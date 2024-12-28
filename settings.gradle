@@ -1,0 +1,3 @@
+rootProject.name = 'meta-agent'
+
+include 'meta-agent-core'

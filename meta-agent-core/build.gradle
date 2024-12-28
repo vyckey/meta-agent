@@ -1,0 +1,22 @@
+plugins {
+    id 'application'
+    id 'maven-publish'
+    id 'buildlogic.java-common-conventions'
+}
+
+sourceSets {
+    main {
+        resources {
+            srcDirs = ['src/main/resources']
+        }
+    }
+    test {
+        resources {
+            srcDirs = ['src/test/resources']
+        }
+    }
+}
+
+dependencies {
+
+}
