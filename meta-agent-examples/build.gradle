@@ -1,0 +1,30 @@
+plugins {
+    id 'application'
+    id 'buildlogic.java-common-conventions'
+}
+
+sourceSets {
+    main {
+        resources {
+            srcDirs = ['src/main/resources']
+        }
+    }
+    test {
+        resources {
+            srcDirs = ['src/test/resources']
+        }
+    }
+}
+
+dependencies {
+    implementation project(':meta-agent-core')
+
+    compileOnly libs.bundles.lombok
+    annotationProcessor libs.bundles.lombok
+
+    implementation libs.bundles.utilies
+    implementation libs.bundles.jackson
+    implementation libs.bundles.log
+    implementation 'org.springframework.ai:spring-ai-ollama:1.0.0-M5'
+
+}
