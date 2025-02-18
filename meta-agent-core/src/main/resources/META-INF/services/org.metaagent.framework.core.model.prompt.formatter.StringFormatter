@@ -1,0 +1,2 @@
+org.metaagent.framework.core.model.prompt.formatter.JavaStringFormatter
+org.metaagent.framework.core.model.prompt.formatter.Slf4jStringFormatter
