@@ -22,24 +22,17 @@
  * SOFTWARE.
  */
 
-package org.metaagent.framework.core.agent.agents;
+package org.metaagent.framework.core.agent.interaction;
 
-import org.metaagent.framework.core.agent.Agent;
-import org.metaagent.framework.core.agent.loop.DefaultLoopControlStrategy;
-import org.metaagent.framework.core.agent.loop.LoopControlStrategy;
+import org.metaagent.framework.core.agent.AgentExecutionContext;
+import org.metaagent.framework.core.agent.chat.message.Message;
+import org.metaagent.framework.core.agent.output.message.AgentMessageOutput;
 
 /**
  * description is here
  *
  * @author vyckey
  */
-public abstract class AbstractAgent extends AbstractMetaAgent implements Agent {
-    protected AbstractAgent(String name) {
-        super(name);
-    }
-
-    @Override
-    public LoopControlStrategy getLoopControlStrategy() {
-        return new DefaultLoopControlStrategy(1);
-    }
+public interface AgentMessageAbility {
+    AgentMessageOutput onMessage(AgentExecutionContext context, Message message);
 }

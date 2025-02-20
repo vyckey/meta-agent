@@ -22,19 +22,31 @@
  * SOFTWARE.
  */
 
-package org.metaagent.framework.core.agent.listener;
+package org.metaagent.framework.core.agent.output.message;
 
-import org.metaagent.framework.core.agent.AgentExecutionContext;
+import org.metaagent.framework.core.agent.chat.message.Message;
+
+import java.util.Objects;
 
 /**
  * description is here
  *
  * @author vyckey
  */
-public interface AgentRunListener {
-    default void beforeAgentRun(AgentExecutionContext context) {
+public class DefaultAgentMessageOutput implements AgentMessageOutput {
+    private final Message message;
+
+    public DefaultAgentMessageOutput(Message message) {
+        this.message = Objects.requireNonNull(message, "message is required");
     }
 
-    default void postAgentRun(AgentExecutionContext context) {
+    @Override
+    public Message getMessage() {
+        return message;
+    }
+
+    @Override
+    public String toString() {
+        return this.getText();
     }
 }

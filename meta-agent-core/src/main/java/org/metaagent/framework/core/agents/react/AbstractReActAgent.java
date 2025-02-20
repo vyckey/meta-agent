@@ -22,11 +22,13 @@
  * SOFTWARE.
  */
 
-package org.metaagent.framework.core.agent.agents;
+package org.metaagent.framework.core.agents.react;
 
+import org.metaagent.framework.core.agent.AbstractAgent;
 import org.metaagent.framework.core.agent.AgentExecutionContext;
 import org.metaagent.framework.core.agent.action.Action;
 import org.metaagent.framework.core.agent.action.DefaultActionExecutionContext;
+import org.metaagent.framework.core.agent.action.actions.AgentFinishAction;
 import org.metaagent.framework.core.agent.action.result.ActionResult;
 import org.metaagent.framework.core.agent.output.AgentOutput;
 import org.metaagent.framework.core.agent.output.observation.Observation;
@@ -51,6 +53,10 @@ public abstract class AbstractReActAgent extends AbstractAgent implements ReActA
         agentLogger.info("Thought #{}: {}", turnNum, thought.getText());
 
         Action action = thought.getProposalAction();
+        if (action instanceof AgentFinishAction) {
+            return thought;
+        }
+
         agentLogger.info("Action #{}: {}", turnNum, action);
         ActionResult actionResult = act(context, action);
 

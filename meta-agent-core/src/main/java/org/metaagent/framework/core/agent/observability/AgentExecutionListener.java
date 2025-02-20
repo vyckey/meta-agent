@@ -22,31 +22,26 @@
  * SOFTWARE.
  */
 
-package org.metaagent.framework.core.agent;
+package org.metaagent.framework.core.agent.observability;
 
-import org.metaagent.framework.core.agent.action.executor.ActionExecutor;
-import org.metaagent.framework.core.agent.goal.Goal;
-import org.metaagent.framework.core.agent.state.AgentState;
-import org.metaagent.framework.core.environment.Environment;
-import org.metaagent.framework.core.tool.manager.ToolManager;
-
-import java.util.concurrent.Executor;
+import org.metaagent.framework.core.agent.AgentExecutionContext;
+import org.metaagent.framework.core.agent.output.AgentOutput;
 
 /**
  * description is here
  *
  * @author vyckey
  */
-public interface AgentExecutionContext {
-    Goal getGoal();
+public interface AgentExecutionListener {
+    default void onAgentNextLoop(AgentExecutionContext context) {
+    }
 
-    AgentState getAgentState();
+    default void onAgentExecutionStart(AgentExecutionContext context) {
+    }
 
-    Environment getEnvironment();
+    default void onAgentExecutionFinish(AgentExecutionContext context, AgentOutput output) {
+    }
 
-    ToolManager getToolManager();
-
-    ActionExecutor getActionExecutor();
-
-    Executor getExecutor();
+    default void onAgentExecutionError(AgentExecutionContext context, Exception exception) {
+    }
 }

@@ -29,6 +29,8 @@ import org.metaagent.framework.core.agent.fallback.AgentFallbackStrategy;
 import org.metaagent.framework.core.agent.memory.Memory;
 import org.metaagent.framework.core.agent.output.AgentOutput;
 
+import java.util.concurrent.CompletableFuture;
+
 /**
  * description is here
  *
@@ -47,6 +49,10 @@ public interface MetaAgent {
         } catch (Exception ex) {
             return getAgentFallbackStrategy().fallback(this, context, ex);
         }
+    }
+
+    default CompletableFuture<AgentOutput> runAsync(AgentExecutionContext context) {
+        return CompletableFuture.supplyAsync(() -> run(context));
     }
 
     AgentOutput execute(AgentExecutionContext context);

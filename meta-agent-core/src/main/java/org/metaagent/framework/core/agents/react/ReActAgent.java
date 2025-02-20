@@ -22,7 +22,7 @@
  * SOFTWARE.
  */
 
-package org.metaagent.framework.core.agent.agents;
+package org.metaagent.framework.core.agents.react;
 
 import org.metaagent.framework.core.agent.Agent;
 import org.metaagent.framework.core.agent.AgentExecutionContext;

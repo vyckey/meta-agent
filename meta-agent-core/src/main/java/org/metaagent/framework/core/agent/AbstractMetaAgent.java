@@ -22,21 +22,19 @@
  * SOFTWARE.
  */
 
-package org.metaagent.framework.core.agent.agents;
+package org.metaagent.framework.core.agent;
 
 import com.google.common.collect.Lists;
 import org.apache.commons.configuration2.Configuration;
 import org.apache.commons.configuration2.ImmutableConfiguration;
-import org.metaagent.framework.core.agent.AgentExecutionContext;
-import org.metaagent.framework.core.agent.state.AgentState;
-import org.metaagent.framework.core.agent.MetaAgent;
 import org.metaagent.framework.core.agent.fallback.AgentFallbackStrategy;
 import org.metaagent.framework.core.agent.fallback.FastFailAgentFallbackStrategy;
-import org.metaagent.framework.core.agent.listener.AgentExecutionListener;
-import org.metaagent.framework.core.agent.listener.AgentRunListener;
 import org.metaagent.framework.core.agent.memory.EmptyMemory;
 import org.metaagent.framework.core.agent.memory.Memory;
+import org.metaagent.framework.core.agent.observability.AgentExecutionListener;
+import org.metaagent.framework.core.agent.observability.AgentRunListener;
 import org.metaagent.framework.core.agent.output.AgentOutput;
+import org.metaagent.framework.core.agent.state.AgentState;
 import org.slf4j.Logger;
 
 import java.util.List;
@@ -114,23 +112,43 @@ public abstract class AbstractMetaAgent implements MetaAgent {
             return agentState.getAgentOutput();
         }
 
-        agentLogger.info("Agent {} is ready to run...", getName());
-        notifyListeners(runListeners, listener -> listener.beforeAgentRun(context));
-        AgentOutput output = MetaAgent.super.run(context);
-        notifyListeners(runListeners, listener -> listener.postAgentRun(context));
-        agentLogger.info("Agent {} run finished.", getName());
-        return output;
+        try {
+            agentLogger.debug("Agent {} is ready to run...", getName());
+            notifyListeners(runListeners, listener -> listener.onAgentStart(context));
+            AgentOutput output = doRun(context);
+            agentLogger.debug("Agent {} run finished.", getName());
+            notifyListeners(runListeners, listener -> listener.onAgentOutput(context, output));
+            return output;
+        } catch (AgentExecutionException ex) {
+            agentLogger.error("Agent {} run exception.", getName(), ex);
+            notifyListeners(runListeners, listener -> listener.onAgentException(context, ex));
+            throw ex;
+        } catch (Exception ex) {
+            agentLogger.error("Agent {} run exception.", getName(), ex);
+            notifyListeners(runListeners, listener -> listener.onAgentException(context, ex));
+            throw new AgentExecutionException(ex);
+        }
+    }
+
+    protected AgentOutput doRun(AgentExecutionContext context) {
+        return MetaAgent.super.run(context);
     }
 
     @Override
     public AgentOutput execute(AgentExecutionContext context) {
         int turn = context.getAgentState().getLoopCount() + 1;
-        agentLogger.info("Agent {} is ready to execute... (Turn#{})", getName(), turn);
-        notifyListeners(executionListeners, listener -> listener.beforeAgentExecute(context));
-        AgentOutput output = doExecute(context);
-        notifyListeners(executionListeners, listener -> listener.postAgentExecute(context));
-        agentLogger.info("Agent {} executes finished. (Turn#{})", getName(), turn);
-        return output;
+        try {
+            agentLogger.debug("Agent {} is ready to execute... (Turn#{})", getName(), turn);
+            notifyListeners(executionListeners, listener -> listener.onAgentExecutionStart(context));
+            AgentOutput output = doExecute(context);
+            agentLogger.debug("Agent {} executes finished. (Turn#{})", getName(), turn);
+            notifyListeners(executionListeners, listener -> listener.onAgentExecutionFinish(context, output));
+            return output;
+        } catch (Exception ex) {
+            agentLogger.error("Agent {} executes occurs error. (Turn#{})", getName(), turn, ex);
+            notifyListeners(executionListeners, listener -> listener.onAgentExecutionError(context, ex));
+            throw ex;
+        }
     }
 
     protected abstract AgentOutput doExecute(AgentExecutionContext context);

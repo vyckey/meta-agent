@@ -22,22 +22,23 @@
  * SOFTWARE.
  */
 
-package org.metaagent.framework.core.agent.listener;
+package org.metaagent.framework.core.agent.observability;
 
 import org.metaagent.framework.core.agent.AgentExecutionContext;
+import org.metaagent.framework.core.agent.output.AgentOutput;
 
 /**
  * description is here
  *
  * @author vyckey
  */
-public interface AgentExecutionListener {
-    default void onAgentNextLoop(AgentExecutionContext context) {
+public interface AgentRunListener {
+    default void onAgentStart(AgentExecutionContext context) {
     }
 
-    default void beforeAgentExecute(AgentExecutionContext context) {
+    default void onAgentOutput(AgentExecutionContext context, AgentOutput output) {
     }
 
-    default void postAgentExecute(AgentExecutionContext context) {
+    default void onAgentException(AgentExecutionContext context, Exception exception) {
     }
 }
