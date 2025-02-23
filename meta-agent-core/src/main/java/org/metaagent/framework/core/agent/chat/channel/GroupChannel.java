@@ -22,44 +22,20 @@
  * SOFTWARE.
  */
 
-package org.metaagent.framework.core.agent;
+package org.metaagent.framework.core.agent.chat.channel;
 
-import org.apache.commons.configuration2.ImmutableConfiguration;
-import org.metaagent.framework.core.agent.ability.AgentAbilityManager;
-import org.metaagent.framework.core.agent.fallback.AgentFallbackStrategy;
-import org.metaagent.framework.core.agent.memory.Memory;
-import org.metaagent.framework.core.agent.output.AgentOutput;
-
-import java.util.concurrent.CompletableFuture;
+import java.util.Collection;
+import java.util.Set;
 
 /**
  * description is here
  *
  * @author vyckey
  */
-public interface MetaAgent {
-    String getName();
+public interface GroupChannel extends Channel {
+    Set<String> members();
 
-    ImmutableConfiguration getConfiguration();
+    void addMembers(Collection<String> members);
 
-    Memory getMemory();
-
-    AgentAbilityManager getAbilityManager();
-
-    default AgentOutput run(AgentExecutionContext context) {
-        try {
-            return execute(context);
-        } catch (Exception ex) {
-            return getAgentFallbackStrategy().fallback(this, context, ex);
-        }
-    }
-
-    default CompletableFuture<AgentOutput> runAsync(AgentExecutionContext context) {
-        return CompletableFuture.supplyAsync(() -> run(context));
-    }
-
-    AgentOutput execute(AgentExecutionContext context);
-
-    AgentFallbackStrategy getAgentFallbackStrategy();
-
+    void removeMembers(Collection<String> members);
 }

@@ -22,17 +22,21 @@
  * SOFTWARE.
  */
 
-package org.metaagent.framework.core.agent.interaction;
+package org.metaagent.framework.core.agent.ability;
 
 import org.metaagent.framework.core.agent.AgentExecutionContext;
-import org.metaagent.framework.core.agent.chat.message.Message;
-import org.metaagent.framework.core.agent.output.message.AgentMessageOutput;
 
 /**
  * description is here
  *
  * @author vyckey
  */
-public interface AgentMessageAbility {
-    AgentMessageOutput onMessage(AgentExecutionContext context, Message message);
+public interface AgentAbility {
+    String getName();
+
+    boolean isActivated();
+
+    void activate(AgentExecutionContext context);
+
+    void deactivate(AgentExecutionContext context);
 }

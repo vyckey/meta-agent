@@ -22,44 +22,29 @@
  * SOFTWARE.
  */
 
-package org.metaagent.framework.core.agent;
+package org.metaagent.framework.core.agent.ability;
 
-import org.apache.commons.configuration2.ImmutableConfiguration;
-import org.metaagent.framework.core.agent.ability.AgentAbilityManager;
-import org.metaagent.framework.core.agent.fallback.AgentFallbackStrategy;
-import org.metaagent.framework.core.agent.memory.Memory;
-import org.metaagent.framework.core.agent.output.AgentOutput;
-
-import java.util.concurrent.CompletableFuture;
+import java.util.Set;
 
 /**
  * description is here
  *
  * @author vyckey
  */
-public interface MetaAgent {
-    String getName();
+public interface AgentAbilityManager {
+    Set<String> getAbilityNames();
 
-    ImmutableConfiguration getConfiguration();
+    boolean hasAbility(String abilityName);
 
-    Memory getMemory();
+    boolean hasAbility(Class<? extends AgentAbility> abilityType);
 
-    AgentAbilityManager getAbilityManager();
+    <T extends AgentAbility> T getAbility(Class<T> abilityType);
 
-    default AgentOutput run(AgentExecutionContext context) {
-        try {
-            return execute(context);
-        } catch (Exception ex) {
-            return getAgentFallbackStrategy().fallback(this, context, ex);
-        }
-    }
+    AgentAbility getAbility(String abilityName);
 
-    default CompletableFuture<AgentOutput> runAsync(AgentExecutionContext context) {
-        return CompletableFuture.supplyAsync(() -> run(context));
-    }
+    void addAbility(AgentAbility ability);
 
-    AgentOutput execute(AgentExecutionContext context);
+    void removeAbility(AgentAbility ability);
 
-    AgentFallbackStrategy getAgentFallbackStrategy();
-
+    void removeAbility(String abilityName);
 }

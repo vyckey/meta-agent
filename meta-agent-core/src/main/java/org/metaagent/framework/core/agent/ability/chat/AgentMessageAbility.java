@@ -22,44 +22,27 @@
  * SOFTWARE.
  */
 
-package org.metaagent.framework.core.agent;
+package org.metaagent.framework.core.agent.ability.chat;
 
-import org.apache.commons.configuration2.ImmutableConfiguration;
-import org.metaagent.framework.core.agent.ability.AgentAbilityManager;
-import org.metaagent.framework.core.agent.fallback.AgentFallbackStrategy;
-import org.metaagent.framework.core.agent.memory.Memory;
-import org.metaagent.framework.core.agent.output.AgentOutput;
+import org.metaagent.framework.core.agent.ability.AgentAbility;
+import org.metaagent.framework.core.agent.chat.channel.Channel;
+import org.metaagent.framework.core.agent.chat.message.Message;
+import org.metaagent.framework.core.agent.chat.message.MessageListener;
 
-import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.Future;
 
 /**
  * description is here
  *
  * @author vyckey
  */
-public interface MetaAgent {
-    String getName();
+public interface AgentMessageAbility extends AgentAbility {
 
-    ImmutableConfiguration getConfiguration();
+    Channel getChannel();
 
-    Memory getMemory();
+    void sendMessage(Message message);
 
-    AgentAbilityManager getAbilityManager();
+    Future<Void> sendMessageAsync(Message message);
 
-    default AgentOutput run(AgentExecutionContext context) {
-        try {
-            return execute(context);
-        } catch (Exception ex) {
-            return getAgentFallbackStrategy().fallback(this, context, ex);
-        }
-    }
-
-    default CompletableFuture<AgentOutput> runAsync(AgentExecutionContext context) {
-        return CompletableFuture.supplyAsync(() -> run(context));
-    }
-
-    AgentOutput execute(AgentExecutionContext context);
-
-    AgentFallbackStrategy getAgentFallbackStrategy();
-
+    void subscribeMessage(MessageListener messageListener);
 }

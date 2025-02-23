@@ -22,36 +22,56 @@
  * SOFTWARE.
  */
 
-package org.metaagent.framework.core.agent.chat.channel;
+package org.metaagent.framework.core.agent.ability.chat;
 
+import org.metaagent.framework.core.agent.ability.AbstractAgentAbility;
+import org.metaagent.framework.core.agent.chat.channel.Channel;
 import org.metaagent.framework.core.agent.chat.message.Message;
-import org.metaagent.framework.core.agent.chat.message.MessageHistory;
 import org.metaagent.framework.core.agent.chat.message.MessageListener;
 
-import java.io.Closeable;
-import java.io.IOException;
-import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.Future;
 
 /**
  * description is here
  *
  * @author vyckey
  */
-public interface Channel extends Closeable {
-    String getName();
+public class DefaultAgentMessageAbility extends AbstractAgentAbility implements AgentMessageAbility {
+    protected final Channel channel;
+    protected MessageListener messageListener;
 
-    boolean isOpen();
+    public DefaultAgentMessageAbility(String name, Channel channel) {
+        super(name);
+        this.channel = channel;
+    }
+
+    public DefaultAgentMessageAbility(Channel channel) {
+        this("AgentChatAbility", channel);
+    }
 
     @Override
-    void close() throws IOException;
+    public Channel getChannel() {
+        return channel;
+    }
 
-    void send(Message message);
+    @Override
+    public void sendMessage(Message message) {
+        checkActivated();
+        this.channel.send(message);
+    }
 
-    CompletableFuture<Void> sendAsync(Message message);
+    @Override
+    public Future<Void> sendMessageAsync(Message message) {
+        checkActivated();
+        return this.channel.sendAsync(message);
+    }
 
-    void receive(MessageListener messageListener);
-
-    void remove(MessageListener messageListener);
-
-    MessageHistory messageHistory();
+    @Override
+    public void subscribeMessage(MessageListener messageListener) {
+        this.channel.remove(message -> {
+            if (isActivated()) {
+                messageListener.onMessage(message);
+            }
+        });
+    }
 }

@@ -25,7 +25,6 @@
 package org.metaagent.framework.core.agent.chat.channel;
 
 import com.google.common.collect.Lists;
-import com.google.common.collect.Sets;
 import lombok.extern.slf4j.Slf4j;
 import org.metaagent.framework.core.agent.chat.message.Message;
 import org.metaagent.framework.core.agent.chat.message.MessageHistory;
@@ -33,12 +32,8 @@ import org.metaagent.framework.core.agent.chat.message.MessageHistoryImpl;
 import org.metaagent.framework.core.agent.chat.message.MessageListener;
 
 import java.io.IOException;
-import java.util.Arrays;
-import java.util.Collections;
 import java.util.List;
-import java.util.Set;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.Future;
 
 /**
  * description is here
@@ -46,14 +41,13 @@ import java.util.concurrent.Future;
  * @author vyckey
  */
 @Slf4j
-public class CommonChannel implements Channel {
+public class DefaultChannel implements Channel {
     protected final String name;
-    protected final Set<String> members = Sets.newHashSet();
     protected final List<MessageListener> messageListeners = Lists.newArrayList();
     protected MessageHistory messageHistory = new MessageHistoryImpl();
     protected boolean open = true;
 
-    public CommonChannel(String name) {
+    public DefaultChannel(String name) {
         this.name = name;
     }
 
@@ -79,45 +73,14 @@ public class CommonChannel implements Channel {
     }
 
     @Override
-    public Set<String> members() {
-        return Collections.unmodifiableSet(members);
-    }
-
-    @Override
-    public void join(String... members) {
-        checkChannelOpen();
-        for (String member : members) {
-            if (this.members.contains(member)) {
-                throw new IllegalArgumentException("member " + member + " is already in channel " + name);
-            }
-        }
-        this.members.addAll(Arrays.asList(members));
-    }
-
-    @Override
-    public void exit(String... members) {
-        List<String> memberList = Arrays.asList(members);
-        checkChannelOpen();
-        for (String member : memberList) {
-            if (this.members.contains(member)) {
-                throw new IllegalArgumentException("member " + member + " is not in channel " + name);
-            }
-        }
-        memberList.forEach(this.members::remove);
-    }
-
-    @Override
     public void send(Message message) {
         checkChannelOpen();
-        if (!members.contains(message.getSender())) {
-            throw new IllegalArgumentException("sender " + message.getSender() + " is not in channel " + name);
-        }
         messageHistory.appendMessage(message);
         notifyReceiver(message);
     }
 
     @Override
-    public Future<Void> sendAsync(Message message) {
+    public CompletableFuture<Void> sendAsync(Message message) {
         return CompletableFuture.runAsync(() -> send(message));
     }
 
@@ -134,6 +97,11 @@ public class CommonChannel implements Channel {
     @Override
     public void receive(MessageListener messageListener) {
         messageListeners.add(messageListener);
+    }
+
+    @Override
+    public void remove(MessageListener messageListener) {
+        messageListeners.remove(messageListener);
     }
 
     @Override

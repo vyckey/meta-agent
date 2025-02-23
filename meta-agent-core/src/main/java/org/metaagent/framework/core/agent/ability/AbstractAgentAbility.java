@@ -22,22 +22,51 @@
  * SOFTWARE.
  */
 
-package org.metaagent.framework.core.agent.chat.channel;
+package org.metaagent.framework.core.agent.ability;
+
+import org.metaagent.framework.core.agent.AgentExecutionContext;
 
 /**
  * description is here
  *
  * @author vyckey
  */
-public class GroupChanel extends CommonChannel {
-    public GroupChanel(String name) {
-        super(channelName(name));
+public abstract class AbstractAgentAbility implements AgentAbility {
+    protected final String name;
+    protected boolean activated;
+
+    public AbstractAgentAbility(String name) {
+        this.name = name;
     }
 
-    private static String channelName(String name) {
-        if (!name.startsWith("#")) {
-            throw new IllegalArgumentException("group channel name must start with #");
+    @Override
+    public String getName() {
+        return name;
+    }
+
+    @Override
+    public boolean isActivated() {
+        return activated;
+    }
+
+    protected void checkActivated() {
+        if (!activated) {
+            throw new IllegalStateException("Ability not activated: " + name);
         }
+    }
+
+    @Override
+    public void activate(AgentExecutionContext context) {
+        this.activated = true;
+    }
+
+    @Override
+    public void deactivate(AgentExecutionContext context) {
+        this.activated = false;
+    }
+
+    @Override
+    public String toString() {
         return name;
     }
 }

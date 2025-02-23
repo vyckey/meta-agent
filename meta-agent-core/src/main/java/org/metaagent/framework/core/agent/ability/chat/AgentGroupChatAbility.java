@@ -22,28 +22,25 @@
  * SOFTWARE.
  */
 
-package org.metaagent.framework.core.agent;
+package org.metaagent.framework.core.agent.ability.chat;
 
 import org.metaagent.framework.core.agent.chat.channel.ChannelManager;
 import org.metaagent.framework.core.agent.chat.message.Message;
 import org.metaagent.framework.core.agent.chat.message.MessageListener;
 
-import java.util.concurrent.Future;
+import java.util.concurrent.CompletableFuture;
 
 /**
  * description is here
  *
  * @author vyckey
  */
-public interface AgentCommunicable {
+public interface AgentGroupChatAbility {
     ChannelManager getChannelManager();
 
     void sendMessage(String channelName, Message message);
 
-    Future<Void> sendMessageAsync(String channelName, Message message);
+    CompletableFuture<Void> sendMessageAsync(String channelName, Message message);
 
-    default void subscribeMessage(String channelName, MessageListener messageListener) {
-    }
-
-    void unsubscribeMessage(String channelName, MessageListener messageListener);
+    void subscribeMessage(String channelName, MessageListener messageListener);
 }

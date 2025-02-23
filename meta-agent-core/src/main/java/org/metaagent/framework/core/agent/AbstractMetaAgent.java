@@ -27,6 +27,8 @@ package org.metaagent.framework.core.agent;
 import com.google.common.collect.Lists;
 import org.apache.commons.configuration2.Configuration;
 import org.apache.commons.configuration2.ImmutableConfiguration;
+import org.metaagent.framework.core.agent.ability.AgentAbilityManager;
+import org.metaagent.framework.core.agent.ability.DefaultAgentAbilityManager;
 import org.metaagent.framework.core.agent.fallback.AgentFallbackStrategy;
 import org.metaagent.framework.core.agent.fallback.FastFailAgentFallbackStrategy;
 import org.metaagent.framework.core.agent.memory.EmptyMemory;
@@ -49,6 +51,7 @@ public abstract class AbstractMetaAgent implements MetaAgent {
     protected final String name;
     protected Configuration configuration;
     protected Memory memory = EmptyMemory.EMPTY_MEMORY;
+    protected AgentAbilityManager abilityManager = new DefaultAgentAbilityManager();
     protected final List<AgentRunListener> runListeners = Lists.newArrayList();
     protected final List<AgentExecutionListener> executionListeners = Lists.newArrayList();
     protected Logger agentLogger;
@@ -71,6 +74,11 @@ public abstract class AbstractMetaAgent implements MetaAgent {
     @Override
     public Memory getMemory() {
         return memory;
+    }
+
+    @Override
+    public AgentAbilityManager getAbilityManager() {
+        return abilityManager;
     }
 
     public void registerRunListener(AgentRunListener listener) {
