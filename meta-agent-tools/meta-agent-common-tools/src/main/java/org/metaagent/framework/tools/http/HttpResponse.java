@@ -22,39 +22,23 @@
  * SOFTWARE.
  */
 
-package org.metaagent.framework.core.agent.chat.channel;
+package org.metaagent.framework.tools.http;
 
-import com.google.common.collect.Maps;
+import lombok.Getter;
+import lombok.experimental.SuperBuilder;
 
-import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
-public class DefaultChannelManager implements ChannelManager {
-    private final Map<String, Channel> channels = Maps.newHashMap();
-
-    @Override
-    public Set<String> getChannelNames() {
-        return channels.keySet();
-    }
-
-    @Override
-    public Channel getChannel(String channelName) {
-        return channels.get(channelName);
-    }
-
-    @Override
-    public void addChannel(Channel channel) {
-        channels.put(channel.getName(), channel);
-    }
-
-    @Override
-    public void removeChannel(String channelName) {
-        channels.remove(channelName);
-    }
-
-    @Override
-    public Iterator<Channel> iterator() {
-        return channels.values().iterator();
-    }
+/**
+ * description is here
+ *
+ * @author vyckey
+ */
+@Getter
+@SuperBuilder()
+public class HttpResponse {
+    private int statusCode;
+    private Map<String, List<String>> headers;
+    private String body;
 }

@@ -22,39 +22,24 @@
  * SOFTWARE.
  */
 
-package org.metaagent.framework.core.agent.agents;
+package org.metaagent.framework.tools.http;
 
-import org.metaagent.framework.core.agent.Agent;
-import org.metaagent.framework.core.agent.AgentExecutionContext;
-import org.metaagent.framework.core.agent.output.AgentOutput;
-import org.metaagent.framework.core.agent.plan.Plan;
-import org.metaagent.framework.core.agent.task.Task;
-import org.metaagent.framework.core.agent.task.TaskResult;
+import lombok.Getter;
+import lombok.experimental.SuperBuilder;
+
+import java.util.Map;
 
 /**
  * description is here
  *
  * @author vyckey
  */
-public interface PlanActAgent extends Agent {
+@Getter
+@SuperBuilder
+public class HttpRequest {
+    private String url;
+    private String method;
+    private Map<String, String> headers;
+    private String body;
 
-    default AgentOutput execute(AgentExecutionContext context) {
-        observe(context);
-
-        Plan plan = plan(context);
-        Task currentTask = plan.getCurrentTask();
-        while (currentTask != null) {
-            TaskResult taskResult = act(context, currentTask);
-            plan.updateTaskResult(currentTask.getName(), taskResult);
-
-            currentTask = plan.getCurrentTask();
-        }
-        return null;
-    }
-
-    void observe(AgentExecutionContext context);
-
-    Plan plan(AgentExecutionContext context);
-
-    TaskResult act(AgentExecutionContext context, Task task);
 }

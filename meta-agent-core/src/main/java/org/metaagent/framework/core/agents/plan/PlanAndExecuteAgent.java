@@ -22,56 +22,39 @@
  * SOFTWARE.
  */
 
-package org.metaagent.framework.core.agent.chat.channel;
+package org.metaagent.framework.core.agents.plan;
 
-import java.util.Collections;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Set;
+import org.metaagent.framework.core.agent.Agent;
+import org.metaagent.framework.core.agent.AgentExecutionContext;
+import org.metaagent.framework.core.agent.output.AgentOutput;
+import org.metaagent.framework.core.agent.plan.Plan;
+import org.metaagent.framework.core.agent.task.Task;
+import org.metaagent.framework.core.agent.task.TaskResult;
 
 /**
  * description is here
  *
  * @author vyckey
  */
-public final class EmptyChannelManager implements ChannelManager {
-    public static final EmptyChannelManager INSTANCE = new EmptyChannelManager();
+public interface PlanAndExecuteAgent extends Agent {
 
-    private EmptyChannelManager() {
-    }
+    default AgentOutput execute(AgentExecutionContext context) {
+        observe(context);
 
-    @Override
-    public Set<String> getChannelNames() {
-        return Collections.emptySet();
-    }
+        Plan plan = plan(context);
+        Task currentTask = plan.getCurrentTask();
+        while (currentTask != null) {
+            TaskResult taskResult = act(context, currentTask);
+            plan.updateTaskResult(currentTask.getName(), taskResult);
 
-    @Override
-    public Channel getChannel(String channelName) {
+            currentTask = plan.getCurrentTask();
+        }
         return null;
     }
 
-    @Override
-    public void addChannel(Channel channel) {
-        throw new UnsupportedOperationException("Empty ChannelManager does not support addChannel");
-    }
+    void observe(AgentExecutionContext context);
 
-    @Override
-    public void removeChannel(String channelName) {
-        throw new UnsupportedOperationException("Empty ChannelManager does not support removeChannel");
-    }
+    Plan plan(AgentExecutionContext context);
 
-    @Override
-    public Iterator<Channel> iterator() {
-        return new Iterator<Channel>() {
-            @Override
-            public boolean hasNext() {
-                return false;
-            }
-
-            @Override
-            public Channel next() {
-                throw new IllegalStateException();
-            }
-        };
-    }
+    TaskResult act(AgentExecutionContext context, Task task);
 }
