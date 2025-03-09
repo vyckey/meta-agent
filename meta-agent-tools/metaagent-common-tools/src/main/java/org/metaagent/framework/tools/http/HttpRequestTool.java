@@ -32,6 +32,8 @@ import okhttp3.Response;
 import org.metaagent.framework.core.tool.Tool;
 import org.metaagent.framework.core.tool.ToolContext;
 import org.metaagent.framework.core.tool.ToolExecutionException;
+import org.metaagent.framework.core.tool.converter.JsonToolConverter;
+import org.metaagent.framework.core.tool.converter.ToolConverter;
 import org.metaagent.framework.core.tool.definition.ToolDefinition;
 
 import java.io.IOException;
@@ -58,6 +60,11 @@ public class HttpRequestTool implements Tool<HttpRequest, HttpResponse> {
                 .build();
     }
 
+    @Override
+    public ToolConverter<HttpRequest, HttpResponse> getConverter() {
+        return JsonToolConverter.create(HttpRequest.class);
+    }
+
     private Request buildRequest(HttpRequest request) {
         Request.Builder requestBuilder = new Request.Builder().url(request.getUrl());
         if (request.getHeaders() != null) {
@@ -74,7 +81,7 @@ public class HttpRequestTool implements Tool<HttpRequest, HttpResponse> {
         return requestBuilder.build();
     }
 
-    private HttpResponse buildResponse(Response response) {
+    private HttpResponse buildResponse(Response response) throws IOException {
         int statusCode = response.code();
         HttpResponse.HttpResponseBuilder<?, ?> builder = HttpResponse.builder()
                 .statusCode(statusCode)
@@ -94,5 +101,4 @@ public class HttpRequestTool implements Tool<HttpRequest, HttpResponse> {
             throw new ToolExecutionException("Error to send HTTP request", e);
         }
     }
-
 }

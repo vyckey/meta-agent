@@ -22,12 +22,11 @@
  * SOFTWARE.
  */
 
-package org.metaagent.framework.tools.http;
+package org.metaagent.framework.tools.script.shell;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Getter;
 import lombok.experimental.SuperBuilder;
-
-import java.util.Map;
 
 /**
  * description is here
@@ -36,10 +35,15 @@ import java.util.Map;
  */
 @Getter
 @SuperBuilder
-public class HttpRequest {
-    private String url;
-    private String method;
-    private Map<String, String> headers;
-    private String body;
+public class ShellCommandOutput {
+    @JsonProperty(required = true)
+    private int exitCode;
 
+    private String output;
+
+    private String error;
+
+    public boolean isSuccessful() {
+        return exitCode == 0;
+    }
 }

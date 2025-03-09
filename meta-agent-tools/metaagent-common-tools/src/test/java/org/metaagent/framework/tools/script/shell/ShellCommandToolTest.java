@@ -22,23 +22,36 @@
  * SOFTWARE.
  */
 
-package org.metaagent.framework.tools.http;
+package org.metaagent.framework.tools.script.shell;
 
-import lombok.Getter;
-import lombok.experimental.SuperBuilder;
+import org.apache.commons.lang3.StringUtils;
 
-import java.util.List;
-import java.util.Map;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
  * description is here
  *
  * @author vyckey
  */
-@Getter
-@SuperBuilder()
-public class HttpResponse {
-    private int statusCode;
-    private Map<String, List<String>> headers;
-    private String body;
+class ShellCommandToolTest {
+
+    @org.junit.jupiter.api.Test
+    void testEchoCommand() {
+        ShellCommandTool commandTool = new ShellCommandTool();
+        ShellCommandInput commandInput = new ShellCommandInput("echo hello");
+        ShellCommandOutput commandOutput = commandTool.run(null, commandInput);
+        assertEquals(0, commandOutput.getExitCode());
+        assertEquals("hello\n", commandOutput.getOutput());
+        assertTrue(StringUtils.isEmpty(commandOutput.getError()));
+    }
+
+    @org.junit.jupiter.api.Test
+    void testInvalidCommand() {
+        ShellCommandTool commandTool = new ShellCommandTool();
+        ShellCommandInput commandInput = new ShellCommandInput("not_exist_command");
+        ShellCommandOutput commandOutput = commandTool.run(null, commandInput);
+        assertEquals(-1, commandOutput.getExitCode());
+        assertTrue(StringUtils.isNotEmpty(commandOutput.getError()));
+    }
 }
