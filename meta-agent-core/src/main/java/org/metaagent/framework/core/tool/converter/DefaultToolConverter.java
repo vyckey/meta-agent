@@ -22,30 +22,34 @@
  * SOFTWARE.
  */
 
-package org.metaagent.framework.core.converter;
+package org.metaagent.framework.core.tool.converter;
+
+import org.metaagent.framework.core.converter.Converter;
+
+import java.util.Objects;
 
 /**
  * description is here
  *
  * @author vyckey
  */
-public interface BiConverter<S, T> extends Converter<S, T> {
-    @Override
-    T convert(S source);
+class DefaultToolConverter<I, O> implements ToolConverter<I, O> {
+    private final Converter<String, I> inputConverter;
+    private final Converter<O, String> outputConverter;
 
-    S reverse(T target);
-
-    default BiConverter<T, S> reverse() {
-        return new BiConverter<T, S>() {
-            @Override
-            public S convert(T target) {
-                return BiConverter.this.reverse(target);
-            }
-
-            @Override
-            public T reverse(S source) {
-                return BiConverter.this.convert(source);
-            }
-        };
+    DefaultToolConverter(Converter<String, I> inputConverter, Converter<O, String> outputConverter) {
+        this.inputConverter = Objects.requireNonNull(inputConverter, "inputConverter is required");
+        this.outputConverter = Objects.requireNonNull(outputConverter, "outputConverter is required");
     }
+
+    @Override
+    public Converter<String, I> inputConverter() {
+        return inputConverter;
+    }
+
+    @Override
+    public Converter<O, String> outputConverter() {
+        return outputConverter;
+    }
+
 }

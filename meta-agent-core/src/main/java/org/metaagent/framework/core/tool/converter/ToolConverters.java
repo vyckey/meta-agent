@@ -22,30 +22,32 @@
  * SOFTWARE.
  */
 
-package org.metaagent.framework.core.converter;
+package org.metaagent.framework.core.tool.converter;
+
+import com.fasterxml.jackson.core.type.TypeReference;
+import org.metaagent.framework.core.converter.Converter;
+import org.metaagent.framework.core.converter.JsonBiConverter;
 
 /**
  * description is here
  *
  * @author vyckey
  */
-public interface BiConverter<S, T> extends Converter<S, T> {
-    @Override
-    T convert(S source);
+public abstract class ToolConverters {
+    public static <I, O> ToolConverter<I, O> create(Converter<String, I> inputConverter,
+                                                    Converter<O, String> outputConverter) {
+        return new DefaultToolConverter<>(inputConverter, outputConverter);
+    }
 
-    S reverse(T target);
+    public static <I, O> ToolConverter<I, O> jsonConverter(Class<I> inputType) {
+        return JsonToolConverter.create(inputType);
+    }
 
-    default BiConverter<T, S> reverse() {
-        return new BiConverter<T, S>() {
-            @Override
-            public S convert(T target) {
-                return BiConverter.this.reverse(target);
-            }
+    public static <I, O> ToolConverter<I, O> jsonConverter(TypeReference<I> inputType) {
+        return new JsonToolConverter<>(JsonBiConverter.create(inputType));
+    }
 
-            @Override
-            public T reverse(S source) {
-                return BiConverter.this.convert(source);
-            }
-        };
+    public static ToolConverter<String, String> stringConverter() {
+        return create(Converter.self(), Converter.self());
     }
 }

@@ -22,30 +22,42 @@
  * SOFTWARE.
  */
 
-package org.metaagent.framework.core.converter;
+package org.metaagent.framework.core.tool;
+
+import lombok.Getter;
+import org.metaagent.framework.core.tool.manager.DefaultToolManager;
+import org.metaagent.framework.core.tool.manager.ToolManager;
 
 /**
  * description is here
  *
  * @author vyckey
  */
-public interface BiConverter<S, T> extends Converter<S, T> {
-    @Override
-    T convert(S source);
+@Getter
+public class DefaultToolContext implements ToolContext {
+    protected ToolManager toolManager;
 
-    S reverse(T target);
+    protected DefaultToolContext(Builder builder) {
+        this.toolManager = builder.toolManager;
+    }
 
-    default BiConverter<T, S> reverse() {
-        return new BiConverter<T, S>() {
-            @Override
-            public S convert(T target) {
-                return BiConverter.this.reverse(target);
+    public static Builder builder() {
+        return new Builder();
+    }
+
+    public static class Builder {
+        private ToolManager toolManager;
+
+        public Builder toolManager(ToolManager toolManager) {
+            this.toolManager = toolManager;
+            return this;
+        }
+
+        public DefaultToolContext build() {
+            if (toolManager == null) {
+                this.toolManager = DefaultToolManager.getInstance();
             }
-
-            @Override
-            public T reverse(S source) {
-                return BiConverter.this.convert(source);
-            }
-        };
+            return new DefaultToolContext(this);
+        }
     }
 }

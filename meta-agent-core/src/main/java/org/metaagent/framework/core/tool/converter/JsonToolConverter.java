@@ -22,30 +22,41 @@
  * SOFTWARE.
  */
 
-package org.metaagent.framework.core.converter;
+package org.metaagent.framework.core.tool.converter;
+
+import com.fasterxml.jackson.core.type.TypeReference;
+import org.metaagent.framework.core.converter.Converter;
+import org.metaagent.framework.core.converter.JsonBiConverter;
+import org.metaagent.framework.core.converter.JsonStringConverter;
 
 /**
  * description is here
  *
  * @author vyckey
  */
-public interface BiConverter<S, T> extends Converter<S, T> {
+public class JsonToolConverter<I, O> implements ToolConverter<I, O> {
+    private final JsonBiConverter<I> inputConverter;
+    private final JsonStringConverter<O> outputConverter = new JsonStringConverter<>();
+
+    public JsonToolConverter(JsonBiConverter<I> inputConverter) {
+        this.inputConverter = inputConverter;
+    }
+
+    public static <I, O> JsonToolConverter<I, O> create(Class<I> inputType) {
+        return new JsonToolConverter<>(JsonBiConverter.create(inputType));
+    }
+
+    public static <I, O> JsonToolConverter<I, O> create(TypeReference<I> inputType) {
+        return new JsonToolConverter<>(JsonBiConverter.create(inputType));
+    }
+
     @Override
-    T convert(S source);
+    public Converter<String, I> inputConverter() {
+        return inputConverter;
+    }
 
-    S reverse(T target);
-
-    default BiConverter<T, S> reverse() {
-        return new BiConverter<T, S>() {
-            @Override
-            public S convert(T target) {
-                return BiConverter.this.reverse(target);
-            }
-
-            @Override
-            public T reverse(S source) {
-                return BiConverter.this.convert(source);
-            }
-        };
+    @Override
+    public Converter<O, String> outputConverter() {
+        return outputConverter;
     }
 }

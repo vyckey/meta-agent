@@ -24,28 +24,33 @@
 
 package org.metaagent.framework.core.converter;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+
+import java.util.Objects;
+
 /**
  * description is here
  *
  * @author vyckey
  */
-public interface BiConverter<S, T> extends Converter<S, T> {
+public class JsonStringConverter<S> implements Converter<S, String> {
+    protected final ObjectMapper objectMapper;
+
+    public JsonStringConverter(ObjectMapper objectMapper) {
+        this.objectMapper = Objects.requireNonNull(objectMapper, "objectMapper is required");
+    }
+
+    public JsonStringConverter() {
+        this(JsonBiConverter.OBJECT_MAPPER);
+    }
+
     @Override
-    T convert(S source);
-
-    S reverse(T target);
-
-    default BiConverter<T, S> reverse() {
-        return new BiConverter<T, S>() {
-            @Override
-            public S convert(T target) {
-                return BiConverter.this.reverse(target);
-            }
-
-            @Override
-            public T reverse(S source) {
-                return BiConverter.this.convert(source);
-            }
-        };
+    public String convert(S source) {
+        try {
+            return this.objectMapper.writeValueAsString(source);
+        } catch (JsonProcessingException e) {
+            throw new IllegalArgumentException("Failed to serialize object as JSON string.", e);
+        }
     }
 }

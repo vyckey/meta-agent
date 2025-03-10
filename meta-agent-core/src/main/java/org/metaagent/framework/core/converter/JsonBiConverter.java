@@ -35,11 +35,11 @@ import java.util.Objects;
  *
  * @author vyckey
  */
-public abstract class JsonConverter<T> implements BiConverter<String, T> {
+public abstract class JsonBiConverter<T> implements BiConverter<String, T> {
     public static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
     protected final ObjectMapper objectMapper;
 
-    protected JsonConverter(ObjectMapper objectMapper) {
+    protected JsonBiConverter(ObjectMapper objectMapper) {
         this.objectMapper = Objects.requireNonNull(objectMapper, "objectMapper is required");
     }
 
@@ -65,12 +65,12 @@ public abstract class JsonConverter<T> implements BiConverter<String, T> {
         return new IllegalArgumentException("Failed to convert JSON to object. json:" + jsonStr, e);
     }
 
-    public static <T> JsonConverter<T> create(Class<T> type) {
+    public static <T> JsonBiConverter<T> create(Class<T> type) {
         return create(OBJECT_MAPPER, type);
     }
 
-    public static <T> JsonConverter<T> create(ObjectMapper objectMapper, Class<T> type) {
-        return new JsonConverter<>(objectMapper) {
+    public static <T> JsonBiConverter<T> create(ObjectMapper objectMapper, Class<T> type) {
+        return new JsonBiConverter<>(objectMapper) {
             @Override
             public T convert(String json) {
                 try {
@@ -82,12 +82,12 @@ public abstract class JsonConverter<T> implements BiConverter<String, T> {
         };
     }
 
-    public static <T> JsonConverter<T> create(TypeReference<T> typeRef) {
+    public static <T> JsonBiConverter<T> create(TypeReference<T> typeRef) {
         return create(OBJECT_MAPPER, typeRef);
     }
 
-    public static <T> JsonConverter<T> create(ObjectMapper objectMapper, TypeReference<T> typeRef) {
-        return new JsonConverter<>(objectMapper) {
+    public static <T> JsonBiConverter<T> create(ObjectMapper objectMapper, TypeReference<T> typeRef) {
+        return new JsonBiConverter<>(objectMapper) {
             @Override
             public T convert(String json) {
                 try {
