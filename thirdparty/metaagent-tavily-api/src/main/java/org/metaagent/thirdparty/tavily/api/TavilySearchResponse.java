@@ -35,7 +35,7 @@ import java.util.List;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-class TavilySearchResponse {
+public class TavilySearchResponse {
     private String answer;
     private String query;
     private Double responseTime;

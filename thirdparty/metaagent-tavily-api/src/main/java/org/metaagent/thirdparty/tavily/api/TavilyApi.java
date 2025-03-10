@@ -32,7 +32,7 @@ import retrofit2.http.POST;
 /**
  * <a href="https://docs.tavily.com/documentation/api-reference/introduction">Tavily API reference</a>
  */
-interface TavilyApi {
+public interface TavilyApi {
 
     @POST("search")
     @Headers({"Content-Type: application/json"})

@@ -36,7 +36,7 @@ import java.util.Map;
  * <p>
  * <a href="https://www.searchapi.io/docs/google">SearchAPI docs</a>
  */
-interface SearchApi {
+public interface SearchApi {
 
     @GET("api/v1/search")
     Call<SearchApiWebSearchResponse> search(@QueryMap Map<String, Object> params,

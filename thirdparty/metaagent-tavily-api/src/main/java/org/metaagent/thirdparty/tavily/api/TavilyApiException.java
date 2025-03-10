@@ -24,19 +24,16 @@
 
 package org.metaagent.thirdparty.tavily.api;
 
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
+public class TavilyApiException extends RuntimeException {
+    public TavilyApiException(String message) {
+        super(message);
+    }
 
-@Getter
-@Builder
-@NoArgsConstructor
-@AllArgsConstructor
-public class TavilySearchResult {
-    private String title;
-    private String url;
-    private String content;
-    private String rawContent;
-    private Double score;
+    public TavilyApiException(String message, Throwable cause) {
+        super(message, cause);
+    }
+
+    public TavilyApiException(Throwable cause) {
+        super(cause);
+    }
 }

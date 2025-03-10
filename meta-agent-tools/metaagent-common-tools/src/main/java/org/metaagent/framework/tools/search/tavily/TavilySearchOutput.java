@@ -22,21 +22,30 @@
  * SOFTWARE.
  */
 
-package org.metaagent.thirdparty.tavily.api;
+package org.metaagent.framework.tools.search.tavily;
 
+import com.fasterxml.jackson.annotation.JsonPropertyDescription;
+import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
+import java.util.List;
+
+/**
+ * description is here
+ *
+ * @author vyckey
+ */
 @Getter
 @Builder
 @NoArgsConstructor
-@AllArgsConstructor
-public class TavilySearchResult {
-    private String title;
-    private String url;
-    private String content;
-    private String rawContent;
-    private Double score;
+@AllArgsConstructor(access = AccessLevel.PRIVATE)
+public class TavilySearchOutput {
+    @JsonPropertyDescription("The total number of results found by the search engine")
+    private Long totalResults;
+
+    @JsonPropertyDescription("The search results")
+    private List<SearchOrganicResult> results;
 }

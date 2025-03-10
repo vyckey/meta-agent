@@ -22,21 +22,32 @@
  * SOFTWARE.
  */
 
-package org.metaagent.thirdparty.tavily.api;
+package org.metaagent.framework.tools.search.tavily;
 
+import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
+import java.util.Map;
+
+/**
+ * description is here
+ *
+ * @author vyckey
+ */
 @Getter
 @Builder
 @NoArgsConstructor
-@AllArgsConstructor
-public class TavilySearchResult {
-    private String title;
-    private String url;
-    private String content;
-    private String rawContent;
-    private Double score;
+@AllArgsConstructor(access = AccessLevel.PRIVATE)
+public class TavilySearchInput {
+    private String searchTerms;
+    private Integer maxResults;
+    private String language;
+    private String geoLocation;
+    private Integer startPage;
+    private Integer startIndex;
+    private Boolean safeSearch;
+    private Map<String, Object> additionalParams;
 }

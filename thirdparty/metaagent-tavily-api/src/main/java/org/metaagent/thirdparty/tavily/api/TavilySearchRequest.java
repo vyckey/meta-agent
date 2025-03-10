@@ -35,7 +35,7 @@ import java.util.List;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-class TavilySearchRequest {
+public class TavilySearchRequest {
     private String apiKey;
     private String query;
     private String searchDepth;

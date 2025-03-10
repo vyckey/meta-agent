@@ -38,7 +38,7 @@ import retrofit2.converter.jackson.JacksonConverterFactory;
 import java.io.IOException;
 import java.time.Duration;
 
-class TavilyClient {
+public class TavilyClient {
 
     private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper()
             .setPropertyNamingStrategy(PropertyNamingStrategies.SNAKE_CASE)
@@ -77,14 +77,14 @@ class TavilyClient {
                 throw toException(retrofitResponse);
             }
         } catch (IOException e) {
-            throw new RuntimeException(e);
+            throw new TavilyApiException(e);
         }
     }
 
-    private static RuntimeException toException(Response<?> response) throws IOException {
+    private static TavilyApiException toException(Response<?> response) throws IOException {
         int code = response.code();
         String body = response.errorBody().string();
         String errorMessage = String.format("status code: %s; body: %s", code, body);
-        return new RuntimeException(errorMessage);
+        return new TavilyApiException(errorMessage);
     }
 }

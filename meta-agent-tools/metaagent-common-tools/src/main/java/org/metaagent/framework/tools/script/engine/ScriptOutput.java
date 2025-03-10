@@ -22,21 +22,28 @@
  * SOFTWARE.
  */
 
-package org.metaagent.thirdparty.tavily.api;
+package org.metaagent.framework.tools.script.engine;
 
+import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
+/**
+ * description is here
+ *
+ * @author vyckey
+ */
 @Getter
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class TavilySearchResult {
-    private String title;
-    private String url;
-    private String content;
-    private String rawContent;
-    private Double score;
+public class ScriptOutput {
+    @JsonPropertyDescription("The result of the script execution")
+    private String result;
+
+    @JsonPropertyDescription("The error message if the script execution failed")
+    private String error;
+
 }
