@@ -22,44 +22,29 @@
  * SOFTWARE.
  */
 
-plugins {
-    id 'java-library'
-    id 'application'
-    id 'maven-publish'
-    id 'buildlogic.java-common-conventions'
-}
+package org.metaagent.framework.core.tool.tracker;
 
-group = 'org.metaagent.framework'
-version = '1.0.0-SNAPSHOT'
+import org.metaagent.framework.core.tool.ToolExecutionException;
 
-publishing {
-    publications {
-        create("mavenJava", MavenPublication) {
-            from components.java
-        }
-    }
-}
+import java.time.Instant;
 
-sourceSets {
-    main {
-        resources {
-            srcDirs = ['src/main/resources']
-        }
-    }
-    test {
-        resources {
-            srcDirs = ['src/test/resources']
-        }
-    }
-}
+/**
+ * description is here
+ *
+ * @author vyckey
+ */
+public interface ToolCallRecord {
+    String getId();
 
-dependencies {
-    compileOnly libs.bundles.lombok
-    annotationProcessor libs.bundles.lombok
+    String getToolName();
 
-    api libs.bundles.utilies
-    api libs.bundles.jackson
-    api libs.bundles.log
-    api "org.springframework.ai:spring-ai-core:1.0.0-M6"
+    String getToolInput();
 
+    String getToolOutput();
+
+    Instant getStartTime();
+
+    Instant getEndTime();
+
+    ToolExecutionException getException();
 }

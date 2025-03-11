@@ -22,44 +22,22 @@
  * SOFTWARE.
  */
 
-plugins {
-    id 'java-library'
-    id 'application'
-    id 'maven-publish'
-    id 'buildlogic.java-common-conventions'
-}
+package org.metaagent.framework.core.tool.tracker;
 
-group = 'org.metaagent.framework'
-version = '1.0.0-SNAPSHOT'
+import java.util.List;
+import java.util.function.Predicate;
 
-publishing {
-    publications {
-        create("mavenJava", MavenPublication) {
-            from components.java
-        }
-    }
-}
+/**
+ * description is here
+ *
+ * @author vyckey
+ */
+public interface ToolCallTracker {
+    void track(ToolCallRecord record);
 
-sourceSets {
-    main {
-        resources {
-            srcDirs = ['src/main/resources']
-        }
-    }
-    test {
-        resources {
-            srcDirs = ['src/test/resources']
-        }
-    }
-}
+    List<ToolCallRecord> find(Predicate<ToolCallRecord> predicate);
 
-dependencies {
-    compileOnly libs.bundles.lombok
-    annotationProcessor libs.bundles.lombok
+    List<ToolCallRecord> findByToolName(String toolName);
 
-    api libs.bundles.utilies
-    api libs.bundles.jackson
-    api libs.bundles.log
-    api "org.springframework.ai:spring-ai-core:1.0.0-M6"
-
+    void clear();
 }

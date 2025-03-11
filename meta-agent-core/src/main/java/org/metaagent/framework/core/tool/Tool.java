@@ -73,6 +73,8 @@ public interface Tool<I, O> {
             I toolInput = getConverter().inputConverter().convert(input);
             O toolOutput = run(context, toolInput);
             return getConverter().outputConverter().convert(toolOutput);
+        } catch (ToolExecutionException e) {
+            throw e;
         } catch (Exception e) {
             throw new ToolExecutionException("Call tool " + getDefinition().name() + " fail", e);
         }

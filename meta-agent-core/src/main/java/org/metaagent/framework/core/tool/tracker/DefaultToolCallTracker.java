@@ -22,44 +22,48 @@
  * SOFTWARE.
  */
 
-plugins {
-    id 'java-library'
-    id 'application'
-    id 'maven-publish'
-    id 'buildlogic.java-common-conventions'
-}
+package org.metaagent.framework.core.tool.tracker;
 
-group = 'org.metaagent.framework'
-version = '1.0.0-SNAPSHOT'
+import com.google.common.collect.Lists;
 
-publishing {
-    publications {
-        create("mavenJava", MavenPublication) {
-            from components.java
-        }
+import java.util.List;
+import java.util.Objects;
+import java.util.function.Predicate;
+
+/**
+ * description is here
+ *
+ * @author vyckey
+ */
+public class DefaultToolCallTracker implements ToolCallTracker {
+    protected final List<ToolCallRecord> records;
+
+    public DefaultToolCallTracker(List<ToolCallRecord> records) {
+        this.records = Objects.requireNonNull(records);
     }
-}
 
-sourceSets {
-    main {
-        resources {
-            srcDirs = ['src/main/resources']
-        }
+    public DefaultToolCallTracker() {
+        this(Lists.newArrayList());
     }
-    test {
-        resources {
-            srcDirs = ['src/test/resources']
-        }
+
+    @Override
+    public void track(ToolCallRecord record) {
+        this.records.add(record);
     }
-}
 
-dependencies {
-    compileOnly libs.bundles.lombok
-    annotationProcessor libs.bundles.lombok
+    @Override
+    public List<ToolCallRecord> find(Predicate<ToolCallRecord> predicate) {
+        return this.records.stream().filter(predicate).toList();
+    }
 
-    api libs.bundles.utilies
-    api libs.bundles.jackson
-    api libs.bundles.log
-    api "org.springframework.ai:spring-ai-core:1.0.0-M6"
+    @Override
+    public List<ToolCallRecord> findByToolName(String toolName) {
+        return find(record -> record.getToolName().equals(toolName));
+    }
+
+    @Override
+    public void clear() {
+        this.records.clear();
+    }
 
 }
