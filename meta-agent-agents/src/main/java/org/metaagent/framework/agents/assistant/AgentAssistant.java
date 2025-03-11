@@ -22,21 +22,17 @@
  * SOFTWARE.
  */
 
-package org.metaagent.framework.core.agent.chat.channel;
+package org.metaagent.framework.agents.assistant;
 
-import java.util.Set;
+import org.metaagent.framework.core.agents.react.AbstractReActAgent;
 
 /**
  * description is here
  *
  * @author vyckey
  */
-public interface ChannelManager extends Iterable<Channel> {
-    Set<String> getChannelNames();
-
-    Channel getChannel(String channelName);
-
-    void addChannel(Channel channel);
-
-    void removeChannel(String channelName);
+public abstract class AgentAssistant extends AbstractReActAgent {
+    public AgentAssistant(String name) {
+        super(name);
+    }
 }

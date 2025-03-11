@@ -22,21 +22,9 @@
  * SOFTWARE.
  */
 
-package org.metaagent.framework.core.agent.chat.channel;
-
-import java.util.Set;
-
 /**
  * description is here
  *
  * @author vyckey
  */
-public interface ChannelManager extends Iterable<Channel> {
-    Set<String> getChannelNames();
-
-    Channel getChannel(String channelName);
-
-    void addChannel(Channel channel);
-
-    void removeChannel(String channelName);
-}
+package org.metaagent.framework.agents;

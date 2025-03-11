@@ -27,7 +27,7 @@ dependencies {
     compileOnly "org.projectlombok:lombok:1.18.30"
     annotationProcessor "org.projectlombok:lombok:1.18.30"
 
-    implementation "org.metaagent.framework:meta-agent-core:1.0-SNAPSHOT"
+    implementation "org.metaagent.framework:meta-agent-core:1.0.0-SNAPSHOT"
     implementation "com.squareup.okhttp3:okhttp:4.12.0"
     implementation "com.squareup.retrofit2:retrofit:2.11.0"
     implementation "org.metaagent.thirdparty:metaagent-tavily-api:1.0.0"
