@@ -30,6 +30,8 @@ import org.metaagent.framework.core.agent.state.AgentState;
 import org.metaagent.framework.core.environment.Environment;
 import org.metaagent.framework.core.tool.manager.ToolManager;
 
+import java.util.concurrent.Executor;
+
 /**
  * description is here
  *
@@ -46,4 +48,5 @@ public interface AgentExecutionContext {
 
     ActionExecutor getActionExecutor();
 
+    Executor getExecutor();
 }

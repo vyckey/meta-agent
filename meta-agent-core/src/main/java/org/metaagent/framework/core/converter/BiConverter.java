@@ -34,4 +34,18 @@ public interface BiConverter<S, T> extends Converter<S, T> {
     T convert(S source);
 
     S reverse(T target);
+
+    default BiConverter<T, S> reverse() {
+        return new BiConverter<T, S>() {
+            @Override
+            public S convert(T target) {
+                return BiConverter.this.reverse(target);
+            }
+
+            @Override
+            public T reverse(S source) {
+                return BiConverter.this.convert(source);
+            }
+        };
+    }
 }

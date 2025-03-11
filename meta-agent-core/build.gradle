@@ -23,9 +23,21 @@
  */
 
 plugins {
+    id 'java-library'
     id 'application'
     id 'maven-publish'
     id 'buildlogic.java-common-conventions'
+}
+
+group = 'org.metaagent.framework'
+version = '1.0.0-SNAPSHOT'
+
+publishing {
+    publications {
+        create("mavenJava", MavenPublication) {
+            from components.java
+        }
+    }
 }
 
 sourceSets {
@@ -45,9 +57,9 @@ dependencies {
     compileOnly libs.bundles.lombok
     annotationProcessor libs.bundles.lombok
 
-    implementation libs.bundles.utilies
-    implementation libs.bundles.jackson
-    implementation libs.bundles.log
-    implementation 'org.springframework.ai:spring-ai-core:1.0.0-M5'
+    api libs.bundles.utilies
+    api libs.bundles.jackson
+    api libs.bundles.log
+    api "org.springframework.ai:spring-ai-core:1.0.0-M6"
 
 }

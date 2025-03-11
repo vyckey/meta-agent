@@ -61,11 +61,6 @@ public final class EmptyChannelManager implements ChannelManager {
     }
 
     @Override
-    public List<Channel> findChannelsByMember(String memberName) {
-        return Collections.emptyList();
-    }
-
-    @Override
     public Iterator<Channel> iterator() {
         return new Iterator<Channel>() {
             @Override

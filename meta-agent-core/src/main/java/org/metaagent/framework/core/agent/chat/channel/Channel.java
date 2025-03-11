@@ -30,8 +30,7 @@ import org.metaagent.framework.core.agent.chat.message.MessageListener;
 
 import java.io.Closeable;
 import java.io.IOException;
-import java.util.Set;
-import java.util.concurrent.Future;
+import java.util.concurrent.CompletableFuture;
 
 /**
  * description is here
@@ -46,17 +45,13 @@ public interface Channel extends Closeable {
     @Override
     void close() throws IOException;
 
-    Set<String> members();
-
-    void join(String... members);
-
-    void exit(String... member);
-
     void send(Message message);
 
-    Future<Void> sendAsync(Message message);
+    CompletableFuture<Void> sendAsync(Message message);
 
     void receive(MessageListener messageListener);
+
+    void remove(MessageListener messageListener);
 
     MessageHistory messageHistory();
 }

@@ -1,0 +1,40 @@
+plugins {
+    id 'java'
+    id 'maven-publish'
+}
+
+group = 'org.metaagent.framework.tools'
+version = '1.0.0'
+
+repositories {
+    mavenLocal()
+    mavenCentral()
+}
+
+publishing {
+    publications {
+        create("mavenJava", MavenPublication) {
+            from components.java
+        }
+    }
+}
+
+dependencies {
+    testImplementation platform("org.junit:junit-bom:5.10.0")
+    testImplementation "org.junit.jupiter:junit-jupiter"
+    testImplementation "org.mockito:mockito-core:5.16.0"
+
+    compileOnly "org.projectlombok:lombok:1.18.30"
+    annotationProcessor "org.projectlombok:lombok:1.18.30"
+
+    implementation "org.metaagent.framework:meta-agent-core:1.0.0-SNAPSHOT"
+    implementation "com.squareup.okhttp3:okhttp:4.12.0"
+    implementation "com.squareup.retrofit2:retrofit:2.11.0"
+    implementation "org.metaagent.thirdparty:metaagent-tavily-api:1.0.0"
+    implementation "org.metaagent.thirdparty:metaagent-searchapi-api:1.0.0"
+
+}
+
+test {
+    useJUnitPlatform()
+}

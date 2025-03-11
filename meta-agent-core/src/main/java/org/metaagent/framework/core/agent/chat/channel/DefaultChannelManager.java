@@ -24,11 +24,9 @@
 
 package org.metaagent.framework.core.agent.chat.channel;
 
-import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 
 import java.util.Iterator;
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -53,17 +51,6 @@ public class DefaultChannelManager implements ChannelManager {
     @Override
     public void removeChannel(String channelName) {
         channels.remove(channelName);
-    }
-
-    @Override
-    public List<Channel> findChannelsByMember(String memberName) {
-        List<Channel> result = Lists.newArrayList();
-        for (Channel channel : channels.values()) {
-            if (channel.members().contains(memberName)) {
-                result.add(channel);
-            }
-        }
-        return result;
     }
 
     @Override

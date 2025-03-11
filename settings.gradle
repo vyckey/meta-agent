@@ -1,4 +1,5 @@
 rootProject.name = 'meta-agent'
 
 include 'meta-agent-core'
+include 'meta-agent-agents'
 include 'meta-agent-examples'

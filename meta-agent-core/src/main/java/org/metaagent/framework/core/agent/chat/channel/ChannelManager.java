@@ -24,7 +24,6 @@
 
 package org.metaagent.framework.core.agent.chat.channel;
 
-import java.util.List;
 import java.util.Set;
 
 /**
@@ -40,6 +39,4 @@ public interface ChannelManager extends Iterable<Channel> {
     void addChannel(Channel channel);
 
     void removeChannel(String channelName);
-
-    List<Channel> findChannelsByMember(String memberName);
 }

@@ -34,6 +34,9 @@ import org.metaagent.framework.core.environment.Environment;
 import org.metaagent.framework.core.tool.manager.DefaultToolManager;
 import org.metaagent.framework.core.tool.manager.ToolManager;
 
+import java.util.concurrent.Executor;
+import java.util.concurrent.Executors;
+
 /**
  * description is here
  *
@@ -46,17 +49,20 @@ public class DefaultAgentExecutionContext implements AgentExecutionContext {
     private final ToolManager toolManager;
     private final AgentState agentState;
     private final ActionExecutor actionExecutor;
+    private final Executor executor;
 
     protected DefaultAgentExecutionContext(Goal goal,
                                            Environment environment,
                                            ToolManager toolManager,
                                            AgentState agentState,
-                                           ActionExecutor actionExecutor) {
+                                           ActionExecutor actionExecutor,
+                                           Executor executor) {
         this.goal = goal;
         this.environment = environment;
         this.toolManager = toolManager;
         this.agentState = agentState;
         this.actionExecutor = actionExecutor;
+        this.executor = executor;
     }
 
     public static Builder builder(Goal goal) {
@@ -73,6 +79,7 @@ public class DefaultAgentExecutionContext implements AgentExecutionContext {
         private ToolManager toolManager;
         private ActionExecutor actionExecutor;
         private AgentState agentState;
+        private Executor executor;
 
         private Builder(Goal goal) {
             this.goal = goal;
@@ -84,10 +91,16 @@ public class DefaultAgentExecutionContext implements AgentExecutionContext {
             this.toolManager = context.getToolManager();
             this.actionExecutor = context.getActionExecutor();
             this.agentState = context.getAgentState();
+            this.executor = context.getExecutor();
         }
 
         public Builder environment(Environment environment) {
             this.environment = environment;
+            return this;
+        }
+
+        public Builder executor(Executor executor) {
+            this.executor = executor;
             return this;
         }
 
@@ -116,11 +129,15 @@ public class DefaultAgentExecutionContext implements AgentExecutionContext {
             if (actionExecutor == null) {
                 actionExecutor = SyncActionExecutor.INSTANCE;
             }
+            if (executor == null) {
+                executor = Executors.newSingleThreadExecutor();
+            }
         }
 
         public DefaultAgentExecutionContext build() {
             setDefault();
-            return new DefaultAgentExecutionContext(goal, environment, toolManager, agentState, actionExecutor);
+            return new DefaultAgentExecutionContext(goal, environment, toolManager,
+                    agentState, actionExecutor, executor);
         }
     }
 }

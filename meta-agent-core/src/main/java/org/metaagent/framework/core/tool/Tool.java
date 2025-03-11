@@ -35,13 +35,20 @@ import org.metaagent.framework.core.tool.definition.ToolDefinition;
  * @param <O> the type of output the tool produces.
  * @author vyckey
  */
-public interface Tool<I, O> extends ToolConverter<I, O> {
+public interface Tool<I, O> {
     /**
      * Gets the definition of the tool.
      *
      * @return the definition of the tool.
      */
     ToolDefinition getDefinition();
+
+    /**
+     * Gets the input and output converter of the tool.
+     *
+     * @return the input and output converter of the tool.
+     */
+    ToolConverter<I, O> getConverter();
 
     /**
      * Runs the tool with the given input.
@@ -63,9 +70,11 @@ public interface Tool<I, O> extends ToolConverter<I, O> {
      */
     default String call(ToolContext context, String input) throws ToolExecutionException {
         try {
-            I toolInput = inputConverter().convert(input);
+            I toolInput = getConverter().inputConverter().convert(input);
             O toolOutput = run(context, toolInput);
-            return outputConverter().convert(toolOutput);
+            return getConverter().outputConverter().convert(toolOutput);
+        } catch (ToolExecutionException e) {
+            throw e;
         } catch (Exception e) {
             throw new ToolExecutionException("Call tool " + getDefinition().name() + " fail", e);
         }
