@@ -22,20 +22,16 @@
  * SOFTWARE.
  */
 
-package org.metaagent.framework.core.agent.output.message;
+package org.metaagent.framework.core.agent.input.message;
 
 import org.metaagent.framework.core.agent.chat.message.Message;
-import org.metaagent.framework.core.agent.output.AgentOutput;
-
-import java.util.List;
+import org.metaagent.framework.core.agent.input.AgentInput;
 
 /**
  * description is here
  *
  * @author vyckey
  */
-public interface AgentMessageOutput extends AgentOutput {
-    boolean isEmpty();
-
-    List<Message> getMessages();
+public interface AgentMessageInput extends AgentInput {
+    Message getMessage();
 }

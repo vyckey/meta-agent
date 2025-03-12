@@ -22,20 +22,22 @@
  * SOFTWARE.
  */
 
-package org.metaagent.framework.core.agent.output.message;
+package org.metaagent.framework.core.agent.input.message;
 
+import lombok.Getter;
 import org.metaagent.framework.core.agent.chat.message.Message;
-import org.metaagent.framework.core.agent.output.AgentOutput;
-
-import java.util.List;
 
 /**
  * description is here
  *
  * @author vyckey
  */
-public interface AgentMessageOutput extends AgentOutput {
-    boolean isEmpty();
+@Getter
+public class DefaultAgentMessageInput implements AgentMessageInput {
+    private final Message message;
 
-    List<Message> getMessages();
+    public DefaultAgentMessageInput(Message message) {
+        this.message = message;
+    }
+
 }

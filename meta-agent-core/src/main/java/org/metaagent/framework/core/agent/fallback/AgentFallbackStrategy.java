@@ -26,13 +26,23 @@ package org.metaagent.framework.core.agent.fallback;
 
 import org.metaagent.framework.core.agent.AgentExecutionContext;
 import org.metaagent.framework.core.agent.MetaAgent;
+import org.metaagent.framework.core.agent.input.AgentInput;
 import org.metaagent.framework.core.agent.output.AgentOutput;
 
 /**
- * description is here
+ * Agent Fallback Strategy
  *
  * @author vyckey
  */
 public interface AgentFallbackStrategy {
-    AgentOutput fallback(MetaAgent agent, AgentExecutionContext context, Exception exception);
+    /**
+     * Fallback when agent execution failed.
+     *
+     * @param agent     agent
+     * @param context   context
+     * @param input     the agent input
+     * @param exception exception
+     * @return the agent output
+     */
+    AgentOutput fallback(MetaAgent agent, AgentExecutionContext context, AgentInput input, Exception exception);
 }

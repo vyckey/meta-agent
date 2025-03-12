@@ -30,6 +30,7 @@ import org.metaagent.framework.core.agent.action.Action;
 import org.metaagent.framework.core.agent.action.DefaultActionExecutionContext;
 import org.metaagent.framework.core.agent.action.actions.AgentFinishAction;
 import org.metaagent.framework.core.agent.action.result.ActionResult;
+import org.metaagent.framework.core.agent.input.AgentInput;
 import org.metaagent.framework.core.agent.output.AgentOutput;
 import org.metaagent.framework.core.agent.output.observation.Observation;
 import org.metaagent.framework.core.agent.output.thought.Thought;
@@ -46,10 +47,10 @@ public abstract class AbstractReActAgent extends AbstractAgent implements ReActA
     }
 
     @Override
-    public AgentOutput doExecute(AgentExecutionContext context) {
+    public AgentOutput doExecute(AgentExecutionContext context, AgentInput input) {
         int turnNum = context.getAgentState().getLoopCount() + 1;
 
-        Thought thought = think(context);
+        Thought thought = think(context, input);
         agentLogger.info("Thought #{}: {}", turnNum, thought.getText());
 
         Action action = thought.getProposalAction();
@@ -60,7 +61,7 @@ public abstract class AbstractReActAgent extends AbstractAgent implements ReActA
         agentLogger.info("Action #{}: {}", turnNum, action);
         ActionResult actionResult = act(context, action);
 
-        Observation observation = observe(context, thought, actionResult);
+        Observation observation = observe(context, input, thought, actionResult);
         agentLogger.info("Observation #{}: {}", turnNum, observation.getText());
         return observation;
     }

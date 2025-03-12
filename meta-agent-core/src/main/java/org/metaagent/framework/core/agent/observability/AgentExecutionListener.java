@@ -25,6 +25,7 @@
 package org.metaagent.framework.core.agent.observability;
 
 import org.metaagent.framework.core.agent.AgentExecutionContext;
+import org.metaagent.framework.core.agent.input.AgentInput;
 import org.metaagent.framework.core.agent.output.AgentOutput;
 
 /**
@@ -36,12 +37,12 @@ public interface AgentExecutionListener {
     default void onAgentNextLoop(AgentExecutionContext context) {
     }
 
-    default void onAgentExecutionStart(AgentExecutionContext context) {
+    default void onAgentExecutionStart(AgentExecutionContext context, AgentInput input) {
     }
 
-    default void onAgentExecutionFinish(AgentExecutionContext context, AgentOutput output) {
+    default void onAgentExecutionFinish(AgentExecutionContext context, AgentInput input, AgentOutput output) {
     }
 
-    default void onAgentExecutionError(AgentExecutionContext context, Exception exception) {
+    default void onAgentExecutionError(AgentExecutionContext context, AgentInput input, Exception exception) {
     }
 }

@@ -22,20 +22,27 @@
  * SOFTWARE.
  */
 
-package org.metaagent.framework.core.agent.output.message;
+package org.metaagent.framework.core.agent.goal;
 
-import org.metaagent.framework.core.agent.chat.message.Message;
-import org.metaagent.framework.core.agent.output.AgentOutput;
+import lombok.Getter;
 
-import java.util.List;
+import java.util.Objects;
 
 /**
  * description is here
  *
  * @author vyckey
  */
-public interface AgentMessageOutput extends AgentOutput {
-    boolean isEmpty();
+@Getter
+public class DefaultGoal implements Goal {
+    private final String content;
 
-    List<Message> getMessages();
+    public DefaultGoal(String content) {
+        this.content = Objects.requireNonNull(content, "content is required");
+    }
+
+    @Override
+    public String toString() {
+        return content;
+    }
 }

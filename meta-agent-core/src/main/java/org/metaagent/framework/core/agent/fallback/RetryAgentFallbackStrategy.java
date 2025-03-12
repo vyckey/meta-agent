@@ -25,9 +25,10 @@
 package org.metaagent.framework.core.agent.fallback;
 
 import org.metaagent.framework.core.agent.AgentExecutionContext;
-import org.metaagent.framework.core.agent.state.AgentState;
 import org.metaagent.framework.core.agent.MetaAgent;
+import org.metaagent.framework.core.agent.input.AgentInput;
 import org.metaagent.framework.core.agent.output.AgentOutput;
+import org.metaagent.framework.core.agent.state.AgentState;
 
 /**
  * description is here
@@ -42,12 +43,12 @@ public class RetryAgentFallbackStrategy implements AgentFallbackStrategy {
     }
 
     @Override
-    public AgentOutput fallback(MetaAgent agent, AgentExecutionContext context, Exception exception) {
+    public AgentOutput fallback(MetaAgent agent, AgentExecutionContext context, AgentInput input, Exception exception) {
         AgentState agentState = context.getAgentState();
         if (agentState.getRetryCount() < maxRetries) {
             agentState.incrRetryCount();
-            return agent.execute(context);
+            return agent.execute(context, input);
         }
-        return FastFailAgentFallbackStrategy.INSTANCE.fallback(agent, context, exception);
+        return FastFailAgentFallbackStrategy.INSTANCE.fallback(agent, context, input, exception);
     }
 }

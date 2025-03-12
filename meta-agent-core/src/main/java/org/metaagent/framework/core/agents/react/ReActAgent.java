@@ -29,6 +29,7 @@ import org.metaagent.framework.core.agent.AgentExecutionContext;
 import org.metaagent.framework.core.agent.action.Action;
 import org.metaagent.framework.core.agent.action.actions.AgentFinishAction;
 import org.metaagent.framework.core.agent.action.result.ActionResult;
+import org.metaagent.framework.core.agent.input.AgentInput;
 import org.metaagent.framework.core.agent.output.AgentOutput;
 import org.metaagent.framework.core.agent.output.observation.Observation;
 import org.metaagent.framework.core.agent.output.thought.Thought;
@@ -42,19 +43,19 @@ import org.metaagent.framework.core.agent.output.thought.Thought;
  */
 public interface ReActAgent extends Agent {
 
-    default AgentOutput execute(AgentExecutionContext context) {
-        Thought thought = think(context);
+    default AgentOutput execute(AgentExecutionContext context, AgentInput input) {
+        Thought thought = think(context, input);
         Action action = thought.getProposalAction();
         if (action instanceof AgentFinishAction) {
             return thought;
         }
         ActionResult actionResult = act(context, action);
-        return observe(context, thought, actionResult);
+        return observe(context, input, thought, actionResult);
     }
 
-    Thought think(AgentExecutionContext context);
+    Thought think(AgentExecutionContext context, AgentInput input);
 
     ActionResult act(AgentExecutionContext context, Action action);
 
-    Observation observe(AgentExecutionContext context, Thought thought, ActionResult actionResult);
+    Observation observe(AgentExecutionContext context, AgentInput input, Thought thought, ActionResult actionResult);
 }

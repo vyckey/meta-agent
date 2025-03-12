@@ -30,7 +30,5 @@ package org.metaagent.framework.core.agent.goal;
  * @author vyckey
  */
 public interface Goal {
-    String getSummary();
-
     String getContent();
 }

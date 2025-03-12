@@ -24,20 +24,19 @@
 
 package org.metaagent.framework.core.agent.memory.fragment;
 
+import lombok.Getter;
+
 /**
  * description is here
  *
  * @author vyckey
  */
+@Getter
 public class EmbeddingFragment implements Fragment {
     private final float[] embedding;
 
     public EmbeddingFragment(float[] embedding) {
         this.embedding = embedding;
-    }
-
-    public float[] getEmbedding() {
-        return embedding;
     }
 
 }
