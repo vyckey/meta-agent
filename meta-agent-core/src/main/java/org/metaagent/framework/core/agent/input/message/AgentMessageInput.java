@@ -27,11 +27,17 @@ package org.metaagent.framework.core.agent.input.message;
 import org.metaagent.framework.core.agent.chat.message.Message;
 import org.metaagent.framework.core.agent.input.AgentInput;
 
+import java.util.List;
+
 /**
  * description is here
  *
  * @author vyckey
  */
 public interface AgentMessageInput extends AgentInput {
-    Message getMessage();
+    List<Message> getMessages();
+
+    static AgentMessageInput build(List<Message> messages) {
+        return new DefaultAgentMessageInput(messages);
+    }
 }

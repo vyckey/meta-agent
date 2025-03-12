@@ -27,6 +27,9 @@ package org.metaagent.framework.core.agent.input.message;
 import lombok.Getter;
 import org.metaagent.framework.core.agent.chat.message.Message;
 
+import java.util.List;
+import java.util.Objects;
+
 /**
  * description is here
  *
@@ -34,10 +37,15 @@ import org.metaagent.framework.core.agent.chat.message.Message;
  */
 @Getter
 public class DefaultAgentMessageInput implements AgentMessageInput {
-    private final Message message;
+    private final List<Message> messages;
+
+    public DefaultAgentMessageInput(List<Message> messages) {
+        this.messages = Objects.requireNonNull(messages, "messages is required");
+    }
 
     public DefaultAgentMessageInput(Message message) {
-        this.message = message;
+        Objects.requireNonNull(message, "message is required");
+        this.messages = List.of(message);
     }
 
 }

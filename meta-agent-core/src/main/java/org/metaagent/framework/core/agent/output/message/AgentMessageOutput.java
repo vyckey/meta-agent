@@ -38,4 +38,8 @@ public interface AgentMessageOutput extends AgentOutput {
     boolean isEmpty();
 
     List<Message> getMessages();
+
+    static AgentMessageOutput build(List<Message> messages) {
+        return new DefaultAgentMessageOutput(messages);
+    }
 }
