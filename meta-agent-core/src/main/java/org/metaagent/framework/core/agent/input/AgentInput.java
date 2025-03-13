@@ -22,27 +22,12 @@
  * SOFTWARE.
  */
 
-package org.metaagent.framework.core.agent.observability;
-
-import org.metaagent.framework.core.agent.AgentExecutionContext;
-import org.metaagent.framework.core.agent.input.AgentInput;
-import org.metaagent.framework.core.agent.output.AgentOutput;
+package org.metaagent.framework.core.agent.input;
 
 /**
  * description is here
  *
  * @author vyckey
  */
-public interface AgentExecutionListener {
-    default void onAgentNextLoop(AgentExecutionContext context) {
-    }
-
-    default void onAgentExecutionStart(AgentExecutionContext context, AgentInput input) {
-    }
-
-    default void onAgentExecutionFinish(AgentExecutionContext context, AgentInput input, AgentOutput output) {
-    }
-
-    default void onAgentExecutionError(AgentExecutionContext context, AgentInput input, Exception exception) {
-    }
+public interface AgentInput {
 }

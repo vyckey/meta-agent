@@ -25,40 +25,80 @@
 package org.metaagent.framework.core.agent;
 
 import org.apache.commons.configuration2.ImmutableConfiguration;
+import org.metaagent.framework.core.agent.ability.AgentAbility;
 import org.metaagent.framework.core.agent.ability.AgentAbilityManager;
 import org.metaagent.framework.core.agent.fallback.AgentFallbackStrategy;
+import org.metaagent.framework.core.agent.input.AgentInput;
 import org.metaagent.framework.core.agent.memory.Memory;
 import org.metaagent.framework.core.agent.output.AgentOutput;
 
 import java.util.concurrent.CompletableFuture;
 
 /**
- * description is here
+ * Meta Agent, the basic class of all agents.
  *
  * @author vyckey
  */
 public interface MetaAgent {
+    /**
+     * Gets agent name.
+     *
+     * @return the agent name.
+     */
     String getName();
 
+    /**
+     * Gets agent configuration.
+     *
+     * @return the agent configuration.
+     */
     ImmutableConfiguration getConfiguration();
 
+    /**
+     * Gets agent memory.
+     *
+     * @return the agent memory.
+     */
     Memory getMemory();
 
+    /**
+     * Gets agent abilities manager.
+     *
+     * @return the ability manager.
+     */
     AgentAbilityManager getAbilityManager();
 
-    default AgentOutput run(AgentExecutionContext context) {
+    /**
+     * Gets specialized agent ability by class type.
+     *
+     * @param abilityType the ability class type.
+     * @param <T>         the ability type.
+     * @return the agent ability.
+     */
+    default <T extends AgentAbility> T getAbility(Class<T> abilityType) {
+        return getAbilityManager().getAbility(abilityType);
+    }
+
+    /**
+     * Runs agent logic.
+     *
+     * @param context the agent execution context.
+     * @param input   the agent input.
+     * @return the agent output.
+     */
+    default AgentOutput run(AgentExecutionContext context, AgentInput input) {
         try {
-            return execute(context);
+            return execute(context, input);
         } catch (Exception ex) {
-            return getAgentFallbackStrategy().fallback(this, context, ex);
+            return getAgentFallbackStrategy().fallback(this, context, input, ex);
         }
     }
 
-    default CompletableFuture<AgentOutput> runAsync(AgentExecutionContext context) {
-        return CompletableFuture.supplyAsync(() -> run(context));
+    default CompletableFuture<AgentOutput> runAsync(AgentExecutionContext context, AgentInput input) {
+        return CompletableFuture.supplyAsync(() -> run(context, input));
     }
 
-    AgentOutput execute(AgentExecutionContext context);
+    AgentOutput execute(AgentExecutionContext context, AgentInput input);
 
     AgentFallbackStrategy getAgentFallbackStrategy();
 

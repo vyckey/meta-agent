@@ -22,27 +22,30 @@
  * SOFTWARE.
  */
 
-package org.metaagent.framework.core.agent.observability;
+package org.metaagent.framework.core.agent.input.message;
 
-import org.metaagent.framework.core.agent.AgentExecutionContext;
-import org.metaagent.framework.core.agent.input.AgentInput;
-import org.metaagent.framework.core.agent.output.AgentOutput;
+import lombok.Getter;
+import org.metaagent.framework.core.agent.chat.message.Message;
+
+import java.util.List;
+import java.util.Objects;
 
 /**
  * description is here
  *
  * @author vyckey
  */
-public interface AgentExecutionListener {
-    default void onAgentNextLoop(AgentExecutionContext context) {
+@Getter
+public class DefaultAgentMessageInput implements AgentMessageInput {
+    private final List<Message> messages;
+
+    public DefaultAgentMessageInput(List<Message> messages) {
+        this.messages = Objects.requireNonNull(messages, "messages is required");
     }
 
-    default void onAgentExecutionStart(AgentExecutionContext context, AgentInput input) {
+    public DefaultAgentMessageInput(Message message) {
+        Objects.requireNonNull(message, "message is required");
+        this.messages = List.of(message);
     }
 
-    default void onAgentExecutionFinish(AgentExecutionContext context, AgentInput input, AgentOutput output) {
-    }
-
-    default void onAgentExecutionError(AgentExecutionContext context, AgentInput input, Exception exception) {
-    }
 }

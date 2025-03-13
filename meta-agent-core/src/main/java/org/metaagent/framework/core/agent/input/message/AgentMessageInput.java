@@ -22,27 +22,22 @@
  * SOFTWARE.
  */
 
-package org.metaagent.framework.core.agent.observability;
+package org.metaagent.framework.core.agent.input.message;
 
-import org.metaagent.framework.core.agent.AgentExecutionContext;
+import org.metaagent.framework.core.agent.chat.message.Message;
 import org.metaagent.framework.core.agent.input.AgentInput;
-import org.metaagent.framework.core.agent.output.AgentOutput;
+
+import java.util.List;
 
 /**
  * description is here
  *
  * @author vyckey
  */
-public interface AgentExecutionListener {
-    default void onAgentNextLoop(AgentExecutionContext context) {
-    }
+public interface AgentMessageInput extends AgentInput {
+    List<Message> getMessages();
 
-    default void onAgentExecutionStart(AgentExecutionContext context, AgentInput input) {
-    }
-
-    default void onAgentExecutionFinish(AgentExecutionContext context, AgentInput input, AgentOutput output) {
-    }
-
-    default void onAgentExecutionError(AgentExecutionContext context, AgentInput input, Exception exception) {
+    static AgentMessageInput build(List<Message> messages) {
+        return new DefaultAgentMessageInput(messages);
     }
 }

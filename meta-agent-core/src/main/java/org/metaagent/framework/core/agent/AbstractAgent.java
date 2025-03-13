@@ -24,6 +24,7 @@
 
 package org.metaagent.framework.core.agent;
 
+import org.metaagent.framework.core.agent.input.AgentInput;
 import org.metaagent.framework.core.agent.loop.DefaultLoopControlStrategy;
 import org.metaagent.framework.core.agent.loop.LoopControlStrategy;
 import org.metaagent.framework.core.agent.output.AgentOutput;
@@ -44,7 +45,7 @@ public abstract class AbstractAgent extends AbstractMetaAgent implements Agent {
     }
 
     @Override
-    protected AgentOutput doRun(AgentExecutionContext context) {
-        return Agent.super.run(context);
+    protected AgentOutput doRun(AgentExecutionContext context, AgentInput input) {
+        return Agent.super.run(context, input);
     }
 }

@@ -25,18 +25,21 @@
 package org.metaagent.framework.core.agent.output.message;
 
 import org.metaagent.framework.core.agent.chat.message.Message;
-import org.metaagent.framework.core.agent.output.TextualAgentOutput;
+import org.metaagent.framework.core.agent.output.AgentOutput;
+
+import java.util.List;
 
 /**
  * description is here
  *
  * @author vyckey
  */
-public interface AgentMessageOutput extends TextualAgentOutput {
-    Message getMessage();
+public interface AgentMessageOutput extends AgentOutput {
+    boolean isEmpty();
 
-    @Override
-    default String getText() {
-        return getMessage().getContent();
+    List<Message> getMessages();
+
+    static AgentMessageOutput build(List<Message> messages) {
+        return new DefaultAgentMessageOutput(messages);
     }
 }

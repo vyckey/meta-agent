@@ -27,6 +27,7 @@ package org.metaagent.framework.core.agent.fallback;
 import org.metaagent.framework.core.agent.AgentExecutionContext;
 import org.metaagent.framework.core.agent.AgentExecutionException;
 import org.metaagent.framework.core.agent.MetaAgent;
+import org.metaagent.framework.core.agent.input.AgentInput;
 import org.metaagent.framework.core.agent.output.AgentOutput;
 
 /**
@@ -41,7 +42,7 @@ public class FastFailAgentFallbackStrategy implements AgentFallbackStrategy {
     }
 
     @Override
-    public AgentOutput fallback(MetaAgent agent, AgentExecutionContext context, Exception exception) {
+    public AgentOutput fallback(MetaAgent agent, AgentExecutionContext context, AgentInput input, Exception exception) {
         context.getAgentState().setLastException(exception);
         if (exception instanceof AgentExecutionException) {
             throw (AgentExecutionException) exception;

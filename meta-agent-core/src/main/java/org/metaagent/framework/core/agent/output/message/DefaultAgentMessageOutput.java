@@ -24,8 +24,10 @@
 
 package org.metaagent.framework.core.agent.output.message;
 
+import lombok.Getter;
 import org.metaagent.framework.core.agent.chat.message.Message;
 
+import java.util.List;
 import java.util.Objects;
 
 /**
@@ -33,20 +35,21 @@ import java.util.Objects;
  *
  * @author vyckey
  */
+@Getter
 public class DefaultAgentMessageOutput implements AgentMessageOutput {
-    private final Message message;
+    private final List<Message> messages;
+
+    public DefaultAgentMessageOutput(List<Message> messages) {
+        this.messages = Objects.requireNonNull(messages, "messages is required");
+    }
 
     public DefaultAgentMessageOutput(Message message) {
-        this.message = Objects.requireNonNull(message, "message is required");
+        Objects.requireNonNull(message, "message is required");
+        this.messages = List.of(message);
     }
 
     @Override
-    public Message getMessage() {
-        return message;
-    }
-
-    @Override
-    public String toString() {
-        return this.getText();
+    public boolean isEmpty() {
+        return messages.isEmpty();
     }
 }

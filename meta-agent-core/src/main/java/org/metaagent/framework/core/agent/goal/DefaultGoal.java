@@ -22,27 +22,27 @@
  * SOFTWARE.
  */
 
-package org.metaagent.framework.core.agent.observability;
+package org.metaagent.framework.core.agent.goal;
 
-import org.metaagent.framework.core.agent.AgentExecutionContext;
-import org.metaagent.framework.core.agent.input.AgentInput;
-import org.metaagent.framework.core.agent.output.AgentOutput;
+import lombok.Getter;
+
+import java.util.Objects;
 
 /**
  * description is here
  *
  * @author vyckey
  */
-public interface AgentExecutionListener {
-    default void onAgentNextLoop(AgentExecutionContext context) {
+@Getter
+public class DefaultGoal implements Goal {
+    private final String content;
+
+    public DefaultGoal(String content) {
+        this.content = Objects.requireNonNull(content, "content is required");
     }
 
-    default void onAgentExecutionStart(AgentExecutionContext context, AgentInput input) {
-    }
-
-    default void onAgentExecutionFinish(AgentExecutionContext context, AgentInput input, AgentOutput output) {
-    }
-
-    default void onAgentExecutionError(AgentExecutionContext context, AgentInput input, Exception exception) {
+    @Override
+    public String toString() {
+        return content;
     }
 }
