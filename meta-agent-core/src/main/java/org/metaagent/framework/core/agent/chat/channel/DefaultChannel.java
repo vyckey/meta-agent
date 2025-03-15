@@ -28,7 +28,7 @@ import com.google.common.collect.Lists;
 import lombok.extern.slf4j.Slf4j;
 import org.metaagent.framework.core.agent.chat.message.Message;
 import org.metaagent.framework.core.agent.chat.message.MessageHistory;
-import org.metaagent.framework.core.agent.chat.message.MessageHistoryImpl;
+import org.metaagent.framework.core.agent.chat.message.DefaultMessageHistory;
 import org.metaagent.framework.core.agent.chat.message.MessageListener;
 
 import java.io.IOException;
@@ -44,7 +44,7 @@ import java.util.concurrent.CompletableFuture;
 public class DefaultChannel implements Channel {
     protected final String name;
     protected final List<MessageListener> messageListeners = Lists.newArrayList();
-    protected MessageHistory messageHistory = new MessageHistoryImpl();
+    protected MessageHistory messageHistory = new DefaultMessageHistory();
     protected boolean open = true;
 
     public DefaultChannel(String name) {

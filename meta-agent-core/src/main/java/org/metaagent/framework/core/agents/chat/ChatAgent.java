@@ -22,27 +22,34 @@
  * SOFTWARE.
  */
 
-package org.metaagent.framework.core.agent.chat.channel;
+package org.metaagent.framework.core.agents.chat;
+
+import com.google.common.collect.Lists;
+import org.metaagent.framework.core.agent.Agent;
+import org.metaagent.framework.core.agent.AgentExecutionContext;
+import org.metaagent.framework.core.agent.chat.message.Message;
+import org.metaagent.framework.core.agent.chat.message.MessageHistory;
+import org.metaagent.framework.core.agent.input.AgentInput;
+import org.metaagent.framework.core.agent.input.message.AgentMessageInput;
+import org.metaagent.framework.core.agent.output.message.AgentMessageOutput;
 
 /**
  * description is here
  *
  * @author vyckey
  */
-public class One2OneChannel extends CommonChannel {
-    public One2OneChannel(String name, String member1, String member2) {
-        super(name);
-        this.members.add(member1);
-        this.members.add(member2);
+public interface ChatAgent extends Agent {
+    MessageHistory getMessageHistory();
+
+    default AgentMessageOutput run(AgentExecutionContext context, Message message) {
+        MessageHistory messageHistory = getMessageHistory();
+        messageHistory.appendMessage(message);
+
+        AgentMessageInput messageInput = AgentMessageInput.build(Lists.newArrayList(messageHistory));
+        return run(context, messageInput);
     }
 
-    @Override
-    public void join(String... members) {
-        throw new UnsupportedOperationException("One-to-one channel can't join new member");
-    }
-
-    @Override
-    public void exit(String... members) {
-        throw new UnsupportedOperationException("One-to-one channel can't exit member");
+    default AgentMessageOutput run(AgentExecutionContext context, AgentMessageInput input) {
+        return (AgentMessageOutput) run(context, (AgentInput) input);
     }
 }

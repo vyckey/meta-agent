@@ -37,14 +37,14 @@ import java.util.function.Predicate;
  *
  * @author vyckey
  */
-public class MessageHistoryImpl implements MessageHistory {
+public class DefaultMessageHistory implements MessageHistory {
     protected final List<Message> messages;
 
-    public MessageHistoryImpl(List<Message> messages) {
+    public DefaultMessageHistory(List<Message> messages) {
         this.messages = Objects.requireNonNull(messages);
     }
 
-    public MessageHistoryImpl() {
+    public DefaultMessageHistory() {
         this.messages = Lists.newArrayList();
     }
 

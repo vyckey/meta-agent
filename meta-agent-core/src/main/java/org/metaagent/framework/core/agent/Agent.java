@@ -26,22 +26,40 @@ package org.metaagent.framework.core.agent;
 
 import org.metaagent.framework.core.agent.fallback.AgentFallbackStrategy;
 import org.metaagent.framework.core.agent.input.AgentInput;
-import org.metaagent.framework.core.agent.loop.LoopControlStrategy;
+import org.metaagent.framework.core.agent.loop.AgentLoopControlStrategy;
 import org.metaagent.framework.core.agent.output.AgentOutput;
 import org.metaagent.framework.core.agent.state.AgentRunStatus;
 import org.metaagent.framework.core.agent.state.AgentState;
 
 /**
- * The core agent class.
+ * The core agent abstraction.
  *
  * @author vyckey
  */
 public interface Agent extends MetaAgent {
 
-    LoopControlStrategy getLoopControlStrategy();
+    /**
+     * Gets loop control strategy which controls if the agent will continue to do next loop.
+     *
+     * @return the loop control strategy.
+     */
+    AgentLoopControlStrategy getLoopControlStrategy();
 
-    AgentFallbackStrategy getAgentFallbackStrategy();
+    /**
+     * Gets agent fallback strategy. It will be used to handle unexpected exceptions while running the agent.
+     *
+     * @return the fallback strategy.
+     */
+    @Override
+    AgentFallbackStrategy getFallbackStrategy();
 
+    /**
+     * The agent will execute a loop step until the agent should exit.
+     *
+     * @param context the agent execution context.
+     * @param input   the agent input.
+     * @return the final agent output.
+     */
     @Override
     default AgentOutput run(AgentExecutionContext context, AgentInput input) {
         AgentState agentState = context.getAgentState();
@@ -50,12 +68,12 @@ public interface Agent extends MetaAgent {
         }
 
         agentState.setStatus(AgentRunStatus.RUNNING);
-        while (getLoopControlStrategy().shouldContinueLoop(context)) {
+        while (getLoopControlStrategy().shouldContinueLoop(context, input)) {
             AgentOutput output = null;
             try {
-                output = execute(context, input);
+                output = step(context, input);
             } catch (Exception ex) {
-                output = getAgentFallbackStrategy().fallback(this, context, input, ex);
+                output = getFallbackStrategy().fallback(this, context, input, ex);
             } finally {
                 agentState.incrLoopCount();
                 agentState.setAgentOutput(output);
@@ -65,6 +83,13 @@ public interface Agent extends MetaAgent {
         return agentState.getAgentOutput();
     }
 
+    /**
+     * Start an agent step.
+     *
+     * @param context the agent execution context.
+     * @param input   the agent input.
+     * @return the agent output.
+     */
     @Override
-    AgentOutput execute(AgentExecutionContext context, AgentInput input);
+    AgentOutput step(AgentExecutionContext context, AgentInput input);
 }

@@ -22,27 +22,16 @@
  * SOFTWARE.
  */
 
-package org.metaagent.framework.core.agent.chat.message;
+package org.metaagent.framework.core.agent.loop;
+
+import org.metaagent.framework.core.agent.AgentExecutionContext;
+import org.metaagent.framework.core.agent.input.AgentInput;
 
 /**
  * description is here
  *
  * @author vyckey
  */
-public class TextMessage extends AbstractMessage {
-    private final String content;
-
-    public TextMessage(String content) {
-        this.content = content;
-    }
-
-    public TextMessage(String sender, String receiver, String content) {
-        super(sender, receiver);
-        this.content = content;
-    }
-
-    @Override
-    public String getContent() {
-        return content;
-    }
+public interface AgentLoopControlStrategy {
+    boolean shouldContinueLoop(AgentExecutionContext context, AgentInput input);
 }

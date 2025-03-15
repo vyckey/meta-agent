@@ -26,6 +26,7 @@ package org.metaagent.framework.core.agent.output.message;
 
 import org.metaagent.framework.core.agent.chat.message.Message;
 import org.metaagent.framework.core.agent.output.AgentOutput;
+import org.metaagent.framework.core.common.MetadataProvider;
 
 import java.util.List;
 
@@ -34,12 +35,16 @@ import java.util.List;
  *
  * @author vyckey
  */
-public interface AgentMessageOutput extends AgentOutput {
+public interface AgentMessageOutput extends AgentOutput, MetadataProvider {
     boolean isEmpty();
 
     List<Message> getMessages();
 
-    static AgentMessageOutput build(List<Message> messages) {
+    static AgentMessageOutput from(List<Message> messages) {
         return new DefaultAgentMessageOutput(messages);
+    }
+
+    static AgentMessageOutput from(Message message) {
+        return new DefaultAgentMessageOutput(List.of(message));
     }
 }

@@ -22,26 +22,23 @@
  * SOFTWARE.
  */
 
-package org.metaagent.framework.core.agent.loop;
-
-import org.metaagent.framework.core.agent.AgentExecutionContext;
-import org.metaagent.framework.core.agent.state.AgentState;
+package org.metaagent.framework.core.agent.chat.message;
 
 /**
  * description is here
  *
  * @author vyckey
  */
-public class DefaultLoopControlStrategy implements LoopControlStrategy {
-    private final int maxLoopCount;
-
-    public DefaultLoopControlStrategy(int maxLoopCount) {
-        this.maxLoopCount = maxLoopCount;
+public abstract class MessageFactory {
+    public static TextMessage textMessage(String content) {
+        return new TextMessage(content);
     }
 
-    @Override
-    public boolean shouldContinueLoop(AgentExecutionContext context) {
-        AgentState agentState = context.getAgentState();
-        return !agentState.getStatus().isFinished() && agentState.getLoopCount() < maxLoopCount;
+    public static TextMessage textMessage(String role, String content) {
+        return new TextMessage(role, null, content);
+    }
+
+    public static TextMessage textMessage(String sender, String receiver, String content) {
+        return new TextMessage(sender, receiver, content);
     }
 }

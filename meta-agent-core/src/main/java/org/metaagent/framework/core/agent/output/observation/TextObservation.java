@@ -24,21 +24,24 @@
 
 package org.metaagent.framework.core.agent.output.observation;
 
+import com.google.common.collect.Maps;
+import lombok.Getter;
+
+import java.util.Map;
+
 /**
  * description is here
  *
  * @author vyckey
  */
+@Getter
 public class TextObservation implements Observation {
     private final String text;
+    private final Map<String, Object> metadata;
 
     public TextObservation(String text) {
         this.text = text;
-    }
-
-    @Override
-    public String getText() {
-        return text;
+        this.metadata = Maps.newHashMap();
     }
 
     @Override

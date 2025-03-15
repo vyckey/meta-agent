@@ -88,18 +88,37 @@ public interface MetaAgent {
      */
     default AgentOutput run(AgentExecutionContext context, AgentInput input) {
         try {
-            return execute(context, input);
+            return step(context, input);
         } catch (Exception ex) {
-            return getAgentFallbackStrategy().fallback(this, context, input, ex);
+            return getFallbackStrategy().fallback(this, context, input, ex);
         }
     }
 
+    /**
+     * Runs agent synchronously.
+     *
+     * @param context the agent execution context.
+     * @param input   the agent input
+     * @return the agent out.
+     */
     default CompletableFuture<AgentOutput> runAsync(AgentExecutionContext context, AgentInput input) {
         return CompletableFuture.supplyAsync(() -> run(context, input));
     }
 
-    AgentOutput execute(AgentExecutionContext context, AgentInput input);
+    /**
+     * Start an agent step.
+     *
+     * @param context the agent execution context.
+     * @param input   the agent input.
+     * @return the agent output.
+     */
+    AgentOutput step(AgentExecutionContext context, AgentInput input);
 
-    AgentFallbackStrategy getAgentFallbackStrategy();
+    /**
+     * Gets agent fallback strategy. It will be used to handle unexpected exceptions while running the agent.
+     *
+     * @return the fallback strategy.
+     */
+    AgentFallbackStrategy getFallbackStrategy();
 
 }

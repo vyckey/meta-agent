@@ -22,27 +22,15 @@
  * SOFTWARE.
  */
 
-package org.metaagent.framework.core.agent.chat.message;
+package org.metaagent.framework.core.common;
+
+import java.util.Map;
 
 /**
  * description is here
  *
  * @author vyckey
  */
-public class TextMessage extends AbstractMessage {
-    private final String content;
-
-    public TextMessage(String content) {
-        this.content = content;
-    }
-
-    public TextMessage(String sender, String receiver, String content) {
-        super(sender, receiver);
-        this.content = content;
-    }
-
-    @Override
-    public String getContent() {
-        return content;
-    }
+public interface MetadataProvider {
+    Map<String, Object> getMetadata();
 }
