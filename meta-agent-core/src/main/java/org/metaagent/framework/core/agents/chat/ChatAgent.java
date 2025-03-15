@@ -22,30 +22,34 @@
  * SOFTWARE.
  */
 
-package org.metaagent.framework.core.agent;
+package org.metaagent.framework.core.agents.chat;
 
+import com.google.common.collect.Lists;
+import org.metaagent.framework.core.agent.Agent;
+import org.metaagent.framework.core.agent.AgentExecutionContext;
+import org.metaagent.framework.core.agent.chat.message.Message;
+import org.metaagent.framework.core.agent.chat.message.MessageHistory;
 import org.metaagent.framework.core.agent.input.AgentInput;
-import org.metaagent.framework.core.agent.loop.AgentLoopControlStrategy;
-import org.metaagent.framework.core.agent.loop.MaxLoopCountAgentLoopControl;
-import org.metaagent.framework.core.agent.output.AgentOutput;
+import org.metaagent.framework.core.agent.input.message.AgentMessageInput;
+import org.metaagent.framework.core.agent.output.message.AgentMessageOutput;
 
 /**
- * Abstract {@link Agent} implementation.
+ * description is here
  *
  * @author vyckey
  */
-public abstract class AbstractAgent extends AbstractMetaAgent implements Agent {
-    protected AbstractAgent(String name) {
-        super(name);
+public interface ChatAgent extends Agent {
+    MessageHistory getMessageHistory();
+
+    default AgentMessageOutput run(AgentExecutionContext context, Message message) {
+        MessageHistory messageHistory = getMessageHistory();
+        messageHistory.appendMessage(message);
+
+        AgentMessageInput messageInput = AgentMessageInput.build(Lists.newArrayList(messageHistory));
+        return run(context, messageInput);
     }
 
-    @Override
-    public AgentLoopControlStrategy getLoopControlStrategy() {
-        return new MaxLoopCountAgentLoopControl(1);
-    }
-
-    @Override
-    protected AgentOutput doRun(AgentExecutionContext context, AgentInput input) {
-        return Agent.super.run(context, input);
+    default AgentMessageOutput run(AgentExecutionContext context, AgentMessageInput input) {
+        return (AgentMessageOutput) run(context, (AgentInput) input);
     }
 }
