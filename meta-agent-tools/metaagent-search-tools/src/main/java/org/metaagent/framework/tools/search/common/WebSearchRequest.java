@@ -22,30 +22,24 @@
  * SOFTWARE.
  */
 
-package org.metaagent.framework.tools.search.tavily;
+package org.metaagent.framework.tools.search.common;
 
-import lombok.AccessLevel;
-import lombok.AllArgsConstructor;
 import lombok.Builder;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
 
-import java.net.URI;
 import java.util.Map;
 
 /**
- * description is here
+ * Web search request
  *
  * @author vyckey
  */
-@Getter
 @Builder
-@NoArgsConstructor
-@AllArgsConstructor(access = AccessLevel.PRIVATE)
-public class SearchOrganicResult {
-    private String title;
-    private URI url;
-    private String snippet;
-    private String content;
-    private Map<String, Object> metadata;
+public record WebSearchRequest(
+        String searchTerms,
+        Integer maxResults,
+        String language,
+        String geoLocation,
+        Integer startPage,
+        Integer startIndex,
+        Map<String, Object> additionalParams) {
 }
