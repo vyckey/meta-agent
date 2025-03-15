@@ -24,34 +24,32 @@
 
 package org.metaagent.framework.core.agent.output.thought;
 
+import com.google.common.collect.Maps;
+import lombok.Getter;
 import org.metaagent.framework.core.agent.action.Action;
+
+import java.util.Map;
 
 /**
  * description is here
  *
  * @author vyckey
  */
+@Getter
 public class TextThought implements Thought {
+    private final Map<String, Object> metadata;
     private final String text;
     private final Action proposalAction;
 
     public TextThought(String text, Action proposalAction) {
         this.text = text;
         this.proposalAction = proposalAction;
-    }
-
-    @Override
-    public String getText() {
-        return text;
-    }
-
-    @Override
-    public Action getProposalAction() {
-        return proposalAction;
+        this.metadata = Maps.newHashMap();
     }
 
     @Override
     public String toString() {
         return text;
     }
+
 }

@@ -24,11 +24,13 @@
 
 package org.metaagent.framework.core.agent.output;
 
+import org.metaagent.framework.core.common.MetadataProvider;
+
 /**
  * description is here
  *
  * @author vyckey
  */
-public interface TextualAgentOutput extends AgentOutput {
+public interface TextualAgentOutput extends AgentOutput, MetadataProvider {
     String getText();
 }

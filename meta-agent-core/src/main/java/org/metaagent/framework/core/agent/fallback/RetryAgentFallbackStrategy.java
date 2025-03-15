@@ -47,7 +47,7 @@ public class RetryAgentFallbackStrategy implements AgentFallbackStrategy {
         AgentState agentState = context.getAgentState();
         if (agentState.getRetryCount() < maxRetries) {
             agentState.incrRetryCount();
-            return agent.execute(context, input);
+            return agent.step(context, input);
         }
         return FastFailAgentFallbackStrategy.INSTANCE.fallback(agent, context, input, exception);
     }

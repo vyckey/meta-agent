@@ -22,30 +22,15 @@
  * SOFTWARE.
  */
 
-package org.metaagent.framework.core.agent;
+package org.metaagent.framework.core.common;
 
-import org.metaagent.framework.core.agent.input.AgentInput;
-import org.metaagent.framework.core.agent.loop.AgentLoopControlStrategy;
-import org.metaagent.framework.core.agent.loop.MaxLoopCountAgentLoopControl;
-import org.metaagent.framework.core.agent.output.AgentOutput;
+import java.util.Map;
 
 /**
  * description is here
  *
  * @author vyckey
  */
-public abstract class AbstractAgent extends AbstractMetaAgent implements Agent {
-    protected AbstractAgent(String name) {
-        super(name);
-    }
-
-    @Override
-    public AgentLoopControlStrategy getLoopControlStrategy() {
-        return new MaxLoopCountAgentLoopControl(1);
-    }
-
-    @Override
-    protected AgentOutput doRun(AgentExecutionContext context, AgentInput input) {
-        return Agent.super.run(context, input);
-    }
+public interface MetadataProvider {
+    Map<String, Object> getMetadata();
 }

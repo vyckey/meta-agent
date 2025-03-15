@@ -32,6 +32,10 @@ package org.metaagent.framework.core.agent.chat.message;
 public class TextMessage extends AbstractMessage {
     private final String content;
 
+    public TextMessage(String content) {
+        this.content = content;
+    }
+
     public TextMessage(String sender, String receiver, String content) {
         super(sender, receiver);
         this.content = content;

@@ -43,7 +43,7 @@ import org.metaagent.framework.core.agent.output.thought.Thought;
  */
 public interface ReActAgent extends Agent {
 
-    default AgentOutput execute(AgentExecutionContext context, AgentInput input) {
+    default AgentOutput step(AgentExecutionContext context, AgentInput input) {
         Thought thought = think(context, input);
         Action action = thought.getProposalAction();
         if (action instanceof AgentFinishAction) {

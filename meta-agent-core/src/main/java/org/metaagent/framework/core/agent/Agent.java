@@ -26,7 +26,7 @@ package org.metaagent.framework.core.agent;
 
 import org.metaagent.framework.core.agent.fallback.AgentFallbackStrategy;
 import org.metaagent.framework.core.agent.input.AgentInput;
-import org.metaagent.framework.core.agent.loop.LoopControlStrategy;
+import org.metaagent.framework.core.agent.loop.AgentLoopControlStrategy;
 import org.metaagent.framework.core.agent.output.AgentOutput;
 import org.metaagent.framework.core.agent.state.AgentRunStatus;
 import org.metaagent.framework.core.agent.state.AgentState;
@@ -38,9 +38,9 @@ import org.metaagent.framework.core.agent.state.AgentState;
  */
 public interface Agent extends MetaAgent {
 
-    LoopControlStrategy getLoopControlStrategy();
+    AgentLoopControlStrategy getLoopControlStrategy();
 
-    AgentFallbackStrategy getAgentFallbackStrategy();
+    AgentFallbackStrategy getFallbackStrategy();
 
     @Override
     default AgentOutput run(AgentExecutionContext context, AgentInput input) {
@@ -50,12 +50,12 @@ public interface Agent extends MetaAgent {
         }
 
         agentState.setStatus(AgentRunStatus.RUNNING);
-        while (getLoopControlStrategy().shouldContinueLoop(context)) {
+        while (getLoopControlStrategy().shouldContinueLoop(context, input)) {
             AgentOutput output = null;
             try {
-                output = execute(context, input);
+                output = step(context, input);
             } catch (Exception ex) {
-                output = getAgentFallbackStrategy().fallback(this, context, input, ex);
+                output = getFallbackStrategy().fallback(this, context, input, ex);
             } finally {
                 agentState.incrLoopCount();
                 agentState.setAgentOutput(output);
@@ -66,5 +66,5 @@ public interface Agent extends MetaAgent {
     }
 
     @Override
-    AgentOutput execute(AgentExecutionContext context, AgentInput input);
+    AgentOutput step(AgentExecutionContext context, AgentInput input);
 }

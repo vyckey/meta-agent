@@ -24,12 +24,14 @@
 
 package org.metaagent.framework.core.agent.chat.message;
 
+import org.metaagent.framework.core.common.MetadataProvider;
+
 /**
  * description is here
  *
  * @author vyckey
  */
-public interface Message {
+public interface Message extends MetadataProvider {
     String getSender();
 
     String getReceiver();

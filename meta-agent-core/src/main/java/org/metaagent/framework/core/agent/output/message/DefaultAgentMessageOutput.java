@@ -24,10 +24,12 @@
 
 package org.metaagent.framework.core.agent.output.message;
 
+import com.google.common.collect.Maps;
 import lombok.Getter;
 import org.metaagent.framework.core.agent.chat.message.Message;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 
 /**
@@ -37,19 +39,25 @@ import java.util.Objects;
  */
 @Getter
 public class DefaultAgentMessageOutput implements AgentMessageOutput {
+    private final Map<String, Object> metadata;
     private final List<Message> messages;
 
-    public DefaultAgentMessageOutput(List<Message> messages) {
+    public DefaultAgentMessageOutput(List<Message> messages, Map<String, Object> metadata) {
         this.messages = Objects.requireNonNull(messages, "messages is required");
+        this.metadata = metadata;
     }
 
-    public DefaultAgentMessageOutput(Message message) {
-        Objects.requireNonNull(message, "message is required");
-        this.messages = List.of(message);
+    public DefaultAgentMessageOutput(List<Message> messages) {
+        this(messages, Maps.newHashMap());
     }
 
     @Override
     public boolean isEmpty() {
         return messages.isEmpty();
+    }
+
+    @Override
+    public Map<String, Object> getMetadata() {
+        return Map.of();
     }
 }

@@ -34,8 +34,8 @@ import org.metaagent.framework.core.agent.fallback.FastFailAgentFallbackStrategy
 import org.metaagent.framework.core.agent.input.AgentInput;
 import org.metaagent.framework.core.agent.memory.EmptyMemory;
 import org.metaagent.framework.core.agent.memory.Memory;
-import org.metaagent.framework.core.agent.observability.AgentExecutionListener;
 import org.metaagent.framework.core.agent.observability.AgentRunListener;
+import org.metaagent.framework.core.agent.observability.AgentStepListener;
 import org.metaagent.framework.core.agent.output.AgentOutput;
 import org.metaagent.framework.core.agent.state.AgentState;
 import org.slf4j.Logger;
@@ -54,7 +54,7 @@ public abstract class AbstractMetaAgent implements MetaAgent {
     protected Memory memory = EmptyMemory.EMPTY_MEMORY;
     protected AgentAbilityManager abilityManager = new DefaultAgentAbilityManager();
     protected final List<AgentRunListener> runListeners = Lists.newArrayList();
-    protected final List<AgentExecutionListener> executionListeners = Lists.newArrayList();
+    protected final List<AgentStepListener> stepListeners = Lists.newArrayList();
     protected Logger agentLogger;
     protected Logger logger;
 
@@ -90,12 +90,12 @@ public abstract class AbstractMetaAgent implements MetaAgent {
         runListeners.remove(listener);
     }
 
-    public void registerExecutionListener(AgentExecutionListener listener) {
-        executionListeners.add(listener);
+    public void registerStepListener(AgentStepListener listener) {
+        stepListeners.add(listener);
     }
 
-    public void unregisterExecutionListener(AgentExecutionListener listener) {
-        executionListeners.remove(listener);
+    public void unregisterStepListener(AgentStepListener listener) {
+        stepListeners.remove(listener);
     }
 
     protected <T> void notifyListeners(Iterable<T> listeners, Consumer<T> consumer) {
@@ -108,13 +108,17 @@ public abstract class AbstractMetaAgent implements MetaAgent {
         }
     }
 
-    @Override
-    public AgentFallbackStrategy getAgentFallbackStrategy() {
+    public AgentFallbackStrategy getFallbackStrategy() {
         return FastFailAgentFallbackStrategy.INSTANCE;
+    }
+
+    protected void checkAgentInput(AgentInput input) {
     }
 
     @Override
     public AgentOutput run(AgentExecutionContext context, AgentInput input) {
+        checkAgentInput(input);
+
         AgentState agentState = context.getAgentState();
         if (agentState.getStatus().isFinished()) {
             agentLogger.info("Agent {} has been run, will exit.", getName());
@@ -144,23 +148,23 @@ public abstract class AbstractMetaAgent implements MetaAgent {
     }
 
     @Override
-    public AgentOutput execute(AgentExecutionContext context, AgentInput input) {
+    public AgentOutput step(AgentExecutionContext context, AgentInput input) {
         int turn = context.getAgentState().getLoopCount() + 1;
         try {
             agentLogger.debug("Agent {} is ready to execute... (Turn#{})", getName(), turn);
-            notifyListeners(executionListeners, listener -> listener.onAgentExecutionStart(context, input));
-            AgentOutput output = doExecute(context, input);
+            notifyListeners(stepListeners, listener -> listener.onAgentStepStart(context, input));
+            AgentOutput output = doStep(context, input);
             agentLogger.debug("Agent {} executes finished. (Turn#{})", getName(), turn);
-            notifyListeners(executionListeners, listener -> listener.onAgentExecutionFinish(context, input, output));
+            notifyListeners(stepListeners, listener -> listener.onAgentStepFinish(context, input, output));
             return output;
         } catch (Exception ex) {
             agentLogger.error("Agent {} executes occurs error. (Turn#{})", getName(), turn, ex);
-            notifyListeners(executionListeners, listener -> listener.onAgentExecutionError(context, input, ex));
+            notifyListeners(stepListeners, listener -> listener.onAgentStepError(context, input, ex));
             throw ex;
         }
     }
 
-    protected abstract AgentOutput doExecute(AgentExecutionContext context, AgentInput input);
+    protected abstract AgentOutput doStep(AgentExecutionContext context, AgentInput input);
 
     @Override
     public String toString() {

@@ -33,16 +33,16 @@ import org.metaagent.framework.core.agent.output.AgentOutput;
  *
  * @author vyckey
  */
-public interface AgentExecutionListener {
+public interface AgentStepListener {
     default void onAgentNextLoop(AgentExecutionContext context) {
     }
 
-    default void onAgentExecutionStart(AgentExecutionContext context, AgentInput input) {
+    default void onAgentStepStart(AgentExecutionContext context, AgentInput input) {
     }
 
-    default void onAgentExecutionFinish(AgentExecutionContext context, AgentInput input, AgentOutput output) {
+    default void onAgentStepFinish(AgentExecutionContext context, AgentInput input, AgentOutput output) {
     }
 
-    default void onAgentExecutionError(AgentExecutionContext context, AgentInput input, Exception exception) {
+    default void onAgentStepError(AgentExecutionContext context, AgentInput input, Exception exception) {
     }
 }

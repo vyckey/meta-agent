@@ -22,27 +22,23 @@
  * SOFTWARE.
  */
 
-package org.metaagent.framework.core.agent.chat.channel;
+package org.metaagent.framework.core.agent.chat.message;
 
 /**
  * description is here
  *
  * @author vyckey
  */
-public class One2OneChannel extends CommonChannel {
-    public One2OneChannel(String name, String member1, String member2) {
-        super(name);
-        this.members.add(member1);
-        this.members.add(member2);
+public abstract class MessageFactory {
+    public static TextMessage textMessage(String content) {
+        return new TextMessage(content);
     }
 
-    @Override
-    public void join(String... members) {
-        throw new UnsupportedOperationException("One-to-one channel can't join new member");
+    public static TextMessage textMessage(String role, String content) {
+        return new TextMessage(role, null, content);
     }
 
-    @Override
-    public void exit(String... members) {
-        throw new UnsupportedOperationException("One-to-one channel can't exit member");
+    public static TextMessage textMessage(String sender, String receiver, String content) {
+        return new TextMessage(sender, receiver, content);
     }
 }
