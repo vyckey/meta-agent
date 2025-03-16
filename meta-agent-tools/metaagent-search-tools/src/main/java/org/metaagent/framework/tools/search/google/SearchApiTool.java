@@ -22,7 +22,7 @@
  * SOFTWARE.
  */
 
-package org.metaagent.framework.tools.search.searchapi;
+package org.metaagent.framework.tools.search.google;
 
 import com.google.common.collect.Maps;
 import org.apache.commons.lang3.StringUtils;
@@ -46,6 +46,7 @@ import java.time.Duration;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
 
 /**
  * description is here
@@ -57,35 +58,33 @@ public class SearchApiTool implements Tool<WebSearchRequest, WebSearchResponse> 
     private static final String DEFAULT_ENGINE = "google";
     private final SearchApiClient client;
     private final String apiKey;
-    private final String engine;
+
+    public SearchApiTool(SearchApiClient client, String apiKey) {
+        this.client = Objects.requireNonNull(client, "client is required");
+        this.apiKey = Objects.requireNonNull(apiKey, "SearchAPI API key is required");
+    }
+
+    public SearchApiTool(String baseUrl, Duration timeout, String apiKey) {
+        this(
+                SearchApiClient.builder()
+                        .baseUrl(StringUtils.isNotEmpty(baseUrl) ? baseUrl : DEFAULT_BASE_URL)
+                        .timeout(timeout != null ? timeout : Duration.ofSeconds(30))
+                        .build(),
+                apiKey
+        );
+    }
 
     public SearchApiTool() {
         this(
                 DEFAULT_BASE_URL,
                 Duration.ofSeconds(30),
-                Objects.requireNonNull(System.getenv("SEARCH_API_KEY"), "Environment variable SEARCH_API_KEY is not set"),
-                DEFAULT_ENGINE
+                Objects.requireNonNull(System.getenv("SEARCH_API_KEY"), "Environment variable SEARCH_API_KEY is not set")
         );
-    }
-
-    public SearchApiTool(SearchApiClient client, String apiKey, String engine) {
-        this.client = Objects.requireNonNull(client, "client is required");
-        this.apiKey = Objects.requireNonNull(apiKey, "SearchAPI API key is required");
-        this.engine = StringUtils.isNotEmpty(engine) ? engine : DEFAULT_ENGINE;
-    }
-
-    public SearchApiTool(String baseUrl, Duration timeout, String apiKey, String engine) {
-        this.apiKey = Objects.requireNonNull(apiKey, "SearchAPI API key is required");
-        this.engine = StringUtils.isNotEmpty(engine) ? engine : DEFAULT_ENGINE;
-        this.client = SearchApiClient.builder()
-                .baseUrl(StringUtils.isNotEmpty(baseUrl) ? baseUrl : DEFAULT_BASE_URL)
-                .timeout(timeout != null ? timeout : Duration.ofSeconds(30))
-                .build();
     }
 
     @Override
     public ToolDefinition getDefinition() {
-        return ToolDefinition.builder("SearchAPITool")
+        return ToolDefinition.builder("GoogleSearchAPI")
                 .description("Web search tool by SearchAPI")
                 .inputSchema(WebSearchRequest.class)
                 .outputSchema(WebSearchResponse.class)
@@ -102,7 +101,7 @@ public class SearchApiTool implements Tool<WebSearchRequest, WebSearchResponse> 
     public WebSearchResponse run(ToolContext toolContext, WebSearchRequest webSearchRequest) throws ToolExecutionException {
         SearchApiWebSearchRequest searchRequest = SearchApiWebSearchRequest.builder()
                 .apiKey(this.apiKey)
-                .engine(this.engine)
+                .engine(Optional.ofNullable(webSearchRequest.searchEngine()).orElse(DEFAULT_ENGINE))
                 .query(webSearchRequest.searchTerms())
                 .build();
 

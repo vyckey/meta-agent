@@ -86,7 +86,7 @@ public class TavilySearchTool implements Tool<WebSearchRequest, WebSearchRespons
 
     @Override
     public ToolDefinition getDefinition() {
-        return ToolDefinition.builder("TavilySearchTool")
+        return ToolDefinition.builder("TavilySearch")
                 .description("Tavily search tool")
                 .inputSchema(WebSearchRequest.class)
                 .outputSchema(WebSearchResponse.class)

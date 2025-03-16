@@ -36,6 +36,7 @@ import java.util.Map;
 @Builder
 public record WebSearchRequest(
         String searchTerms,
+        String searchEngine,
         Integer maxResults,
         String language,
         String geoLocation,
