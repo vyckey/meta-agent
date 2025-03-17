@@ -22,7 +22,7 @@
  * SOFTWARE.
  */
 
-package org.metaagent.framework.tools.search.google;
+package org.metaagent.framework.tools.search.searchapi;
 
 import com.google.common.collect.Maps;
 import org.apache.commons.lang3.StringUtils;
