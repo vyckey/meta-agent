@@ -22,36 +22,50 @@
  * SOFTWARE.
  */
 
-package org.metaagent.framework.core.agents.chat;
+package org.metaagent.framework.core.tool.manager;
 
 import com.google.common.collect.Lists;
-import org.metaagent.framework.core.agent.Agent;
-import org.metaagent.framework.core.agent.AgentExecutionContext;
-import org.metaagent.framework.core.agent.chat.message.Message;
-import org.metaagent.framework.core.agent.chat.message.MessageHistory;
-import org.metaagent.framework.core.agent.input.AgentInput;
-import org.metaagent.framework.core.agent.input.message.AgentMessageInput;
-import org.metaagent.framework.core.agent.output.message.AgentMessageOutput;
+import lombok.extern.slf4j.Slf4j;
+import org.metaagent.framework.core.tool.Tool;
+
+import java.util.List;
 
 /**
  * description is here
  *
  * @author vyckey
  */
-public interface ChatAgent extends Agent {
-    MessageHistory getMessageHistory();
+@Slf4j
+public abstract class AbstractToolManager implements ToolManager {
+    protected final List<ToolChangeListener> listeners = Lists.newArrayList();
 
-    default AgentMessageOutput run(AgentExecutionContext context, Message message) {
-        MessageHistory messageHistory = getMessageHistory();
-        messageHistory.appendMessage(message);
-
-        AgentMessageInput messageInput = AgentMessageInput.build(Lists.newArrayList(messageHistory));
-        return run(context, messageInput);
+    @Override
+    public boolean hasTool(String name) {
+        return getTool(name) != null;
     }
 
-    default AgentMessageOutput run(AgentExecutionContext context, AgentMessageInput input) {
-        return (AgentMessageOutput) run(context, (AgentInput) input);
+    @Override
+    public void removeTool(Tool<?, ?> tool) {
+        removeTool(tool.getName());
     }
 
-    void reset();
+    @Override
+    public void addChangeListener(ToolChangeListener listener) {
+        listeners.add(listener);
+    }
+
+    @Override
+    public void removeChangeListener(ToolChangeListener listener) {
+        listeners.remove(listener);
+    }
+
+    protected void notifyChangeListeners(Tool<?, ?> tool, ToolChangeListener.EventType eventType) {
+        for (ToolChangeListener listener : listeners) {
+            try {
+                listener.onToolChange(tool, eventType);
+            } catch (Exception e) {
+                log.error("Failed to notify tool change listener", e);
+            }
+        }
+    }
 }

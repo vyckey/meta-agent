@@ -37,7 +37,7 @@ import java.util.Set;
  *
  * @author vyckey
  */
-public class DefaultToolManager implements ToolManager {
+public class DefaultToolManager extends AbstractToolManager implements ToolManager {
     private static volatile ToolManager instance;
     protected final Map<String, Tool<?, ?>> tools = Maps.newConcurrentMap();
 
@@ -74,16 +74,19 @@ public class DefaultToolManager implements ToolManager {
 
     @Override
     public void addTool(Tool<?, ?> tool) {
-        this.tools.put(tool.getDefinition().name(), tool);
-    }
-
-    @Override
-    public void removeTool(Tool<?, ?> tool) {
-        this.tools.remove(tool.getDefinition().name());
+        Tool<?, ?> oldTool = this.tools.put(tool.getName(), tool);
+        if (oldTool != null) {
+            notifyChangeListeners(tool, ToolChangeListener.EventType.UPDATED);
+        } else {
+            notifyChangeListeners(tool, ToolChangeListener.EventType.ADDED);
+        }
     }
 
     @Override
     public void removeTool(String name) {
-        this.tools.remove(name);
+        Tool<?, ?> tool = this.tools.remove(name);
+        if (tool != null) {
+            notifyChangeListeners(tool, ToolChangeListener.EventType.REMOVED);
+        }
     }
 }

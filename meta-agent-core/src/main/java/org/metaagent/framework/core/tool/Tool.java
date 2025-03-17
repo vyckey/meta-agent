@@ -37,6 +37,15 @@ import org.metaagent.framework.core.tool.definition.ToolDefinition;
  */
 public interface Tool<I, O> {
     /**
+     * Gets the tool name.
+     *
+     * @return the tool name.
+     */
+    default String getName() {
+        return getDefinition().name();
+    }
+
+    /**
      * Gets the definition of the tool.
      *
      * @return the definition of the tool.

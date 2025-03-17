@@ -13,6 +13,8 @@ guava = '33.2.1-jre'
 apacheCommon = '3.16.0'
 commonConfig = '2.11.0'
 collections = '3.2.2'
+mcp = '0.7.0'
+springAI = '1.0.0-M6'
 
 [libraries]
 junit = { module = 'junit:junit', version.ref = 'junit' }
@@ -31,6 +33,8 @@ log4j-core = { module = 'org.apache.logging.log4j:log4j-core', version.ref = 'ap
 log4j-api = { module = 'org.apache.logging.log4j:log4j-api', version.ref = 'apacheLog4j' }
 slf4j-impl = { module = 'org.apache.logging.log4j:log4j-slf4j-impl', version.ref = 'apacheLog4j' }
 log4j = { module = 'log4j:log4j', version.ref = 'log4j' }
+mcp-sdk = { module = 'io.modelcontextprotocol.sdk:mcp', version.ref = 'mcp' }
+spring-ai-core = { module = 'org.springframework.ai:spring-ai-core', version.ref = 'springAI' }
 
 [bundles]
 unittest = ['junit', 'jmockit']
@@ -39,3 +43,5 @@ jsonschema = ['jsonschema']
 lombok = ['lombok']
 utilies = ['commons-lang3', 'commons-config', 'collections4', 'guava']
 log = ['slf4j-api', 'log4j', 'log4j-core', 'log4j-api', 'slf4j-impl']
+mcp = ['mcp-sdk']
+springai = ['spring-ai-core']

@@ -79,4 +79,18 @@ public interface ToolManager {
      * @param name the name of the tool to be removed.
      */
     void removeTool(String name);
+
+    /**
+     * Add a tool change listener.
+     *
+     * @param listener the tool change listener.
+     */
+    void addChangeListener(ToolChangeListener listener);
+
+    /**
+     * Remove a tool change listener.
+     *
+     * @param listener the tool change listener.
+     */
+    void removeChangeListener(ToolChangeListener listener);
 }
