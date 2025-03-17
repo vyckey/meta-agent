@@ -24,6 +24,7 @@
 
 plugins {
     id 'java'
+    id 'checkstyle'
 }
 
 group = 'org.metaagent.framework'

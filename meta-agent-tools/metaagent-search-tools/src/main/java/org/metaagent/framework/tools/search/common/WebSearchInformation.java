@@ -22,45 +22,20 @@
  * SOFTWARE.
  */
 
-plugins {
-    id 'java-library'
-    id 'application'
-    id 'maven-publish'
-    id 'buildlogic.java-common-conventions'
-}
+package org.metaagent.framework.tools.search.common;
 
-group = 'org.metaagent.framework'
-version = '1.0.0-SNAPSHOT'
+import lombok.Builder;
 
-publishing {
-    publications {
-        create("mavenJava", MavenPublication) {
-            from components.java
-        }
-    }
-}
+import java.util.Map;
 
-sourceSets {
-    main {
-        resources {
-            srcDirs = ['src/main/resources']
-        }
-    }
-    test {
-        resources {
-            srcDirs = ['src/test/resources']
-        }
-    }
-}
-
-dependencies {
-    compileOnly libs.bundles.lombok
-    annotationProcessor libs.bundles.lombok
-
-    api libs.bundles.utilies
-    api libs.bundles.jackson
-    api libs.bundles.log
-    api libs.bundles.mcp
-    api libs.bundles.springai
-
+/**
+ * Web search information
+ *
+ * @author vyckey
+ */
+@Builder
+public record WebSearchInformation(
+        Long totalResults,
+        Integer pageIndex,
+        Map<String, Object> metadata) {
 }

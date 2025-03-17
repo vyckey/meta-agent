@@ -22,30 +22,20 @@
  * SOFTWARE.
  */
 
-package org.metaagent.framework.tools.search.tavily;
+package org.metaagent.framework.tools.search.common;
 
-import com.fasterxml.jackson.annotation.JsonPropertyDescription;
-import lombok.AccessLevel;
-import lombok.AllArgsConstructor;
 import lombok.Builder;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
 
 import java.util.List;
 
 /**
- * description is here
+ * Web search response
  *
  * @author vyckey
  */
-@Getter
 @Builder
-@NoArgsConstructor
-@AllArgsConstructor(access = AccessLevel.PRIVATE)
-public class TavilySearchOutput {
-    @JsonPropertyDescription("The total number of results found by the search engine")
-    private Long totalResults;
-
-    @JsonPropertyDescription("The search results")
-    private List<SearchOrganicResult> results;
+public record WebSearchResponse(
+        WebSearchInformation searchInfo,
+        List<WebSearchResult> searchResults
+) {
 }

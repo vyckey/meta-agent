@@ -22,45 +22,36 @@
  * SOFTWARE.
  */
 
-plugins {
-    id 'java-library'
-    id 'application'
-    id 'maven-publish'
-    id 'buildlogic.java-common-conventions'
-}
+package org.metaagent.framework.tools.search.common;
 
-group = 'org.metaagent.framework'
-version = '1.0.0-SNAPSHOT'
+import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonPropertyDescription;
+import lombok.Builder;
 
-publishing {
-    publications {
-        create("mavenJava", MavenPublication) {
-            from components.java
-        }
-    }
-}
+import java.net.URI;
+import java.util.Map;
 
-sourceSets {
-    main {
-        resources {
-            srcDirs = ['src/main/resources']
-        }
-    }
-    test {
-        resources {
-            srcDirs = ['src/test/resources']
-        }
-    }
-}
+/**
+ * Web search result
+ *
+ * @author vyckey
+ */
+@Builder
+public record WebSearchResult(
+        String id,
 
-dependencies {
-    compileOnly libs.bundles.lombok
-    annotationProcessor libs.bundles.lombok
+        @JsonProperty(required = true)
+        String title,
 
-    api libs.bundles.utilies
-    api libs.bundles.jackson
-    api libs.bundles.log
-    api libs.bundles.mcp
-    api libs.bundles.springai
+        @JsonProperty(required = true)
+        URI url,
+
+        @JsonPropertyDescription("the brief description of the page")
+        String snippet,
+
+        @JsonPropertyDescription("the detailed content of the page")
+        String content,
+
+        Map<String, Object> metadata) {
 
 }

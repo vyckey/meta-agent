@@ -22,45 +22,25 @@
  * SOFTWARE.
  */
 
-plugins {
-    id 'java-library'
-    id 'application'
-    id 'maven-publish'
-    id 'buildlogic.java-common-conventions'
-}
+package org.metaagent.framework.core.tool.manager;
 
-group = 'org.metaagent.framework'
-version = '1.0.0-SNAPSHOT'
+import org.metaagent.framework.core.tool.Tool;
 
-publishing {
-    publications {
-        create("mavenJava", MavenPublication) {
-            from components.java
-        }
+/**
+ * Tool change listener
+ *
+ * @author vyckey
+ */
+public interface ToolChangeListener {
+    enum EventType {
+        ADDED, UPDATED, REMOVED
     }
-}
 
-sourceSets {
-    main {
-        resources {
-            srcDirs = ['src/main/resources']
-        }
-    }
-    test {
-        resources {
-            srcDirs = ['src/test/resources']
-        }
-    }
-}
-
-dependencies {
-    compileOnly libs.bundles.lombok
-    annotationProcessor libs.bundles.lombok
-
-    api libs.bundles.utilies
-    api libs.bundles.jackson
-    api libs.bundles.log
-    api libs.bundles.mcp
-    api libs.bundles.springai
-
+    /**
+     * Handle tool change event.
+     *
+     * @param tool      the changed tool.
+     * @param eventType the change event type.
+     */
+    void onToolChange(Tool<?, ?> tool, EventType eventType);
 }
