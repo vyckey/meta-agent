@@ -29,11 +29,12 @@ import org.metaagent.framework.core.agent.goal.Goal;
 import org.metaagent.framework.core.agent.state.AgentState;
 import org.metaagent.framework.core.environment.Environment;
 import org.metaagent.framework.core.tool.manager.ToolManager;
+import org.metaagent.framework.core.tool.tracker.ToolCallTracker;
 
 import java.util.concurrent.Executor;
 
 /**
- * description is here
+ * Agent execution context.
  *
  * @author vyckey
  */
@@ -46,7 +47,11 @@ public interface AgentExecutionContext {
 
     ToolManager getToolManager();
 
+    ToolCallTracker getToolCallTracker();
+
     ActionExecutor getActionExecutor();
 
     Executor getExecutor();
+
+    void reset();
 }

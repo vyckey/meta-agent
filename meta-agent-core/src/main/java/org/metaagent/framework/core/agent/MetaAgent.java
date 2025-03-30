@@ -121,4 +121,8 @@ public interface MetaAgent {
      */
     AgentFallbackStrategy getFallbackStrategy();
 
+    /**
+     * Reset the agent to initial state.
+     */
+    void reset();
 }

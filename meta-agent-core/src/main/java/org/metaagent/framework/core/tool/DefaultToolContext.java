@@ -27,6 +27,7 @@ package org.metaagent.framework.core.tool;
 import lombok.Getter;
 import org.metaagent.framework.core.tool.manager.DefaultToolManager;
 import org.metaagent.framework.core.tool.manager.ToolManager;
+import org.metaagent.framework.core.tool.tracker.ToolCallTracker;
 
 /**
  * description is here
@@ -36,9 +37,11 @@ import org.metaagent.framework.core.tool.manager.ToolManager;
 @Getter
 public class DefaultToolContext implements ToolContext {
     protected ToolManager toolManager;
+    protected ToolCallTracker toolCallTracker;
 
     protected DefaultToolContext(Builder builder) {
         this.toolManager = builder.toolManager;
+        this.toolCallTracker = builder.toolCallTracker;
     }
 
     public static Builder builder() {
@@ -47,9 +50,15 @@ public class DefaultToolContext implements ToolContext {
 
     public static class Builder {
         private ToolManager toolManager;
+        private ToolCallTracker toolCallTracker;
 
         public Builder toolManager(ToolManager toolManager) {
             this.toolManager = toolManager;
+            return this;
+        }
+
+        public Builder toolCallTracker(ToolCallTracker toolCallTracker) {
+            this.toolCallTracker = toolCallTracker;
             return this;
         }
 

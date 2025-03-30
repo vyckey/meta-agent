@@ -33,6 +33,8 @@ import org.metaagent.framework.core.agent.state.DefaultAgentState;
 import org.metaagent.framework.core.environment.Environment;
 import org.metaagent.framework.core.tool.manager.DefaultToolManager;
 import org.metaagent.framework.core.tool.manager.ToolManager;
+import org.metaagent.framework.core.tool.tracker.DefaultToolCallTracker;
+import org.metaagent.framework.core.tool.tracker.ToolCallTracker;
 
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
@@ -47,22 +49,25 @@ public class DefaultAgentExecutionContext implements AgentExecutionContext {
     private final Goal goal;
     private final Environment environment;
     private final ToolManager toolManager;
+    private final ToolCallTracker toolCallTracker;
     private final AgentState agentState;
     private final ActionExecutor actionExecutor;
     private final Executor executor;
 
-    protected DefaultAgentExecutionContext(Goal goal,
-                                           Environment environment,
-                                           ToolManager toolManager,
-                                           AgentState agentState,
-                                           ActionExecutor actionExecutor,
-                                           Executor executor) {
-        this.goal = goal;
-        this.environment = environment;
-        this.toolManager = toolManager;
-        this.agentState = agentState;
-        this.actionExecutor = actionExecutor;
-        this.executor = executor;
+    protected DefaultAgentExecutionContext(Builder builder) {
+        this.goal = builder.goal;
+        this.environment = builder.environment;
+        this.toolManager = builder.toolManager;
+        this.toolCallTracker = builder.toolCallTracker;
+        this.agentState = builder.agentState;
+        this.actionExecutor = builder.actionExecutor;
+        this.executor = builder.executor;
+    }
+
+    @Override
+    public void reset() {
+        toolCallTracker.clear();
+        agentState.reset();
     }
 
     public static Builder builder(Goal goal) {
@@ -77,6 +82,7 @@ public class DefaultAgentExecutionContext implements AgentExecutionContext {
         private final Goal goal;
         private Environment environment;
         private ToolManager toolManager;
+        private ToolCallTracker toolCallTracker;
         private ActionExecutor actionExecutor;
         private AgentState agentState;
         private Executor executor;
@@ -109,6 +115,11 @@ public class DefaultAgentExecutionContext implements AgentExecutionContext {
             return this;
         }
 
+        public Builder toolCallTracker(ToolCallTracker toolCallTracker) {
+            this.toolCallTracker = toolCallTracker;
+            return this;
+        }
+
         public Builder actionExecutor(ActionExecutor actionExecutor) {
             this.actionExecutor = actionExecutor;
             return this;
@@ -126,6 +137,9 @@ public class DefaultAgentExecutionContext implements AgentExecutionContext {
             if (toolManager == null) {
                 this.toolManager = DefaultToolManager.getInstance();
             }
+            if (toolCallTracker == null) {
+                this.toolCallTracker = new DefaultToolCallTracker();
+            }
             if (actionExecutor == null) {
                 actionExecutor = SyncActionExecutor.INSTANCE;
             }
@@ -136,8 +150,7 @@ public class DefaultAgentExecutionContext implements AgentExecutionContext {
 
         public DefaultAgentExecutionContext build() {
             setDefault();
-            return new DefaultAgentExecutionContext(goal, environment, toolManager,
-                    agentState, actionExecutor, executor);
+            return new DefaultAgentExecutionContext(this);
         }
     }
 }

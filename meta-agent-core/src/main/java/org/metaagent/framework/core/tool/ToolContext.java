@@ -25,6 +25,7 @@
 package org.metaagent.framework.core.tool;
 
 import org.metaagent.framework.core.tool.manager.ToolManager;
+import org.metaagent.framework.core.tool.tracker.ToolCallTracker;
 
 /**
  * description is here
@@ -33,4 +34,6 @@ import org.metaagent.framework.core.tool.manager.ToolManager;
  */
 public interface ToolContext {
     ToolManager getToolManager();
+
+    ToolCallTracker getToolCallTracker();
 }
