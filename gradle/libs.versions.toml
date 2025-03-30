@@ -8,7 +8,7 @@ jsonschema = '4.37.0'
 lombok = '1.18.30'
 slf4j = '2.0.13'
 log4j = '1.2.17'
-apacheLog4j = '2.23.1'
+apacheLog4j = '2.24.3'
 guava = '33.2.1-jre'
 apacheCommon = '3.16.0'
 commonConfig = '2.11.0'
@@ -31,7 +31,7 @@ guava = { module = 'com.google.guava:guava', version.ref = 'guava' }
 slf4j-api = { module = 'org.slf4j:slf4j-api', version.ref = 'slf4j' }
 log4j-core = { module = 'org.apache.logging.log4j:log4j-core', version.ref = 'apacheLog4j' }
 log4j-api = { module = 'org.apache.logging.log4j:log4j-api', version.ref = 'apacheLog4j' }
-slf4j-impl = { module = 'org.apache.logging.log4j:log4j-slf4j-impl', version.ref = 'apacheLog4j' }
+slf4j-impl = { module = 'org.apache.logging.log4j:log4j-slf4j2-impl', version.ref = 'apacheLog4j' }
 log4j = { module = 'log4j:log4j', version.ref = 'log4j' }
 mcp-sdk = { module = 'io.modelcontextprotocol.sdk:mcp', version.ref = 'mcp' }
 spring-ai-core = { module = 'org.springframework.ai:spring-ai-core', version.ref = 'springAI' }

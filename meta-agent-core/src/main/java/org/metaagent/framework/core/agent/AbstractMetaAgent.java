@@ -34,6 +34,7 @@ import org.metaagent.framework.core.agent.fallback.FastFailAgentFallbackStrategy
 import org.metaagent.framework.core.agent.input.AgentInput;
 import org.metaagent.framework.core.agent.memory.EmptyMemory;
 import org.metaagent.framework.core.agent.memory.Memory;
+import org.metaagent.framework.core.agent.observability.AgentLogger;
 import org.metaagent.framework.core.agent.observability.AgentRunListener;
 import org.metaagent.framework.core.agent.observability.AgentStepListener;
 import org.metaagent.framework.core.agent.output.AgentOutput;
@@ -56,11 +57,12 @@ public abstract class AbstractMetaAgent implements MetaAgent {
     protected AgentAbilityManager abilityManager = new DefaultAgentAbilityManager();
     protected final List<AgentRunListener> runListeners = Lists.newArrayList();
     protected final List<AgentStepListener> stepListeners = Lists.newArrayList();
-    protected Logger agentLogger = LoggerFactory.getLogger(getName() + ".Agent");
+    protected AgentLogger agentLogger;
     protected Logger logger = LoggerFactory.getLogger(getClass());
 
     protected AbstractMetaAgent(String name) {
         this.name = name;
+        this.agentLogger = AgentLogger.getLogger(name);
     }
 
     @Override
