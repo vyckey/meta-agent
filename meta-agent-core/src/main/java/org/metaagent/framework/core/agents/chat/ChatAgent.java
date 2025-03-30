@@ -53,5 +53,4 @@ public interface ChatAgent extends Agent {
         return (AgentMessageOutput) run(context, (AgentInput) input);
     }
 
-    void reset();
 }

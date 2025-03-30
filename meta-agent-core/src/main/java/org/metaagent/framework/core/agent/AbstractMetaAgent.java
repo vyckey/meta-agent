@@ -39,6 +39,7 @@ import org.metaagent.framework.core.agent.observability.AgentStepListener;
 import org.metaagent.framework.core.agent.output.AgentOutput;
 import org.metaagent.framework.core.agent.state.AgentState;
 import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.List;
 import java.util.function.Consumer;
@@ -55,8 +56,8 @@ public abstract class AbstractMetaAgent implements MetaAgent {
     protected AgentAbilityManager abilityManager = new DefaultAgentAbilityManager();
     protected final List<AgentRunListener> runListeners = Lists.newArrayList();
     protected final List<AgentStepListener> stepListeners = Lists.newArrayList();
-    protected Logger agentLogger;
-    protected Logger logger;
+    protected Logger agentLogger = LoggerFactory.getLogger(getName() + ".Agent");
+    protected Logger logger = LoggerFactory.getLogger(getClass());
 
     protected AbstractMetaAgent(String name) {
         this.name = name;
@@ -165,6 +166,11 @@ public abstract class AbstractMetaAgent implements MetaAgent {
     }
 
     protected abstract AgentOutput doStep(AgentExecutionContext context, AgentInput input);
+
+    @Override
+    public void reset() {
+        this.memory.clearAll();
+    }
 
     @Override
     public String toString() {
