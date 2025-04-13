@@ -31,6 +31,7 @@ import org.metaagent.framework.core.agent.fallback.AgentFallbackStrategy;
 import org.metaagent.framework.core.agent.input.AgentInput;
 import org.metaagent.framework.core.agent.memory.Memory;
 import org.metaagent.framework.core.agent.output.AgentOutput;
+import reactor.core.publisher.Flux;
 
 import java.util.concurrent.CompletableFuture;
 
@@ -92,6 +93,17 @@ public interface MetaAgent {
         } catch (Exception ex) {
             return getFallbackStrategy().fallback(this, context, input, ex);
         }
+    }
+
+    /**
+     * Runs agent logic in a streaming way.
+     *
+     * @param context the agent execution context.
+     * @param input   the agent input.
+     * @return the streaming agent output.
+     */
+    default Flux<AgentOutput> runFlux(AgentExecutionContext context, AgentInput input) {
+        throw new UnsupportedOperationException("Streaming run is not supported");
     }
 
     /**

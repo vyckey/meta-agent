@@ -61,6 +61,7 @@ dependencies {
     api libs.bundles.jackson
     api libs.bundles.log
     api libs.bundles.mcp
+    api libs.bundles.reactor
     api libs.bundles.springai
 
 }
