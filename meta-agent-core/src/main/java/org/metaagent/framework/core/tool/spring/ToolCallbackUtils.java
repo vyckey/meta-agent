@@ -43,15 +43,13 @@ import java.util.List;
  * @author vyckey
  */
 public abstract class ToolCallbackUtils {
-    public static ToolCallingChatOptions buildChatOptions(ToolManager toolManager) {
+    public static void setToolOptions(ToolCallingChatOptions chatOptions, ToolManager toolManager) {
         List<FunctionCallback> toolCallbacks = Lists.newArrayList();
         for (String toolName : toolManager.getToolNames()) {
             toolCallbacks.add(new ToolCallbackDelegate(toolManager.getTool(toolName)));
         }
-        return ToolCallingChatOptions.builder()
-                .toolNames(toolManager.getToolNames())
-                .toolCallbacks(toolCallbacks)
-                .build();
+        chatOptions.setToolNames(toolManager.getToolNames());
+        chatOptions.setToolCallbacks(toolCallbacks);
     }
 
     public static List<ToolResponseMessage.ToolResponse> callTools(

@@ -22,39 +22,57 @@
  * SOFTWARE.
  */
 
-package org.metaagent.framework.core.tool.manager;
+package org.metaagent.framework.core.tool.toolkit;
 
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Maps;
+import org.apache.commons.lang3.StringUtils;
 import org.metaagent.framework.core.tool.Tool;
 
-import java.util.Collections;
+import java.util.List;
 import java.util.Map;
-import java.util.ServiceLoader;
-import java.util.Set;
+import java.util.Objects;
 
 /**
  * description is here
  *
  * @author vyckey
  */
-public class DefaultToolManager extends AbstractToolManager implements ToolManager {
-    protected final Map<String, Tool<?, ?>> tools = Maps.newConcurrentMap();
+public class DefaultToolkit implements Toolkit {
+    protected final String name;
+    protected String description;
+    protected final Map<String, Tool<?, ?>> tools;
 
-    public DefaultToolManager() {
+    protected DefaultToolkit(String name, String description, Map<String, Tool<?, ?>> tools) {
+        if (StringUtils.isEmpty(name)) {
+            throw new IllegalArgumentException("Toolkit name is required");
+        }
+        this.name = name;
+        this.description = description;
+        this.tools = Objects.requireNonNull(tools, "Tools is required");
     }
 
-    public void loadSpiTools() {
-        ServiceLoader.load(Tool.class).forEach(this::addTool);
+    public DefaultToolkit(String name, String description) {
+        this(name, description, Maps.newHashMap());
+    }
+
+    public DefaultToolkit(String name) {
+        this(name, "");
     }
 
     @Override
-    public Set<String> getToolNames() {
-        return Collections.unmodifiableSet(tools.keySet());
+    public String getName() {
+        return name;
     }
 
     @Override
-    public boolean hasTool(String name) {
-        return tools.containsKey(name);
+    public String getDescription() {
+        return description;
+    }
+
+    @Override
+    public List<Tool<?, ?>> listTools() {
+        return ImmutableList.copyOf(tools.values());
     }
 
     @Override
@@ -63,20 +81,7 @@ public class DefaultToolManager extends AbstractToolManager implements ToolManag
     }
 
     @Override
-    public void addTool(Tool<?, ?> tool) {
-        Tool<?, ?> oldTool = this.tools.put(tool.getName(), tool);
-        if (oldTool != null) {
-            notifyChangeListeners(tool, ToolChangeListener.EventType.UPDATED);
-        } else {
-            notifyChangeListeners(tool, ToolChangeListener.EventType.ADDED);
-        }
-    }
-
-    @Override
-    public void removeTool(String name) {
-        Tool<?, ?> tool = this.tools.remove(name);
-        if (tool != null) {
-            notifyChangeListeners(tool, ToolChangeListener.EventType.REMOVED);
-        }
+    public String toString() {
+        return "Toolkit{name=\"" + name + "\"}";
     }
 }

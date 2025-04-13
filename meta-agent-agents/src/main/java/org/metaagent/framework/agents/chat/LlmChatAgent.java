@@ -114,10 +114,12 @@ public class LlmChatAgent extends AbstractAgent implements ChatAgent {
     }
 
     protected ChatOptions buildChatOptions(AgentExecutionContext context, AgentMessageInput messageInput) {
-        ToolCallingChatOptions toolChatOptions = ToolCallbackUtils.buildChatOptions(context.getToolManager());
-        ChatOptions chatOptions = this.chatOptions.copy();
-        ModelOptionsUtils.merge(toolChatOptions, chatOptions, chatOptions.getClass());
-        return chatOptions;
+        if (this.chatOptions instanceof ToolCallingChatOptions) {
+            ToolCallingChatOptions toolCallingChatOptions = this.chatOptions.copy();
+            ToolCallbackUtils.setToolOptions(toolCallingChatOptions, context.getToolManager());
+            return toolCallingChatOptions;
+        }
+        return this.chatOptions;
     }
 
     @Override

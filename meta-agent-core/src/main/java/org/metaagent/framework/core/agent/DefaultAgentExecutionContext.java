@@ -135,7 +135,7 @@ public class DefaultAgentExecutionContext implements AgentExecutionContext {
                 this.agentState = new DefaultAgentState();
             }
             if (toolManager == null) {
-                this.toolManager = DefaultToolManager.getInstance();
+                this.toolManager = new DefaultToolManager();
             }
             if (toolCallTracker == null) {
                 this.toolCallTracker = new DefaultToolCallTracker();

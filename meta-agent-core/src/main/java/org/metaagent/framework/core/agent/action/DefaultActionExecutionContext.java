@@ -101,7 +101,7 @@ public class DefaultActionExecutionContext implements ActionExecuteContext {
 
         private void setDefault() {
             if (toolManager == null) {
-                this.toolManager = DefaultToolManager.getInstance();
+                this.toolManager = new DefaultToolManager();
             }
             if (actionExecutor == null) {
                 actionExecutor = SyncActionExecutor.INSTANCE;
