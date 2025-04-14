@@ -22,32 +22,32 @@
  * SOFTWARE.
  */
 
-package org.metaagent.framework.tools.search.tavily;
+package org.metaagent.framework.core.agent.chat.message.history;
 
-import lombok.AccessLevel;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
+import org.metaagent.framework.core.agent.chat.message.Message;
 
-import java.util.Map;
+import java.util.List;
+import java.util.Optional;
+import java.util.function.Predicate;
 
 /**
  * description is here
  *
  * @author vyckey
  */
-@Getter
-@Builder
-@NoArgsConstructor
-@AllArgsConstructor(access = AccessLevel.PRIVATE)
-public class TavilySearchInput {
-    private String searchTerms;
-    private Integer maxResults;
-    private String language;
-    private String geoLocation;
-    private Integer startPage;
-    private Integer startIndex;
-    private Boolean safeSearch;
-    private Map<String, Object> additionalParams;
+public interface MessageHistory extends Iterable<Message> {
+
+    String historyId();
+
+    boolean isEmpty();
+
+    Iterable<Message> reverse();
+
+    void appendMessage(Message message);
+
+    List<Message> findMessages(Predicate<Message> predicate, boolean reverse);
+
+    Optional<Message> findMessage(Predicate<Message> predicate, boolean reverse);
+
+    void clear();
 }

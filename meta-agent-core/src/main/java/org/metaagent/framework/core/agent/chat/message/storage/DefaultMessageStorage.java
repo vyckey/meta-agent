@@ -22,35 +22,29 @@
  * SOFTWARE.
  */
 
-package org.metaagent.framework.core.agents.chat;
+package org.metaagent.framework.core.agent.chat.message.storage;
 
-import com.google.common.collect.Lists;
-import org.metaagent.framework.core.agent.Agent;
-import org.metaagent.framework.core.agent.AgentExecutionContext;
-import org.metaagent.framework.core.agent.chat.message.Message;
 import org.metaagent.framework.core.agent.chat.message.history.MessageHistory;
-import org.metaagent.framework.core.agent.input.AgentInput;
-import org.metaagent.framework.core.agent.input.message.AgentMessageInput;
-import org.metaagent.framework.core.agent.output.message.AgentMessageOutput;
 
 /**
  * description is here
  *
  * @author vyckey
  */
-public interface ChatAgent extends Agent {
-    MessageHistory getMessageHistory();
+public class DefaultMessageStorage implements MessageStorage {
+    public static final DefaultMessageStorage INSTANCE = new DefaultMessageStorage();
 
-    default AgentMessageOutput run(AgentExecutionContext context, Message message) {
-        MessageHistory messageHistory = getMessageHistory();
-        messageHistory.appendMessage(message);
+    private DefaultMessageStorage() {}
 
-        AgentMessageInput messageInput = AgentMessageInput.build(Lists.newArrayList(messageHistory));
-        return run(context, messageInput);
+    @Override
+    public void save(MessageHistory messageHistory) {
     }
 
-    default AgentMessageOutput run(AgentExecutionContext context, AgentMessageInput input) {
-        return (AgentMessageOutput) run(context, (AgentInput) input);
+    @Override
+    public void load(MessageHistory messageHistory) {
     }
 
+    @Override
+    public void clear(String historyId) {
+    }
 }

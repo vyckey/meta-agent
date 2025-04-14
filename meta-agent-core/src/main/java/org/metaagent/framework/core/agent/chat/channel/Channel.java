@@ -25,7 +25,7 @@
 package org.metaagent.framework.core.agent.chat.channel;
 
 import org.metaagent.framework.core.agent.chat.message.Message;
-import org.metaagent.framework.core.agent.chat.message.MessageHistory;
+import org.metaagent.framework.core.agent.chat.message.history.MessageHistory;
 import org.metaagent.framework.core.agent.chat.message.MessageListener;
 
 import java.io.Closeable;

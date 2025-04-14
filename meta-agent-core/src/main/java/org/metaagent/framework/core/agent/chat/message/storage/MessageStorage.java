@@ -22,35 +22,19 @@
  * SOFTWARE.
  */
 
-package org.metaagent.framework.core.agents.chat;
+package org.metaagent.framework.core.agent.chat.message.storage;
 
-import com.google.common.collect.Lists;
-import org.metaagent.framework.core.agent.Agent;
-import org.metaagent.framework.core.agent.AgentExecutionContext;
-import org.metaagent.framework.core.agent.chat.message.Message;
 import org.metaagent.framework.core.agent.chat.message.history.MessageHistory;
-import org.metaagent.framework.core.agent.input.AgentInput;
-import org.metaagent.framework.core.agent.input.message.AgentMessageInput;
-import org.metaagent.framework.core.agent.output.message.AgentMessageOutput;
 
 /**
- * description is here
+ * Message storage interface for storing and retrieving messages.
  *
  * @author vyckey
  */
-public interface ChatAgent extends Agent {
-    MessageHistory getMessageHistory();
+public interface MessageStorage {
+    void save(MessageHistory messageHistory);
 
-    default AgentMessageOutput run(AgentExecutionContext context, Message message) {
-        MessageHistory messageHistory = getMessageHistory();
-        messageHistory.appendMessage(message);
+    void load(MessageHistory messageHistory);
 
-        AgentMessageInput messageInput = AgentMessageInput.build(Lists.newArrayList(messageHistory));
-        return run(context, messageInput);
-    }
-
-    default AgentMessageOutput run(AgentExecutionContext context, AgentMessageInput input) {
-        return (AgentMessageOutput) run(context, (AgentInput) input);
-    }
-
+    void clear(String historyId);
 }

@@ -22,14 +22,16 @@
  * SOFTWARE.
  */
 
-package org.metaagent.framework.core.agent.chat.message;
+package org.metaagent.framework.core.agent.chat.message.history;
 
 import com.google.common.collect.Lists;
+import org.metaagent.framework.core.agent.chat.message.Message;
 
 import java.util.Iterator;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.UUID;
 import java.util.function.Predicate;
 
 /**
@@ -38,14 +40,29 @@ import java.util.function.Predicate;
  * @author vyckey
  */
 public class DefaultMessageHistory implements MessageHistory {
+    protected final String historyId;
     protected final List<Message> messages;
 
-    public DefaultMessageHistory(List<Message> messages) {
-        this.messages = Objects.requireNonNull(messages);
+    public DefaultMessageHistory(String historyId, List<Message> messages) {
+        this.historyId = Objects.requireNonNull(historyId, "historyId is required");
+        this.messages = Objects.requireNonNull(messages, "messages is required");
+    }
+
+    public DefaultMessageHistory(String historyId) {
+        this(historyId, Lists.newArrayList());
     }
 
     public DefaultMessageHistory() {
-        this.messages = Lists.newArrayList();
+        this(generateHistoryId());
+    }
+
+    public static String generateHistoryId() {
+        return UUID.randomUUID().toString().replaceAll("-", "").substring(0, 16);
+    }
+
+    @Override
+    public String historyId() {
+        return historyId;
     }
 
     @Override

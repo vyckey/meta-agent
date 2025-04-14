@@ -26,14 +26,18 @@ package org.metaagent.framework.core.tool.manager;
 
 import com.google.common.collect.Maps;
 import org.metaagent.framework.core.tool.Tool;
+import org.metaagent.framework.core.tool.toolkit.Toolkit;
 
+import java.util.Arrays;
 import java.util.Collections;
+import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.ServiceLoader;
 import java.util.Set;
 
 /**
- * description is here
+ * Default {@link ToolManager} implementation.
  *
  * @author vyckey
  */
@@ -41,6 +45,33 @@ public class DefaultToolManager extends AbstractToolManager implements ToolManag
     protected final Map<String, Tool<?, ?>> tools = Maps.newConcurrentMap();
 
     public DefaultToolManager() {
+    }
+
+    public DefaultToolManager(List<Tool<?, ?>> tools) {
+        Objects.requireNonNull(tools, "tools is required");
+        tools.forEach(tool -> this.tools.put(tool.getName(), tool));
+    }
+
+    public DefaultToolManager fromTools(Tool<?, ?>... tools) {
+        return new DefaultToolManager(List.of(tools));
+    }
+
+    public static DefaultToolManager fromToolkits(Toolkit... toolkits) {
+        List<Tool<?, ?>> tools = Arrays.stream(toolkits).map(Toolkit::listTools)
+                .flatMap(List::stream).toList();
+        return new DefaultToolManager(tools);
+    }
+
+    public void addToolkit(Toolkit toolkit) {
+        for (Tool<?, ?> tool : toolkit.listTools()) {
+            addTool(tool);
+        }
+    }
+
+    public void removeToolkit(Toolkit toolkit) {
+        for (Tool<?, ?> tool : toolkit.listTools()) {
+            removeTool(tool.getName());
+        }
     }
 
     public void loadSpiTools() {
