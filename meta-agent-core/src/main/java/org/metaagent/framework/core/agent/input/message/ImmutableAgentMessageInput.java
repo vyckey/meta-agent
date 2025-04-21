@@ -22,34 +22,49 @@
  * SOFTWARE.
  */
 
-package org.metaagent.framework.core.agent;
+package org.metaagent.framework.core.agent.input.message;
 
-import org.metaagent.framework.core.agent.action.executor.ActionExecutor;
-import org.metaagent.framework.core.agent.goal.Goal;
-import org.metaagent.framework.core.agent.state.AgentState;
-import org.metaagent.framework.core.environment.Environment;
-import org.metaagent.framework.core.tool.manager.ToolManager;
-import org.metaagent.framework.core.tool.tracker.ToolCallTracker;
+import lombok.Getter;
+import org.metaagent.framework.core.agent.chat.message.Message;
 
-import java.util.concurrent.Executor;
+import java.util.List;
+import java.util.Objects;
 
 /**
- * Agent execution context.
+ * description is here
  *
  * @author vyckey
  */
-public interface AgentExecutionContext {
-    AgentState getAgentState();
+@Getter
+public class ImmutableAgentMessageInput implements AgentMessageInput {
+    private final String topic;
+    private final List<Message> messages;
 
-    Environment getEnvironment();
+    public ImmutableAgentMessageInput(String topic, List<Message> messages) {
+        this.topic = topic;
+        this.messages = Objects.requireNonNull(messages, "messages is required");
+    }
 
-    ToolManager getToolManager();
+    public static ImmutableAgentMessageInput.Builder builder(List<Message> messages) {
+        return new ImmutableAgentMessageInput.Builder(messages);
+    }
 
-    ToolCallTracker getToolCallTracker();
 
-    ActionExecutor getActionExecutor();
+    public static class Builder {
+        private final List<Message> messages;
+        private String topic;
 
-    Executor getExecutor();
+        Builder(List<Message> messages) {
+            this.messages = messages;
+        }
 
-    void reset();
+        public Builder topic(String topic) {
+            this.topic = topic;
+            return this;
+        }
+
+        public AgentMessageInput build() {
+            return new ImmutableAgentMessageInput(topic, messages);
+        }
+    }
 }

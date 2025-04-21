@@ -27,7 +27,6 @@ package org.metaagent.framework.core.agent;
 import lombok.Getter;
 import org.metaagent.framework.core.agent.action.executor.ActionExecutor;
 import org.metaagent.framework.core.agent.action.executor.SyncActionExecutor;
-import org.metaagent.framework.core.agent.goal.Goal;
 import org.metaagent.framework.core.agent.state.AgentState;
 import org.metaagent.framework.core.agent.state.DefaultAgentState;
 import org.metaagent.framework.core.environment.Environment;
@@ -46,7 +45,6 @@ import java.util.concurrent.Executors;
  */
 @Getter
 public class DefaultAgentExecutionContext implements AgentExecutionContext {
-    private final Goal goal;
     private final Environment environment;
     private final ToolManager toolManager;
     private final ToolCallTracker toolCallTracker;
@@ -55,7 +53,6 @@ public class DefaultAgentExecutionContext implements AgentExecutionContext {
     private final Executor executor;
 
     protected DefaultAgentExecutionContext(Builder builder) {
-        this.goal = builder.goal;
         this.environment = builder.environment;
         this.toolManager = builder.toolManager;
         this.toolCallTracker = builder.toolCallTracker;
@@ -70,8 +67,8 @@ public class DefaultAgentExecutionContext implements AgentExecutionContext {
         agentState.reset();
     }
 
-    public static Builder builder(Goal goal) {
-        return new Builder(goal);
+    public static Builder builder() {
+        return new Builder();
     }
 
     public static Builder builder(AgentExecutionContext context) {
@@ -79,7 +76,6 @@ public class DefaultAgentExecutionContext implements AgentExecutionContext {
     }
 
     public static final class Builder {
-        private final Goal goal;
         private Environment environment;
         private ToolManager toolManager;
         private ToolCallTracker toolCallTracker;
@@ -87,12 +83,10 @@ public class DefaultAgentExecutionContext implements AgentExecutionContext {
         private AgentState agentState;
         private Executor executor;
 
-        private Builder(Goal goal) {
-            this.goal = goal;
+        private Builder() {
         }
 
         private Builder(AgentExecutionContext context) {
-            this.goal = context.getGoal();
             this.environment = context.getEnvironment();
             this.toolManager = context.getToolManager();
             this.actionExecutor = context.getActionExecutor();

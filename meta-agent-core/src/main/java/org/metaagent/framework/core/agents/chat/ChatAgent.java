@@ -28,9 +28,11 @@ import com.google.common.collect.Lists;
 import org.metaagent.framework.core.agent.Agent;
 import org.metaagent.framework.core.agent.AgentExecutionContext;
 import org.metaagent.framework.core.agent.chat.message.Message;
+import org.metaagent.framework.core.agent.chat.message.TextMessage;
 import org.metaagent.framework.core.agent.chat.message.history.MessageHistory;
 import org.metaagent.framework.core.agent.input.AgentInput;
 import org.metaagent.framework.core.agent.input.message.AgentMessageInput;
+import org.metaagent.framework.core.agent.output.AgentOutput;
 import org.metaagent.framework.core.agent.output.message.AgentMessageOutput;
 
 /**
@@ -41,11 +43,20 @@ import org.metaagent.framework.core.agent.output.message.AgentMessageOutput;
 public interface ChatAgent extends Agent {
     MessageHistory getMessageHistory();
 
+    default AgentOutput run(String input) {
+        return run(createContext(), new TextMessage(input));
+    }
+
+    @Override
+    default AgentOutput run(AgentExecutionContext context, String input) {
+        return run(context, new TextMessage(input));
+    }
+
     default AgentMessageOutput run(AgentExecutionContext context, Message message) {
         MessageHistory messageHistory = getMessageHistory();
         messageHistory.appendMessage(message);
 
-        AgentMessageInput messageInput = AgentMessageInput.build(Lists.newArrayList(messageHistory));
+        AgentMessageInput messageInput = AgentMessageInput.with(Lists.newArrayList(messageHistory));
         return run(context, messageInput);
     }
 

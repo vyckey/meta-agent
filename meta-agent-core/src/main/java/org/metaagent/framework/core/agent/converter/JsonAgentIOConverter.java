@@ -22,34 +22,29 @@
  * SOFTWARE.
  */
 
-package org.metaagent.framework.core.agent;
+package org.metaagent.framework.core.agent.converter;
 
-import org.metaagent.framework.core.agent.action.executor.ActionExecutor;
-import org.metaagent.framework.core.agent.goal.Goal;
-import org.metaagent.framework.core.agent.state.AgentState;
-import org.metaagent.framework.core.environment.Environment;
-import org.metaagent.framework.core.tool.manager.ToolManager;
-import org.metaagent.framework.core.tool.tracker.ToolCallTracker;
-
-import java.util.concurrent.Executor;
+import lombok.Getter;
+import org.metaagent.framework.core.agent.input.AgentInput;
+import org.metaagent.framework.core.agent.output.AgentOutput;
+import org.metaagent.framework.core.converter.JsonBiConverter;
+import org.metaagent.framework.core.util.json.JsonSchemaGenerator;
 
 /**
- * Agent execution context.
+ * JSON format implementation of {@link AgentIOConverter}.
  *
  * @author vyckey
  */
-public interface AgentExecutionContext {
-    AgentState getAgentState();
+@Getter
+public class JsonAgentIOConverter<I extends AgentInput, O extends AgentOutput>
+        extends DefaultAgentIOConverter<I, O> {
 
-    Environment getEnvironment();
-
-    ToolManager getToolManager();
-
-    ToolCallTracker getToolCallTracker();
-
-    ActionExecutor getActionExecutor();
-
-    Executor getExecutor();
-
-    void reset();
+    public JsonAgentIOConverter(Class<I> inputType, Class<O> outputType) {
+        super(
+                JsonSchemaGenerator.generateForType(inputType),
+                JsonSchemaGenerator.generateForType(outputType),
+                JsonBiConverter.create(inputType),
+                JsonBiConverter.create(outputType).reverse()
+        );
+    }
 }

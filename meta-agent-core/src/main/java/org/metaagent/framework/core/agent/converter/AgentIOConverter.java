@@ -22,34 +22,43 @@
  * SOFTWARE.
  */
 
-package org.metaagent.framework.core.agent;
+package org.metaagent.framework.core.agent.converter;
 
-import org.metaagent.framework.core.agent.action.executor.ActionExecutor;
-import org.metaagent.framework.core.agent.goal.Goal;
-import org.metaagent.framework.core.agent.state.AgentState;
-import org.metaagent.framework.core.environment.Environment;
-import org.metaagent.framework.core.tool.manager.ToolManager;
-import org.metaagent.framework.core.tool.tracker.ToolCallTracker;
-
-import java.util.concurrent.Executor;
+import org.metaagent.framework.core.agent.input.AgentInput;
+import org.metaagent.framework.core.agent.output.AgentOutput;
+import org.metaagent.framework.core.converter.Converter;
 
 /**
- * Agent execution context.
+ * Agent Input/Output Converter.
  *
  * @author vyckey
  */
-public interface AgentExecutionContext {
-    AgentState getAgentState();
+public interface AgentIOConverter<I extends AgentInput, O extends AgentOutput> {
+    /**
+     * Get the input schema of the agent.
+     *
+     * @return the input schema of the agent.
+     */
+    String getInputSchema();
 
-    Environment getEnvironment();
+    /**
+     * Get the output schema of the agent.
+     *
+     * @return the output schema of the agent.
+     */
+    String getOutputSchema();
 
-    ToolManager getToolManager();
+    /**
+     * Get the input converter of the agent.
+     *
+     * @return the input converter of the agent.
+     */
+    Converter<String, I> getInputConverter();
 
-    ToolCallTracker getToolCallTracker();
-
-    ActionExecutor getActionExecutor();
-
-    Executor getExecutor();
-
-    void reset();
+    /**
+     * Get the output converter of the agent.
+     *
+     * @return the output converter of the agent.
+     */
+    Converter<O, String> getOutputConverter();
 }

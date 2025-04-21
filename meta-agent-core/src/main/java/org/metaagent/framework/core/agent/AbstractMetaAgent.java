@@ -25,8 +25,6 @@
 package org.metaagent.framework.core.agent;
 
 import com.google.common.collect.Lists;
-import org.apache.commons.configuration2.Configuration;
-import org.apache.commons.configuration2.ImmutableConfiguration;
 import org.metaagent.framework.core.agent.ability.AgentAbilityManager;
 import org.metaagent.framework.core.agent.ability.DefaultAgentAbilityManager;
 import org.metaagent.framework.core.agent.fallback.AgentFallbackStrategy;
@@ -38,6 +36,8 @@ import org.metaagent.framework.core.agent.observability.AgentLogger;
 import org.metaagent.framework.core.agent.observability.AgentRunListener;
 import org.metaagent.framework.core.agent.observability.AgentStepListener;
 import org.metaagent.framework.core.agent.output.AgentOutput;
+import org.metaagent.framework.core.agent.profile.AgentProfile;
+import org.metaagent.framework.core.agent.profile.DefaultAgentProfile;
 import org.metaagent.framework.core.agent.state.AgentState;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -51,8 +51,7 @@ import java.util.function.Consumer;
  * @author vyckey
  */
 public abstract class AbstractMetaAgent implements MetaAgent {
-    protected final String name;
-    protected Configuration configuration;
+    protected AgentProfile profile;
     protected Memory memory = EmptyMemory.EMPTY_MEMORY;
     protected AgentAbilityManager abilityManager = new DefaultAgentAbilityManager();
     protected final List<AgentRunListener> runListeners = Lists.newArrayList();
@@ -61,18 +60,18 @@ public abstract class AbstractMetaAgent implements MetaAgent {
     protected Logger logger = LoggerFactory.getLogger(getClass());
 
     protected AbstractMetaAgent(String name) {
-        this.name = name;
+        this.profile = new DefaultAgentProfile(name);
         this.agentLogger = AgentLogger.getLogger(name);
     }
 
     @Override
-    public String getName() {
-        return name;
+    public final String getName() {
+        return profile.getName();
     }
 
     @Override
-    public ImmutableConfiguration getConfiguration() {
-        return configuration;
+    public AgentProfile getAgentProfile() {
+        return profile;
     }
 
     @Override

@@ -105,7 +105,7 @@ public class LlmChatAgent extends AbstractAgent implements ChatAgent {
     protected Prompt buildPrompt(AgentExecutionContext context, AgentMessageInput messageInput) {
         List<Message> inputMessages = messageInput.getMessages();
         List<org.springframework.ai.chat.messages.Message> messages = Lists.newArrayList();
-        messages.add(new SystemMessage(context.getGoal().getContent()));
+        messages.add(new SystemMessage(messageInput.getTopic()));
         inputMessages.stream().map(messageConverter::convert).forEach(messages::add);
 
         ChatOptions options = buildChatOptions(context, messageInput);

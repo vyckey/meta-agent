@@ -22,34 +22,34 @@
  * SOFTWARE.
  */
 
-package org.metaagent.framework.core.agent;
+package org.metaagent.framework.core.agent.converter;
 
-import org.metaagent.framework.core.agent.action.executor.ActionExecutor;
-import org.metaagent.framework.core.agent.goal.Goal;
-import org.metaagent.framework.core.agent.state.AgentState;
-import org.metaagent.framework.core.environment.Environment;
-import org.metaagent.framework.core.tool.manager.ToolManager;
-import org.metaagent.framework.core.tool.tracker.ToolCallTracker;
-
-import java.util.concurrent.Executor;
+import lombok.Builder;
+import lombok.Getter;
+import org.metaagent.framework.core.agent.input.AgentInput;
+import org.metaagent.framework.core.agent.output.AgentOutput;
+import org.metaagent.framework.core.converter.Converter;
 
 /**
- * Agent execution context.
+ * Default implementation of {@link AgentIOConverter}.
  *
  * @author vyckey
  */
-public interface AgentExecutionContext {
-    AgentState getAgentState();
+@Getter
+public class DefaultAgentIOConverter<I extends AgentInput, O extends AgentOutput> implements AgentIOConverter<I, O> {
+    private final String inputSchema;
+    private final String outputSchema;
+    private final Converter<String, I> inputConverter;
+    private final Converter<O, String> outputConverter;
 
-    Environment getEnvironment();
-
-    ToolManager getToolManager();
-
-    ToolCallTracker getToolCallTracker();
-
-    ActionExecutor getActionExecutor();
-
-    Executor getExecutor();
-
-    void reset();
+    @Builder
+    public DefaultAgentIOConverter(String inputSchema,
+                                   String outputSchema,
+                                   Converter<String, I> inputConverter,
+                                   Converter<O, String> outputConverter) {
+        this.inputSchema = inputSchema;
+        this.outputSchema = outputSchema;
+        this.inputConverter = inputConverter;
+        this.outputConverter = outputConverter;
+    }
 }

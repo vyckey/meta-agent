@@ -35,9 +35,23 @@ import java.util.List;
  * @author vyckey
  */
 public interface AgentMessageInput extends AgentInput {
+    String getTopic();
+
     List<Message> getMessages();
 
-    static AgentMessageInput build(List<Message> messages) {
-        return new DefaultAgentMessageInput(messages);
+    static AgentMessageInput with(List<Message> messages) {
+        return ImmutableAgentMessageInput.builder(messages).build();
+    }
+
+    static AgentMessageInput with(Message... messages) {
+        return ImmutableAgentMessageInput.builder(List.of(messages)).build();
+    }
+
+    static ImmutableAgentMessageInput.Builder builder(List<Message> messages) {
+        return ImmutableAgentMessageInput.builder(messages);
+    }
+
+    static ImmutableAgentMessageInput.Builder builder(Message... messages) {
+        return ImmutableAgentMessageInput.builder(List.of(messages));
     }
 }

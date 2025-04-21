@@ -22,30 +22,60 @@
  * SOFTWARE.
  */
 
-package org.metaagent.framework.core.agent.input.message;
+package org.metaagent.framework.core.agent.profile;
 
-import lombok.Getter;
-import org.metaagent.framework.core.agent.chat.message.Message;
-
-import java.util.List;
-import java.util.Objects;
+import org.metaagent.framework.core.common.MetadataProvider;
 
 /**
- * description is here
+ * Agent profile.
  *
  * @author vyckey
  */
-@Getter
-public class DefaultAgentMessageInput implements AgentMessageInput {
-    private final List<Message> messages;
+public interface AgentProfile extends MetadataProvider {
+    /**
+     * Gets agent name.
+     *
+     * @return the agent name.
+     */
+    String getName();
 
-    public DefaultAgentMessageInput(List<Message> messages) {
-        this.messages = Objects.requireNonNull(messages, "messages is required");
-    }
+    /**
+     * Gets agent description.
+     *
+     * @return the agent description.
+     */
+    String getDescription();
 
-    public DefaultAgentMessageInput(Message message) {
-        Objects.requireNonNull(message, "message is required");
-        this.messages = List.of(message);
-    }
+    /**
+     * Sets agent description.
+     *
+     * @param description the agent description.
+     */
+    void setDescription(String description);
 
+    /**
+     * Gets profile property.
+     *
+     * @param key the property key.
+     * @return the property value.
+     */
+    Object getProperty(String key);
+
+    /**
+     * Gets profile property.
+     *
+     * @param key the property key.
+     * @param <T> the property type.
+     * @return the property value.
+     */
+    <T> T getProperty(String key, Class<T> type);
+
+    /**
+     * Sets the property value.
+     *
+     * @param key   the property key.
+     * @param value the property value.
+     * @return the self profile.
+     */
+    AgentProfile setProperty(String key, Object value);
 }
