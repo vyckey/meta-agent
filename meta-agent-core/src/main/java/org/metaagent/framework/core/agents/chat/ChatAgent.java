@@ -28,6 +28,7 @@ import com.google.common.collect.Lists;
 import org.metaagent.framework.core.agent.Agent;
 import org.metaagent.framework.core.agent.AgentExecutionContext;
 import org.metaagent.framework.core.agent.chat.message.Message;
+import org.metaagent.framework.core.agent.chat.message.MessageFactory;
 import org.metaagent.framework.core.agent.chat.message.TextMessage;
 import org.metaagent.framework.core.agent.chat.message.history.MessageHistory;
 import org.metaagent.framework.core.agent.input.AgentInput;
@@ -49,7 +50,7 @@ public interface ChatAgent extends Agent {
 
     @Override
     default AgentOutput run(AgentExecutionContext context, String input) {
-        return run(context, new TextMessage(input));
+        return run(context, MessageFactory.textMessage("user", input));
     }
 
     default AgentMessageOutput run(AgentExecutionContext context, Message message) {

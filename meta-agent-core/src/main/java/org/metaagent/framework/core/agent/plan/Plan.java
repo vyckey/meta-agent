@@ -24,7 +24,6 @@
 
 package org.metaagent.framework.core.agent.plan;
 
-import org.metaagent.framework.core.agent.goal.Goal;
 import org.metaagent.framework.core.agent.task.Task;
 import org.metaagent.framework.core.agent.task.TaskGraph;
 import org.metaagent.framework.core.agent.task.TaskResult;
@@ -35,7 +34,7 @@ import org.metaagent.framework.core.agent.task.TaskResult;
  * @author vyckey
  */
 public interface Plan {
-    Goal getGoal();
+    String getGoal();
 
     PlanStatus getStatus();
 

@@ -25,7 +25,6 @@
 package org.metaagent.framework.core.agent;
 
 import org.metaagent.framework.core.agent.action.executor.ActionExecutor;
-import org.metaagent.framework.core.agent.goal.Goal;
 import org.metaagent.framework.core.agent.state.AgentState;
 import org.metaagent.framework.core.environment.Environment;
 import org.metaagent.framework.core.tool.manager.ToolManager;
