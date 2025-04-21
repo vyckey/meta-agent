@@ -22,13 +22,24 @@
  * SOFTWARE.
  */
 
-package org.metaagent.framework.core.agent.goal;
+package org.metaagent.framework.core.agents.cooperation;
+
+import org.metaagent.framework.core.agent.Agent;
+import org.metaagent.framework.core.agent.AgentExecutionContext;
+import org.metaagent.framework.core.agent.input.AgentInput;
+import org.metaagent.framework.core.agent.output.AgentOutput;
+
+import java.util.List;
 
 /**
- * description is here
+ * The conductor agent.
  *
  * @author vyckey
  */
-public interface Goal {
-    String getContent();
+public interface ConductorAgent extends Agent {
+    List<Agent> getActorAgents();
+
+    default AgentOutput conduct(Agent actorAgent, AgentExecutionContext context, AgentInput input) {
+        return actorAgent.run(context, input);
+    }
 }

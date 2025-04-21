@@ -24,6 +24,8 @@
 
 package org.metaagent.framework.core.agent;
 
+import org.apache.commons.lang3.NotImplementedException;
+import org.metaagent.framework.core.agent.converter.AgentIOConverter;
 import org.metaagent.framework.core.agent.fallback.AgentFallbackStrategy;
 import org.metaagent.framework.core.agent.input.AgentInput;
 import org.metaagent.framework.core.agent.loop.AgentLoopControlStrategy;
@@ -40,6 +42,15 @@ import java.util.concurrent.CompletableFuture;
  * @author vyckey
  */
 public interface Agent extends MetaAgent {
+
+    /**
+     * Gets Input/Output converter.
+     *
+     * @return the converter.
+     */
+    default AgentIOConverter<AgentInput, AgentOutput> getIOConverter() {
+        throw new NotImplementedException("not implement yet");
+    }
 
     /**
      * Gets loop control strategy which controls if the agent will continue to do next loop.
