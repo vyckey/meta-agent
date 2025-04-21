@@ -22,32 +22,44 @@
  * SOFTWARE.
  */
 
-package org.metaagent.framework.tools.search.tavily;
+package org.metaagent.framework.core.tool.toolkit;
 
-import lombok.AccessLevel;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
+import org.metaagent.framework.core.tool.Tool;
 
-import java.util.Map;
+import java.util.List;
 
 /**
- * description is here
+ * Toolkit is a collection of tools that can be used together to perform a specific task or set of tasks.
  *
  * @author vyckey
  */
-@Getter
-@Builder
-@NoArgsConstructor
-@AllArgsConstructor(access = AccessLevel.PRIVATE)
-public class TavilySearchInput {
-    private String searchTerms;
-    private Integer maxResults;
-    private String language;
-    private String geoLocation;
-    private Integer startPage;
-    private Integer startIndex;
-    private Boolean safeSearch;
-    private Map<String, Object> additionalParams;
+public interface Toolkit {
+    /**
+     * Get the name of the toolkit.
+     *
+     * @return the name of the toolkit
+     */
+    String getName();
+
+    /**
+     * Get the description of the toolkit.
+     *
+     * @return the description of the toolkit
+     */
+    String getDescription();
+
+    /**
+     * Get the list of tools in the toolkit.
+     *
+     * @return the list of tools in the toolkit
+     */
+    List<Tool<?, ?>> listTools();
+
+    /**
+     * Get the list of tool names in the toolkit.
+     *
+     * @param name the name of the tool
+     * @return the tool name
+     */
+    Tool<?, ?> getTool(String name);
 }

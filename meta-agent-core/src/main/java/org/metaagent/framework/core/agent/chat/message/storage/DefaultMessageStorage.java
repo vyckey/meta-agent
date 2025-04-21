@@ -22,46 +22,29 @@
  * SOFTWARE.
  */
 
-plugins {
-    id 'java-library'
-    id 'application'
-    id 'maven-publish'
-    id 'buildlogic.java-common-conventions'
-}
+package org.metaagent.framework.core.agent.chat.message.storage;
 
-group = 'org.metaagent.framework'
-version = '1.0.0-SNAPSHOT'
+import org.metaagent.framework.core.agent.chat.message.history.MessageHistory;
 
-publishing {
-    publications {
-        create("mavenJava", MavenPublication) {
-            from components.java
-        }
+/**
+ * description is here
+ *
+ * @author vyckey
+ */
+public class DefaultMessageStorage implements MessageStorage {
+    public static final DefaultMessageStorage INSTANCE = new DefaultMessageStorage();
+
+    private DefaultMessageStorage() {}
+
+    @Override
+    public void save(MessageHistory messageHistory) {
     }
-}
 
-sourceSets {
-    main {
-        resources {
-            srcDirs = ['src/main/resources']
-        }
+    @Override
+    public void load(MessageHistory messageHistory) {
     }
-    test {
-        resources {
-            srcDirs = ['src/test/resources']
-        }
+
+    @Override
+    public void clear(String historyId) {
     }
-}
-
-dependencies {
-    compileOnly libs.bundles.lombok
-    annotationProcessor libs.bundles.lombok
-
-    api libs.bundles.utilies
-    api libs.bundles.jackson
-    api libs.bundles.log
-    api libs.bundles.mcp
-    api libs.bundles.reactor
-    api libs.bundles.springai
-
 }

@@ -22,46 +22,29 @@
  * SOFTWARE.
  */
 
-plugins {
-    id 'java-library'
-    id 'application'
-    id 'maven-publish'
-    id 'buildlogic.java-common-conventions'
-}
+package org.metaagent.framework.core.agent.converter;
 
-group = 'org.metaagent.framework'
-version = '1.0.0-SNAPSHOT'
+import lombok.Getter;
+import org.metaagent.framework.core.agent.input.AgentInput;
+import org.metaagent.framework.core.agent.output.AgentOutput;
+import org.metaagent.framework.core.converter.JsonBiConverter;
+import org.metaagent.framework.core.util.json.JsonSchemaGenerator;
 
-publishing {
-    publications {
-        create("mavenJava", MavenPublication) {
-            from components.java
-        }
+/**
+ * JSON format implementation of {@link AgentIOConverter}.
+ *
+ * @author vyckey
+ */
+@Getter
+public class JsonAgentIOConverter<I extends AgentInput, O extends AgentOutput>
+        extends DefaultAgentIOConverter<I, O> {
+
+    public JsonAgentIOConverter(Class<I> inputType, Class<O> outputType) {
+        super(
+                JsonSchemaGenerator.generateForType(inputType),
+                JsonSchemaGenerator.generateForType(outputType),
+                JsonBiConverter.create(inputType),
+                JsonBiConverter.create(outputType).reverse()
+        );
     }
-}
-
-sourceSets {
-    main {
-        resources {
-            srcDirs = ['src/main/resources']
-        }
-    }
-    test {
-        resources {
-            srcDirs = ['src/test/resources']
-        }
-    }
-}
-
-dependencies {
-    compileOnly libs.bundles.lombok
-    annotationProcessor libs.bundles.lombok
-
-    api libs.bundles.utilies
-    api libs.bundles.jackson
-    api libs.bundles.log
-    api libs.bundles.mcp
-    api libs.bundles.reactor
-    api libs.bundles.springai
-
 }

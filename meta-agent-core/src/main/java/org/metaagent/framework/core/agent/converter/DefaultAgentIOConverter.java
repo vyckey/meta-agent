@@ -22,46 +22,34 @@
  * SOFTWARE.
  */
 
-plugins {
-    id 'java-library'
-    id 'application'
-    id 'maven-publish'
-    id 'buildlogic.java-common-conventions'
-}
+package org.metaagent.framework.core.agent.converter;
 
-group = 'org.metaagent.framework'
-version = '1.0.0-SNAPSHOT'
+import lombok.Builder;
+import lombok.Getter;
+import org.metaagent.framework.core.agent.input.AgentInput;
+import org.metaagent.framework.core.agent.output.AgentOutput;
+import org.metaagent.framework.core.converter.Converter;
 
-publishing {
-    publications {
-        create("mavenJava", MavenPublication) {
-            from components.java
-        }
+/**
+ * Default implementation of {@link AgentIOConverter}.
+ *
+ * @author vyckey
+ */
+@Getter
+public class DefaultAgentIOConverter<I extends AgentInput, O extends AgentOutput> implements AgentIOConverter<I, O> {
+    private final String inputSchema;
+    private final String outputSchema;
+    private final Converter<String, I> inputConverter;
+    private final Converter<O, String> outputConverter;
+
+    @Builder
+    public DefaultAgentIOConverter(String inputSchema,
+                                   String outputSchema,
+                                   Converter<String, I> inputConverter,
+                                   Converter<O, String> outputConverter) {
+        this.inputSchema = inputSchema;
+        this.outputSchema = outputSchema;
+        this.inputConverter = inputConverter;
+        this.outputConverter = outputConverter;
     }
-}
-
-sourceSets {
-    main {
-        resources {
-            srcDirs = ['src/main/resources']
-        }
-    }
-    test {
-        resources {
-            srcDirs = ['src/test/resources']
-        }
-    }
-}
-
-dependencies {
-    compileOnly libs.bundles.lombok
-    annotationProcessor libs.bundles.lombok
-
-    api libs.bundles.utilies
-    api libs.bundles.jackson
-    api libs.bundles.log
-    api libs.bundles.mcp
-    api libs.bundles.reactor
-    api libs.bundles.springai
-
 }

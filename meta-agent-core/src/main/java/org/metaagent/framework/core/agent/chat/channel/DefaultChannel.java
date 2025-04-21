@@ -27,9 +27,9 @@ package org.metaagent.framework.core.agent.chat.channel;
 import com.google.common.collect.Lists;
 import lombok.extern.slf4j.Slf4j;
 import org.metaagent.framework.core.agent.chat.message.Message;
-import org.metaagent.framework.core.agent.chat.message.MessageHistory;
-import org.metaagent.framework.core.agent.chat.message.DefaultMessageHistory;
 import org.metaagent.framework.core.agent.chat.message.MessageListener;
+import org.metaagent.framework.core.agent.chat.message.history.DefaultMessageHistory;
+import org.metaagent.framework.core.agent.chat.message.history.MessageHistory;
 
 import java.io.IOException;
 import java.util.List;

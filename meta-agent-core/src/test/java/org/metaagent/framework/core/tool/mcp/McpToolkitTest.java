@@ -22,30 +22,27 @@
  * SOFTWARE.
  */
 
-package org.metaagent.framework.core.agent.input.message;
+package org.metaagent.framework.core.tool.mcp;
 
-import lombok.Getter;
-import org.metaagent.framework.core.agent.chat.message.Message;
-
-import java.util.List;
-import java.util.Objects;
+import io.modelcontextprotocol.client.McpSyncClient;
+import org.junit.Ignore;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
 
 /**
  * description is here
  *
  * @author vyckey
  */
-@Getter
-public class DefaultAgentMessageInput implements AgentMessageInput {
-    private final List<Message> messages;
+class McpToolkitTest {
 
-    public DefaultAgentMessageInput(List<Message> messages) {
-        this.messages = Objects.requireNonNull(messages, "messages is required");
+    @Ignore
+    @Test
+    void listToolsTest() {
+        McpSyncClient mcpClient = McpClientBuilder.httpSse("http://localhost:8931/sse")
+                .sync().build();
+        McpToolkit toolkit = new McpToolkit("Playwright", "Playwright MCP tools.", mcpClient);
+        toolkit.loadTools();
+        Assertions.assertFalse(toolkit.listTools().isEmpty());
     }
-
-    public DefaultAgentMessageInput(Message message) {
-        Objects.requireNonNull(message, "message is required");
-        this.messages = List.of(message);
-    }
-
 }

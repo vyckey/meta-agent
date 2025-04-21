@@ -22,46 +22,43 @@
  * SOFTWARE.
  */
 
-plugins {
-    id 'java-library'
-    id 'application'
-    id 'maven-publish'
-    id 'buildlogic.java-common-conventions'
-}
+package org.metaagent.framework.core.agent.converter;
 
-group = 'org.metaagent.framework'
-version = '1.0.0-SNAPSHOT'
+import org.metaagent.framework.core.agent.input.AgentInput;
+import org.metaagent.framework.core.agent.output.AgentOutput;
+import org.metaagent.framework.core.converter.Converter;
 
-publishing {
-    publications {
-        create("mavenJava", MavenPublication) {
-            from components.java
-        }
-    }
-}
+/**
+ * Agent Input/Output Converter.
+ *
+ * @author vyckey
+ */
+public interface AgentIOConverter<I extends AgentInput, O extends AgentOutput> {
+    /**
+     * Get the input schema of the agent.
+     *
+     * @return the input schema of the agent.
+     */
+    String getInputSchema();
 
-sourceSets {
-    main {
-        resources {
-            srcDirs = ['src/main/resources']
-        }
-    }
-    test {
-        resources {
-            srcDirs = ['src/test/resources']
-        }
-    }
-}
+    /**
+     * Get the output schema of the agent.
+     *
+     * @return the output schema of the agent.
+     */
+    String getOutputSchema();
 
-dependencies {
-    compileOnly libs.bundles.lombok
-    annotationProcessor libs.bundles.lombok
+    /**
+     * Get the input converter of the agent.
+     *
+     * @return the input converter of the agent.
+     */
+    Converter<String, I> getInputConverter();
 
-    api libs.bundles.utilies
-    api libs.bundles.jackson
-    api libs.bundles.log
-    api libs.bundles.mcp
-    api libs.bundles.reactor
-    api libs.bundles.springai
-
+    /**
+     * Get the output converter of the agent.
+     *
+     * @return the output converter of the agent.
+     */
+    Converter<O, String> getOutputConverter();
 }

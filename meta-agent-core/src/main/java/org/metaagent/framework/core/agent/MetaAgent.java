@@ -24,13 +24,14 @@
 
 package org.metaagent.framework.core.agent;
 
-import org.apache.commons.configuration2.ImmutableConfiguration;
 import org.metaagent.framework.core.agent.ability.AgentAbility;
 import org.metaagent.framework.core.agent.ability.AgentAbilityManager;
 import org.metaagent.framework.core.agent.fallback.AgentFallbackStrategy;
 import org.metaagent.framework.core.agent.input.AgentInput;
 import org.metaagent.framework.core.agent.memory.Memory;
 import org.metaagent.framework.core.agent.output.AgentOutput;
+import org.metaagent.framework.core.agent.profile.AgentProfile;
+import reactor.core.publisher.Flux;
 
 import java.util.concurrent.CompletableFuture;
 
@@ -45,14 +46,16 @@ public interface MetaAgent {
      *
      * @return the agent name.
      */
-    String getName();
+    default String getName() {
+        return getAgentProfile().getName();
+    }
 
     /**
-     * Gets agent configuration.
+     * Gets agent profile.
      *
-     * @return the agent configuration.
+     * @return the agent profile.
      */
-    ImmutableConfiguration getConfiguration();
+    AgentProfile getAgentProfile();
 
     /**
      * Gets agent memory.
@@ -92,6 +95,17 @@ public interface MetaAgent {
         } catch (Exception ex) {
             return getFallbackStrategy().fallback(this, context, input, ex);
         }
+    }
+
+    /**
+     * Runs agent logic in a streaming way.
+     *
+     * @param context the agent execution context.
+     * @param input   the agent input.
+     * @return the streaming agent output.
+     */
+    default Flux<AgentOutput> runFlux(AgentExecutionContext context, AgentInput input) {
+        throw new UnsupportedOperationException("Streaming run is not supported");
     }
 
     /**

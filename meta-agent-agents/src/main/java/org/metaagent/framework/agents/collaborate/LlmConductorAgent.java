@@ -22,47 +22,51 @@
  * SOFTWARE.
  */
 
-package org.metaagent.framework.core.agents.chat;
+package org.metaagent.framework.agents.collaborate;
 
 import com.google.common.collect.Lists;
+import org.apache.commons.lang3.NotImplementedException;
+import org.metaagent.framework.core.agent.AbstractAgent;
 import org.metaagent.framework.core.agent.Agent;
 import org.metaagent.framework.core.agent.AgentExecutionContext;
-import org.metaagent.framework.core.agent.chat.message.Message;
-import org.metaagent.framework.core.agent.chat.message.MessageFactory;
-import org.metaagent.framework.core.agent.chat.message.TextMessage;
-import org.metaagent.framework.core.agent.chat.message.history.MessageHistory;
 import org.metaagent.framework.core.agent.input.AgentInput;
-import org.metaagent.framework.core.agent.input.message.AgentMessageInput;
 import org.metaagent.framework.core.agent.output.AgentOutput;
-import org.metaagent.framework.core.agent.output.message.AgentMessageOutput;
+import org.metaagent.framework.core.agents.cooperation.ConductorAgent;
+
+import java.util.List;
 
 /**
  * description is here
  *
  * @author vyckey
  */
-public interface ChatAgent extends Agent {
-    MessageHistory getMessageHistory();
+public class LlmConductorAgent extends AbstractAgent implements ConductorAgent {
+    protected final List<Agent> actorAgents;
 
-    default AgentOutput run(String input) {
-        return run(createContext(), new TextMessage(input));
+    public LlmConductorAgent(String name, List<Agent> actorAgents) {
+        super(name);
+        this.actorAgents = actorAgents;
+    }
+
+    public LlmConductorAgent(String name) {
+        this(name, Lists.newArrayList());
+    }
+
+    public void addActorAgent(Agent actorAgent) {
+        this.actorAgents.add(actorAgent);
+    }
+
+    public void removeActorAgent(Agent actorAgent) {
+        this.actorAgents.remove(actorAgent);
     }
 
     @Override
-    default AgentOutput run(AgentExecutionContext context, String input) {
-        return run(context, MessageFactory.textMessage("user", input));
+    public List<Agent> getActorAgents() {
+        return actorAgents;
     }
 
-    default AgentMessageOutput run(AgentExecutionContext context, Message message) {
-        MessageHistory messageHistory = getMessageHistory();
-        messageHistory.appendMessage(message);
-
-        AgentMessageInput messageInput = AgentMessageInput.with(Lists.newArrayList(messageHistory));
-        return run(context, messageInput);
+    @Override
+    protected AgentOutput doStep(AgentExecutionContext context, AgentInput input) {
+        throw new NotImplementedException("not implement yet");
     }
-
-    default AgentMessageOutput run(AgentExecutionContext context, AgentMessageInput input) {
-        return (AgentMessageOutput) run(context, (AgentInput) input);
-    }
-
 }

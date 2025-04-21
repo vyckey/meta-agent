@@ -22,13 +22,60 @@
  * SOFTWARE.
  */
 
-package org.metaagent.framework.core.agent.goal;
+package org.metaagent.framework.core.agent.profile;
+
+import org.metaagent.framework.core.common.MetadataProvider;
 
 /**
- * description is here
+ * Agent profile.
  *
  * @author vyckey
  */
-public interface Goal {
-    String getContent();
+public interface AgentProfile extends MetadataProvider {
+    /**
+     * Gets agent name.
+     *
+     * @return the agent name.
+     */
+    String getName();
+
+    /**
+     * Gets agent description.
+     *
+     * @return the agent description.
+     */
+    String getDescription();
+
+    /**
+     * Sets agent description.
+     *
+     * @param description the agent description.
+     */
+    void setDescription(String description);
+
+    /**
+     * Gets profile property.
+     *
+     * @param key the property key.
+     * @return the property value.
+     */
+    Object getProperty(String key);
+
+    /**
+     * Gets profile property.
+     *
+     * @param key the property key.
+     * @param <T> the property type.
+     * @return the property value.
+     */
+    <T> T getProperty(String key, Class<T> type);
+
+    /**
+     * Sets the property value.
+     *
+     * @param key   the property key.
+     * @param value the property value.
+     * @return the self profile.
+     */
+    AgentProfile setProperty(String key, Object value);
 }

@@ -22,46 +22,24 @@
  * SOFTWARE.
  */
 
-plugins {
-    id 'java-library'
-    id 'application'
-    id 'maven-publish'
-    id 'buildlogic.java-common-conventions'
-}
+package org.metaagent.framework.core.agents.cooperation;
 
-group = 'org.metaagent.framework'
-version = '1.0.0-SNAPSHOT'
+import org.metaagent.framework.core.agent.Agent;
+import org.metaagent.framework.core.agent.AgentExecutionContext;
+import org.metaagent.framework.core.agent.input.AgentInput;
+import org.metaagent.framework.core.agent.output.AgentOutput;
 
-publishing {
-    publications {
-        create("mavenJava", MavenPublication) {
-            from components.java
-        }
+import java.util.List;
+
+/**
+ * The conductor agent.
+ *
+ * @author vyckey
+ */
+public interface ConductorAgent extends Agent {
+    List<Agent> getActorAgents();
+
+    default AgentOutput conduct(Agent actorAgent, AgentExecutionContext context, AgentInput input) {
+        return actorAgent.run(context, input);
     }
-}
-
-sourceSets {
-    main {
-        resources {
-            srcDirs = ['src/main/resources']
-        }
-    }
-    test {
-        resources {
-            srcDirs = ['src/test/resources']
-        }
-    }
-}
-
-dependencies {
-    compileOnly libs.bundles.lombok
-    annotationProcessor libs.bundles.lombok
-
-    api libs.bundles.utilies
-    api libs.bundles.jackson
-    api libs.bundles.log
-    api libs.bundles.mcp
-    api libs.bundles.reactor
-    api libs.bundles.springai
-
 }

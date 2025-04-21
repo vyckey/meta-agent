@@ -64,7 +64,7 @@ public class DefaultToolContext implements ToolContext {
 
         public DefaultToolContext build() {
             if (toolManager == null) {
-                this.toolManager = DefaultToolManager.getInstance();
+                this.toolManager = new DefaultToolManager();
             }
             return new DefaultToolContext(this);
         }

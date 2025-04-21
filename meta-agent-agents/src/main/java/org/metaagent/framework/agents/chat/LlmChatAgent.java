@@ -28,9 +28,9 @@ import com.google.common.collect.Lists;
 import org.metaagent.framework.core.agent.AbstractAgent;
 import org.metaagent.framework.core.agent.AgentExecutionContext;
 import org.metaagent.framework.core.agent.AgentExecutionException;
-import org.metaagent.framework.core.agent.chat.message.DefaultMessageHistory;
 import org.metaagent.framework.core.agent.chat.message.Message;
-import org.metaagent.framework.core.agent.chat.message.MessageHistory;
+import org.metaagent.framework.core.agent.chat.message.history.DefaultMessageHistory;
+import org.metaagent.framework.core.agent.chat.message.history.MessageHistory;
 import org.metaagent.framework.core.agent.input.AgentInput;
 import org.metaagent.framework.core.agent.input.message.AgentMessageInput;
 import org.metaagent.framework.core.agent.output.AgentOutput;
@@ -47,7 +47,6 @@ import org.springframework.ai.chat.model.ChatResponse;
 import org.springframework.ai.chat.model.Generation;
 import org.springframework.ai.chat.prompt.ChatOptions;
 import org.springframework.ai.chat.prompt.Prompt;
-import org.springframework.ai.model.ModelOptionsUtils;
 import org.springframework.ai.model.tool.ToolCallingChatOptions;
 
 import java.util.List;
@@ -106,7 +105,7 @@ public class LlmChatAgent extends AbstractAgent implements ChatAgent {
     protected Prompt buildPrompt(AgentExecutionContext context, AgentMessageInput messageInput) {
         List<Message> inputMessages = messageInput.getMessages();
         List<org.springframework.ai.chat.messages.Message> messages = Lists.newArrayList();
-        messages.add(new SystemMessage(context.getGoal().getContent()));
+        messages.add(new SystemMessage(messageInput.getTopic()));
         inputMessages.stream().map(messageConverter::convert).forEach(messages::add);
 
         ChatOptions options = buildChatOptions(context, messageInput);
@@ -114,10 +113,12 @@ public class LlmChatAgent extends AbstractAgent implements ChatAgent {
     }
 
     protected ChatOptions buildChatOptions(AgentExecutionContext context, AgentMessageInput messageInput) {
-        ToolCallingChatOptions toolChatOptions = ToolCallbackUtils.buildChatOptions(context.getToolManager());
-        ChatOptions chatOptions = this.chatOptions.copy();
-        ModelOptionsUtils.merge(toolChatOptions, chatOptions, chatOptions.getClass());
-        return chatOptions;
+        if (this.chatOptions instanceof ToolCallingChatOptions) {
+            ToolCallingChatOptions toolCallingChatOptions = this.chatOptions.copy();
+            ToolCallbackUtils.setToolOptions(toolCallingChatOptions, context.getToolManager());
+            return toolCallingChatOptions;
+        }
+        return this.chatOptions;
     }
 
     @Override

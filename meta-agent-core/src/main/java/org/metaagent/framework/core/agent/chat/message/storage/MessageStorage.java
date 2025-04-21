@@ -22,46 +22,19 @@
  * SOFTWARE.
  */
 
-plugins {
-    id 'java-library'
-    id 'application'
-    id 'maven-publish'
-    id 'buildlogic.java-common-conventions'
-}
+package org.metaagent.framework.core.agent.chat.message.storage;
 
-group = 'org.metaagent.framework'
-version = '1.0.0-SNAPSHOT'
+import org.metaagent.framework.core.agent.chat.message.history.MessageHistory;
 
-publishing {
-    publications {
-        create("mavenJava", MavenPublication) {
-            from components.java
-        }
-    }
-}
+/**
+ * Message storage interface for storing and retrieving messages.
+ *
+ * @author vyckey
+ */
+public interface MessageStorage {
+    void save(MessageHistory messageHistory);
 
-sourceSets {
-    main {
-        resources {
-            srcDirs = ['src/main/resources']
-        }
-    }
-    test {
-        resources {
-            srcDirs = ['src/test/resources']
-        }
-    }
-}
+    void load(MessageHistory messageHistory);
 
-dependencies {
-    compileOnly libs.bundles.lombok
-    annotationProcessor libs.bundles.lombok
-
-    api libs.bundles.utilies
-    api libs.bundles.jackson
-    api libs.bundles.log
-    api libs.bundles.mcp
-    api libs.bundles.reactor
-    api libs.bundles.springai
-
+    void clear(String historyId);
 }

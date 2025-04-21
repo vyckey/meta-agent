@@ -22,33 +22,41 @@
  * SOFTWARE.
  */
 
-package org.metaagent.framework.core.agent;
+package org.metaagent.framework.core.tool.mcp;
 
-import org.metaagent.framework.core.agent.action.executor.ActionExecutor;
-import org.metaagent.framework.core.agent.state.AgentState;
-import org.metaagent.framework.core.environment.Environment;
-import org.metaagent.framework.core.tool.manager.ToolManager;
-import org.metaagent.framework.core.tool.tracker.ToolCallTracker;
-
-import java.util.concurrent.Executor;
+import io.modelcontextprotocol.client.McpClient;
+import io.modelcontextprotocol.client.transport.HttpClientSseClientTransport;
+import io.modelcontextprotocol.client.transport.ServerParameters;
+import io.modelcontextprotocol.client.transport.StdioClientTransport;
+import io.modelcontextprotocol.spec.ClientMcpTransport;
 
 /**
- * Agent execution context.
+ * description is here
  *
  * @author vyckey
  */
-public interface AgentExecutionContext {
-    AgentState getAgentState();
+public class McpClientBuilder {
+    final ClientMcpTransport transport;
 
-    Environment getEnvironment();
+    McpClientBuilder(ClientMcpTransport transport) {
+        this.transport = transport;
+    }
 
-    ToolManager getToolManager();
+    public static McpClientBuilder httpSse(String baseUri) {
+        HttpClientSseClientTransport transport = new HttpClientSseClientTransport(baseUri);
+        return new McpClientBuilder(transport);
+    }
 
-    ToolCallTracker getToolCallTracker();
+    public static McpClientBuilder stdio(ServerParameters parameters) {
+        StdioClientTransport transport = new StdioClientTransport(parameters);
+        return new McpClientBuilder(transport);
+    }
 
-    ActionExecutor getActionExecutor();
+    public McpClient.SyncSpec sync() {
+        return McpClient.sync(transport);
+    }
 
-    Executor getExecutor();
-
-    void reset();
+    public McpClient.AsyncSpec async() {
+        return McpClient.async(transport);
+    }
 }
