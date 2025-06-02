@@ -25,6 +25,7 @@
 package org.metaagent.framework.core.tool.mcp;
 
 import com.fasterxml.jackson.core.type.TypeReference;
+import io.modelcontextprotocol.client.McpAsyncClient;
 import io.modelcontextprotocol.client.McpSyncClient;
 import io.modelcontextprotocol.spec.McpSchema;
 import lombok.extern.slf4j.Slf4j;
@@ -37,21 +38,33 @@ import org.metaagent.framework.core.tool.definition.ToolDefinition;
 import org.metaagent.framework.core.util.json.JsonObjectMapper;
 
 import java.util.Map;
+import java.util.Objects;
 
 /**
- * description is here
+ * Model Context Protocol (MCP) Tool
  *
  * @author vyckey
+ * @see McpSyncClient
+ * @see McpAsyncClient
  */
 @Slf4j
 public class McpTool implements Tool<Map<String, Object>, McpSchema.CallToolResult> {
     protected final McpSyncClient mcpSyncClient;
+    protected final McpAsyncClient mcpAsyncClient;
     protected final McpSchema.Tool toolSchema;
     protected final ToolDefinition toolDefinition;
 
     public McpTool(McpSyncClient mcpSyncClient, McpSchema.Tool toolSchema) {
-        this.mcpSyncClient = mcpSyncClient;
-        this.toolSchema = toolSchema;
+        this.mcpSyncClient = Objects.requireNonNull(mcpSyncClient, "McpSyncClient is required");
+        this.mcpAsyncClient = null;
+        this.toolSchema = Objects.requireNonNull(toolSchema, "ToolSchema is required");
+        this.toolDefinition = buildToolDefinition(toolSchema);
+    }
+
+    public McpTool(McpAsyncClient mcpAsyncClient, McpSchema.Tool toolSchema) {
+        this.mcpSyncClient = null;
+        this.mcpAsyncClient = Objects.requireNonNull(mcpAsyncClient, "McpAsyncClient is required");
+        this.toolSchema = Objects.requireNonNull(toolSchema, "ToolSchema is required");
         this.toolDefinition = buildToolDefinition(toolSchema);
     }
 
@@ -80,7 +93,12 @@ public class McpTool implements Tool<Map<String, Object>, McpSchema.CallToolResu
     public McpSchema.CallToolResult run(ToolContext context, Map<String, Object> input) throws ToolExecutionException {
         String name = getDefinition().name();
         McpSchema.CallToolRequest toolRequest = new McpSchema.CallToolRequest(name, input);
-        McpSchema.CallToolResult toolResult = mcpSyncClient.callTool(toolRequest);
+        McpSchema.CallToolResult toolResult;
+        if (mcpSyncClient != null) {
+            toolResult = mcpSyncClient.callTool(toolRequest);
+        } else {
+            toolResult = mcpAsyncClient.callTool(toolRequest).block();
+        }
         return toolResult;
     }
 

@@ -25,9 +25,12 @@
 package org.metaagent.framework.core.tool.mcp;
 
 import io.modelcontextprotocol.client.McpSyncClient;
+import io.modelcontextprotocol.client.transport.HttpClientSseClientTransport;
 import org.junit.Ignore;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
+import org.metaagent.framework.core.mcp.factory.McpClientFactory;
+import org.metaagent.framework.core.mcp.factory.McpTransportFactory;
 
 /**
  * description is here
@@ -39,9 +42,9 @@ class McpToolkitTest {
     @Ignore
     @Test
     void listToolsTest() {
-        McpSyncClient mcpClient = McpClientBuilder.httpSse("http://localhost:8931/sse")
-                .sync().build();
-        McpToolkit toolkit = new McpToolkit("Playwright", "Playwright MCP tools.", mcpClient);
+        HttpClientSseClientTransport transport = McpTransportFactory.httpClientSseClient("http://localhost:8931/sse");
+        McpSyncClient mcpClient = McpClientFactory.syncClient(transport).build();
+        McpToolkit toolkit = McpToolkit.sync("Playwright", "Playwright MCP tools.", mcpClient);
         toolkit.loadTools();
         Assertions.assertFalse(toolkit.listTools().isEmpty());
     }

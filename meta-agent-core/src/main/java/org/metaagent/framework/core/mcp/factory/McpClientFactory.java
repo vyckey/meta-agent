@@ -22,27 +22,26 @@
  * SOFTWARE.
  */
 
-package org.metaagent.framework.core.agent.goal;
+package org.metaagent.framework.core.mcp.factory;
 
-import lombok.Getter;
-
-import java.util.Objects;
+import io.modelcontextprotocol.client.McpAsyncClient;
+import io.modelcontextprotocol.client.McpClient;
+import io.modelcontextprotocol.client.McpSyncClient;
+import io.modelcontextprotocol.spec.McpClientTransport;
 
 /**
- * description is here
+ * Model Context Protocol (MCP) Client Factory
  *
- * @author vyckey
+ * @see McpClient
+ * @see McpSyncClient
+ * @see McpAsyncClient
  */
-@Getter
-public class DefaultGoal implements Goal {
-    private final String content;
-
-    public DefaultGoal(String content) {
-        this.content = Objects.requireNonNull(content, "content is required");
+public abstract class McpClientFactory {
+    public static McpClient.SyncSpec syncClient(McpClientTransport transport) {
+        return McpClient.sync(transport);
     }
 
-    @Override
-    public String toString() {
-        return content;
+    public static McpClient.AsyncSpec asyncClient(McpClientTransport transport) {
+        return McpClient.async(transport);
     }
 }
