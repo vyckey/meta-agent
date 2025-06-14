@@ -22,7 +22,7 @@
  * SOFTWARE.
  */
 
-package org.metaagent.framework.core.mcp.factory;
+package org.metaagent.framework.core.mcp.client.factory;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.modelcontextprotocol.client.transport.HttpClientSseClientTransport;

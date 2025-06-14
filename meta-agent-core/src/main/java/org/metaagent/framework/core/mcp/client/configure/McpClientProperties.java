@@ -22,30 +22,23 @@
  * SOFTWARE.
  */
 
-package org.metaagent.framework.core.tool.mcp;
+package org.metaagent.framework.core.mcp.client.configure;
 
-import io.modelcontextprotocol.client.McpSyncClient;
-import io.modelcontextprotocol.client.transport.HttpClientSseClientTransport;
-import org.junit.Ignore;
-import org.junit.jupiter.api.Assertions;
-import org.junit.jupiter.api.Test;
-import org.metaagent.framework.core.mcp.client.factory.McpClientFactory;
-import org.metaagent.framework.core.mcp.client.factory.McpTransportFactory;
+import lombok.Getter;
+import lombok.Setter;
 
 /**
- * description is here
+ * Configuration properties for the MCP client.
  *
  * @author vyckey
  */
-class McpToolkitTest {
+@Getter
+@Setter
+public class McpClientProperties extends McpClientCommonProperties {
+    public static final String DEFAULT_PROPERTIES_FILE = "mcp-client-config.json";
 
-    @Ignore
-    @Test
-    void listToolsTest() {
-        HttpClientSseClientTransport transport = McpTransportFactory.httpClientSseClient("http://localhost:8931/sse");
-        McpSyncClient mcpClient = McpClientFactory.syncClient(transport).build();
-        McpToolkit toolkit = McpToolkit.sync("Playwright", "Playwright MCP tools.", mcpClient);
-        toolkit.loadTools();
-        Assertions.assertFalse(toolkit.listTools().isEmpty());
-    }
+    private final McpStdioClientProperties stdio = new McpStdioClientProperties();
+
+    private final McpSseClientProperties sse = new McpSseClientProperties();
+
 }

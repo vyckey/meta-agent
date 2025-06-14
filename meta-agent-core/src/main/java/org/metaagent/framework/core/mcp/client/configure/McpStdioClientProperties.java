@@ -22,26 +22,25 @@
  * SOFTWARE.
  */
 
-package org.metaagent.framework.core.mcp.factory;
+package org.metaagent.framework.core.mcp.client.configure;
 
-import io.modelcontextprotocol.client.McpAsyncClient;
-import io.modelcontextprotocol.client.McpClient;
-import io.modelcontextprotocol.client.McpSyncClient;
-import io.modelcontextprotocol.spec.McpClientTransport;
+import lombok.Getter;
+
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 /**
- * Model Context Protocol (MCP) Client Factory
+ * Configuration properties for the MCP Stdio client.
  *
- * @see McpClient
- * @see McpSyncClient
- * @see McpAsyncClient
+ * @author vyckey
  */
-public abstract class McpClientFactory {
-    public static McpClient.SyncSpec syncClient(McpClientTransport transport) {
-        return McpClient.sync(transport);
-    }
+@Getter
+public class McpStdioClientProperties extends McpClientCommonProperties {
+    private final Map<String, StdioParameters> connections = new HashMap<>();
 
-    public static McpClient.AsyncSpec asyncClient(McpClientTransport transport) {
-        return McpClient.async(transport);
+    public record StdioParameters(String command,
+                                  List<String> args,
+                                  Map<String, String> env) {
     }
 }

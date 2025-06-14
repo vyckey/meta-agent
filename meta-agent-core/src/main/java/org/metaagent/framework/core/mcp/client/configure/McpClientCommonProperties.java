@@ -22,30 +22,42 @@
  * SOFTWARE.
  */
 
-package org.metaagent.framework.core.tool.mcp;
+package org.metaagent.framework.core.mcp.client.configure;
 
-import io.modelcontextprotocol.client.McpSyncClient;
-import io.modelcontextprotocol.client.transport.HttpClientSseClientTransport;
-import org.junit.Ignore;
-import org.junit.jupiter.api.Assertions;
-import org.junit.jupiter.api.Test;
-import org.metaagent.framework.core.mcp.client.factory.McpClientFactory;
-import org.metaagent.framework.core.mcp.client.factory.McpTransportFactory;
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import lombok.Getter;
+import lombok.Setter;
+
+import java.time.Duration;
 
 /**
- * description is here
+ * Common properties for MCP client configurations.
  *
  * @author vyckey
  */
-class McpToolkitTest {
+@Getter
+@Setter
+public class McpClientCommonProperties {
+    private boolean enabled;
 
-    @Ignore
-    @Test
-    void listToolsTest() {
-        HttpClientSseClientTransport transport = McpTransportFactory.httpClientSseClient("http://localhost:8931/sse");
-        McpSyncClient mcpClient = McpClientFactory.syncClient(transport).build();
-        McpToolkit toolkit = McpToolkit.sync("Playwright", "Playwright MCP tools.", mcpClient);
-        toolkit.loadTools();
-        Assertions.assertFalse(toolkit.listTools().isEmpty());
+    private String name = "meta-agent-mcp-client";
+
+    private String version = "1.0.0";
+
+    private boolean initialized;
+
+    @JsonIgnore
+    private Duration requestTimeout = Duration.ofSeconds(10);
+
+    private ClientType type = ClientType.SYNC;
+
+    public enum ClientType {
+        SYNC,
+        ASYNC,
+    }
+
+    @Override
+    public String toString() {
+        return name + ":v" + version;
     }
 }

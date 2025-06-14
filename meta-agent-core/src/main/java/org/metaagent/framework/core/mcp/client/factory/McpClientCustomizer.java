@@ -22,30 +22,35 @@
  * SOFTWARE.
  */
 
-package org.metaagent.framework.core.tool.mcp;
+package org.metaagent.framework.core.mcp.client.factory;
 
-import io.modelcontextprotocol.client.McpSyncClient;
-import io.modelcontextprotocol.client.transport.HttpClientSseClientTransport;
-import org.junit.Ignore;
-import org.junit.jupiter.api.Assertions;
-import org.junit.jupiter.api.Test;
-import org.metaagent.framework.core.mcp.client.factory.McpClientFactory;
-import org.metaagent.framework.core.mcp.client.factory.McpTransportFactory;
+import io.modelcontextprotocol.client.McpClient;
 
 /**
- * description is here
+ * Customizer interface for modifying the behavior of MCP clients.
+ * Implementations can customize the sync and async specifications of the clients.
  *
  * @author vyckey
  */
-class McpToolkitTest {
+public interface McpClientCustomizer {
+    McpClientCustomizer DEFAULT = new McpClientCustomizer() {
+    };
 
-    @Ignore
-    @Test
-    void listToolsTest() {
-        HttpClientSseClientTransport transport = McpTransportFactory.httpClientSseClient("http://localhost:8931/sse");
-        McpSyncClient mcpClient = McpClientFactory.syncClient(transport).build();
-        McpToolkit toolkit = McpToolkit.sync("Playwright", "Playwright MCP tools.", mcpClient);
-        toolkit.loadTools();
-        Assertions.assertFalse(toolkit.listTools().isEmpty());
+    /**
+     * Customize the sync specification of the MCP client.
+     *
+     * @param name      the name of the client
+     * @param syncSpec  the sync specification to customize
+     */
+    default void customize(String name, McpClient.SyncSpec syncSpec) {
+    }
+
+    /**
+     * Customize the async specification of the MCP client.
+     *
+     * @param name      the name of the client
+     * @param asyncSpec the async specification to customize
+     */
+    default void customize(String name, McpClient.AsyncSpec asyncSpec) {
     }
 }
