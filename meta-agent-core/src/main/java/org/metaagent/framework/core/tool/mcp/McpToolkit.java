@@ -30,6 +30,7 @@ import io.modelcontextprotocol.client.McpAsyncClient;
 import io.modelcontextprotocol.client.McpSyncClient;
 import io.modelcontextprotocol.spec.McpSchema;
 import org.apache.commons.lang3.StringUtils;
+import org.metaagent.framework.core.mcp.client.UnifiedMcpClient;
 import org.metaagent.framework.core.tool.Tool;
 import org.metaagent.framework.core.tool.manager.ToolChangeListener;
 import org.metaagent.framework.core.tool.toolkit.AbstractToolkit;
@@ -61,6 +62,14 @@ public abstract class McpToolkit extends AbstractToolkit {
 
     public static McpToolkit async(String name, String description, McpAsyncClient mcpAsyncClient) {
         return new McpAsyncClientToolkit(name, description, mcpAsyncClient);
+    }
+
+    public static McpToolkit create(String name, String description, UnifiedMcpClient mcpClient) {
+        if (mcpClient.isSync()) {
+            return new McpSyncClientToolkit(name, description, mcpClient.sync());
+        } else {
+            return new McpAsyncClientToolkit(name, description, mcpClient.async());
+        }
     }
 
     @Override
