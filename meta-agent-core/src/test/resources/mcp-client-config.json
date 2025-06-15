@@ -1,0 +1,33 @@
+{
+    "enabled": true,
+    "name": "mcp-client",
+    "version": "1.0.0",
+    "requestTimeout": 30000,
+    "type": "SYNC",
+    "sse": {
+        "requestTimeout": 10000,
+        "connections": {
+            "server1": {
+                "url": "http://localhost:8080/sse"
+            },
+            "server2": {
+                "url": "http://localhost:8081/sse"
+            }
+        }
+    },
+    "stdio": {
+        "connections": {
+            "server3": {
+                "command": "/path/to/server",
+                "args": [
+                    "--port=8080",
+                    "--mode=production"
+                ],
+                "env": {
+                    "API_KEY": "your-api-key",
+                    "DEBUG": "false"
+                }
+            }
+        }
+    }
+}

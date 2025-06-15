@@ -22,30 +22,22 @@
  * SOFTWARE.
  */
 
-package org.metaagent.framework.core.tool.mcp;
+package org.metaagent.framework.core.mcp.client.configure;
 
-import io.modelcontextprotocol.client.McpSyncClient;
-import io.modelcontextprotocol.client.transport.HttpClientSseClientTransport;
-import org.junit.Ignore;
-import org.junit.jupiter.api.Assertions;
-import org.junit.jupiter.api.Test;
-import org.metaagent.framework.core.mcp.client.factory.McpClientFactory;
-import org.metaagent.framework.core.mcp.client.factory.McpTransportFactory;
+import lombok.Getter;
+
+import java.util.HashMap;
+import java.util.Map;
 
 /**
- * description is here
+ * Configuration properties for the MCP SSE client.
  *
  * @author vyckey
  */
-class McpToolkitTest {
+@Getter
+public class McpSseClientProperties extends McpClientCommonProperties {
+    private final Map<String, SseParameters> connections = new HashMap<>();
 
-    @Ignore
-    @Test
-    void listToolsTest() {
-        HttpClientSseClientTransport transport = McpTransportFactory.httpClientSseClient("http://localhost:8931/sse");
-        McpSyncClient mcpClient = McpClientFactory.syncClient(transport).build();
-        McpToolkit toolkit = McpToolkit.sync("Playwright", "Playwright MCP tools.", mcpClient);
-        toolkit.loadTools();
-        Assertions.assertFalse(toolkit.listTools().isEmpty());
+    public record SseParameters(String url, String endpoint) {
     }
 }

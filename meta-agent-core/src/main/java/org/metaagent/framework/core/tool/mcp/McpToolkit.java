@@ -26,54 +26,50 @@ package org.metaagent.framework.core.tool.mcp;
 
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
+import io.modelcontextprotocol.client.McpAsyncClient;
 import io.modelcontextprotocol.client.McpSyncClient;
 import io.modelcontextprotocol.spec.McpSchema;
-import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
+import org.metaagent.framework.core.mcp.client.UnifiedMcpClient;
 import org.metaagent.framework.core.tool.Tool;
 import org.metaagent.framework.core.tool.manager.ToolChangeListener;
-import org.metaagent.framework.core.tool.toolkit.Toolkit;
+import org.metaagent.framework.core.tool.toolkit.AbstractToolkit;
+import reactor.core.publisher.Mono;
 
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.function.Function;
 
 /**
  * Model Context Protocol (MCP) Toolkit
  *
  * @author vyckey
+ * @see McpSyncClient
+ * @see McpAsyncClient
  */
-@Slf4j
-public class McpToolkit implements Toolkit {
-    protected final String name;
-    protected String description;
-    protected final McpSyncClient mcpSyncClient;
+public abstract class McpToolkit extends AbstractToolkit {
     protected final Map<String, McpTool> mcpToolCache;
-    protected final List<ToolChangeListener> listeners = Lists.newArrayList();
 
-    public McpToolkit(String name, String description,
-                      McpSyncClient mcpSyncClient, Map<String, McpTool> mcpToolCache) {
-        if (StringUtils.isEmpty(name)) {
-            throw new IllegalArgumentException("Toolkit name is required");
-        }
-        this.name = name;
-        this.description = description;
-        this.mcpSyncClient = Objects.requireNonNull(mcpSyncClient, "McpSyncClient is required");
+    protected McpToolkit(String name, String description, Map<String, McpTool> mcpToolCache) {
+        super(name, description);
         this.mcpToolCache = Objects.requireNonNull(mcpToolCache, "McpToolCache is required");
     }
 
-    public McpToolkit(String name, String description, McpSyncClient mcpSyncClient) {
-        this(name, description, mcpSyncClient, Maps.newConcurrentMap());
+    public static McpToolkit sync(String name, String description, McpSyncClient mcpSyncClient) {
+        return new McpSyncClientToolkit(name, description, mcpSyncClient);
     }
 
-    @Override
-    public String getName() {
-        return name;
+    public static McpToolkit async(String name, String description, McpAsyncClient mcpAsyncClient) {
+        return new McpAsyncClientToolkit(name, description, mcpAsyncClient);
     }
 
-    @Override
-    public String getDescription() {
-        return description;
+    public static McpToolkit create(String name, String description, UnifiedMcpClient mcpClient) {
+        if (mcpClient.isSync()) {
+            return new McpSyncClientToolkit(name, description, mcpClient.sync());
+        } else {
+            return new McpAsyncClientToolkit(name, description, mcpClient.async());
+        }
     }
 
     @Override
@@ -86,24 +82,9 @@ public class McpToolkit implements Toolkit {
         return mcpToolCache.get(name);
     }
 
-    public void loadTools() {
-        mcpSyncClient.ping();
-        String nextCursor = null;
-        do {
-            McpSchema.ListToolsResult toolsResult = (nextCursor == null)
-                    ? mcpSyncClient.listTools() : mcpSyncClient.listTools(nextCursor);
-            List<McpSchema.Tool> tools = toolsResult.tools();
-            for (McpSchema.Tool tool : tools) {
-                McpTool mcpTool = new McpTool(mcpSyncClient, tool);
-                mcpToolCache.put(mcpTool.getDefinition().name(), mcpTool);
-            }
-            nextCursor = toolsResult.nextCursor();
-        } while (StringUtils.isNotEmpty(nextCursor));
-    }
-
-    public void onToolsChange(List<McpSchema.Tool> tools) {
+    protected void onToolsChange(List<McpSchema.Tool> tools, Function<McpSchema.Tool, McpTool> toolCreator) {
         for (McpSchema.Tool tool : tools) {
-            McpTool mcpTool = new McpTool(mcpSyncClient, tool);
+            McpTool mcpTool = toolCreator.apply(tool);
             McpTool oldTool = mcpToolCache.put(mcpTool.getName(), mcpTool);
             if (oldTool != null) {
                 notifyChangeListeners(mcpTool, ToolChangeListener.EventType.UPDATED);
@@ -113,18 +94,78 @@ public class McpToolkit implements Toolkit {
         }
     }
 
-    protected void notifyChangeListeners(Tool<?, ?> tool, ToolChangeListener.EventType eventType) {
-        for (ToolChangeListener listener : listeners) {
-            try {
-                listener.onToolChange(tool, eventType);
-            } catch (Exception e) {
-                log.error("Failed to notify tool change listener", e);
-            }
-        }
-    }
-
     @Override
     public String toString() {
         return "McpToolkit{name=\"" + name + "\"}";
+    }
+
+    static class McpSyncClientToolkit extends McpToolkit {
+        protected final McpSyncClient mcpSyncClient;
+
+        McpSyncClientToolkit(String name, String description,
+                             McpSyncClient mcpSyncClient, Map<String, McpTool> mcpToolCache) {
+            super(name, description, mcpToolCache);
+            this.mcpSyncClient = Objects.requireNonNull(mcpSyncClient, "McpSyncClient is required");
+        }
+
+        McpSyncClientToolkit(String name, String description, McpSyncClient mcpSyncClient) {
+            this(name, description, mcpSyncClient, Maps.newConcurrentMap());
+        }
+
+        @Override
+        public void loadTools() {
+            mcpSyncClient.ping();
+            String nextCursor = null;
+            do {
+                McpSchema.ListToolsResult toolsResult = (nextCursor == null)
+                        ? mcpSyncClient.listTools() : mcpSyncClient.listTools(nextCursor);
+                List<McpSchema.Tool> tools = toolsResult.tools();
+                for (McpSchema.Tool tool : tools) {
+                    McpTool mcpTool = new McpTool(mcpSyncClient, tool);
+                    mcpToolCache.put(mcpTool.getDefinition().name(), mcpTool);
+                }
+                nextCursor = toolsResult.nextCursor();
+            } while (StringUtils.isNotEmpty(nextCursor));
+        }
+
+        public void onToolsChange(List<McpSchema.Tool> tools) {
+            onToolsChange(tools, toolSchema -> new McpTool(mcpSyncClient, toolSchema));
+        }
+    }
+
+    static class McpAsyncClientToolkit extends McpToolkit {
+        protected final McpAsyncClient mcpAsyncClient;
+
+        McpAsyncClientToolkit(String name, String description,
+                              McpAsyncClient mcpAsyncClient, Map<String, McpTool> mcpToolCache) {
+            super(name, description, mcpToolCache);
+            this.mcpAsyncClient = Objects.requireNonNull(mcpAsyncClient, "McpSyncClient is required");
+        }
+
+        McpAsyncClientToolkit(String name, String description, McpAsyncClient mcpAsyncClient) {
+            this(name, description, mcpAsyncClient, Maps.newConcurrentMap());
+        }
+
+        @Override
+        public void loadTools() {
+            mcpAsyncClient.ping().block();
+
+            String nextCursor = null;
+            do {
+                Mono<McpSchema.ListToolsResult> toolsResultMono = (nextCursor == null)
+                        ? mcpAsyncClient.listTools() : mcpAsyncClient.listTools(nextCursor);
+                McpSchema.ListToolsResult toolsResult = toolsResultMono.block();
+                List<McpSchema.Tool> tools = toolsResult.tools();
+                for (McpSchema.Tool tool : tools) {
+                    McpTool mcpTool = new McpTool(mcpAsyncClient, tool);
+                    mcpToolCache.put(mcpTool.getDefinition().name(), mcpTool);
+                }
+                nextCursor = toolsResult.nextCursor();
+            } while (StringUtils.isNotEmpty(nextCursor));
+        }
+
+        public void onToolsChange(List<McpSchema.Tool> tools) {
+            onToolsChange(tools, toolSchema -> new McpTool(mcpAsyncClient, toolSchema));
+        }
     }
 }

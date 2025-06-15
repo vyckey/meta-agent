@@ -22,30 +22,25 @@
  * SOFTWARE.
  */
 
-package org.metaagent.framework.core.tool.mcp;
+package org.metaagent.framework.core.mcp.client;
 
-import io.modelcontextprotocol.client.McpSyncClient;
-import io.modelcontextprotocol.client.transport.HttpClientSseClientTransport;
-import org.junit.Ignore;
-import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
-import org.metaagent.framework.core.mcp.client.factory.McpClientFactory;
-import org.metaagent.framework.core.mcp.client.factory.McpTransportFactory;
+import org.metaagent.framework.core.mcp.client.configure.McpClaudeClientPropertiesParser;
+import org.metaagent.framework.core.mcp.client.configure.McpClientProperties;
 
-/**
- * description is here
- *
- * @author vyckey
- */
-class McpToolkitTest {
+import java.io.IOException;
 
-    @Ignore
+import static org.junit.jupiter.api.Assertions.assertEquals;
+
+class McpClientManagerTest {
+
     @Test
-    void listToolsTest() {
-        HttpClientSseClientTransport transport = McpTransportFactory.httpClientSseClient("http://localhost:8931/sse");
-        McpSyncClient mcpClient = McpClientFactory.syncClient(transport).build();
-        McpToolkit toolkit = McpToolkit.sync("Playwright", "Playwright MCP tools.", mcpClient);
-        toolkit.loadTools();
-        Assertions.assertFalse(toolkit.listTools().isEmpty());
+    void testLoadMcpClients() throws IOException {
+        McpClientManager mcpClientManager = McpClientManager.getInstance();
+        assertEquals(3, mcpClientManager.getClientNames().size());
+
+        McpClientProperties claudeClientProperties = McpClaudeClientPropertiesParser.parseFile("mcp-server.json");
+        mcpClientManager.loadClients(claudeClientProperties);
+        assertEquals(7, mcpClientManager.getClientNames().size());
     }
 }

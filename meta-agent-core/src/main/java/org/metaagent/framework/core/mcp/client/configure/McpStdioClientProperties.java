@@ -22,27 +22,25 @@
  * SOFTWARE.
  */
 
-package org.metaagent.framework.core.agent.goal;
+package org.metaagent.framework.core.mcp.client.configure;
 
 import lombok.Getter;
 
-import java.util.Objects;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 /**
- * description is here
+ * Configuration properties for the MCP Stdio client.
  *
  * @author vyckey
  */
 @Getter
-public class DefaultGoal implements Goal {
-    private final String content;
+public class McpStdioClientProperties extends McpClientCommonProperties {
+    private final Map<String, StdioParameters> connections = new HashMap<>();
 
-    public DefaultGoal(String content) {
-        this.content = Objects.requireNonNull(content, "content is required");
-    }
-
-    @Override
-    public String toString() {
-        return content;
+    public record StdioParameters(String command,
+                                  List<String> args,
+                                  Map<String, String> env) {
     }
 }

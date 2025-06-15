@@ -22,41 +22,42 @@
  * SOFTWARE.
  */
 
-package org.metaagent.framework.core.tool.mcp;
+package org.metaagent.framework.core.mcp.client.configure;
 
-import io.modelcontextprotocol.client.McpClient;
-import io.modelcontextprotocol.client.transport.HttpClientSseClientTransport;
-import io.modelcontextprotocol.client.transport.ServerParameters;
-import io.modelcontextprotocol.client.transport.StdioClientTransport;
-import io.modelcontextprotocol.spec.ClientMcpTransport;
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import lombok.Getter;
+import lombok.Setter;
+
+import java.time.Duration;
 
 /**
- * description is here
+ * Common properties for MCP client configurations.
  *
  * @author vyckey
  */
-public class McpClientBuilder {
-    final ClientMcpTransport transport;
+@Getter
+@Setter
+public class McpClientCommonProperties {
+    private boolean enabled;
 
-    McpClientBuilder(ClientMcpTransport transport) {
-        this.transport = transport;
+    private String name = "meta-agent-mcp-client";
+
+    private String version = "1.0.0";
+
+    private boolean initialized;
+
+    @JsonIgnore
+    private Duration requestTimeout = Duration.ofSeconds(10);
+
+    private ClientType type = ClientType.SYNC;
+
+    public enum ClientType {
+        SYNC,
+        ASYNC,
     }
 
-    public static McpClientBuilder httpSse(String baseUri) {
-        HttpClientSseClientTransport transport = new HttpClientSseClientTransport(baseUri);
-        return new McpClientBuilder(transport);
-    }
-
-    public static McpClientBuilder stdio(ServerParameters parameters) {
-        StdioClientTransport transport = new StdioClientTransport(parameters);
-        return new McpClientBuilder(transport);
-    }
-
-    public McpClient.SyncSpec sync() {
-        return McpClient.sync(transport);
-    }
-
-    public McpClient.AsyncSpec async() {
-        return McpClient.async(transport);
+    @Override
+    public String toString() {
+        return name + ":v" + version;
     }
 }

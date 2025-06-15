@@ -24,53 +24,55 @@
 
 package org.metaagent.framework.core.tool.toolkit;
 
-import com.google.common.collect.ImmutableList;
-import com.google.common.collect.Maps;
+import com.google.common.collect.Lists;
+import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 import org.metaagent.framework.core.tool.Tool;
+import org.metaagent.framework.core.tool.manager.ToolChangeListener;
 
 import java.util.List;
-import java.util.Map;
-import java.util.Objects;
 
 /**
- * Default implementation of a toolkit.
- *
- * @author vyckey
+ * Abstract base class for toolkits.
  */
-public class DefaultToolkit extends AbstractToolkit {
-    protected final Map<String, Tool<?, ?>> tools;
+@Slf4j
+public abstract class AbstractToolkit implements Toolkit {
+    protected final String name;
+    protected String description;
+    protected final List<ToolChangeListener> listeners = Lists.newArrayList();
 
-    protected DefaultToolkit(String name, String description, Map<String, Tool<?, ?>> tools) {
-        super(name, description);
-        this.tools = Objects.requireNonNull(tools, "Tools is required");
-    }
-
-    public DefaultToolkit(String name, String description) {
-        this(name, description, Maps.newHashMap());
-    }
-
-    public DefaultToolkit(String name) {
-        this(name, "");
-    }
-
-    @Override
-    public List<Tool<?, ?>> listTools() {
-        return ImmutableList.copyOf(tools.values());
-    }
-
-    @Override
-    public Tool<?, ?> getTool(String name) {
-        return tools.get(name);
-    }
-
-    public void addTools(Tool<?, ?>... tools) {
-        for (Tool<?, ?> tool : tools) {
-            this.tools.put(tool.getName(), tool);
+    protected AbstractToolkit(String name, String description) {
+        if (StringUtils.isEmpty(name)) {
+            throw new IllegalArgumentException("Toolkit name is required");
         }
+        this.name = name;
+        this.description = description;
+    }
+
+    public void loadTools() {
     }
 
     @Override
-    public String toString() {
-        return "Toolkit{name=\"" + name + "\"}";
+    public String getName() {
+        return name;
+    }
+
+    @Override
+    public String getDescription() {
+        return description;
+    }
+
+    public void setDescription(String description) {
+        this.description = description;
+    }
+
+    protected void notifyChangeListeners(Tool<?, ?> tool, ToolChangeListener.EventType eventType) {
+        for (ToolChangeListener listener : listeners) {
+            try {
+                listener.onToolChange(tool, eventType);
+            } catch (Exception e) {
+                log.error("Failed to notify tool change listener", e);
+            }
+        }
     }
 }
