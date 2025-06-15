@@ -25,14 +25,22 @@
 package org.metaagent.framework.core.mcp.client;
 
 import org.junit.jupiter.api.Test;
+import org.metaagent.framework.core.mcp.client.configure.McpClaudeClientPropertiesParser;
+import org.metaagent.framework.core.mcp.client.configure.McpClientProperties;
+
+import java.io.IOException;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 class McpClientManagerTest {
 
     @Test
-    void testLoadMcpClients() {
+    void testLoadMcpClients() throws IOException {
         McpClientManager mcpClientManager = McpClientManager.getInstance();
         assertEquals(3, mcpClientManager.getClientNames().size());
+
+        McpClientProperties claudeClientProperties = McpClaudeClientPropertiesParser.parseFile("mcp-server.json");
+        mcpClientManager.loadClients(claudeClientProperties);
+        assertEquals(6, mcpClientManager.getClientNames().size());
     }
 }

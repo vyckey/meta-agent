@@ -50,7 +50,7 @@ public class McpClientPropertiesParser {
     private McpClientPropertiesParser() {
     }
 
-    public static McpClientProperties fromFile(String fileName) throws IOException {
+    public static McpClientProperties parseFile(String fileName) throws IOException {
         Objects.requireNonNull(fileName, "MCP client properties file name is required.");
         ClassLoader classLoader = McpClientPropertiesParser.class.getClassLoader();
         try (InputStream stream = classLoader.getResourceAsStream(fileName)) {
@@ -58,18 +58,18 @@ public class McpClientPropertiesParser {
                 throw new IOException("Resource not found: " + fileName);
             }
             String json = new String(stream.readAllBytes());
-            return fromJson(json);
+            return parseJson(json);
         }
     }
 
-    public static McpClientProperties fromJson(String json) throws IOException {
+    public static McpClientProperties parseJson(String json) throws IOException {
         Map<String, Object> map = OBJECT_MAPPER.readValue(json, new TypeReference<>() {
         });
-        return fromMap(map);
+        return parseMap(map);
     }
 
     @SuppressWarnings("unchecked")
-    public static McpClientProperties fromMap(Map<String, Object> map) throws IOException {
+    private static McpClientProperties parseMap(Map<String, Object> map) throws IOException {
         try {
             McpClientProperties properties = OBJECT_MAPPER.convertValue(map, McpClientProperties.class);
             if (map.containsKey("requestTimeout")) {
@@ -131,7 +131,7 @@ public class McpClientPropertiesParser {
 
     public static void main(String[] args) throws IOException {
         McpClientProperties clientProperties =
-                McpClientPropertiesParser.fromFile(McpClientProperties.DEFAULT_PROPERTIES_FILE);
+                McpClientPropertiesParser.parseFile(McpClientProperties.DEFAULT_PROPERTIES_FILE);
         System.out.println(clientProperties);
     }
 }

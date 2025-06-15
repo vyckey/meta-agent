@@ -66,13 +66,19 @@ public class McpClientManager {
     }
 
     public synchronized void loadClients(String configFile) {
+        McpClientProperties properties;
         try {
-            McpClientProperties properties = McpClientPropertiesParser.fromFile(configFile);
-            Map<String, UnifiedMcpClient> newMcpClients = McpClientFactory.createMcpClients(properties);
-            this.mcpClients.putAll(newMcpClients);
+            properties = McpClientPropertiesParser.parseFile(configFile);
         } catch (IOException e) {
             throw new IllegalStateException("Failed to load MCP clients from properties file", e);
         }
+        loadClients(properties);
+    }
+
+    public synchronized void loadClients(McpClientProperties properties) {
+        Objects.requireNonNull(properties, "MCP client properties is required.");
+        Map<String, UnifiedMcpClient> newMcpClients = McpClientFactory.createMcpClients(properties);
+        this.mcpClients.putAll(newMcpClients);
     }
 
     public Set<String> getClientNames() {
