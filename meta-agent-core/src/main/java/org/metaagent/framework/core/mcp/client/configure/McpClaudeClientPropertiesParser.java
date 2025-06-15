@@ -27,6 +27,7 @@ package org.metaagent.framework.core.mcp.client.configure;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import lombok.Getter;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -61,25 +62,31 @@ public class McpClaudeClientPropertiesParser {
 
         McpClientProperties properties = new McpClientProperties();
         properties.setEnabled(true);
-        McpStdioClientProperties stdio = properties.getStdio();
-        stdio.setEnabled(true);
-        for (Map.Entry<String, McpStdioClientProperties.StdioParameters> entry : claudeProperties.mcpServers.entrySet()) {
+        properties.getStdio().setEnabled(true);
+        properties.getSse().setEnabled(true);
+        for (Map.Entry<String, Map<String, Object>> entry : claudeProperties.mcpServers.entrySet()) {
             String name = entry.getKey();
-            McpStdioClientProperties.StdioParameters params = entry.getValue();
+            Map<String, Object> config = entry.getValue();
 
-            stdio.getConnections().put(name, new McpStdioClientProperties.StdioParameters(
-                    params.command(), params.args(), params.env()
-            ));
+            if (config.containsKey("command")) {
+                McpStdioClientProperties.StdioParameters stdioParameters =
+                        OBJECT_MAPPER.convertValue(config, McpStdioClientProperties.StdioParameters.class);
+                properties.getStdio().getConnections().put(name, stdioParameters);
+            } else if (config.containsKey("url")) {
+                McpSseClientProperties.SseParameters sseParameters =
+                        OBJECT_MAPPER.convertValue(config, McpSseClientProperties.SseParameters.class);
+                properties.getSse().getConnections().put(name, sseParameters);
+            } else {
+                throw new IllegalArgumentException("Invalid MCP server configuration for " + name);
+            }
         }
         return properties;
     }
 
+    @Getter
     private static class ClaudeClientProperties {
-        private final Map<String, McpStdioClientProperties.StdioParameters> mcpServers = new HashMap<>();
+        private final Map<String, Map<String, Object>> mcpServers = new HashMap<>();
 
-        public Map<String, McpStdioClientProperties.StdioParameters> getMcpServers() {
-            return mcpServers;
-        }
     }
 
     public static void main(String[] args) throws IOException {

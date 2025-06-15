@@ -35,12 +35,14 @@ import io.modelcontextprotocol.spec.McpClientTransport;
 import io.modelcontextprotocol.spec.McpSchema;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.collections.MapUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.metaagent.framework.core.mcp.client.UnifiedMcpClient;
 import org.metaagent.framework.core.mcp.client.configure.McpClientCommonProperties;
 import org.metaagent.framework.core.mcp.client.configure.McpClientProperties;
 import org.metaagent.framework.core.mcp.client.configure.McpSseClientProperties;
 import org.metaagent.framework.core.mcp.client.configure.McpStdioClientProperties;
 
+import java.net.URI;
 import java.util.Map;
 
 /**
@@ -78,7 +80,7 @@ public abstract class McpClientFactory {
                 HttpClientSseClientTransport transport = sseClientTransport(entry.getValue());
                 sseTransports.put(entry.getKey(), transport);
             }
-            clients.putAll(createMcpClients(clientProperties, sseTransports, customizer));
+            clients.putAll(createMcpClients(sseProperties, sseTransports, customizer));
         }
 
         McpStdioClientProperties stdioProperties = clientProperties.getStdio();
@@ -89,7 +91,7 @@ public abstract class McpClientFactory {
                 StdioClientTransport transport = stdioClientTransport(entry.getValue());
                 stdioTransports.put(entry.getKey(), transport);
             }
-            clients.putAll(createMcpClients(clientProperties, stdioTransports, customizer));
+            clients.putAll(createMcpClients(stdioProperties, stdioTransports, customizer));
         }
         return clients;
     }
@@ -113,16 +115,24 @@ public abstract class McpClientFactory {
                         .clientInfo(clientInfo)
                         .requestTimeout(clientProperties.getRequestTimeout());
                 customizer.customize(transportName, syncSpec);
-                UnifiedMcpClient mcpClient = UnifiedMcpClient.from(transportName, syncSpec.build());
+                McpSyncClient syncClient = syncSpec.build();
+                if (clientProperties.isInitialized()) {
+                    syncClient.initialize();
+                }
 
+                UnifiedMcpClient mcpClient = UnifiedMcpClient.from(transportName, syncClient);
                 clients.put(transportName, mcpClient);
             } else {
                 McpClient.AsyncSpec asyncSpec = McpClientFactory.asyncClient(entry.getValue())
                         .clientInfo(clientInfo)
                         .requestTimeout(clientProperties.getRequestTimeout());
                 customizer.customize(transportName, asyncSpec);
-                UnifiedMcpClient mcpClient = UnifiedMcpClient.from(transportName, asyncSpec.build());
+                McpAsyncClient asyncClient = asyncSpec.build();
+                if (clientProperties.isInitialized()) {
+                    asyncClient.initialize().block();
+                }
 
+                UnifiedMcpClient mcpClient = UnifiedMcpClient.from(transportName, asyncClient);
                 clients.put(transportName, mcpClient);
             }
         }
@@ -130,7 +140,20 @@ public abstract class McpClientFactory {
     }
 
     static HttpClientSseClientTransport sseClientTransport(McpSseClientProperties.SseParameters sseParameters) {
-        return McpTransportFactory.httpClientSseClient(sseParameters.url());
+        if (StringUtils.isNotEmpty(sseParameters.endpoint())) {
+            return McpTransportFactory.httpClientSseClientBuilder(sseParameters.url())
+                    .sseEndpoint(sseParameters.endpoint())
+                    .build();
+        }
+
+        URI uri = URI.create(sseParameters.url());
+        if (StringUtils.isEmpty(uri.getPath())) {
+            return McpTransportFactory.httpClientSseClient(uri.toString());
+        } else {
+            return McpTransportFactory.httpClientSseClientBuilder(uri.resolve("").toString())
+                    .sseEndpoint(uri.getPath())
+                    .build();
+        }
     }
 
     static StdioClientTransport stdioClientTransport(McpStdioClientProperties.StdioParameters stdioParameters) {

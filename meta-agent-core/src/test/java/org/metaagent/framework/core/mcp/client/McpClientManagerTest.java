@@ -41,6 +41,6 @@ class McpClientManagerTest {
 
         McpClientProperties claudeClientProperties = McpClaudeClientPropertiesParser.parseFile("mcp-server.json");
         mcpClientManager.loadClients(claudeClientProperties);
-        assertEquals(6, mcpClientManager.getClientNames().size());
+        assertEquals(7, mcpClientManager.getClientNames().size());
     }
 }
