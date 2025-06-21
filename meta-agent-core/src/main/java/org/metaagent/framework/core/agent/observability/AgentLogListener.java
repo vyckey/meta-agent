@@ -24,7 +24,7 @@
 
 package org.metaagent.framework.core.agent.observability;
 
-import org.metaagent.framework.core.agent.AgentExecutionContext;
+import org.metaagent.framework.core.agent.AgentContext;
 import org.metaagent.framework.core.agent.input.AgentInput;
 import org.metaagent.framework.core.agent.output.AgentOutput;
 import org.metaagent.framework.core.agent.state.AgentState;
@@ -48,39 +48,39 @@ public class AgentLogListener implements AgentRunListener, AgentStepListener {
     }
 
     @Override
-    public void onAgentStart(AgentExecutionContext context, AgentInput input) {
+    public void onAgentStart(AgentContext context, AgentInput input) {
         agentLogger.debug("Agent is ready to run...");
     }
 
     @Override
-    public void onAgentOutput(AgentExecutionContext context, AgentInput input, AgentOutput output) {
+    public void onAgentOutput(AgentContext context, AgentInput input, AgentOutput output) {
         agentLogger.debug("Agent run finished.");
     }
 
     @Override
-    public void onAgentException(AgentExecutionContext context, AgentInput input, Exception exception) {
+    public void onAgentException(AgentContext context, AgentInput input, Exception exception) {
         agentLogger.error("Agent run exception.", exception);
     }
 
     @Override
-    public void onAgentNextLoop(AgentExecutionContext context) {
+    public void onAgentNextLoop(AgentContext context) {
         AgentStepListener.super.onAgentNextLoop(context);
     }
 
     @Override
-    public void onAgentStepStart(AgentExecutionContext context, AgentInput input) {
+    public void onAgentStepStart(AgentContext context, AgentInput input) {
         int turn = agentState.getLoopCount() + 1;
         agentLogger.debug("Agent is ready to execute... (Turn#{})", turn);
     }
 
     @Override
-    public void onAgentStepFinish(AgentExecutionContext context, AgentInput input, AgentOutput output) {
+    public void onAgentStepFinish(AgentContext context, AgentInput input, AgentOutput output) {
         int turn = agentState.getLoopCount() + 1;
         agentLogger.debug("Agent executes finished. (Turn#{})", turn);
     }
 
     @Override
-    public void onAgentStepError(AgentExecutionContext context, AgentInput input, Exception exception) {
+    public void onAgentStepError(AgentContext context, AgentInput input, Exception exception) {
         int turn = agentState.getLoopCount() + 1;
         agentLogger.error("Agent executes occurs error. (Turn#{})", turn, exception);
     }

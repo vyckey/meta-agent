@@ -55,6 +55,11 @@ public class DefaultToolCallRecord implements ToolCallRecord {
         this.endTime = builder.endTime;
     }
 
+    @Override
+    public String toString() {
+        return "DefaultToolCallRecord{id:\"" + id + "\", toolName:\"" + toolName + "\", \"}";
+    }
+
     public static Builder builder() {
         return new Builder();
     }

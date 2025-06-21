@@ -146,21 +146,22 @@ public abstract class AbstractMetaAgent implements MetaAgent {
     public AgentOutput run(AgentExecutionContext context, AgentInput input) {
         beforeRun(context, input);
 
+        AgentContext agentContext = AgentContext.from(this, context);
         agentState.setStatus(AgentRunStatus.RUNNING);
         try {
-            notifyListeners(runListeners, listener -> listener.onAgentStart(context, input));
+            notifyListeners(runListeners, listener -> listener.onAgentStart(agentContext, input));
             AgentOutput output = doRun(context, input);
-            notifyListeners(runListeners, listener -> listener.onAgentOutput(context, input, output));
+            notifyListeners(runListeners, listener -> listener.onAgentOutput(agentContext, input, output));
 
             agentState.setStatus(AgentRunStatus.COMPLETED);
             return output;
         } catch (AgentExecutionException ex) {
             agentState.setLastException(ex);
-            notifyListeners(runListeners, listener -> listener.onAgentException(context, input, ex));
+            notifyListeners(runListeners, listener -> listener.onAgentException(agentContext, input, ex));
             throw ex;
         } catch (Exception ex) {
             agentState.setLastException(ex);
-            notifyListeners(runListeners, listener -> listener.onAgentException(context, input, ex));
+            notifyListeners(runListeners, listener -> listener.onAgentException(agentContext, input, ex));
             throw new AgentExecutionException(ex);
         }
     }
@@ -171,14 +172,15 @@ public abstract class AbstractMetaAgent implements MetaAgent {
 
     @Override
     public AgentOutput step(AgentExecutionContext context, AgentInput input) {
+        AgentContext agentContext = AgentContext.from(this, context);
         try {
-            notifyListeners(stepListeners, listener -> listener.onAgentStepStart(context, input));
+            notifyListeners(stepListeners, listener -> listener.onAgentStepStart(agentContext, input));
             AgentOutput output = doStep(context, input);
-            notifyListeners(stepListeners, listener -> listener.onAgentStepFinish(context, input, output));
+            notifyListeners(stepListeners, listener -> listener.onAgentStepFinish(agentContext, input, output));
             return output;
         } catch (Exception ex) {
             agentState.setLastException(ex);
-            notifyListeners(stepListeners, listener -> listener.onAgentStepError(context, input, ex));
+            notifyListeners(stepListeners, listener -> listener.onAgentStepError(agentContext, input, ex));
             throw ex;
         }
     }

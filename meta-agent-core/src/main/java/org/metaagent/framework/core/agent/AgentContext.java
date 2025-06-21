@@ -22,24 +22,19 @@
  * SOFTWARE.
  */
 
-package org.metaagent.framework.core.agent.observability;
+package org.metaagent.framework.core.agent;
 
-import org.metaagent.framework.core.agent.AgentContext;
-import org.metaagent.framework.core.agent.input.AgentInput;
-import org.metaagent.framework.core.agent.output.AgentOutput;
 
 /**
- * description is here
+ * AgentContext holds the context of an agent, including its metadata and execution context.
+ * It is used to pass information between different components of the agent framework.
  *
+ * @param agent            The metadata of the agent.
+ * @param executionContext The execution context of the agent, which contains information about the current run.
  * @author vyckey
  */
-public interface AgentRunListener {
-    default void onAgentStart(AgentContext context, AgentInput input) {
-    }
-
-    default void onAgentOutput(AgentContext context, AgentInput input, AgentOutput output) {
-    }
-
-    default void onAgentException(AgentContext context, AgentInput input, Exception exception) {
+public record AgentContext(MetaAgent agent, AgentExecutionContext executionContext) {
+    public static AgentContext from(MetaAgent agent, AgentExecutionContext executionContext) {
+        return new AgentContext(agent, executionContext);
     }
 }
