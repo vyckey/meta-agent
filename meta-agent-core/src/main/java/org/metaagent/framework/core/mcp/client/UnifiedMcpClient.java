@@ -26,6 +26,8 @@ package org.metaagent.framework.core.mcp.client;
 
 import io.modelcontextprotocol.client.McpAsyncClient;
 import io.modelcontextprotocol.client.McpSyncClient;
+import io.modelcontextprotocol.spec.McpSchema;
+import reactor.core.publisher.Mono;
 
 import java.util.Objects;
 
@@ -68,6 +70,14 @@ public final class UnifiedMcpClient {
 
     public McpAsyncClient async() {
         return mcpAsyncClient;
+    }
+
+    public Mono<McpSchema.InitializeResult> initialize() {
+        if (isSync()) {
+            return Mono.fromCallable(mcpSyncClient::initialize);
+        } else {
+            return mcpAsyncClient.initialize();
+        }
     }
 
     @Override

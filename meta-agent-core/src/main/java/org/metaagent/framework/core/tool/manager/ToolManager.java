@@ -57,7 +57,7 @@ public interface ToolManager {
      * @param name the name of the tool.
      * @return the tool instance, or null if no tool with the specified name exists.
      */
-    Tool<?, ?> getTool(String name);
+    <I, O> Tool<I, O> getTool(String name);
 
     /**
      * Adds a new tool to the manager.

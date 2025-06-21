@@ -147,12 +147,16 @@ public abstract class McpClientFactory {
         }
 
         URI uri = URI.create(sseParameters.url());
-        if (StringUtils.isEmpty(uri.getPath())) {
+        String baseUri = uri.getScheme() + "://" + uri.getHost();
+        if (uri.getPort() != -1) {
+            baseUri += ":" + uri.getPort();
+        }
+        String endpoint = StringUtils.isNotEmpty(uri.getQuery()) ? uri.getPath() + "?" + uri.getQuery() : uri.getPath();
+
+        if (StringUtils.isEmpty(endpoint)) {
             return McpTransportFactory.httpClientSseClient(uri.toString());
         } else {
-            return McpTransportFactory.httpClientSseClientBuilder(uri.resolve("").toString())
-                    .sseEndpoint(uri.getPath())
-                    .build();
+            return McpTransportFactory.httpClientSseClientBuilder(baseUri).sseEndpoint(endpoint).build();
         }
     }
 
