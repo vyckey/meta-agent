@@ -25,7 +25,7 @@
 package org.metaagent.framework.core.agent.state;
 
 import org.metaagent.framework.core.agent.action.history.ActionHistory;
-import org.metaagent.framework.core.agent.output.AgentOutput;
+import org.metaagent.framework.core.tool.tracker.ToolCallTracker;
 
 /**
  * description is here
@@ -40,17 +40,15 @@ public interface AgentState {
 
     int getLoopCount();
 
-    void incrLoopCount();
+    int incrLoopCount();
 
     int getRetryCount();
 
-    void incrRetryCount();
+    int incrRetryCount();
 
     ActionHistory getActionHistory();
 
-    AgentOutput getAgentOutput();
-
-    void setAgentOutput(AgentOutput output);
+    ToolCallTracker getToolCallTracker();
 
     Exception getLastException();
 

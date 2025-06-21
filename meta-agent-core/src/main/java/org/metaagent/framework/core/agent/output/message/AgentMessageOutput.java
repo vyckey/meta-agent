@@ -26,7 +26,7 @@ package org.metaagent.framework.core.agent.output.message;
 
 import org.metaagent.framework.core.agent.chat.message.Message;
 import org.metaagent.framework.core.agent.output.AgentOutput;
-import org.metaagent.framework.core.common.MetadataProvider;
+import org.metaagent.framework.core.common.metadata.MetadataProvider;
 
 import java.util.List;
 
@@ -35,7 +35,9 @@ import java.util.List;
  *
  * @author vyckey
  */
-public interface AgentMessageOutput extends AgentOutput, MetadataProvider {
+public interface AgentMessageOutput extends AgentOutput {
+    MetadataProvider getMetadata();
+
     boolean isEmpty();
 
     List<Message> getMessages();

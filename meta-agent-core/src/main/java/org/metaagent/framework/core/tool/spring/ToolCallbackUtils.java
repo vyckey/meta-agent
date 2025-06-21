@@ -29,6 +29,7 @@ import org.metaagent.framework.core.tool.Tool;
 import org.metaagent.framework.core.tool.ToolContext;
 import org.metaagent.framework.core.tool.ToolExecutionException;
 import org.metaagent.framework.core.tool.manager.ToolManager;
+import org.metaagent.framework.core.tool.tracker.ToolCallTracker;
 import org.metaagent.framework.core.tool.tracker.ToolTrackerDelegate;
 import org.springframework.ai.chat.messages.AssistantMessage;
 import org.springframework.ai.chat.messages.ToolResponseMessage;
@@ -47,6 +48,17 @@ public abstract class ToolCallbackUtils {
         List<FunctionCallback> toolCallbacks = Lists.newArrayList();
         for (String toolName : toolManager.getToolNames()) {
             toolCallbacks.add(new ToolCallbackDelegate(toolManager.getTool(toolName)));
+        }
+        chatOptions.setToolNames(toolManager.getToolNames());
+        chatOptions.setToolCallbacks(toolCallbacks);
+    }
+
+    public static void setToolOptions(ToolCallingChatOptions chatOptions, ToolManager toolManager, ToolCallTracker toolCallTracker) {
+        List<FunctionCallback> toolCallbacks = Lists.newArrayList();
+        for (String toolName : toolManager.getToolNames()) {
+            ToolTrackerDelegate<Object, Object> trackerDelegate =
+                    new ToolTrackerDelegate<>(toolCallTracker, toolManager.getTool(toolName));
+            toolCallbacks.add(new ToolCallbackDelegate(trackerDelegate));
         }
         chatOptions.setToolNames(toolManager.getToolNames());
         chatOptions.setToolCallbacks(toolCallbacks);

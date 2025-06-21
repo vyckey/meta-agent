@@ -22,15 +22,37 @@
  * SOFTWARE.
  */
 
-package org.metaagent.framework.core.common;
+package org.metaagent.framework.agents.mcp.client;
 
-import java.util.Map;
+import io.modelcontextprotocol.spec.McpSchema;
+import org.junit.Ignore;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.metaagent.framework.core.mcp.client.McpClientManager;
+import org.metaagent.framework.core.mcp.client.UnifiedMcpClient;
+import org.metaagent.framework.core.tool.Tool;
+import org.metaagent.framework.core.tool.mcp.McpToolkit;
 
-/**
- * description is here
- *
- * @author vyckey
- */
-public interface MetadataProvider {
-    Map<String, Object> getMetadata();
+import java.util.List;
+
+import static org.junit.jupiter.api.Assertions.assertFalse;
+
+class McpClientTest {
+
+    private McpClientManager mcpClientManager;
+
+    @BeforeEach
+    void setUp() {
+        mcpClientManager = McpClientManager.getInstance();
+    }
+
+    @Ignore
+    @Test
+    void testAmapMcpClient() {
+        UnifiedMcpClient mcpClient = mcpClientManager.getClient("amap-amap-sse");
+        McpSchema.InitializeResult initializeResult = mcpClient.initialize().block();
+        McpToolkit toolkit = McpToolkit.create("Amap", "", mcpClient);
+        List<Tool<?, ?>> tools = toolkit.listTools();
+        assertFalse(tools.isEmpty(), "Amap MCP Client should have tools");
+    }
 }

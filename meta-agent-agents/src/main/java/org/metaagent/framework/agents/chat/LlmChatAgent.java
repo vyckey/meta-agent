@@ -25,6 +25,7 @@
 package org.metaagent.framework.agents.chat;
 
 import com.google.common.collect.Lists;
+import org.apache.commons.lang3.StringUtils;
 import org.metaagent.framework.core.agent.AbstractAgent;
 import org.metaagent.framework.core.agent.AgentExecutionContext;
 import org.metaagent.framework.core.agent.AgentExecutionException;
@@ -39,6 +40,7 @@ import org.metaagent.framework.core.agents.chat.ChatAgent;
 import org.metaagent.framework.core.model.chat.MessageConverter;
 import org.metaagent.framework.core.tool.DefaultToolContext;
 import org.metaagent.framework.core.tool.spring.ToolCallbackUtils;
+import org.metaagent.framework.core.tool.tracker.ToolCallTracker;
 import org.springframework.ai.chat.messages.AssistantMessage;
 import org.springframework.ai.chat.messages.SystemMessage;
 import org.springframework.ai.chat.messages.ToolResponseMessage;
@@ -88,7 +90,6 @@ public class LlmChatAgent extends AbstractAgent implements ChatAgent {
                 List<AssistantMessage.ToolCall> toolCalls = assistantMessage.getToolCalls();
                 DefaultToolContext toolContext = DefaultToolContext.builder()
                         .toolManager(context.getToolManager())
-                        .toolCallTracker(context.getToolCallTracker())
                         .build();
                 List<ToolResponseMessage.ToolResponse> toolResponses =
                         ToolCallbackUtils.callTools(context.getToolManager(), toolContext, toolCalls);
@@ -105,7 +106,9 @@ public class LlmChatAgent extends AbstractAgent implements ChatAgent {
     protected Prompt buildPrompt(AgentExecutionContext context, AgentMessageInput messageInput) {
         List<Message> inputMessages = messageInput.getMessages();
         List<org.springframework.ai.chat.messages.Message> messages = Lists.newArrayList();
-        messages.add(new SystemMessage(messageInput.getTopic()));
+        if (StringUtils.isNotEmpty(messageInput.getTopic())) {
+            messages.add(new SystemMessage(messageInput.getTopic()));
+        }
         inputMessages.stream().map(messageConverter::convert).forEach(messages::add);
 
         ChatOptions options = buildChatOptions(context, messageInput);
@@ -113,9 +116,10 @@ public class LlmChatAgent extends AbstractAgent implements ChatAgent {
     }
 
     protected ChatOptions buildChatOptions(AgentExecutionContext context, AgentMessageInput messageInput) {
+        ToolCallTracker toolCallTracker = getAgentState().getToolCallTracker();
         if (this.chatOptions instanceof ToolCallingChatOptions) {
             ToolCallingChatOptions toolCallingChatOptions = this.chatOptions.copy();
-            ToolCallbackUtils.setToolOptions(toolCallingChatOptions, context.getToolManager());
+            ToolCallbackUtils.setToolOptions(toolCallingChatOptions, context.getToolManager(), toolCallTracker);
             return toolCallingChatOptions;
         }
         return this.chatOptions;

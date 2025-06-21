@@ -24,11 +24,10 @@
 
 package org.metaagent.framework.core.agent.output.thought;
 
-import com.google.common.collect.Maps;
 import lombok.Getter;
 import org.metaagent.framework.core.agent.action.Action;
-
-import java.util.Map;
+import org.metaagent.framework.core.common.metadata.MapMetadataProvider;
+import org.metaagent.framework.core.common.metadata.MetadataProvider;
 
 /**
  * description is here
@@ -37,14 +36,14 @@ import java.util.Map;
  */
 @Getter
 public class TextThought implements Thought {
-    private final Map<String, Object> metadata;
+    private final MetadataProvider metadata;
     private final String text;
     private final Action proposalAction;
 
     public TextThought(String text, Action proposalAction) {
         this.text = text;
         this.proposalAction = proposalAction;
-        this.metadata = Maps.newHashMap();
+        this.metadata = new MapMetadataProvider();
     }
 
     @Override

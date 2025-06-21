@@ -108,25 +108,23 @@ public interface Agent extends MetaAgent {
      */
     @Override
     default AgentOutput run(AgentExecutionContext context, AgentInput input) {
-        AgentState agentState = context.getAgentState();
-        if (agentState.getStatus().isFinished()) {
-            return agentState.getAgentOutput();
-        }
-
-        agentState.setStatus(AgentRunStatus.RUNNING);
-        while (getLoopControlStrategy().shouldContinueLoop(context, input)) {
-            AgentOutput output = null;
+        AgentState agentState = getAgentState();
+        AgentOutput output = null;
+        while (getLoopControlStrategy().shouldContinueLoop(this, context, input)) {
             try {
+                agentState.setStatus(AgentRunStatus.RUNNING);
                 output = step(context, input);
             } catch (Exception ex) {
+                agentState.setLastException(ex);
                 output = getFallbackStrategy().fallback(this, context, input, ex);
             } finally {
                 agentState.incrLoopCount();
-                agentState.setAgentOutput(output);
             }
         }
-        agentState.setStatus(AgentRunStatus.COMPLETED);
-        return agentState.getAgentOutput();
+        if (!agentState.getStatus().isFinished()) {
+            agentState.setStatus(AgentRunStatus.COMPLETED);
+        }
+        return output;
     }
 
     /**

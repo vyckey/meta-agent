@@ -25,30 +25,44 @@
 package org.metaagent.framework.core.agent;
 
 import org.metaagent.framework.core.agent.action.executor.ActionExecutor;
-import org.metaagent.framework.core.agent.state.AgentState;
 import org.metaagent.framework.core.environment.Environment;
 import org.metaagent.framework.core.tool.manager.ToolManager;
-import org.metaagent.framework.core.tool.tracker.ToolCallTracker;
 
 import java.util.concurrent.Executor;
 
 /**
- * Agent execution context.
+ * Agent execution context which won't contain agent state.
  *
  * @author vyckey
  */
 public interface AgentExecutionContext {
-    AgentState getAgentState();
 
+    /**
+     * Get the environment associated with this agent execution context.
+     *
+     * @return the environment
+     */
     Environment getEnvironment();
 
+    /**
+     * Get the tool manager associated with this agent execution context.
+     *
+     * @return the tool manager
+     */
     ToolManager getToolManager();
 
-    ToolCallTracker getToolCallTracker();
-
+    /**
+     * Get the action executor associated with this agent execution context.
+     *
+     * @return the action executor
+     */
     ActionExecutor getActionExecutor();
 
+    /**
+     * Get the executor associated with this agent execution context.
+     *
+     * @return the executor
+     */
     Executor getExecutor();
 
-    void reset();
 }

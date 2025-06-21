@@ -25,5 +25,6 @@ dependencies {
     implementation libs.bundles.jackson
     implementation libs.bundles.log
     implementation "org.metaagent.framework.tools:metaagent-common-tools:1.0.0"
-    implementation "org.springframework.ai:spring-ai-ollama:1.0.0-M6"
+    implementation "org.springframework.ai:spring-ai-openai:${libs.versions.springAI.get()}"
+    implementation "org.springframework.ai:spring-ai-ollama:${libs.versions.springAI.get()}"
 }

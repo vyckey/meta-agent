@@ -28,10 +28,8 @@ import lombok.Getter;
 import org.apache.commons.configuration2.BaseConfiguration;
 import org.apache.commons.configuration2.Configuration;
 import org.apache.commons.lang3.StringUtils;
+import org.metaagent.framework.core.common.metadata.ConfigurationMetadataProvider;
 
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.Map;
 import java.util.Objects;
 
 /**
@@ -44,6 +42,7 @@ public class DefaultAgentProfile implements AgentProfile {
     protected final String name;
     protected String description;
     protected final Configuration configuration;
+    protected final ConfigurationMetadataProvider metadata;
 
     public DefaultAgentProfile(String name, String description, Configuration configuration) {
         if (StringUtils.isBlank(name)) {
@@ -52,6 +51,7 @@ public class DefaultAgentProfile implements AgentProfile {
         this.name = name.trim();
         setDescription(description);
         this.configuration = Objects.requireNonNull(configuration, "configuration is required");
+        this.metadata = new ConfigurationMetadataProvider(configuration);
     }
 
     public DefaultAgentProfile(String name, String description) {
@@ -64,39 +64,6 @@ public class DefaultAgentProfile implements AgentProfile {
 
     public void setDescription(String description) {
         this.description = description != null ? description.trim() : "";
-    }
-
-    @Override
-    public Object getProperty(String key) {
-        return configuration.getProperty(key);
-    }
-
-    @Override
-    public <T> T getProperty(String key, Class<T> type) {
-        Object value = configuration.getProperty(key);
-        if (value == null) {
-            return null;
-        } else if (type.isAssignableFrom(value.getClass())) {
-            return type.cast(value);
-        }
-        throw new IllegalArgumentException("Unsupported property type: " + type.getName());
-    }
-
-    @Override
-    public AgentProfile setProperty(String key, Object value) {
-        configuration.setProperty(key, value);
-        return this;
-    }
-
-    @Override
-    public Map<String, Object> getMetadata() {
-        Map<String, Object> metadata = new HashMap<>();
-        Iterator<String> iterator = configuration.getKeys();
-        while (iterator.hasNext()) {
-            String key = iterator.next();
-            metadata.put(key, configuration.getProperty(key));
-        }
-        return metadata;
     }
 
     @Override
