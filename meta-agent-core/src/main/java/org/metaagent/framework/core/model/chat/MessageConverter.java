@@ -44,7 +44,7 @@ public class MessageConverter implements BiConverter<Message, org.springframewor
     public org.springframework.ai.chat.messages.Message convert(Message message) {
         String role = message.getSender();
         return switch (MessageType.fromValue(role)) {
-            case ASSISTANT -> new AssistantMessage(message.getContent(), message.getMetadata());
+            case ASSISTANT -> new AssistantMessage(message.getContent(), message.getMetadata().getProperties());
             case USER -> new UserMessage(message.getContent());
             default -> throw new IllegalArgumentException("message cannot be converted");
         };
@@ -56,7 +56,7 @@ public class MessageConverter implements BiConverter<Message, org.springframewor
             case USER, ASSISTANT -> {
                 String role = message.getMessageType().getValue();
                 TextMessage userMessage = MessageFactory.textMessage(role, message.getText());
-                userMessage.getMetadata().putAll(message.getMetadata());
+                message.getMetadata().forEach(userMessage.getMetadata()::setProperty);
                 return userMessage;
             }
             default -> throw new IllegalArgumentException("message cannot be converted");

@@ -25,7 +25,10 @@
 package org.metaagent.framework.core.agent.state;
 
 import org.metaagent.framework.core.agent.action.history.ActionHistory;
+import org.metaagent.framework.core.agent.action.history.DefaultActionHistory;
 import org.metaagent.framework.core.agent.output.AgentOutput;
+import org.metaagent.framework.core.tool.tracker.DefaultToolCallTracker;
+import org.metaagent.framework.core.tool.tracker.ToolCallTracker;
 
 import java.util.concurrent.TimeoutException;
 
@@ -37,10 +40,19 @@ import java.util.concurrent.TimeoutException;
 public class DefaultAgentState implements AgentState {
     protected AgentRunStatus status = AgentRunStatus.NOT_STARTED;
     protected ActionHistory actionHistory;
-    protected AgentOutput agentOutput;
+    protected ToolCallTracker toolCallTracker;
     protected Exception exception;
     protected int loopCount = 0;
     protected int retryCount = 0;
+
+    protected DefaultAgentState(Builder builder) {
+        this.actionHistory = builder.actionHistory;
+        this.toolCallTracker = builder.toolCallTracker;
+    }
+
+    public static Builder builder() {
+        return new Builder();
+    }
 
     @Override
     public AgentRunStatus getStatus() {
@@ -58,8 +70,8 @@ public class DefaultAgentState implements AgentState {
     }
 
     @Override
-    public void incrLoopCount() {
-        loopCount++;
+    public int incrLoopCount() {
+        return ++loopCount;
     }
 
     @Override
@@ -68,8 +80,8 @@ public class DefaultAgentState implements AgentState {
     }
 
     @Override
-    public void incrRetryCount() {
-        retryCount++;
+    public int incrRetryCount() {
+        return ++retryCount;
     }
 
     @Override
@@ -78,13 +90,8 @@ public class DefaultAgentState implements AgentState {
     }
 
     @Override
-    public AgentOutput getAgentOutput() {
-        return agentOutput;
-    }
-
-    @Override
-    public void setAgentOutput(AgentOutput output) {
-        this.agentOutput = output;
+    public ToolCallTracker getToolCallTracker() {
+        return toolCallTracker;
     }
 
     @Override
@@ -109,9 +116,37 @@ public class DefaultAgentState implements AgentState {
     public void reset() {
         this.status = AgentRunStatus.NOT_STARTED;
         this.actionHistory.clearAll();
-        this.agentOutput = null;
+        this.toolCallTracker.clear();
         this.exception = null;
         this.loopCount = 0;
         this.retryCount = 0;
+    }
+
+    public static class Builder {
+        private ActionHistory actionHistory;
+        private ToolCallTracker toolCallTracker;
+
+        private Builder() {
+        }
+
+        public Builder actionHistory(ActionHistory actionHistory) {
+            this.actionHistory = actionHistory;
+            return this;
+        }
+
+        public Builder toolCallTracker(ToolCallTracker toolCallTracker) {
+            this.toolCallTracker = toolCallTracker;
+            return this;
+        }
+
+        public DefaultAgentState build() {
+            if (actionHistory == null) {
+                actionHistory = new DefaultActionHistory();
+            }
+            if (toolCallTracker == null) {
+                toolCallTracker = new DefaultToolCallTracker();
+            }
+            return new DefaultAgentState(this);
+        }
     }
 }

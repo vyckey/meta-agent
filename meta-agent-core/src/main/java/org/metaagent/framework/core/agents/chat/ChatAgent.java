@@ -33,7 +33,6 @@ import org.metaagent.framework.core.agent.chat.message.TextMessage;
 import org.metaagent.framework.core.agent.chat.message.history.MessageHistory;
 import org.metaagent.framework.core.agent.input.AgentInput;
 import org.metaagent.framework.core.agent.input.message.AgentMessageInput;
-import org.metaagent.framework.core.agent.output.AgentOutput;
 import org.metaagent.framework.core.agent.output.message.AgentMessageOutput;
 
 /**
@@ -44,13 +43,17 @@ import org.metaagent.framework.core.agent.output.message.AgentMessageOutput;
 public interface ChatAgent extends Agent {
     MessageHistory getMessageHistory();
 
-    default AgentOutput run(String input) {
+    default AgentMessageOutput run(String input) {
         return run(createContext(), new TextMessage(input));
     }
 
     @Override
-    default AgentOutput run(AgentExecutionContext context, String input) {
+    default AgentMessageOutput run(AgentExecutionContext context, String input) {
         return run(context, MessageFactory.textMessage("user", input));
+    }
+
+    default AgentMessageOutput run(Message message) {
+        return run(createContext(), message);
     }
 
     default AgentMessageOutput run(AgentExecutionContext context, Message message) {
@@ -59,6 +62,10 @@ public interface ChatAgent extends Agent {
 
         AgentMessageInput messageInput = AgentMessageInput.with(Lists.newArrayList(messageHistory));
         return run(context, messageInput);
+    }
+
+    default AgentMessageOutput run(AgentMessageInput input) {
+        return run(createContext(), input);
     }
 
     default AgentMessageOutput run(AgentExecutionContext context, AgentMessageInput input) {

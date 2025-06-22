@@ -22,40 +22,61 @@
  * SOFTWARE.
  */
 
-package org.metaagent.framework.core.agent.output.message;
+package org.metaagent.framework.core.common.metadata;
 
 import com.google.common.collect.Maps;
-import lombok.Getter;
-import org.metaagent.framework.core.agent.chat.message.Message;
-import org.metaagent.framework.core.common.metadata.MapMetadataProvider;
-import org.metaagent.framework.core.common.metadata.MetadataProvider;
 
-import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 
 /**
- * description is here
+ * MapMetadataProvider is a simple implementation of MetadataProvider that uses a Map to store metadata.
+ * It allows for easy retrieval, setting, and removal of metadata entries.
  *
  * @author vyckey
  */
-@Getter
-public class DefaultAgentMessageOutput implements AgentMessageOutput {
-    private final MetadataProvider metadata;
-    private final List<Message> messages;
+public class MapMetadataProvider implements MetadataProvider {
+    private final Map<String, Object> metadata;
 
-    public DefaultAgentMessageOutput(List<Message> messages, Map<String, Object> metadata) {
-        this.messages = Objects.requireNonNull(messages, "messages is required");
-        this.metadata = new MapMetadataProvider(metadata);
+    public MapMetadataProvider(Map<String, Object> metadata) {
+        this.metadata = Objects.requireNonNull(metadata);
     }
 
-    public DefaultAgentMessageOutput(List<Message> messages) {
-        this(messages, Maps.newHashMap());
+    public MapMetadataProvider() {
+        this.metadata = Maps.newHashMap();
     }
 
     @Override
-    public boolean isEmpty() {
-        return messages.isEmpty();
+    public Map<String, Object> getProperties() {
+        return metadata;
     }
 
+    @Override
+    public Object getProperty(String key) {
+        return metadata.get(key);
+    }
+
+    @Override
+    public <T> T getProperty(String key, Class<T> type) {
+        Object obj = metadata.get(key);
+        if (obj == null) {
+            return null;
+        }
+        return type.cast(obj);
+    }
+
+    @Override
+    public void setProperty(String key, Object value) {
+        metadata.put(key, value);
+    }
+
+    @Override
+    public void removeProperty(String key) {
+        metadata.remove(key);
+    }
+
+    @Override
+    public void merge(MetadataProvider other) {
+        this.metadata.putAll(other.getProperties());
+    }
 }

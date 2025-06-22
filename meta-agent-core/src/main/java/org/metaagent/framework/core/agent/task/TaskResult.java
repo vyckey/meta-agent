@@ -30,5 +30,4 @@ package org.metaagent.framework.core.agent.task;
  * @author vyckey
  */
 public interface TaskResult {
-    TaskStatus getStatus();
 }

@@ -31,6 +31,7 @@ import org.metaagent.framework.core.agent.input.AgentInput;
 import org.metaagent.framework.core.agent.memory.Memory;
 import org.metaagent.framework.core.agent.output.AgentOutput;
 import org.metaagent.framework.core.agent.profile.AgentProfile;
+import org.metaagent.framework.core.agent.state.AgentState;
 import reactor.core.publisher.Flux;
 
 import java.util.concurrent.CompletableFuture;
@@ -56,6 +57,13 @@ public interface MetaAgent {
      * @return the agent profile.
      */
     AgentProfile getAgentProfile();
+
+    /**
+     * Gets agent state.
+     *
+     * @return the agent state.
+     */
+    AgentState getAgentState();
 
     /**
      * Gets agent memory.

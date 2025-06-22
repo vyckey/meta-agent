@@ -48,7 +48,7 @@ public abstract class AbstractReActAgent extends AbstractAgent implements ReActA
 
     @Override
     public AgentOutput doStep(AgentExecutionContext context, AgentInput input) {
-        int turnNum = context.getAgentState().getLoopCount() + 1;
+        int turnNum = agentState.getLoopCount() + 1;
 
         Thought thought = think(context, input);
         agentLogger.info("Thought #{}: {}", turnNum, thought.getText());
@@ -72,7 +72,7 @@ public abstract class AbstractReActAgent extends AbstractAgent implements ReActA
                 .environment(context.getEnvironment())
                 .toolManager(context.getToolManager())
                 .actionExecutor(context.getActionExecutor())
-                .actionHistory(context.getAgentState().getActionHistory())
+                .actionHistory(agentState.getActionHistory())
                 .build();
         return context.getActionExecutor().execute(executionContext, action);
     }

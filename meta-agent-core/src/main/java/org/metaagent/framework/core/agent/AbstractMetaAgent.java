@@ -32,13 +32,16 @@ import org.metaagent.framework.core.agent.fallback.FastFailAgentFallbackStrategy
 import org.metaagent.framework.core.agent.input.AgentInput;
 import org.metaagent.framework.core.agent.memory.EmptyMemory;
 import org.metaagent.framework.core.agent.memory.Memory;
+import org.metaagent.framework.core.agent.observability.AgentLogListener;
 import org.metaagent.framework.core.agent.observability.AgentLogger;
 import org.metaagent.framework.core.agent.observability.AgentRunListener;
 import org.metaagent.framework.core.agent.observability.AgentStepListener;
 import org.metaagent.framework.core.agent.output.AgentOutput;
 import org.metaagent.framework.core.agent.profile.AgentProfile;
 import org.metaagent.framework.core.agent.profile.DefaultAgentProfile;
+import org.metaagent.framework.core.agent.state.AgentRunStatus;
 import org.metaagent.framework.core.agent.state.AgentState;
+import org.metaagent.framework.core.agent.state.DefaultAgentState;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -52,6 +55,7 @@ import java.util.function.Consumer;
  */
 public abstract class AbstractMetaAgent implements MetaAgent {
     protected AgentProfile profile;
+    protected AgentState agentState = DefaultAgentState.builder().build();
     protected Memory memory = EmptyMemory.EMPTY_MEMORY;
     protected AgentAbilityManager abilityManager = new DefaultAgentAbilityManager();
     protected final List<AgentRunListener> runListeners = Lists.newArrayList();
@@ -75,6 +79,11 @@ public abstract class AbstractMetaAgent implements MetaAgent {
     }
 
     @Override
+    public AgentState getAgentState() {
+        return agentState;
+    }
+
+    @Override
     public Memory getMemory() {
         return memory;
     }
@@ -82,6 +91,13 @@ public abstract class AbstractMetaAgent implements MetaAgent {
     @Override
     public AgentAbilityManager getAbilityManager() {
         return abilityManager;
+    }
+
+    public void initialize() {
+        // Register log listener to capture agent logs
+        AgentLogListener logListener = new AgentLogListener(agentState, agentLogger);
+        registerRunListener(logListener);
+        registerStepListener(logListener);
     }
 
     public void registerRunListener(AgentRunListener listener) {
@@ -114,33 +130,38 @@ public abstract class AbstractMetaAgent implements MetaAgent {
         return FastFailAgentFallbackStrategy.INSTANCE;
     }
 
-    protected void checkAgentInput(AgentInput input) {
+    /**
+     * This method is called before the agent runs. It also checks the agent state and the agent input.
+     *
+     * @param context the agent execution context
+     * @param input   the agent input
+     */
+    protected void beforeRun(AgentExecutionContext context, AgentInput input) {
+        if (agentState.getStatus().isFinished()) {
+            throw new AgentExecutionException("Agent " + getName() + " has run finished. Please reset it before running again.");
+        }
     }
 
     @Override
     public AgentOutput run(AgentExecutionContext context, AgentInput input) {
-        checkAgentInput(input);
+        beforeRun(context, input);
 
-        AgentState agentState = context.getAgentState();
-        if (agentState.getStatus().isFinished()) {
-            agentLogger.info("Agent {} has been run, will exit.", getName());
-            return agentState.getAgentOutput();
-        }
-
+        AgentContext agentContext = AgentContext.from(this, context);
+        agentState.setStatus(AgentRunStatus.RUNNING);
         try {
-            agentLogger.debug("Agent {} is ready to run...", getName());
-            notifyListeners(runListeners, listener -> listener.onAgentStart(context, input));
+            notifyListeners(runListeners, listener -> listener.onAgentStart(agentContext, input));
             AgentOutput output = doRun(context, input);
-            agentLogger.debug("Agent {} run finished.", getName());
-            notifyListeners(runListeners, listener -> listener.onAgentOutput(context, input, output));
+            notifyListeners(runListeners, listener -> listener.onAgentOutput(agentContext, input, output));
+
+            agentState.setStatus(AgentRunStatus.COMPLETED);
             return output;
         } catch (AgentExecutionException ex) {
-            agentLogger.error("Agent {} run exception.", getName(), ex);
-            notifyListeners(runListeners, listener -> listener.onAgentException(context, input, ex));
+            agentState.setLastException(ex);
+            notifyListeners(runListeners, listener -> listener.onAgentException(agentContext, input, ex));
             throw ex;
         } catch (Exception ex) {
-            agentLogger.error("Agent {} run exception.", getName(), ex);
-            notifyListeners(runListeners, listener -> listener.onAgentException(context, input, ex));
+            agentState.setLastException(ex);
+            notifyListeners(runListeners, listener -> listener.onAgentException(agentContext, input, ex));
             throw new AgentExecutionException(ex);
         }
     }
@@ -151,17 +172,15 @@ public abstract class AbstractMetaAgent implements MetaAgent {
 
     @Override
     public AgentOutput step(AgentExecutionContext context, AgentInput input) {
-        int turn = context.getAgentState().getLoopCount() + 1;
+        AgentContext agentContext = AgentContext.from(this, context);
         try {
-            agentLogger.debug("Agent {} is ready to execute... (Turn#{})", getName(), turn);
-            notifyListeners(stepListeners, listener -> listener.onAgentStepStart(context, input));
+            notifyListeners(stepListeners, listener -> listener.onAgentStepStart(agentContext, input));
             AgentOutput output = doStep(context, input);
-            agentLogger.debug("Agent {} executes finished. (Turn#{})", getName(), turn);
-            notifyListeners(stepListeners, listener -> listener.onAgentStepFinish(context, input, output));
+            notifyListeners(stepListeners, listener -> listener.onAgentStepFinish(agentContext, input, output));
             return output;
         } catch (Exception ex) {
-            agentLogger.error("Agent {} executes occurs error. (Turn#{})", getName(), turn, ex);
-            notifyListeners(stepListeners, listener -> listener.onAgentStepError(context, input, ex));
+            agentState.setLastException(ex);
+            notifyListeners(stepListeners, listener -> listener.onAgentStepError(agentContext, input, ex));
             throw ex;
         }
     }
@@ -170,6 +189,7 @@ public abstract class AbstractMetaAgent implements MetaAgent {
 
     @Override
     public void reset() {
+        this.agentState.reset();
         this.memory.clearAll();
     }
 

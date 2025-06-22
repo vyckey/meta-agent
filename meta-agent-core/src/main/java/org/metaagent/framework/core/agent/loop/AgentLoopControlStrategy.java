@@ -24,6 +24,7 @@
 
 package org.metaagent.framework.core.agent.loop;
 
+import org.metaagent.framework.core.agent.Agent;
 import org.metaagent.framework.core.agent.AgentExecutionContext;
 import org.metaagent.framework.core.agent.input.AgentInput;
 
@@ -33,5 +34,5 @@ import org.metaagent.framework.core.agent.input.AgentInput;
  * @author vyckey
  */
 public interface AgentLoopControlStrategy {
-    boolean shouldContinueLoop(AgentExecutionContext context, AgentInput input);
+    boolean shouldContinueLoop(Agent agent, AgentExecutionContext context, AgentInput input);
 }

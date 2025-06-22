@@ -24,10 +24,9 @@
 
 package org.metaagent.framework.core.agent.output.observation;
 
-import com.google.common.collect.Maps;
 import lombok.Getter;
-
-import java.util.Map;
+import org.metaagent.framework.core.common.metadata.MapMetadataProvider;
+import org.metaagent.framework.core.common.metadata.MetadataProvider;
 
 /**
  * description is here
@@ -37,11 +36,11 @@ import java.util.Map;
 @Getter
 public class TextObservation implements Observation {
     private final String text;
-    private final Map<String, Object> metadata;
+    private final MetadataProvider metadata;
 
     public TextObservation(String text) {
         this.text = text;
-        this.metadata = Maps.newHashMap();
+        this.metadata = new MapMetadataProvider();
     }
 
     @Override

@@ -24,6 +24,7 @@
 
 package org.metaagent.framework.core.agent.loop;
 
+import org.metaagent.framework.core.agent.Agent;
 import org.metaagent.framework.core.agent.AgentExecutionContext;
 import org.metaagent.framework.core.agent.input.AgentInput;
 import org.metaagent.framework.core.agent.state.AgentState;
@@ -41,8 +42,8 @@ public class MaxLoopCountAgentLoopControl implements AgentLoopControlStrategy {
     }
 
     @Override
-    public boolean shouldContinueLoop(AgentExecutionContext context, AgentInput input) {
-        AgentState agentState = context.getAgentState();
+    public boolean shouldContinueLoop(Agent agent, AgentExecutionContext context, AgentInput input) {
+        AgentState agentState = agent.getAgentState();
         return !agentState.getStatus().isFinished() && agentState.getLoopCount() < maxLoopCount;
     }
 }

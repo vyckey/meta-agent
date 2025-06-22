@@ -22,40 +22,19 @@
  * SOFTWARE.
  */
 
-package org.metaagent.framework.core.agent.output.message;
+package org.metaagent.framework.core.agent;
 
-import com.google.common.collect.Maps;
-import lombok.Getter;
-import org.metaagent.framework.core.agent.chat.message.Message;
-import org.metaagent.framework.core.common.metadata.MapMetadataProvider;
-import org.metaagent.framework.core.common.metadata.MetadataProvider;
-
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
 
 /**
- * description is here
+ * AgentContext holds the context of an agent, including its metadata and execution context.
+ * It is used to pass information between different components of the agent framework.
  *
+ * @param agent            The metadata of the agent.
+ * @param executionContext The execution context of the agent, which contains information about the current run.
  * @author vyckey
  */
-@Getter
-public class DefaultAgentMessageOutput implements AgentMessageOutput {
-    private final MetadataProvider metadata;
-    private final List<Message> messages;
-
-    public DefaultAgentMessageOutput(List<Message> messages, Map<String, Object> metadata) {
-        this.messages = Objects.requireNonNull(messages, "messages is required");
-        this.metadata = new MapMetadataProvider(metadata);
+public record AgentContext(MetaAgent agent, AgentExecutionContext executionContext) {
+    public static AgentContext from(MetaAgent agent, AgentExecutionContext executionContext) {
+        return new AgentContext(agent, executionContext);
     }
-
-    public DefaultAgentMessageOutput(List<Message> messages) {
-        this(messages, Maps.newHashMap());
-    }
-
-    @Override
-    public boolean isEmpty() {
-        return messages.isEmpty();
-    }
-
 }

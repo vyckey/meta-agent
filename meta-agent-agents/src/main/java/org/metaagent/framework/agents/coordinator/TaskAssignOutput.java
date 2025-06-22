@@ -22,15 +22,26 @@
  * SOFTWARE.
  */
 
-package org.metaagent.framework.core.common;
+package org.metaagent.framework.agents.coordinator;
 
-import java.util.Map;
+import com.google.common.collect.Lists;
+import lombok.Getter;
+import org.metaagent.framework.core.agent.output.AgentOutput;
 
-/**
- * description is here
- *
- * @author vyckey
- */
-public interface MetadataProvider {
-    Map<String, Object> getMetadata();
+import java.util.List;
+
+@Getter
+public class TaskAssignOutput implements AgentOutput {
+    private final List<TaskAssignment> assignments = Lists.newArrayList();
+
+    @Getter
+    public static class TaskAssignment {
+        private final String taskId;
+        private final String assignee;
+
+        public TaskAssignment(String taskId, String assignee) {
+            this.taskId = taskId;
+            this.assignee = assignee;
+        }
+    }
 }

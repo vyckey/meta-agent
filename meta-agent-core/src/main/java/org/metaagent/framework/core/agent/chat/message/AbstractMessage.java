@@ -24,10 +24,9 @@
 
 package org.metaagent.framework.core.agent.chat.message;
 
-import com.google.common.collect.Maps;
 import org.apache.commons.lang3.StringUtils;
-
-import java.util.Map;
+import org.metaagent.framework.core.common.metadata.MapMetadataProvider;
+import org.metaagent.framework.core.common.metadata.MetadataProvider;
 
 /**
  * description is here
@@ -35,18 +34,23 @@ import java.util.Map;
  * @author vyckey
  */
 public abstract class AbstractMessage implements Message {
-    protected final Map<String, Object> metadata;
+    protected final MetadataProvider metadata;
     protected String sender;
     protected String receiver;
 
     protected AbstractMessage() {
-        this.metadata = Maps.newHashMap();
+        this.metadata = new MapMetadataProvider();
     }
 
     protected AbstractMessage(String sender, String receiver) {
         this();
         this.sender = sender;
         this.receiver = receiver;
+    }
+
+    @Override
+    public MetadataProvider getMetadata() {
+        return metadata;
     }
 
     @Override
@@ -57,11 +61,6 @@ public abstract class AbstractMessage implements Message {
     @Override
     public String getReceiver() {
         return receiver;
-    }
-
-    @Override
-    public Map<String, Object> getMetadata() {
-        return metadata;
     }
 
     @Override

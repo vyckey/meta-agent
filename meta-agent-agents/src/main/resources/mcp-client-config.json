@@ -1,0 +1,123 @@
+{
+    "enabled": true,
+    "name": "mcp-client",
+    "version": "1.0.0",
+    "requestTimeout": 30000,
+    "type": "SYNC",
+    "initialized": false,
+    "sse": {
+        "requestTimeout": 10000,
+        "connections": {
+            "github-remote": {
+                "url": "https://api.githubcopilot.com/mcp/"
+            },
+            "amap-amap-sse": {
+                "url": "https://mcp.amap.com/sse?key=API_KEY"
+            },
+            "kuaidi100-server": {
+                "url": "http://api.kuaidi100.com/mcp/sse?key=API_KEY"
+            }
+        }
+    },
+    "stdio": {
+        "connections": {
+            "tavily-mcp": {
+                "command": "npx",
+                "args": [
+                    "-y",
+                    "tavily-mcp"
+                ],
+                "env": {
+                    "TAVILY_API_KEY": "<API_KEY>"
+                },
+                "disabled": false,
+                "autoApprove": []
+            },
+            "playwright": {
+                "command": "npx",
+                "args": [
+                    "@playwright/mcp@latest"
+                ],
+                "env": {}
+            },
+            "github": {
+                "command": "docker",
+                "args": [
+                    "run",
+                    "-i",
+                    "--rm",
+                    "-e",
+                    "GITHUB_PERSONAL_ACCESS_TOKEN",
+                    "mcp/github"
+                ],
+                "env": {
+                    "GITHUB_PERSONAL_ACCESS_TOKEN": "<YOUR_TOKEN>"
+                }
+            },
+            "gitlab": {
+                "command": "npx",
+                "args": [
+                    "-y",
+                    "@modelcontextprotocol/server-gitlab"
+                ],
+                "env": {
+                    "GITLAB_PERSONAL_ACCESS_TOKEN": "<YOUR_TOKEN>",
+                    "GITLAB_API_URL": "https://gitlab.com/api/v4"
+                }
+            },
+            "git": {
+                "command": "uvx",
+                "args": ["mcp-server-git", "--repository", "path/to/git/repo"]
+            },
+            "amap-maps": {
+                "command": "npx",
+                "args": [
+                    "-y",
+                    "@amap/amap-maps-mcp-server"
+                ],
+                "env": {
+                    "AMAP_MAPS_API_KEY": "<API_KEY>"
+                }
+            },
+            "baidu-map": {
+                "command": "npx",
+                "args": [
+                    "-y",
+                    "@baidumap/mcp-server-baidu-map"
+                ],
+                "env": {
+                    "BAIDU_MAP_API_KEY": "<API_KEY>"
+                }
+            },
+            "redis": {
+                "command": "docker",
+                "args": [
+                    "run",
+                    "-i",
+                    "--rm",
+                    "mcp/redis",
+                    "redis://host.docker.internal:6379"
+                ]
+            },
+            "notion": {
+                "command": "npx",
+                "args": ["-y", "@suekou/mcp-notion-server"],
+                "env": {
+                    "NOTION_API_TOKEN": "<API_TOKEN>"
+                }
+            },
+            "MiniMax": {
+                "command": "uvx",
+                "args": [
+                    "minimax-mcp"
+                ],
+                "env": {
+                    "MINIMAX_API_KEY": "<API_KEY>",
+                    "MINIMAX_MCP_BASE_PATH": "<local-output-dir-path>",
+                    "MINIMAX_API_HOST": "https://api.minimaxi.chat",
+                    "MINIMAX_API_RESOURCE_MODE": "<optional, [url|local], url is default, audio/image/video are downloaded locally or provided in URL format>"
+                }
+            }
+        }
+    }
+}

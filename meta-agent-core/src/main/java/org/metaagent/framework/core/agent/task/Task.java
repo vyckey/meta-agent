@@ -27,22 +27,97 @@ package org.metaagent.framework.core.agent.task;
 import java.util.List;
 
 /**
- * description is here
+ * Task interface represents a unit of work in the agent framework.
  *
  * @author vyckey
  */
 public interface Task {
+    /**
+     * Unique identifier for the task.
+     *
+     * @return the task ID
+     */
+    String getId();
+
+    /**
+     * Name of the task.
+     *
+     * @return the task name
+     */
     String getName();
 
+    /**
+     * Description of the task.
+     *
+     * @return the task description
+     */
     String getDescription();
 
+    /**
+     * Status of the task.
+     *
+     * @return the current status of the task
+     */
     TaskStatus getStatus();
 
-    default boolean isFinished() {
-        return getStatus().isFinished();
-    }
+    /**
+     * Sets the status of the task.
+     *
+     * @param status the new status to set
+     */
+    void setStatus(TaskStatus status);
 
+    /**
+     * Parent task of this task.
+     *
+     * @return the parent task
+     */
+    Task getParentTask();
+
+    /**
+     * Sets the parent task of this task.
+     *
+     * @param parentTask the parent task to set
+     */
+    void setParentTask(Task parentTask);
+
+    /**
+     * List of dependent tasks that must be completed before this task can be executed.
+     *
+     * @return the list of dependent tasks
+     */
     List<Task> getDependentTasks();
 
+    /**
+     * Sets the dependent tasks for this task.
+     *
+     * @param dependentTasks the list of dependent tasks to set
+     */
+    void setDependentTasks(List<Task> dependentTasks);
+
+    /**
+     * Adds dependent tasks to this task.
+     *
+     * @param tasks the tasks to add as dependencies
+     */
+    void addDependentTasks(Task... tasks);
+
+    /**
+     * Result of the task execution.
+     *
+     * @return the result of the task execution
+     */
     TaskResult getResult();
+
+    /**
+     * Sets the result of the task execution.
+     *
+     * @param result the result to set
+     */
+    void setResult(TaskResult result);
+
+    /**
+     * Reset the task to its initial state.
+     */
+    void reset();
 }

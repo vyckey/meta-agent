@@ -24,14 +24,21 @@
 
 package org.metaagent.framework.core.agent.profile;
 
-import org.metaagent.framework.core.common.MetadataProvider;
+import org.metaagent.framework.core.common.metadata.MetadataProvider;
 
 /**
  * Agent profile.
  *
  * @author vyckey
  */
-public interface AgentProfile extends MetadataProvider {
+public interface AgentProfile {
+    /**
+     * Gets agent metadata provider.
+     *
+     * @return the metadata provider.
+     */
+    MetadataProvider getMetadata();
+
     /**
      * Gets agent name.
      *
@@ -53,29 +60,4 @@ public interface AgentProfile extends MetadataProvider {
      */
     void setDescription(String description);
 
-    /**
-     * Gets profile property.
-     *
-     * @param key the property key.
-     * @return the property value.
-     */
-    Object getProperty(String key);
-
-    /**
-     * Gets profile property.
-     *
-     * @param key the property key.
-     * @param <T> the property type.
-     * @return the property value.
-     */
-    <T> T getProperty(String key, Class<T> type);
-
-    /**
-     * Sets the property value.
-     *
-     * @param key   the property key.
-     * @param value the property value.
-     * @return the self profile.
-     */
-    AgentProfile setProperty(String key, Object value);
 }

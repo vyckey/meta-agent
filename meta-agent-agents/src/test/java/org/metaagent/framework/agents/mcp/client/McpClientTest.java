@@ -22,40 +22,37 @@
  * SOFTWARE.
  */
 
-package org.metaagent.framework.core.agent.output.message;
+package org.metaagent.framework.agents.mcp.client;
 
-import com.google.common.collect.Maps;
-import lombok.Getter;
-import org.metaagent.framework.core.agent.chat.message.Message;
-import org.metaagent.framework.core.common.metadata.MapMetadataProvider;
-import org.metaagent.framework.core.common.metadata.MetadataProvider;
+import io.modelcontextprotocol.spec.McpSchema;
+import org.junit.Ignore;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.metaagent.framework.core.mcp.client.McpClientManager;
+import org.metaagent.framework.core.mcp.client.UnifiedMcpClient;
+import org.metaagent.framework.core.tool.Tool;
+import org.metaagent.framework.core.tool.mcp.McpToolkit;
 
 import java.util.List;
-import java.util.Map;
-import java.util.Objects;
 
-/**
- * description is here
- *
- * @author vyckey
- */
-@Getter
-public class DefaultAgentMessageOutput implements AgentMessageOutput {
-    private final MetadataProvider metadata;
-    private final List<Message> messages;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 
-    public DefaultAgentMessageOutput(List<Message> messages, Map<String, Object> metadata) {
-        this.messages = Objects.requireNonNull(messages, "messages is required");
-        this.metadata = new MapMetadataProvider(metadata);
+class McpClientTest {
+
+    private McpClientManager mcpClientManager;
+
+    @BeforeEach
+    void setUp() {
+        mcpClientManager = McpClientManager.getInstance();
     }
 
-    public DefaultAgentMessageOutput(List<Message> messages) {
-        this(messages, Maps.newHashMap());
+    @Ignore
+    @Test
+    void testAmapMcpClient() {
+        UnifiedMcpClient mcpClient = mcpClientManager.getClient("amap-amap-sse");
+        McpSchema.InitializeResult initializeResult = mcpClient.initialize().block();
+        McpToolkit toolkit = McpToolkit.create("Amap", "", mcpClient);
+        List<Tool<?, ?>> tools = toolkit.listTools();
+        assertFalse(tools.isEmpty(), "Amap MCP Client should have tools");
     }
-
-    @Override
-    public boolean isEmpty() {
-        return messages.isEmpty();
-    }
-
 }

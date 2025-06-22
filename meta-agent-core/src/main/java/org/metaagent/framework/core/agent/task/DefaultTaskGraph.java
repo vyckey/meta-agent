@@ -29,24 +29,23 @@ import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 import org.apache.commons.collections.CollectionUtils;
 
-import java.util.Collection;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.function.Predicate;
+import java.util.stream.Collectors;
 
 /**
- * description is here
+ * Default implementation of TaskGraph interface.
  *
  * @author vyckey
  */
-public class TaskGraphImpl implements TaskGraph {
+public class DefaultTaskGraph implements TaskGraph {
     protected final Map<String, Task> taskMap;
+    protected final Set<String> rootTaskIds;
     protected List<Task> tasks;
 
-    public TaskGraphImpl() {
+    public DefaultTaskGraph() {
         this.taskMap = Maps.newHashMap();
+        this.rootTaskIds = Sets.newHashSet();
         this.tasks = Lists.newArrayList();
     }
 
@@ -61,33 +60,57 @@ public class TaskGraphImpl implements TaskGraph {
     }
 
     @Override
-    public boolean hasTask(String taskName) {
-        return taskMap.containsKey(taskName);
+    public boolean hasTask(String taskId) {
+        return taskMap.containsKey(taskId);
     }
 
     @Override
-    public Task getTask(String taskName) {
-        return taskMap.get(taskName);
+    public Task getTask(String taskId) {
+        return taskMap.get(taskId);
     }
 
     @Override
-    public List<Task> getTasks() {
-        return List.of();
+    public List<Task> getSortedTasks() {
+        return Collections.unmodifiableList(tasks);
     }
 
     @Override
-    public List<Task> findTasks(Predicate<Task> predicate) {
-        return List.of();
+    public List<Task> findSortedTasks(Predicate<Task> predicate) {
+        return tasks.stream().filter(predicate).collect(Collectors.toList());
+    }
+
+    private boolean checkAddTasks(Collection<Task> tasks) {
+        boolean allNewTasks = true;
+        Map<String, Task> addTaskMap = tasks.stream().collect(Collectors.toMap(Task::getId, task -> task));
+        for (Task task : tasks) {
+            if (hasTask(task.getId())) {
+                throw new IllegalArgumentException("Task \"" + task.getId() +
+                        "\" already exists, use replaceTask instead.");
+            }
+            for (Task dependentTask : task.getDependentTasks()) {
+                String dependentTaskId = dependentTask.getId();
+                if (!hasTask(dependentTaskId) && !addTaskMap.containsKey(dependentTaskId)) {
+                    throw new IllegalArgumentException("Dependent task \"" + dependentTaskId +
+                            "\" does not exist for task \"" + task.getId() + "\".");
+                }
+                if (hasTask(dependentTaskId)) {
+                    allNewTasks = false;
+                }
+            }
+        }
+        return allNewTasks;
     }
 
     @Override
     public void addTask(Task task) {
-        if (hasTask(task.getName())) {
-            throw new IllegalArgumentException("Task \"" + task.getName() +
-                    "\" already exists, use replaceTask instead.");
+        if (checkAddTasks(Collections.singleton(task))) {
+            taskMap.put(task.getId(), task);
+            tasks.add(task);
+        } else {
+            this.tasks = List.of();
+            taskMap.put(task.getId(), task);
+            addNewTasks(taskMap.values());
         }
-        tasks.add(task);
-        taskMap.put(task.getName(), task);
     }
 
     @Override
@@ -95,26 +118,21 @@ public class TaskGraphImpl implements TaskGraph {
         if (CollectionUtils.isEmpty(tasks)) {
             return;
         }
-
-        for (Task task : tasks) {
-            if (hasTask(task.getName())) {
-                throw new IllegalArgumentException("Task \"" + task.getName() +
-                        "\" already exists, use replaceTask instead.");
-            }
-        }
-
-        addNewTasks(tasks);
-        for (Task task : tasks) {
-            taskMap.put(task.getName(), task);
+        if (checkAddTasks(tasks)) {
+            addNewTasks(tasks);
+            tasks.forEach(task -> taskMap.put(task.getId(), task));
+        } else {
+            this.tasks = List.of();
+            tasks.forEach(task -> taskMap.put(task.getId(), task));
+            addNewTasks(taskMap.values());
         }
     }
 
     @Override
     public void replaceTask(Task task) {
-        if (!hasTask(task.getName())) {
-            throw new IllegalArgumentException("Task \"" + task.getName() + "\" does not exist.");
-        }
-        taskMap.put(task.getName(), task);
+        checkAddTasks(Collections.singleton(task));
+
+        taskMap.put(task.getId(), task);
         tasks = List.of();
         addNewTasks(taskMap.values());
     }
@@ -140,8 +158,8 @@ public class TaskGraphImpl implements TaskGraph {
     }
 
     @Override
-    public Task removeTask(String taskName) {
-        Task removedTask = this.taskMap.remove(taskName);
+    public Task removeTask(String taskId) {
+        Task removedTask = this.taskMap.remove(taskId);
         if (removedTask != null) {
             this.tasks = List.of();
             addNewTasks(this.taskMap.values());
@@ -149,27 +167,26 @@ public class TaskGraphImpl implements TaskGraph {
         return removedTask;
     }
 
-    @Override
-    public Iterator<Task> iterator() {
-        return this.tasks.iterator();
-    }
-
-    void dfs(Task task, Set<Task> visited, List<Task> sortedTasks) {
+    void dfs(Task task, Set<Task> visited, List<Task> path, List<Task> sortedTasks) {
         if (visited.contains(task)) {
-            return;
+            String circle = path.stream().map(Task::getId).collect(Collectors.joining("->"));
+            throw new IllegalArgumentException("Task graph contains a circle: " + circle);
         }
         visited.add(task);
+        path.add(task);
         for (Task nextTask : task.getDependentTasks()) {
-            dfs(nextTask, visited, sortedTasks);
+            dfs(nextTask, visited, path, sortedTasks);
         }
+        path.remove(path.size() - 1);
         sortedTasks.add(task);
     }
 
     protected List<Task> topologicalSort(Collection<Task> tasks) {
         List<Task> sortedTasks = Lists.newArrayList();
+        List<Task> path = Lists.newArrayList();
         Set<Task> visited = Sets.newHashSet();
         for (Task task : tasks) {
-            dfs(task, visited, sortedTasks);
+            dfs(task, visited, path, sortedTasks);
         }
         return sortedTasks;
     }

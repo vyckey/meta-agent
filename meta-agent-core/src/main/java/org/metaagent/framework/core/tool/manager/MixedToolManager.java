@@ -89,7 +89,7 @@ public class MixedToolManager extends AbstractToolManager implements ToolManager
     }
 
     @Override
-    public Tool<?, ?> getTool(String name) {
+    public <I, O> Tool<I, O> getTool(String name) {
         ToolManager toolManager = toolManagerMapping.get(name);
         return toolManager != null ? toolManager.getTool(name) : null;
     }

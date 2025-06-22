@@ -27,13 +27,9 @@ package org.metaagent.framework.core.agent;
 import lombok.Getter;
 import org.metaagent.framework.core.agent.action.executor.ActionExecutor;
 import org.metaagent.framework.core.agent.action.executor.SyncActionExecutor;
-import org.metaagent.framework.core.agent.state.AgentState;
-import org.metaagent.framework.core.agent.state.DefaultAgentState;
 import org.metaagent.framework.core.environment.Environment;
 import org.metaagent.framework.core.tool.manager.DefaultToolManager;
 import org.metaagent.framework.core.tool.manager.ToolManager;
-import org.metaagent.framework.core.tool.tracker.DefaultToolCallTracker;
-import org.metaagent.framework.core.tool.tracker.ToolCallTracker;
 
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
@@ -47,24 +43,14 @@ import java.util.concurrent.Executors;
 public class DefaultAgentExecutionContext implements AgentExecutionContext {
     private final Environment environment;
     private final ToolManager toolManager;
-    private final ToolCallTracker toolCallTracker;
-    private final AgentState agentState;
     private final ActionExecutor actionExecutor;
     private final Executor executor;
 
     protected DefaultAgentExecutionContext(Builder builder) {
         this.environment = builder.environment;
         this.toolManager = builder.toolManager;
-        this.toolCallTracker = builder.toolCallTracker;
-        this.agentState = builder.agentState;
         this.actionExecutor = builder.actionExecutor;
         this.executor = builder.executor;
-    }
-
-    @Override
-    public void reset() {
-        toolCallTracker.clear();
-        agentState.reset();
     }
 
     public static Builder builder() {
@@ -78,9 +64,7 @@ public class DefaultAgentExecutionContext implements AgentExecutionContext {
     public static final class Builder {
         private Environment environment;
         private ToolManager toolManager;
-        private ToolCallTracker toolCallTracker;
         private ActionExecutor actionExecutor;
-        private AgentState agentState;
         private Executor executor;
 
         private Builder() {
@@ -90,7 +74,6 @@ public class DefaultAgentExecutionContext implements AgentExecutionContext {
             this.environment = context.getEnvironment();
             this.toolManager = context.getToolManager();
             this.actionExecutor = context.getActionExecutor();
-            this.agentState = context.getAgentState();
             this.executor = context.getExecutor();
         }
 
@@ -109,30 +92,14 @@ public class DefaultAgentExecutionContext implements AgentExecutionContext {
             return this;
         }
 
-        public Builder toolCallTracker(ToolCallTracker toolCallTracker) {
-            this.toolCallTracker = toolCallTracker;
-            return this;
-        }
-
         public Builder actionExecutor(ActionExecutor actionExecutor) {
             this.actionExecutor = actionExecutor;
             return this;
         }
 
-        public Builder agentState(AgentState agentState) {
-            this.agentState = agentState;
-            return this;
-        }
-
         private void setDefault() {
-            if (agentState == null) {
-                this.agentState = new DefaultAgentState();
-            }
             if (toolManager == null) {
                 this.toolManager = new DefaultToolManager();
-            }
-            if (toolCallTracker == null) {
-                this.toolCallTracker = new DefaultToolCallTracker();
             }
             if (actionExecutor == null) {
                 actionExecutor = SyncActionExecutor.INSTANCE;

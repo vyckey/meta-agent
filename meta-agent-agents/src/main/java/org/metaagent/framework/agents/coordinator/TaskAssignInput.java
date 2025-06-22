@@ -22,40 +22,31 @@
  * SOFTWARE.
  */
 
-package org.metaagent.framework.core.agent.output.message;
+package org.metaagent.framework.agents.coordinator;
 
-import com.google.common.collect.Maps;
 import lombok.Getter;
-import org.metaagent.framework.core.agent.chat.message.Message;
-import org.metaagent.framework.core.common.metadata.MapMetadataProvider;
-import org.metaagent.framework.core.common.metadata.MetadataProvider;
+import org.metaagent.framework.core.agent.input.AgentInput;
+import org.metaagent.framework.core.agent.task.Task;
 
 import java.util.List;
-import java.util.Map;
 import java.util.Objects;
 
 /**
- * description is here
+ * Input for task assignment in the coordinator agent.
+ * This class encapsulates a list of tasks to be assigned.
  *
  * @author vyckey
  */
 @Getter
-public class DefaultAgentMessageOutput implements AgentMessageOutput {
-    private final MetadataProvider metadata;
-    private final List<Message> messages;
+public class TaskAssignInput implements AgentInput {
+    private final List<Task> tasks;
 
-    public DefaultAgentMessageOutput(List<Message> messages, Map<String, Object> metadata) {
-        this.messages = Objects.requireNonNull(messages, "messages is required");
-        this.metadata = new MapMetadataProvider(metadata);
+    public TaskAssignInput(List<Task> tasks) {
+        this.tasks = Objects.requireNonNull(tasks, "Tasks cannot be null");
     }
 
-    public DefaultAgentMessageOutput(List<Message> messages) {
-        this(messages, Maps.newHashMap());
-    }
-
-    @Override
-    public boolean isEmpty() {
-        return messages.isEmpty();
+    public TaskAssignInput(Task... tasks) {
+        this(List.of(tasks));
     }
 
 }

@@ -88,9 +88,10 @@ public class DefaultToolManager extends AbstractToolManager implements ToolManag
         return tools.containsKey(name);
     }
 
+    @SuppressWarnings("unchecked")
     @Override
-    public Tool<?, ?> getTool(String name) {
-        return tools.get(name);
+    public <I, O> Tool<I, O> getTool(String name) {
+        return (Tool<I, O>) tools.get(name);
     }
 
     @Override
