@@ -22,51 +22,39 @@
  * SOFTWARE.
  */
 
-package org.metaagent.framework.agents.collaborate;
+package org.metaagent.framework.core.agents.coordinator;
 
 import com.google.common.collect.Lists;
-import org.apache.commons.lang3.NotImplementedException;
 import org.metaagent.framework.core.agent.AbstractAgent;
 import org.metaagent.framework.core.agent.Agent;
-import org.metaagent.framework.core.agent.AgentExecutionContext;
-import org.metaagent.framework.core.agent.input.AgentInput;
-import org.metaagent.framework.core.agent.output.AgentOutput;
-import org.metaagent.framework.core.agents.cooperation.ConductorAgent;
 
 import java.util.List;
 
 /**
- * description is here
+ * AbstractCoordinateAgent is an abstract class that implements the CoordinateAgent interface.
+ * It provides a base implementation for agents that coordinate the execution of other agents.
  *
  * @author vyckey
  */
-public class LlmConductorAgent extends AbstractAgent implements ConductorAgent {
-    protected final List<Agent> actorAgents;
+public abstract class AbstractCoordinateAgent extends AbstractAgent implements CoordinateAgent {
+    protected final List<Agent> executeAgents = Lists.newArrayList();
 
-    public LlmConductorAgent(String name, List<Agent> actorAgents) {
+    protected AbstractCoordinateAgent(String name) {
         super(name);
-        this.actorAgents = actorAgents;
-    }
-
-    public LlmConductorAgent(String name) {
-        this(name, Lists.newArrayList());
-    }
-
-    public void addActorAgent(Agent actorAgent) {
-        this.actorAgents.add(actorAgent);
-    }
-
-    public void removeActorAgent(Agent actorAgent) {
-        this.actorAgents.remove(actorAgent);
     }
 
     @Override
-    public List<Agent> getActorAgents() {
-        return actorAgents;
+    public List<Agent> getExecuteAgents() {
+        return executeAgents;
     }
 
     @Override
-    protected AgentOutput doStep(AgentExecutionContext context, AgentInput input) {
-        throw new NotImplementedException("not implement yet");
+    public void addExecuteAgent(Agent executeAgent) {
+        this.executeAgents.add(executeAgent);
+    }
+
+    @Override
+    public void removeExecuteAgent(Agent executeAgent) {
+        this.executeAgents.remove(executeAgent);
     }
 }

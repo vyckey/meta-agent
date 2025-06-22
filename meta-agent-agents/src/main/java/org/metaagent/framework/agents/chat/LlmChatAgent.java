@@ -78,6 +78,15 @@ public class LlmChatAgent extends AbstractAgent implements ChatAgent {
     }
 
     @Override
+    protected AgentMessageOutput doRun(AgentExecutionContext context, AgentInput input) {
+        AgentMessageOutput agentOutput = (AgentMessageOutput) super.doRun(context, input);
+        if (agentOutput != null) {
+            agentOutput.getMessages().forEach(messageHistory::appendMessage);
+        }
+        return agentOutput;
+    }
+
+    @Override
     protected AgentOutput doStep(AgentExecutionContext context, AgentInput input) {
         AgentMessageInput messageInput = (AgentMessageInput) input;
 

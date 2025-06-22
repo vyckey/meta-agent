@@ -22,12 +22,31 @@
  * SOFTWARE.
  */
 
-package org.metaagent.framework.core.agent.task;
+package org.metaagent.framework.agents.coordinator;
+
+import lombok.Getter;
+import org.metaagent.framework.core.agent.input.AgentInput;
+import org.metaagent.framework.core.agent.task.Task;
+
+import java.util.List;
+import java.util.Objects;
 
 /**
- * description is here
+ * Input for task assignment in the coordinator agent.
+ * This class encapsulates a list of tasks to be assigned.
  *
  * @author vyckey
  */
-public interface TaskResult {
+@Getter
+public class TaskAssignInput implements AgentInput {
+    private final List<Task> tasks;
+
+    public TaskAssignInput(List<Task> tasks) {
+        this.tasks = Objects.requireNonNull(tasks, "Tasks cannot be null");
+    }
+
+    public TaskAssignInput(Task... tasks) {
+        this(List.of(tasks));
+    }
+
 }

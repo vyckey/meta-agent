@@ -22,12 +22,22 @@
  * SOFTWARE.
  */
 
-package org.metaagent.framework.core.agent.task;
+package org.metaagent.framework.core.agents.coordinator;
+
+import org.metaagent.framework.core.agent.Agent;
+
+import java.util.List;
 
 /**
- * description is here
+ * CoordinateAgent is an interface that represents an agent responsible for coordinating.
  *
  * @author vyckey
  */
-public interface TaskResult {
+public interface CoordinateAgent extends Agent {
+    List<Agent> getExecuteAgents();
+
+    void addExecuteAgent(Agent executeAgent);
+
+    void removeExecuteAgent(Agent executeAgent);
+
 }

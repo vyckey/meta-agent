@@ -29,22 +29,22 @@ import java.util.List;
 import java.util.function.Predicate;
 
 /**
- * description is here
+ * TaskGraph interface represents a collection of tasks which have dependencies.
  *
  * @author vyckey
  */
-public interface TaskGraph extends Iterable<Task> {
+public interface TaskGraph {
     int size();
 
     boolean isEmpty();
 
-    boolean hasTask(String taskName);
+    boolean hasTask(String taskId);
 
-    Task getTask(String taskName);
+    Task getTask(String taskId);
 
-    List<Task> getTasks();
+    List<Task> getSortedTasks();
 
-    List<Task> findTasks(Predicate<Task> predicate);
+    List<Task> findSortedTasks(Predicate<Task> predicate);
 
     void addTask(Task task);
 
@@ -52,6 +52,6 @@ public interface TaskGraph extends Iterable<Task> {
 
     void replaceTask(Task task);
 
-    Task removeTask(String taskName);
+    Task removeTask(String taskId);
 
 }
