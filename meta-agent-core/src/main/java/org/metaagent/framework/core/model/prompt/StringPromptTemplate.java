@@ -42,12 +42,12 @@ public class StringPromptTemplate implements PromptTemplate {
         return from(formatter, template);
     }
 
-    public StringPromptTemplate fromFile(String formatterName, String fileName) {
+    public static StringPromptTemplate fromFile(String formatterName, String fileName) {
         String content = StringPromptValue.readFileAsString(fileName);
         return from(formatterName, content);
     }
 
-    public StringPromptTemplate fromFile(String fileName) {
+    public static StringPromptTemplate fromFile(String fileName) {
         String content = StringPromptValue.readFileAsString(fileName);
         String formatterName = StringFormatterManager.getDefaultFormatter().name();
         return from(formatterName, content);

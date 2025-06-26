@@ -13,7 +13,7 @@ import java.util.Set;
  */
 public final class StringFormatterManager {
     private static volatile StringFormatterManager instance = null;
-    private static volatile String defaultFormatter = "slf4j";
+    private static volatile String defaultFormatter = DefaultStringFormatter.NAME;
 
     private final Map<String, StringFormatter> formatterMap = Maps.newConcurrentMap();
 
