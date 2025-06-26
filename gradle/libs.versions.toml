@@ -11,6 +11,7 @@ log4j = '1.2.17'
 apacheLog4j = '2.24.3'
 guava = '33.2.1-jre'
 apacheCommon = '3.16.0'
+apacheCommonText = '1.13.1'
 commonConfig = '2.11.0'
 collections = '3.2.2'
 mcp = '0.10.0'
@@ -26,6 +27,7 @@ jackson-annotations = { module = 'com.fasterxml.jackson.core:jackson-annotations
 jsonschema = { module = 'com.github.victools:jsonschema-generator', version = 'jsonschema' }
 lombok = { module = 'org.projectlombok:lombok', version.ref = 'lombok' }
 commons-lang3 = { module = 'org.apache.commons:commons-lang3', version.ref = 'apacheCommon' }
+commons-text = { module = 'org.apache.commons:commons-text', version.ref = 'apacheCommonText' }
 commons-config = { module = 'org.apache.commons:commons-configuration2', version.ref = 'commonConfig' }
 collections4 = { module = 'commons-collections:commons-collections', version.ref = 'collections' }
 guava = { module = 'com.google.guava:guava', version.ref = 'guava' }
@@ -45,7 +47,7 @@ unittest = ['junit', 'jmockit']
 jackson = ['jackson-annotations', 'jackson-core', 'jackson-databind']
 jsonschema = ['jsonschema']
 lombok = ['lombok']
-utilies = ['commons-lang3', 'commons-config', 'collections4', 'guava']
+utilies = ['commons-lang3', 'commons-config', 'commons-text', 'collections4', 'guava']
 log = ['slf4j-api', 'log4j', 'log4j-core', 'log4j-api', 'slf4j-impl']
 mcp = ['mcp-sdk' , 'mcp-spring-webflux', 'mcp-spring-webmvc']
 reactor = ['reactor-core']
