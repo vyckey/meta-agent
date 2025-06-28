@@ -35,12 +35,12 @@ import com.google.api.services.customsearch.v1.model.Search;
 import com.google.common.collect.Lists;
 import org.apache.commons.collections.MapUtils;
 import org.apache.commons.lang3.StringUtils;
-import org.metaagent.framework.core.tool.Tool;
 import org.metaagent.framework.core.tool.ToolContext;
 import org.metaagent.framework.core.tool.ToolExecutionException;
 import org.metaagent.framework.core.tool.converter.ToolConverter;
 import org.metaagent.framework.core.tool.converter.ToolConverters;
 import org.metaagent.framework.core.tool.definition.ToolDefinition;
+import org.metaagent.framework.tools.search.SearchTool;
 import org.metaagent.framework.tools.search.common.WebSearchInformation;
 import org.metaagent.framework.tools.search.common.WebSearchRequest;
 import org.metaagent.framework.tools.search.common.WebSearchResponse;
@@ -59,7 +59,7 @@ import java.util.Optional;
  *
  * @author vyckey
  */
-public class GoogleCustomSearchTool implements Tool<WebSearchRequest, WebSearchResponse> {
+public class GoogleCustomSearchTool implements SearchTool {
     private static final String DEFAULT_ENGINE = "google";
     private static final String DEFAULT_LANGUAGE = "en";
     private final Customsearch customsearch;
@@ -74,7 +74,8 @@ public class GoogleCustomSearchTool implements Tool<WebSearchRequest, WebSearchR
     }
 
     public GoogleCustomSearchTool(Customsearch customsearch) {
-        this(customsearch, System.getenv("CUSTOM_SEARCH_API_KEY"));
+        this(customsearch, Objects.requireNonNull(System.getenv("CUSTOM_SEARCH_API_KEY"),
+                "Environment variable CUSTOM_SEARCH_API_KEY is required"));
     }
 
     public GoogleCustomSearchTool() {
@@ -84,8 +85,8 @@ public class GoogleCustomSearchTool implements Tool<WebSearchRequest, WebSearchR
 
     @Override
     public ToolDefinition getDefinition() {
-        return ToolDefinition.builder("GoogleCustomSearch")
-                .description("Web search tool by SearchAPI")
+        return ToolDefinition.builder("google_custom_search")
+                .description("Web search tool by Google Custom Search API")
                 .inputSchema(WebSearchRequest.class)
                 .outputSchema(WebSearchResponse.class)
                 .build();
