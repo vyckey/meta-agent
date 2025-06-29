@@ -1,13 +1,10 @@
 package org.metaagent.framework.core.model.prompt;
 
-import com.google.common.io.Files;
 import lombok.EqualsAndHashCode;
 import org.apache.commons.lang3.StringUtils;
-import org.springframework.util.ResourceUtils;
+import org.metaagent.framework.core.util.IOUtils;
 
-import java.io.File;
 import java.io.IOException;
-import java.nio.charset.StandardCharsets;
 
 /**
  * String format prompt value.
@@ -25,21 +22,18 @@ public final class StringPromptValue implements PromptValue {
         this.value = value;
     }
 
-    public StringPromptValue from(String value) {
+    public static StringPromptValue from(String value) {
         return new StringPromptValue(value);
     }
 
-    public StringPromptValue fromFile(String fileName) {
-        return new StringPromptValue(readFileAsString(fileName));
-    }
-
-    static String readFileAsString(String fileName) {
+    public static StringPromptValue fromFile(String fileName) {
+        String prompt;
         try {
-            File file = ResourceUtils.getFile(fileName);
-            return Files.asCharSource(file, StandardCharsets.UTF_8).read();
+            prompt = IOUtils.readToString(fileName);
         } catch (IOException e) {
-            throw new IllegalArgumentException("Failed to read prompt file: " + fileName, e);
+            throw new IllegalArgumentException("Failed to read prompt from file: " + fileName, e);
         }
+        return new StringPromptValue(prompt);
     }
 
     @Override

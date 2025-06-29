@@ -22,36 +22,23 @@
  * SOFTWARE.
  */
 
-package org.metaagent.framework.core.agent.fallback;
-
-import lombok.extern.slf4j.Slf4j;
-import org.metaagent.framework.core.agent.AgentExecutionContext;
-import org.metaagent.framework.core.agent.MetaAgent;
-import org.metaagent.framework.core.agent.input.AgentInput;
-import org.metaagent.framework.core.agent.output.AgentOutput;
-import org.metaagent.framework.core.agent.state.AgentState;
+package org.metaagent.framework.core.model.parser;
 
 /**
- * description is here
+ * Interface for parsing the output of an model into a specific type.
  *
  * @author vyckey
  */
-@Slf4j
-public class RetryAgentFallbackStrategy implements AgentFallbackStrategy {
-    private final int maxRetries;
-
-    public RetryAgentFallbackStrategy(int maxRetries) {
-        this.maxRetries = maxRetries;
+public class OutputParsingException extends RuntimeException {
+    public OutputParsingException(String message) {
+        super(message);
     }
 
-    @Override
-    public AgentOutput fallback(MetaAgent agent, AgentExecutionContext context, AgentInput input, Exception exception) {
-        AgentState agentState = agent.getAgentState();
-        if (agentState.getRetryCount() < maxRetries) {
-            agentState.incrRetryCount();
-            return agent.step(context, input);
-        }
-        log.warn("Failed to retry agent after {} retries", maxRetries);
-        return FastFailAgentFallbackStrategy.INSTANCE.fallback(agent, context, input, exception);
+    public OutputParsingException(String message, Throwable cause) {
+        super(message, cause);
+    }
+
+    public OutputParsingException(Throwable cause) {
+        super(cause);
     }
 }

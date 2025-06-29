@@ -3,7 +3,9 @@ package org.metaagent.framework.core.model.prompt;
 import lombok.Getter;
 import org.metaagent.framework.core.model.prompt.formatter.StringFormatter;
 import org.metaagent.framework.core.model.prompt.formatter.StringFormatterManager;
+import org.metaagent.framework.core.util.IOUtils;
 
+import java.io.IOException;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -43,14 +45,18 @@ public class StringPromptTemplate implements PromptTemplate {
     }
 
     public static StringPromptTemplate fromFile(String formatterName, String fileName) {
-        String content = StringPromptValue.readFileAsString(fileName);
-        return from(formatterName, content);
+        String template;
+        try {
+            template = IOUtils.readToString(fileName);
+        } catch (IOException e) {
+            throw new IllegalArgumentException("Failed to read prompt template from file: " + fileName, e);
+        }
+        return from(formatterName, template);
     }
 
     public static StringPromptTemplate fromFile(String fileName) {
-        String content = StringPromptValue.readFileAsString(fileName);
         String formatterName = StringFormatterManager.getDefaultFormatter().name();
-        return from(formatterName, content);
+        return fromFile(formatterName, fileName);
     }
 
     @Override
