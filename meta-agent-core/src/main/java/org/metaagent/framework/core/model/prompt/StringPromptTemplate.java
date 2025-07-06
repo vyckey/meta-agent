@@ -44,6 +44,10 @@ public class StringPromptTemplate implements PromptTemplate {
         return from(formatter, template);
     }
 
+    public static StringPromptTemplate from(String template) {
+        return from(StringFormatterManager.getDefaultFormatter(), template);
+    }
+
     public static StringPromptTemplate fromFile(String formatterName, String fileName) {
         String template;
         try {
