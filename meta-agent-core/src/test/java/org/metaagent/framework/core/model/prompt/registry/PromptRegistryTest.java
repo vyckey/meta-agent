@@ -46,7 +46,7 @@ class PromptRegistryTest {
         assertNotNull(registry.getPrompt("hello_prompt"));
         assertNotNull(registry.getPrompt("hello_prompt", StringPromptValue.class));
 
-        registry.unregisterPrompt("hello_prompt");
+        registry.removePrompt("hello_prompt");
     }
 
     @Test
@@ -56,7 +56,7 @@ class PromptRegistryTest {
         assertThrows(IllegalStateException.class, () ->
                 registry.registerPrompt("river_prompt", StringPromptValue.from("How long is the river?"))
         );
-        assertNotNull(registry.unregisterPrompt("river_prompt"));
+        assertNotNull(registry.removePrompt("river_prompt"));
         assertThrows(IllegalStateException.class, () -> registry.getPrompt("river_prompt"));
     }
 
@@ -83,7 +83,7 @@ class PromptRegistryTest {
         assertNotNull(registry.getPromptTemplate("greet_template"));
         assertNotNull(registry.getPromptTemplate("greet_template", StringPromptTemplate.class));
 
-        registry.unregisterPromptTemplate("greet_template");
+        registry.removePromptTemplate("greet_template");
     }
 
     @Test
@@ -94,7 +94,7 @@ class PromptRegistryTest {
         assertThrows(IllegalStateException.class, () ->
                 registry.registerPromptTemplate("welcome_template", template)
         );
-        assertNotNull(registry.unregisterPromptTemplate("welcome_template"));
+        assertNotNull(registry.removePromptTemplate("welcome_template"));
         assertThrows(IllegalStateException.class, () -> registry.getPromptTemplate("welcome_template"));
     }
 
@@ -107,7 +107,7 @@ class PromptRegistryTest {
         PromptTemplate replaced = registry.replacePromptTemplate("city_template", StringPromptTemplate.from("What is your city?"));
         assertNotNull(replaced);
 
-        registry.unregisterPromptTemplate("city_template");
+        registry.removePromptTemplate("city_template");
     }
 
 }

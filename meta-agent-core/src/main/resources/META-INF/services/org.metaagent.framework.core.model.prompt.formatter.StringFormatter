@@ -1,3 +1,4 @@
 org.metaagent.framework.core.model.prompt.formatter.DefaultStringFormatter
 org.metaagent.framework.core.model.prompt.formatter.JavaStringFormatter
 org.metaagent.framework.core.model.prompt.formatter.Slf4jStringFormatter
+org.metaagent.framework.core.model.prompt.formatter.Jinja2StringFormatter

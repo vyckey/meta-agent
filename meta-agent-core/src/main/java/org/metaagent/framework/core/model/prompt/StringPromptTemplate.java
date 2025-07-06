@@ -75,11 +75,12 @@ public class StringPromptTemplate implements PromptTemplate {
 
     @Override
     public PromptValue format(Map<String, Object> args) {
-        if (variables.isPresent()) {
-            Object[] argsArr = variables.get().stream().map(args::get).toArray();
-            return format(argsArr);
+        try {
+            String value = stringFormatter.format(template, args);
+            return PromptValue.from(value);
+        } catch (Exception e) {
+            throw new PromptFormatException("Failed to format prompt", e);
         }
-        throw new UnsupportedOperationException("Variables extraction is not supported by the formatter");
     }
 
     @Override

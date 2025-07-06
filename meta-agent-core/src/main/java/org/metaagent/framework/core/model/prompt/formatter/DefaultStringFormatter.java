@@ -59,25 +59,28 @@ public class DefaultStringFormatter implements StringFormatter {
         return DefaultStringFormatter.NAME;
     }
 
-    @SuppressWarnings("unchecked")
-    private Map<String, Object> convertToVariables(Object... args) {
+    static Map<String, Object> toMapVariables(Object... args) {
         Map<String, Object> variables = new HashMap<>();
         if ((args.length & 0x1) == 0) {
             for (int i = 0; i < args.length; i += 2) {
                 variables.put(args[i].toString(), args[i + 1]);
             }
-        } else if (args.length == 1 && args[0] instanceof Map) {
-            variables = (Map<String, Object>) args[0];
         } else {
-            throw new IllegalArgumentException("Arguments must be key-value pairs or a single map.");
+            throw new IllegalArgumentException("Arguments must be key-value pairs.");
         }
         return variables;
     }
 
     @Override
     public String format(String template, Object... args) {
-        Map<String, Object> variables = convertToVariables(args);
+        Map<String, Object> variables = toMapVariables(args);
         VariableSubstitutor substitutor = new VariableSubstitutor(variables);
+        return substitutor.replace(template);
+    }
+
+    @Override
+    public String format(String template, Map<String, Object> args) {
+        VariableSubstitutor substitutor = new VariableSubstitutor(args);
         return substitutor.replace(template);
     }
 
