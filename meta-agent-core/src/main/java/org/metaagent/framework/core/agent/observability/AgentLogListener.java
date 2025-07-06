@@ -69,19 +69,19 @@ public class AgentLogListener<I extends AgentInput, O extends AgentOutput>
     }
 
     @Override
-    public void onAgentStepStart(MetaAgent<I, O> agent, AgentInput input) {
+    public void onAgentStepStart(MetaAgent<I, O> agent, I input) {
         int turn = agentState.getLoopCount() + 1;
         agentLogger.debug("Agent is ready to execute... (Turn#{})", turn);
     }
 
     @Override
-    public void onAgentStepFinish(MetaAgent<I, O> agent, AgentInput input, AgentOutput output) {
+    public void onAgentStepFinish(MetaAgent<I, O> agent, I input, O output) {
         int turn = agentState.getLoopCount() + 1;
         agentLogger.debug("Agent executes finished. (Turn#{})", turn);
     }
 
     @Override
-    public void onAgentStepError(MetaAgent<I, O> agent, AgentInput input, Exception exception) {
+    public void onAgentStepError(MetaAgent<I, O> agent, I input, Exception exception) {
         int turn = agentState.getLoopCount() + 1;
         agentLogger.error("Agent executes occurs error. (Turn#{})", turn, exception);
     }

@@ -37,12 +37,12 @@ public interface AgentStepListener<I extends AgentInput, O extends AgentOutput> 
     default void onAgentNextLoop(MetaAgent<I, O> agent) {
     }
 
-    default void onAgentStepStart(MetaAgent<I, O> agent, AgentInput input) {
+    default void onAgentStepStart(MetaAgent<I, O> agent, I input) {
     }
 
-    default void onAgentStepFinish(MetaAgent<I, O> agent, AgentInput input, AgentOutput output) {
+    default void onAgentStepFinish(MetaAgent<I, O> agent, I input, O output) {
     }
 
-    default void onAgentStepError(MetaAgent<I, O> agent, AgentInput input, Exception exception) {
+    default void onAgentStepError(MetaAgent<I, O> agent, I input, Exception exception) {
     }
 }
