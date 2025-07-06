@@ -90,7 +90,7 @@ public final class GlobalPromptRegistry implements PromptRegistry {
     }
 
     @Override
-    public PromptValue unregisterPrompt(String name) {
+    public PromptValue removePrompt(String name) {
         PromptValue removedPrompt = promptMap.remove(name);
         if (removedPrompt == null) {
             throw new IllegalStateException(String.format("Prompt '%s' does not exist", name));
@@ -138,7 +138,7 @@ public final class GlobalPromptRegistry implements PromptRegistry {
     }
 
     @Override
-    public PromptTemplate unregisterPromptTemplate(String name) {
+    public PromptTemplate removePromptTemplate(String name) {
         PromptTemplate removedPromptTemplate = templateMap.remove(name);
         if (removedPromptTemplate == null) {
             throw new IllegalStateException(String.format("Prompt template '%s' does not exist", name));

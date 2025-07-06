@@ -134,7 +134,7 @@ public interface PromptRegistry {
      * @return the unregistered prompt value
      * @throws IllegalStateException if the prompt with the specified name does not exist
      */
-    PromptValue unregisterPrompt(String name);
+    PromptValue removePrompt(String name);
 
     /**
      * Checks if a prompt template with the specified name exists.
@@ -223,5 +223,5 @@ public interface PromptRegistry {
      * @return the unregistered prompt template
      * @throws IllegalStateException if the prompt template with the specified name does not exist
      */
-    PromptTemplate unregisterPromptTemplate(String name);
+    PromptTemplate removePromptTemplate(String name);
 }
