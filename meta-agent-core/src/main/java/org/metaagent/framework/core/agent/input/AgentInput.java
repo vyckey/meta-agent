@@ -24,10 +24,18 @@
 
 package org.metaagent.framework.core.agent.input;
 
+import org.metaagent.framework.core.agent.AgentExecutionContext;
+
 /**
- * description is here
+ * AgentInput is an interface that represents the input for an agent.
  *
  * @author vyckey
  */
 public interface AgentInput {
+    /**
+     * Gets the context of the agent execution.
+     *
+     * @return the AgentExecutionContext associated with this input
+     */
+    AgentExecutionContext getContext();
 }

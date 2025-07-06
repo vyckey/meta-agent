@@ -32,9 +32,7 @@ import org.metaagent.framework.core.agent.AgentExecutionException;
 import org.metaagent.framework.core.agent.chat.message.Message;
 import org.metaagent.framework.core.agent.chat.message.history.DefaultMessageHistory;
 import org.metaagent.framework.core.agent.chat.message.history.MessageHistory;
-import org.metaagent.framework.core.agent.input.AgentInput;
 import org.metaagent.framework.core.agent.input.message.AgentMessageInput;
-import org.metaagent.framework.core.agent.output.AgentOutput;
 import org.metaagent.framework.core.agent.output.message.AgentMessageOutput;
 import org.metaagent.framework.core.agents.chat.ChatAgent;
 import org.metaagent.framework.core.model.chat.MessageConverter;
@@ -57,7 +55,7 @@ import java.util.Objects;
  *
  * @author vyckey
  */
-public class LlmChatAgent extends AbstractAgent implements ChatAgent {
+public class LlmChatAgent extends AbstractAgent<AgentMessageInput, AgentMessageOutput> implements ChatAgent {
     protected final ChatModel chatModel;
     protected final ChatOptions chatOptions;
     protected MessageHistory messageHistory = new DefaultMessageHistory();
@@ -76,20 +74,9 @@ public class LlmChatAgent extends AbstractAgent implements ChatAgent {
     }
 
     @Override
-    protected AgentMessageOutput doRun(AgentExecutionContext context, AgentInput input) {
-        AgentMessageOutput agentOutput = (AgentMessageOutput) super.doRun(context, input);
-        if (agentOutput != null) {
-            agentOutput.getMessages().forEach(messageHistory::appendMessage);
-        }
-        return agentOutput;
-    }
-
-
-    @Override
-    protected AgentOutput doStep(AgentExecutionContext context, AgentInput input) {
-        AgentMessageInput messageInput = (AgentMessageInput) input;
-
-        Prompt prompt = buildPrompt(context, messageInput);
+    protected AgentMessageOutput doStep(AgentMessageInput input) {
+        AgentExecutionContext context = input.getContext();
+        Prompt prompt = buildPrompt(context, input);
         for (int i = 0; i < maxLoopCount; i++) {
             ChatResponse chatResponse = chatModel.call(prompt);
             Generation result = chatResponse.getResult();
@@ -106,7 +93,9 @@ public class LlmChatAgent extends AbstractAgent implements ChatAgent {
                 prompt.getInstructions().add(toolResponseMessage);
             } else {
                 Message outputMessage = messageConverter.reverse(assistantMessage);
-                return AgentMessageOutput.from(outputMessage);
+                AgentMessageOutput agentOutput = AgentMessageOutput.from(outputMessage);
+                agentOutput.getMessages().forEach(messageHistory::appendMessage);
+                return agentOutput;
             }
         }
         throw new AgentExecutionException("Exceed the agent max loop count " + maxLoopCount);

@@ -22,37 +22,28 @@
  * SOFTWARE.
  */
 
-package org.metaagent.framework.core.agents.chat;
+package org.metaagent.framework.core.agent.input;
 
-import com.google.common.collect.Lists;
-import org.metaagent.framework.core.agent.Agent;
-import org.metaagent.framework.core.agent.chat.message.Message;
-import org.metaagent.framework.core.agent.chat.message.MessageFactory;
-import org.metaagent.framework.core.agent.chat.message.history.MessageHistory;
-import org.metaagent.framework.core.agent.input.message.AgentMessageInput;
-import org.metaagent.framework.core.agent.output.message.AgentMessageOutput;
+import org.metaagent.framework.core.agent.AgentExecutionContext;
 
 /**
- * description is here
+ * AbstractAgentInput is an abstract class that implements the AgentInput interface.
  *
  * @author vyckey
  */
-public interface ChatAgent extends Agent<AgentMessageInput, AgentMessageOutput> {
-    MessageHistory getMessageHistory();
+public class AbstractAgentInput implements AgentInput {
+    protected AgentExecutionContext context;
+
+    protected AbstractAgentInput(AgentExecutionContext context) {
+        this.context = context;
+    }
+
+    protected AbstractAgentInput() {
+        this.context = AgentExecutionContext.create();
+    }
 
     @Override
-    default AgentMessageOutput run(String input) {
-        return run(MessageFactory.textMessage("user", input));
+    public AgentExecutionContext getContext() {
+        return context;
     }
-
-    default AgentMessageOutput run(Message message) {
-        MessageHistory messageHistory = getMessageHistory();
-        messageHistory.appendMessage(message);
-
-        AgentMessageInput messageInput = AgentMessageInput.with(Lists.newArrayList(messageHistory));
-        return run(messageInput);
-    }
-
-    AgentMessageOutput run(AgentMessageInput input);
-
 }

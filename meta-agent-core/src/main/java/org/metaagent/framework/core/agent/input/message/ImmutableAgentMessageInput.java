@@ -25,7 +25,9 @@
 package org.metaagent.framework.core.agent.input.message;
 
 import lombok.Getter;
+import org.metaagent.framework.core.agent.AgentExecutionContext;
 import org.metaagent.framework.core.agent.chat.message.Message;
+import org.metaagent.framework.core.agent.input.AbstractAgentInput;
 
 import java.util.List;
 import java.util.Objects;
@@ -36,7 +38,7 @@ import java.util.Objects;
  * @author vyckey
  */
 @Getter
-public class ImmutableAgentMessageInput implements AgentMessageInput {
+public class ImmutableAgentMessageInput extends AbstractAgentInput implements AgentMessageInput {
     private final String topic;
     private final List<Message> messages;
 
@@ -45,17 +47,24 @@ public class ImmutableAgentMessageInput implements AgentMessageInput {
         this.messages = Objects.requireNonNull(messages, "messages is required");
     }
 
-    public static ImmutableAgentMessageInput.Builder builder(List<Message> messages) {
-        return new ImmutableAgentMessageInput.Builder(messages);
+    public static ImmutableAgentMessageInput.Builder builder() {
+        return new ImmutableAgentMessageInput.Builder();
     }
 
 
     public static class Builder {
-        private final List<Message> messages;
+        private AgentExecutionContext context;
+        private List<Message> messages;
         private String topic;
 
-        Builder(List<Message> messages) {
+        public Builder context(AgentExecutionContext context) {
+            this.context = context;
+            return this;
+        }
+
+        public Builder messages(List<Message> messages) {
             this.messages = messages;
+            return this;
         }
 
         public Builder topic(String topic) {
@@ -64,7 +73,11 @@ public class ImmutableAgentMessageInput implements AgentMessageInput {
         }
 
         public AgentMessageInput build() {
-            return new ImmutableAgentMessageInput(topic, messages);
+            ImmutableAgentMessageInput messageInput = new ImmutableAgentMessageInput(topic, messages);
+            if (context != null) {
+                messageInput.context = context;
+            }
+            return messageInput;
         }
     }
 }

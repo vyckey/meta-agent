@@ -25,6 +25,7 @@
 package org.metaagent.framework.agents.coordinator;
 
 import lombok.Getter;
+import org.metaagent.framework.core.agent.input.AbstractAgentInput;
 import org.metaagent.framework.core.agent.input.AgentInput;
 import org.metaagent.framework.core.agent.task.Task;
 
@@ -38,7 +39,7 @@ import java.util.Objects;
  * @author vyckey
  */
 @Getter
-public class TaskAssignInput implements AgentInput {
+public class TaskAssignInput extends AbstractAgentInput implements AgentInput {
     private final List<Task> tasks;
 
     public TaskAssignInput(List<Task> tasks) {

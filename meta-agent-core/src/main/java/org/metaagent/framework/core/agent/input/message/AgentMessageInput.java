@@ -27,6 +27,7 @@ package org.metaagent.framework.core.agent.input.message;
 import org.metaagent.framework.core.agent.chat.message.Message;
 import org.metaagent.framework.core.agent.input.AgentInput;
 
+import java.util.Arrays;
 import java.util.List;
 
 /**
@@ -40,18 +41,18 @@ public interface AgentMessageInput extends AgentInput {
     List<Message> getMessages();
 
     static AgentMessageInput with(List<Message> messages) {
-        return ImmutableAgentMessageInput.builder(messages).build();
+        return ImmutableAgentMessageInput.builder().messages(messages).build();
     }
 
     static AgentMessageInput with(Message... messages) {
-        return ImmutableAgentMessageInput.builder(List.of(messages)).build();
+        return with(Arrays.asList(messages));
     }
 
     static ImmutableAgentMessageInput.Builder builder(List<Message> messages) {
-        return ImmutableAgentMessageInput.builder(messages);
+        return ImmutableAgentMessageInput.builder().messages(messages);
     }
 
     static ImmutableAgentMessageInput.Builder builder(Message... messages) {
-        return ImmutableAgentMessageInput.builder(List.of(messages));
+        return builder(Arrays.asList(messages));
     }
 }

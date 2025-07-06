@@ -24,28 +24,29 @@
 
 package org.metaagent.framework.core.agent;
 
-import org.metaagent.framework.core.agent.input.AgentInput;
 import org.metaagent.framework.core.agent.loop.AgentLoopControlStrategy;
 import org.metaagent.framework.core.agent.loop.MaxLoopCountAgentLoopControl;
-import org.metaagent.framework.core.agent.output.AgentOutput;
 
 /**
  * Abstract {@link Agent} implementation.
  *
  * @author vyckey
  */
-public abstract class AbstractAgent extends AbstractMetaAgent implements Agent {
+public abstract class AbstractAgent<
+        AgentInput extends org.metaagent.framework.core.agent.input.AgentInput,
+        AgentOutput extends org.metaagent.framework.core.agent.output.AgentOutput>
+        extends AbstractMetaAgent<AgentInput, AgentOutput> implements Agent<AgentInput, AgentOutput> {
     protected AbstractAgent(String name) {
         super(name);
     }
 
     @Override
-    public AgentLoopControlStrategy getLoopControlStrategy() {
-        return new MaxLoopCountAgentLoopControl(1);
+    public AgentLoopControlStrategy<AgentInput, AgentOutput> getLoopControlStrategy() {
+        return new MaxLoopCountAgentLoopControl<>(1);
     }
 
     @Override
-    protected AgentOutput doRun(AgentExecutionContext context, AgentInput input) {
-        return Agent.super.run(context, input);
+    protected AgentOutput doRun(AgentInput input) {
+        return Agent.super.run(input);
     }
 }

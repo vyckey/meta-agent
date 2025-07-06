@@ -24,7 +24,7 @@
 
 package org.metaagent.framework.agents.search;
 
-import lombok.Builder;
+import org.metaagent.framework.core.agent.AgentExecutionContext;
 import org.metaagent.framework.core.agent.input.AgentInput;
 
 /**
@@ -33,11 +33,59 @@ import org.metaagent.framework.core.agent.input.AgentInput;
  * @param query          the search query
  * @param detailIncluded whether to include detailed results
  */
-@Builder
-public record SearchAgentInput(String query,
-                               boolean forceSearch,
-                               boolean detailIncluded) implements AgentInput {
-    public static SearchAgentInput from(String query) {
-        return new SearchAgentInput(query, false, true);
+public record SearchAgentInput(
+        AgentExecutionContext context,
+        String query,
+        boolean forceSearch,
+        boolean detailIncluded) implements AgentInput {
+
+    public SearchAgentInput from(String query) {
+        return SearchAgentInput.builder().query(query).build();
+    }
+
+    @Override
+    public AgentExecutionContext getContext() {
+        return context;
+    }
+
+    public static Builder builder() {
+        return new Builder();
+    }
+
+    public static class Builder {
+        private AgentExecutionContext context;
+        private String query;
+        private boolean forceSearch = false;
+        private boolean detailIncluded = true;
+
+        private Builder() {
+        }
+
+        public Builder context(AgentExecutionContext context) {
+            this.context = context;
+            return this;
+        }
+
+        public Builder query(String query) {
+            this.query = query;
+            return this;
+        }
+
+        public Builder forceSearch(boolean forceSearch) {
+            this.forceSearch = forceSearch;
+            return this;
+        }
+
+        public Builder detailIncluded(boolean detailIncluded) {
+            this.detailIncluded = detailIncluded;
+            return this;
+        }
+
+        public SearchAgentInput build() {
+            if (context == null) {
+                context = AgentExecutionContext.create();
+            }
+            return new SearchAgentInput(context, query, forceSearch, detailIncluded);
+        }
     }
 }

@@ -27,21 +27,19 @@ package org.metaagent.framework.core.agent;
 import org.apache.commons.lang3.NotImplementedException;
 import org.metaagent.framework.core.agent.converter.AgentIOConverter;
 import org.metaagent.framework.core.agent.fallback.AgentFallbackStrategy;
-import org.metaagent.framework.core.agent.input.AgentInput;
 import org.metaagent.framework.core.agent.loop.AgentLoopControlStrategy;
-import org.metaagent.framework.core.agent.output.AgentOutput;
 import org.metaagent.framework.core.agent.state.AgentRunStatus;
 import org.metaagent.framework.core.agent.state.AgentState;
-import reactor.core.publisher.Flux;
-
-import java.util.concurrent.CompletableFuture;
 
 /**
  * The core agent abstraction.
  *
  * @author vyckey
  */
-public interface Agent extends MetaAgent {
+public interface Agent<
+        AgentInput extends org.metaagent.framework.core.agent.input.AgentInput,
+        AgentOutput extends org.metaagent.framework.core.agent.output.AgentOutput>
+        extends MetaAgent<AgentInput, AgentOutput> {
 
     /**
      * Gets Input/Output converter.
@@ -57,7 +55,7 @@ public interface Agent extends MetaAgent {
      *
      * @return the loop control strategy.
      */
-    AgentLoopControlStrategy getLoopControlStrategy();
+    AgentLoopControlStrategy<AgentInput, AgentOutput> getLoopControlStrategy();
 
     /**
      * Gets agent fallback strategy. It will be used to handle unexpected exceptions while running the agent.
@@ -65,58 +63,36 @@ public interface Agent extends MetaAgent {
      * @return the fallback strategy.
      */
     @Override
-    AgentFallbackStrategy getFallbackStrategy();
-
-    /**
-     * Creates default execution context.
-     *
-     * @return the agent execution context.
-     */
-    default AgentExecutionContext createContext() {
-        return DefaultAgentExecutionContext.builder().build();
-    }
+    AgentFallbackStrategy<AgentInput, AgentOutput> getFallbackStrategy();
 
     /**
      * Run with execution context and string input.
-     * It will invoke the method {@link #run(AgentExecutionContext, AgentInput)}.
-     *
-     * @param context the agent execution context.
-     * @param input   the agent input.
-     * @return the final agent output.
-     */
-    default AgentOutput run(AgentExecutionContext context, String input) {
-        throw new IllegalArgumentException("string agent input is unsupported");
-    }
-
-    /**
-     * Run with default execution context and string input.
-     * It will invoke the method {@link #run(AgentExecutionContext, AgentInput)}.
+     * It will invoke the method {@link #run(AgentInput)}.
      *
      * @param input the agent input.
      * @return the final agent output.
      */
-    default AgentOutput run(AgentInput input) {
-        return run(createContext(), input);
+    default AgentOutput run(String input) {
+        throw new IllegalArgumentException("string agent input is unsupported");
     }
 
     /**
      * The agent will execute a loop step until the agent should exit.
      *
-     * @param context the agent execution context.
-     * @param input   the agent input.
+     * @param input the agent input.
      * @return the final agent output.
      */
     @Override
-    default AgentOutput run(AgentExecutionContext context, AgentInput input) {
+    default AgentOutput run(AgentInput input) {
         AgentState agentState = getAgentState();
         AgentOutput output = null;
-        while (getLoopControlStrategy().shouldContinueLoop(this, context, input)) {
+        while (getLoopControlStrategy().shouldContinueLoop(this, input)) {
             try {
                 agentState.setStatus(AgentRunStatus.RUNNING);
-                output = step(context, input);
+                output = step(input);
             } catch (Exception ex) {
                 agentState.setLastException(ex);
-                output = getFallbackStrategy().fallback(this, context, input, ex);
+                output = getFallbackStrategy().fallback(this, input, ex);
             } finally {
                 agentState.incrLoopCount();
             }
@@ -128,32 +104,12 @@ public interface Agent extends MetaAgent {
     }
 
     /**
-     * Runs agent logic in a streaming way with default execution context.
-     *
-     * @param input the agent input.
-     * @return the streaming agent output.
-     */
-    default Flux<AgentOutput> runFlux(AgentInput input) {
-        return MetaAgent.super.runFlux(createContext(), input);
-    }
-
-    /**
-     * Runs agent synchronously with default execution context.
-     *
-     * @param input the agent input
-     * @return the agent out.
-     */
-    default CompletableFuture<AgentOutput> runAsync(AgentInput input) {
-        return MetaAgent.super.runAsync(createContext(), input);
-    }
-
-    /**
      * Start an agent step.
      *
-     * @param context the agent execution context.
-     * @param input   the agent input.
+     * @param input the agent input.
      * @return the agent output.
      */
     @Override
-    AgentOutput step(AgentExecutionContext context, AgentInput input);
+    AgentOutput step(AgentInput input);
+
 }

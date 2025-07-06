@@ -30,8 +30,6 @@ import org.metaagent.framework.core.agent.action.Action;
 import org.metaagent.framework.core.agent.action.DefaultActionExecutionContext;
 import org.metaagent.framework.core.agent.action.actions.AgentFinishAction;
 import org.metaagent.framework.core.agent.action.result.ActionResult;
-import org.metaagent.framework.core.agent.input.AgentInput;
-import org.metaagent.framework.core.agent.output.AgentOutput;
 import org.metaagent.framework.core.agent.output.observation.Observation;
 import org.metaagent.framework.core.agent.output.thought.Thought;
 
@@ -40,34 +38,38 @@ import org.metaagent.framework.core.agent.output.thought.Thought;
  *
  * @author vyckey
  */
-public abstract class AbstractReActAgent extends AbstractAgent implements ReActAgent {
+public abstract class AbstractReActAgent<
+        AgentInput extends org.metaagent.framework.core.agent.input.AgentInput,
+        AgentOutput extends org.metaagent.framework.core.agent.output.AgentOutput>
+        extends AbstractAgent<AgentInput, AgentOutput> implements ReActAgent<AgentInput, AgentOutput> {
 
     protected AbstractReActAgent(String name) {
         super(name);
     }
 
     @Override
-    public AgentOutput doStep(AgentExecutionContext context, AgentInput input) {
+    public AgentOutput doStep(AgentInput input) {
         int turnNum = agentState.getLoopCount() + 1;
 
-        Thought thought = think(context, input);
+        Thought thought = think(input);
         agentLogger.info("Thought #{}: {}", turnNum, thought.getText());
 
         Action action = thought.getProposalAction();
         if (action instanceof AgentFinishAction) {
-            return thought;
+            return generateOutput(input, thought, null);
         }
 
         agentLogger.info("Action #{}: {}", turnNum, action);
-        ActionResult actionResult = act(context, action);
+        ActionResult actionResult = act(input, action);
 
-        Observation observation = observe(context, input, thought, actionResult);
+        Observation observation = observe(input, thought, actionResult);
         agentLogger.info("Observation #{}: {}", turnNum, observation.getText());
-        return observation;
+        return generateOutput(input, thought, observation);
     }
 
     @Override
-    public ActionResult act(AgentExecutionContext context, Action action) {
+    public ActionResult act(AgentInput input, Action action) {
+        AgentExecutionContext context = input.getContext();
         DefaultActionExecutionContext executionContext = DefaultActionExecutionContext.builder()
                 .environment(context.getEnvironment())
                 .toolManager(context.getToolManager())
