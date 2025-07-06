@@ -22,36 +22,23 @@
  * SOFTWARE.
  */
 
-package org.metaagent.framework.core.agent.fallback;
-
-import lombok.extern.slf4j.Slf4j;
-import org.metaagent.framework.core.agent.AgentExecutionContext;
-import org.metaagent.framework.core.agent.MetaAgent;
-import org.metaagent.framework.core.agent.input.AgentInput;
-import org.metaagent.framework.core.agent.output.AgentOutput;
-import org.metaagent.framework.core.agent.state.AgentState;
+package org.metaagent.framework.core.model.parser;
 
 /**
- * description is here
+ * Interface for parsing the output of an agent into a specific type.
  *
+ * @param <O> the type of output
+ * @param <T> the type to parse the output into
  * @author vyckey
  */
-@Slf4j
-public class RetryAgentFallbackStrategy implements AgentFallbackStrategy {
-    private final int maxRetries;
+public interface OutputParser<O, T> {
 
-    public RetryAgentFallbackStrategy(int maxRetries) {
-        this.maxRetries = maxRetries;
-    }
-
-    @Override
-    public AgentOutput fallback(MetaAgent agent, AgentExecutionContext context, AgentInput input, Exception exception) {
-        AgentState agentState = agent.getAgentState();
-        if (agentState.getRetryCount() < maxRetries) {
-            agentState.incrRetryCount();
-            return agent.step(context, input);
-        }
-        log.warn("Failed to retry agent after {} retries", maxRetries);
-        return FastFailAgentFallbackStrategy.INSTANCE.fallback(agent, context, input, exception);
-    }
+    /**
+     * Parses the output of an agent into a specific type.
+     *
+     * @param output the output to parse
+     * @return the parsed output
+     * @throws OutputParsingException if parsing fails
+     */
+    T parse(O output) throws OutputParsingException;
 }

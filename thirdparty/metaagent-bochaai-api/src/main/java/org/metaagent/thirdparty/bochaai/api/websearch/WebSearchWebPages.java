@@ -22,24 +22,14 @@
  * SOFTWARE.
  */
 
-package org.metaagent.framework.core.agents.cooperation;
-
-import org.metaagent.framework.core.agent.Agent;
-import org.metaagent.framework.core.agent.AgentExecutionContext;
-import org.metaagent.framework.core.agent.input.AgentInput;
-import org.metaagent.framework.core.agent.output.AgentOutput;
+package org.metaagent.thirdparty.bochaai.api.websearch;
 
 import java.util.List;
 
-/**
- * The conductor agent.
- *
- * @author vyckey
- */
-public interface ConductorAgent extends Agent {
-    List<Agent> getActorAgents();
+public record WebSearchWebPages(
+        String webSearchUrl,
+        int totalEstimatedMatches,
+        List<WebPageValue> value,
+        boolean someResultsRemoved) {
 
-    default AgentOutput conduct(Agent actorAgent, AgentExecutionContext context, AgentInput input) {
-        return actorAgent.run(context, input);
-    }
 }

@@ -22,47 +22,28 @@
  * SOFTWARE.
  */
 
-plugins {
-    id 'java-library'
-    id 'application'
-    id 'maven-publish'
-    id 'buildlogic.java-common-conventions'
-}
+package org.metaagent.thirdparty.bochaai.api;
 
-group = 'org.metaagent.framework'
-version = '1.0.0-SNAPSHOT'
+import lombok.Getter;
 
-publishing {
-    publications {
-        create("mavenJava", MavenPublication) {
-            from components.java
-        }
+@Getter
+public class BochaaiApiException extends RuntimeException {
+    private BochaaiResponse<Void> response;
+
+    public BochaaiApiException(String message) {
+        super(message);
     }
-}
 
-sourceSets {
-    main {
-        resources {
-            srcDirs = ['src/main/resources']
-        }
+    public BochaaiApiException(String message, Throwable cause) {
+        super(message, cause);
     }
-    test {
-        resources {
-            srcDirs = ['src/test/resources']
-        }
+
+    public BochaaiApiException(Throwable cause) {
+        super(cause);
     }
-}
 
-dependencies {
-    compileOnly libs.bundles.lombok
-    annotationProcessor libs.bundles.lombok
-
-    api libs.bundles.utilies
-    api libs.bundles.jackson
-    api libs.bundles.log
-    api libs.bundles.mcp
-    api libs.bundles.reactor
-    api libs.bundles.springai
-    api libs.bundles.jinjava
-
+    public BochaaiApiException(BochaaiResponse<Void> response) {
+        this(response.message());
+        this.response = response;
+    }
 }

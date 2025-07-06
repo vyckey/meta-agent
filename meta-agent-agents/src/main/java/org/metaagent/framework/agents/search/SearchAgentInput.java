@@ -22,36 +22,22 @@
  * SOFTWARE.
  */
 
-package org.metaagent.framework.core.agent.fallback;
+package org.metaagent.framework.agents.search;
 
-import lombok.extern.slf4j.Slf4j;
-import org.metaagent.framework.core.agent.AgentExecutionContext;
-import org.metaagent.framework.core.agent.MetaAgent;
+import lombok.Builder;
 import org.metaagent.framework.core.agent.input.AgentInput;
-import org.metaagent.framework.core.agent.output.AgentOutput;
-import org.metaagent.framework.core.agent.state.AgentState;
 
 /**
- * description is here
+ * Search agent input schema.
  *
- * @author vyckey
+ * @param query          the search query
+ * @param detailIncluded whether to include detailed results
  */
-@Slf4j
-public class RetryAgentFallbackStrategy implements AgentFallbackStrategy {
-    private final int maxRetries;
-
-    public RetryAgentFallbackStrategy(int maxRetries) {
-        this.maxRetries = maxRetries;
-    }
-
-    @Override
-    public AgentOutput fallback(MetaAgent agent, AgentExecutionContext context, AgentInput input, Exception exception) {
-        AgentState agentState = agent.getAgentState();
-        if (agentState.getRetryCount() < maxRetries) {
-            agentState.incrRetryCount();
-            return agent.step(context, input);
-        }
-        log.warn("Failed to retry agent after {} retries", maxRetries);
-        return FastFailAgentFallbackStrategy.INSTANCE.fallback(agent, context, input, exception);
+@Builder
+public record SearchAgentInput(String query,
+                               boolean forceSearch,
+                               boolean detailIncluded) implements AgentInput {
+    public static SearchAgentInput from(String query) {
+        return new SearchAgentInput(query, false, true);
     }
 }

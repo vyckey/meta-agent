@@ -25,6 +25,8 @@
 package org.metaagent.framework.core.tool.spring;
 
 import com.google.common.collect.Lists;
+import com.google.common.collect.Sets;
+import org.apache.commons.collections.CollectionUtils;
 import org.metaagent.framework.core.tool.Tool;
 import org.metaagent.framework.core.tool.ToolContext;
 import org.metaagent.framework.core.tool.ToolExecutionException;
@@ -33,6 +35,7 @@ import org.metaagent.framework.core.tool.tracker.ToolCallTracker;
 import org.metaagent.framework.core.tool.tracker.ToolTrackerDelegate;
 import org.springframework.ai.chat.messages.AssistantMessage;
 import org.springframework.ai.chat.messages.ToolResponseMessage;
+import org.springframework.ai.chat.prompt.ChatOptions;
 import org.springframework.ai.model.function.FunctionCallback;
 import org.springframework.ai.model.tool.ToolCallingChatOptions;
 
@@ -44,24 +47,39 @@ import java.util.List;
  * @author vyckey
  */
 public abstract class ToolCallbackUtils {
-    public static void setToolOptions(ToolCallingChatOptions chatOptions, ToolManager toolManager) {
+    public static void addToolsToChatOptions(ToolCallingChatOptions chatOptions, ToolManager toolManager) {
+        addToolsToChatOptions(chatOptions, toolManager, null);
+    }
+
+    public static void addToolsToChatOptions(ToolCallingChatOptions chatOptions,
+                                             ToolManager toolManager, ToolCallTracker toolCallTracker) {
         List<FunctionCallback> toolCallbacks = Lists.newArrayList();
         for (String toolName : toolManager.getToolNames()) {
-            toolCallbacks.add(new ToolCallbackDelegate(toolManager.getTool(toolName)));
+            Tool<Object, Object> tool = toolManager.getTool(toolName);
+            if (toolCallTracker != null && !(tool instanceof ToolTrackerDelegate)) {
+                tool = new ToolTrackerDelegate<>(toolCallTracker, tool);
+            }
+            toolCallbacks.add(new ToolCallbackDelegate(tool));
         }
-        chatOptions.setToolNames(toolManager.getToolNames());
+        if (CollectionUtils.isEmpty(chatOptions.getToolNames())) {
+            chatOptions.setToolNames(toolManager.getToolNames());
+        } else {
+            chatOptions.setToolNames(Sets.union(chatOptions.getToolNames(), toolManager.getToolNames()));
+        }
+        if (CollectionUtils.isNotEmpty(chatOptions.getToolCallbacks())) {
+            toolCallbacks.addAll(chatOptions.getToolCallbacks());
+        }
         chatOptions.setToolCallbacks(toolCallbacks);
     }
 
-    public static void setToolOptions(ToolCallingChatOptions chatOptions, ToolManager toolManager, ToolCallTracker toolCallTracker) {
-        List<FunctionCallback> toolCallbacks = Lists.newArrayList();
-        for (String toolName : toolManager.getToolNames()) {
-            ToolTrackerDelegate<Object, Object> trackerDelegate =
-                    new ToolTrackerDelegate<>(toolCallTracker, toolManager.getTool(toolName));
-            toolCallbacks.add(new ToolCallbackDelegate(trackerDelegate));
+    public static ChatOptions buildChatOptionsWithTools(ChatOptions chatOptions,
+                                                        ToolManager toolManager, ToolCallTracker toolCallTracker) {
+        if (chatOptions instanceof ToolCallingChatOptions) {
+            ToolCallingChatOptions toolCallingChatOptions = chatOptions.copy();
+            ToolCallbackUtils.addToolsToChatOptions(toolCallingChatOptions, toolManager, toolCallTracker);
+            return toolCallingChatOptions;
         }
-        chatOptions.setToolNames(toolManager.getToolNames());
-        chatOptions.setToolCallbacks(toolCallbacks);
+        return chatOptions;
     }
 
     public static List<ToolResponseMessage.ToolResponse> callTools(

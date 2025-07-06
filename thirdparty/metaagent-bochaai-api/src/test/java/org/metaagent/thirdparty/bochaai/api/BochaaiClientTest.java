@@ -22,47 +22,27 @@
  * SOFTWARE.
  */
 
-plugins {
-    id 'java-library'
-    id 'application'
-    id 'maven-publish'
-    id 'buildlogic.java-common-conventions'
-}
+package org.metaagent.thirdparty.bochaai.api;
 
-group = 'org.metaagent.framework'
-version = '1.0.0-SNAPSHOT'
+import org.junit.jupiter.api.Disabled;
+import org.junit.jupiter.api.Test;
+import org.metaagent.thirdparty.bochaai.api.websearch.WebSearchData;
+import org.metaagent.thirdparty.bochaai.api.websearch.WebSearchRequest;
 
-publishing {
-    publications {
-        create("mavenJava", MavenPublication) {
-            from components.java
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
+@Disabled
+class BochaaiClientTest {
+    @Test
+    public void invalidApiKeyTest() {
+        BochaaiClient client = new BochaaiClient("test");
+        try {
+            BochaaiResponse<WebSearchData> response = client.search(new WebSearchRequest("How to install Python on MacOS?"));
+            assertNotNull(response);
+            assertTrue(response.isSuccess());
+        } catch (BochaaiApiException ex) {
+            assertNotNull(ex.getResponse());
         }
     }
-}
-
-sourceSets {
-    main {
-        resources {
-            srcDirs = ['src/main/resources']
-        }
-    }
-    test {
-        resources {
-            srcDirs = ['src/test/resources']
-        }
-    }
-}
-
-dependencies {
-    compileOnly libs.bundles.lombok
-    annotationProcessor libs.bundles.lombok
-
-    api libs.bundles.utilies
-    api libs.bundles.jackson
-    api libs.bundles.log
-    api libs.bundles.mcp
-    api libs.bundles.reactor
-    api libs.bundles.springai
-    api libs.bundles.jinjava
-
 }

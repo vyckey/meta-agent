@@ -22,36 +22,17 @@
  * SOFTWARE.
  */
 
-package org.metaagent.framework.core.agent.fallback;
+package org.metaagent.framework.tools.search;
 
-import lombok.extern.slf4j.Slf4j;
-import org.metaagent.framework.core.agent.AgentExecutionContext;
-import org.metaagent.framework.core.agent.MetaAgent;
-import org.metaagent.framework.core.agent.input.AgentInput;
-import org.metaagent.framework.core.agent.output.AgentOutput;
-import org.metaagent.framework.core.agent.state.AgentState;
+import org.metaagent.framework.core.tool.Tool;
+import org.metaagent.framework.tools.search.common.WebSearchRequest;
+import org.metaagent.framework.tools.search.common.WebSearchResponse;
 
 /**
- * description is here
+ * Interface for search tools that perform web searches.
  *
  * @author vyckey
  */
-@Slf4j
-public class RetryAgentFallbackStrategy implements AgentFallbackStrategy {
-    private final int maxRetries;
+public interface SearchTool extends Tool<WebSearchRequest, WebSearchResponse> {
 
-    public RetryAgentFallbackStrategy(int maxRetries) {
-        this.maxRetries = maxRetries;
-    }
-
-    @Override
-    public AgentOutput fallback(MetaAgent agent, AgentExecutionContext context, AgentInput input, Exception exception) {
-        AgentState agentState = agent.getAgentState();
-        if (agentState.getRetryCount() < maxRetries) {
-            agentState.incrRetryCount();
-            return agent.step(context, input);
-        }
-        log.warn("Failed to retry agent after {} retries", maxRetries);
-        return FastFailAgentFallbackStrategy.INSTANCE.fallback(agent, context, input, exception);
-    }
 }

@@ -22,47 +22,23 @@
  * SOFTWARE.
  */
 
-plugins {
-    id 'java-library'
-    id 'application'
-    id 'maven-publish'
-    id 'buildlogic.java-common-conventions'
-}
+package org.metaagent.thirdparty.bochaai.api;
 
-group = 'org.metaagent.framework'
-version = '1.0.0-SNAPSHOT'
+import org.metaagent.thirdparty.bochaai.api.websearch.WebSearchData;
+import org.metaagent.thirdparty.bochaai.api.websearch.WebSearchRequest;
+import retrofit2.Call;
+import retrofit2.http.Body;
+import retrofit2.http.Header;
+import retrofit2.http.Headers;
+import retrofit2.http.POST;
 
-publishing {
-    publications {
-        create("mavenJava", MavenPublication) {
-            from components.java
-        }
-    }
-}
+/**
+ * <a href="https://bocha-ai.feishu.cn/wiki/AOGtwEXhjiuDgLkTIqcc5LNNnZc">Bochaai API document</a>
+ */
+public interface BochaaiApi {
 
-sourceSets {
-    main {
-        resources {
-            srcDirs = ['src/main/resources']
-        }
-    }
-    test {
-        resources {
-            srcDirs = ['src/test/resources']
-        }
-    }
-}
-
-dependencies {
-    compileOnly libs.bundles.lombok
-    annotationProcessor libs.bundles.lombok
-
-    api libs.bundles.utilies
-    api libs.bundles.jackson
-    api libs.bundles.log
-    api libs.bundles.mcp
-    api libs.bundles.reactor
-    api libs.bundles.springai
-    api libs.bundles.jinjava
-
+    @POST("v1/web-search")
+    @Headers({"Content-Type: application/json"})
+    Call<BochaaiResponse<WebSearchData>> webSearch(@Header("Authorization") String authorization,
+                                                   @Body WebSearchRequest request);
 }

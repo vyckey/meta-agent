@@ -22,36 +22,36 @@
  * SOFTWARE.
  */
 
-package org.metaagent.framework.core.agent.fallback;
+package org.metaagent.framework.agents.search;
 
-import lombok.extern.slf4j.Slf4j;
-import org.metaagent.framework.core.agent.AgentExecutionContext;
-import org.metaagent.framework.core.agent.MetaAgent;
-import org.metaagent.framework.core.agent.input.AgentInput;
+import lombok.Builder;
 import org.metaagent.framework.core.agent.output.AgentOutput;
-import org.metaagent.framework.core.agent.state.AgentState;
+
+import java.util.List;
 
 /**
- * description is here
+ * SearchAgentOutput is the output schema for the SearchAgent.
  *
- * @author vyckey
+ * @param answer      the answer to the search query
+ * @param searched    whether the search was performed
+ * @param queryTerms  the terms used in the search query
+ * @param sources     the sources of the search results
+ * @param explanation an explanation of the answer or search process
+ * @param valuable    whether the search results are considered valuable
  */
-@Slf4j
-public class RetryAgentFallbackStrategy implements AgentFallbackStrategy {
-    private final int maxRetries;
+@Builder
+public record SearchAgentOutput(
+        String answer,
+        boolean searched,
+        List<String> queryTerms,
+        List<SearchSource> sources,
+        String explanation,
+        boolean valuable) implements AgentOutput {
 
-    public RetryAgentFallbackStrategy(int maxRetries) {
-        this.maxRetries = maxRetries;
+    public record SearchSource(String url, String title, String snippet, Float confidence) {
     }
 
-    @Override
-    public AgentOutput fallback(MetaAgent agent, AgentExecutionContext context, AgentInput input, Exception exception) {
-        AgentState agentState = agent.getAgentState();
-        if (agentState.getRetryCount() < maxRetries) {
-            agentState.incrRetryCount();
-            return agent.step(context, input);
-        }
-        log.warn("Failed to retry agent after {} retries", maxRetries);
-        return FastFailAgentFallbackStrategy.INSTANCE.fallback(agent, context, input, exception);
+    public static SearchAgentOutput fromAnswer(String answer) {
+        return new SearchAgentOutput(answer, false, List.of(), List.of(), null, true);
     }
 }

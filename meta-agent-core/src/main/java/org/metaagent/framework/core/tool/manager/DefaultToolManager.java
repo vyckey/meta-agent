@@ -52,7 +52,7 @@ public class DefaultToolManager extends AbstractToolManager implements ToolManag
         tools.forEach(tool -> this.tools.put(tool.getName(), tool));
     }
 
-    public DefaultToolManager fromTools(Tool<?, ?>... tools) {
+    public static DefaultToolManager fromTools(Tool<?, ?>... tools) {
         return new DefaultToolManager(List.of(tools));
     }
 

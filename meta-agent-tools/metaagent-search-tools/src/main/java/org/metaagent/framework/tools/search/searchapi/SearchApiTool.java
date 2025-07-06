@@ -26,12 +26,12 @@ package org.metaagent.framework.tools.search.searchapi;
 
 import com.google.common.collect.Maps;
 import org.apache.commons.lang3.StringUtils;
-import org.metaagent.framework.core.tool.Tool;
 import org.metaagent.framework.core.tool.ToolContext;
 import org.metaagent.framework.core.tool.ToolExecutionException;
 import org.metaagent.framework.core.tool.converter.ToolConverter;
 import org.metaagent.framework.core.tool.converter.ToolConverters;
 import org.metaagent.framework.core.tool.definition.ToolDefinition;
+import org.metaagent.framework.tools.search.SearchTool;
 import org.metaagent.framework.tools.search.common.WebSearchInformation;
 import org.metaagent.framework.tools.search.common.WebSearchRequest;
 import org.metaagent.framework.tools.search.common.WebSearchResponse;
@@ -49,11 +49,11 @@ import java.util.Objects;
 import java.util.Optional;
 
 /**
- * description is here
+ * Search tool using SearchAPI to perform web searches.
  *
  * @author vyckey
  */
-public class SearchApiTool implements Tool<WebSearchRequest, WebSearchResponse> {
+public class SearchApiTool implements SearchTool {
     private static final String DEFAULT_BASE_URL = "https://www.searchapi.io";
     private static final String DEFAULT_ENGINE = "google";
     private final SearchApiClient client;
@@ -84,7 +84,7 @@ public class SearchApiTool implements Tool<WebSearchRequest, WebSearchResponse> 
 
     @Override
     public ToolDefinition getDefinition() {
-        return ToolDefinition.builder("GoogleSearchAPI")
+        return ToolDefinition.builder("google_search_api")
                 .description("Web search tool by SearchAPI")
                 .inputSchema(WebSearchRequest.class)
                 .outputSchema(WebSearchResponse.class)

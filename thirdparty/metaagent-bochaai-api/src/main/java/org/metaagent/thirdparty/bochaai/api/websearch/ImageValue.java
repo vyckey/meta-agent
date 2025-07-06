@@ -22,47 +22,25 @@
  * SOFTWARE.
  */
 
-plugins {
-    id 'java-library'
-    id 'application'
-    id 'maven-publish'
-    id 'buildlogic.java-common-conventions'
-}
+package org.metaagent.thirdparty.bochaai.api.websearch;
 
-group = 'org.metaagent.framework'
-version = '1.0.0-SNAPSHOT'
+import com.fasterxml.jackson.annotation.JsonFormat;
 
-publishing {
-    publications {
-        create("mavenJava", MavenPublication) {
-            from components.java
-        }
-    }
-}
+import java.util.Date;
 
-sourceSets {
-    main {
-        resources {
-            srcDirs = ['src/main/resources']
-        }
-    }
-    test {
-        resources {
-            srcDirs = ['src/test/resources']
-        }
-    }
-}
-
-dependencies {
-    compileOnly libs.bundles.lombok
-    annotationProcessor libs.bundles.lombok
-
-    api libs.bundles.utilies
-    api libs.bundles.jackson
-    api libs.bundles.log
-    api libs.bundles.mcp
-    api libs.bundles.reactor
-    api libs.bundles.springai
-    api libs.bundles.jinjava
+public record ImageValue(
+        String webSearchUrl,
+        String name,
+        String thumbnailUrl,
+        @JsonFormat(pattern = "yyyy-MM-dd'T'HH:mm:ssXXX")
+        Date datePublished,
+        String contentUrl,
+        String hostPageUrl,
+        String contentSize,
+        String encodingFormat,
+        String hostPageDisplayUrl,
+        Integer width,
+        Integer height,
+        Thumbnail thumbnail) {
 
 }
