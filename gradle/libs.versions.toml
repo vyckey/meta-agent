@@ -18,6 +18,7 @@ collections = '3.2.2'
 mcp = '0.10.0'
 reactorCore = '3.7.4'
 springAI = '1.0.0-M6'
+jinjava = '2.8.0'
 
 [libraries]
 junit = { module = 'junit:junit', version.ref = 'junit' }
@@ -43,6 +44,8 @@ mcp-spring-webflux = { module = 'io.modelcontextprotocol.sdk:mcp-spring-webflux'
 mcp-spring-webmvc = { module = 'io.modelcontextprotocol.sdk:mcp-spring-webmvc', version.ref = 'mcp' }
 reactor-core = { module = 'io.projectreactor:reactor-core', version.ref = 'reactorCore' }
 spring-ai-core = { module = 'org.springframework.ai:spring-ai-core', version.ref = 'springAI' }
+jinjava = { module = 'com.hubspot.jinjava:jinjava', version.ref = 'jinjava' }
+picocli = { module = 'info.picocli:picocli', version = '4.7.6' }
 
 [bundles]
 unittest = ['junit', 'jmockit']
@@ -54,3 +57,5 @@ log = ['slf4j-api', 'log4j', 'log4j-core', 'log4j-api', 'slf4j-impl']
 mcp = ['mcp-sdk' , 'mcp-spring-webflux', 'mcp-spring-webmvc']
 reactor = ['reactor-core']
 springai = ['spring-ai-core']
+jinjava = ['jinjava']
+picocli = ['picocli']
