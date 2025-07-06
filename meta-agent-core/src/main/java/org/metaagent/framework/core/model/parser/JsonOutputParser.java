@@ -58,6 +58,9 @@ public class JsonOutputParser<T> implements OutputParser<String, T> {
 
     @Override
     public T parse(String output) throws OutputParsingException {
+        if (output.startsWith("```json") && output.endsWith("```")) {
+            output = output.substring(7, output.length() - 3).trim();
+        }
         try {
             return OBJECT_MAPPER.readValue(output, this.typeRef);
         } catch (JsonProcessingException e) {
