@@ -24,6 +24,7 @@
 
 package org.metaagent.framework.agents.search;
 
+import lombok.Builder;
 import org.metaagent.framework.core.agent.output.AgentOutput;
 
 import java.util.List;
@@ -36,18 +37,21 @@ import java.util.List;
  * @param queryTerms  the terms used in the search query
  * @param sources     the sources of the search results
  * @param explanation an explanation of the answer or search process
+ * @param valuable    whether the search results are considered valuable
  */
+@Builder
 public record SearchAgentOutput(
         String answer,
         boolean searched,
         List<String> queryTerms,
         List<SearchSource> sources,
-        String explanation) implements AgentOutput {
+        String explanation,
+        boolean valuable) implements AgentOutput {
 
-    public record SearchSource(String url, String title, String summary) {
+    public record SearchSource(String url, String title, String snippet, Float confidence) {
     }
 
     public static SearchAgentOutput fromAnswer(String answer) {
-        return new SearchAgentOutput(answer, false, List.of(), List.of(), null);
+        return new SearchAgentOutput(answer, false, List.of(), List.of(), null, true);
     }
 }

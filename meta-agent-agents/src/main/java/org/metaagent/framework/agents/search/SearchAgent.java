@@ -34,8 +34,10 @@ import org.metaagent.framework.core.agent.input.AgentInput;
 import org.metaagent.framework.core.agent.output.AgentOutput;
 import org.metaagent.framework.core.model.chat.ChatModelUtils;
 import org.metaagent.framework.core.model.parser.JsonOutputParser;
+import org.metaagent.framework.core.model.prompt.PromptTemplate;
 import org.metaagent.framework.core.model.prompt.PromptValue;
-import org.metaagent.framework.core.model.prompt.StringPromptValue;
+import org.metaagent.framework.core.model.prompt.StringPromptTemplate;
+import org.metaagent.framework.core.model.prompt.registry.PromptRegistry;
 import org.metaagent.framework.core.tool.manager.DefaultToolManager;
 import org.metaagent.framework.core.tool.manager.ToolManager;
 import org.metaagent.framework.core.tool.spring.ToolCallbackUtils;
@@ -49,7 +51,10 @@ import org.springframework.ai.chat.model.ChatResponse;
 import org.springframework.ai.chat.prompt.ChatOptions;
 import org.springframework.ai.chat.prompt.Prompt;
 
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.List;
+import java.util.Map;
 
 /**
  * SearchAgent is an agent that performs web searches using a chat model and tools.
@@ -59,7 +64,12 @@ import java.util.List;
 public class SearchAgent extends AbstractAgent {
     protected final ChatModel chatModel;
     protected final ChatOptions chatOptions;
-    protected PromptValue promptValue = StringPromptValue.fromFile("agents/prompts/search_agent_system_prompt.md");
+
+    static {
+        PromptRegistry.global().registerPromptTemplate("framework:search_agent_system_prompt",
+                StringPromptTemplate.fromFile("jinja2", "agents/prompts/search_agent_system_prompt.md")
+        );
+    }
 
     public SearchAgent(String name, ChatModel chatModel, ChatOptions chatOptions) {
         super(name);
@@ -95,6 +105,11 @@ public class SearchAgent extends AbstractAgent {
         ChatOptions options = ToolCallbackUtils.buildChatOptionsWithTools(this.chatOptions,
                 context.getToolManager(), getAgentState().getToolCallTracker());
 
+        PromptTemplate promptTemplate = PromptRegistry.global().getPromptTemplate("framework:search_agent_system_prompt");
+        PromptValue promptValue = promptTemplate.format(Map.of(
+                "date", LocalDateTime.now().format(DateTimeFormatter.ISO_LOCAL_DATE),
+                "force_search", agentInput.forceSearch()
+        ));
         List<Message> messages = List.of(
                 new SystemMessage(promptValue.toString()),
                 new UserMessage(agentInput.query())
@@ -108,9 +123,14 @@ public class SearchAgent extends AbstractAgent {
         if (CollectionUtils.isEmpty(output.queryTerms()) && CollectionUtils.isEmpty(output.sources())) {
             return SearchAgentOutput.fromAnswer(output.answer());
         }
-        return new SearchAgentOutput(output.answer(), true,
-                output.queryTerms(), output.sources(), output.explanation()
-        );
+        return SearchAgentOutput.builder()
+                .answer(output.answer())
+                .searched(true)
+                .queryTerms(output.queryTerms())
+                .sources(output.sources())
+                .explanation(output.explanation())
+                .valuable(output.valuable())
+                .build();
     }
 
 }

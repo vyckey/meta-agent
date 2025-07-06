@@ -24,6 +24,7 @@
 
 package org.metaagent.framework.agents.search;
 
+import lombok.Builder;
 import org.metaagent.framework.core.agent.input.AgentInput;
 
 /**
@@ -32,9 +33,11 @@ import org.metaagent.framework.core.agent.input.AgentInput;
  * @param query          the search query
  * @param detailIncluded whether to include detailed results
  */
+@Builder
 public record SearchAgentInput(String query,
+                               boolean forceSearch,
                                boolean detailIncluded) implements AgentInput {
     public static SearchAgentInput from(String query) {
-        return new SearchAgentInput(query, true);
+        return new SearchAgentInput(query, false, true);
     }
 }
