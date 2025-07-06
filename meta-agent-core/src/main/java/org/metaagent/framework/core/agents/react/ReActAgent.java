@@ -25,12 +25,9 @@
 package org.metaagent.framework.core.agents.react;
 
 import org.metaagent.framework.core.agent.Agent;
-import org.metaagent.framework.core.agent.AgentExecutionContext;
 import org.metaagent.framework.core.agent.action.Action;
 import org.metaagent.framework.core.agent.action.actions.AgentFinishAction;
 import org.metaagent.framework.core.agent.action.result.ActionResult;
-import org.metaagent.framework.core.agent.input.AgentInput;
-import org.metaagent.framework.core.agent.output.AgentOutput;
 import org.metaagent.framework.core.agent.output.observation.Observation;
 import org.metaagent.framework.core.agent.output.thought.Thought;
 
@@ -41,21 +38,27 @@ import org.metaagent.framework.core.agent.output.thought.Thought;
  *
  * @author vyckey
  */
-public interface ReActAgent extends Agent {
+public interface ReActAgent<
+        AgentInput extends org.metaagent.framework.core.agent.input.AgentInput,
+        AgentOutput extends org.metaagent.framework.core.agent.output.AgentOutput>
+        extends Agent<AgentInput, AgentOutput> {
 
-    default AgentOutput step(AgentExecutionContext context, AgentInput input) {
-        Thought thought = think(context, input);
+    default AgentOutput step(AgentInput input) {
+        Thought thought = think(input);
         Action action = thought.getProposalAction();
         if (action instanceof AgentFinishAction) {
-            return thought;
+            return generateOutput(input, thought, null);
         }
-        ActionResult actionResult = act(context, action);
-        return observe(context, input, thought, actionResult);
+        ActionResult actionResult = act(input, action);
+        Observation observation = observe(input, thought, actionResult);
+        return generateOutput(input, thought, observation);
     }
 
-    Thought think(AgentExecutionContext context, AgentInput input);
+    Thought think(AgentInput input);
 
-    ActionResult act(AgentExecutionContext context, Action action);
+    ActionResult act(AgentInput input, Action action);
 
-    Observation observe(AgentExecutionContext context, AgentInput input, Thought thought, ActionResult actionResult);
+    Observation observe(AgentInput input, Thought thought, ActionResult actionResult);
+
+    AgentOutput generateOutput(AgentInput input, Thought thought, Observation observation);
 }

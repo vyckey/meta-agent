@@ -25,9 +25,6 @@
 package org.metaagent.framework.agents.coordinator;
 
 import com.google.common.collect.Lists;
-import org.metaagent.framework.core.agent.AgentExecutionContext;
-import org.metaagent.framework.core.agent.input.AgentInput;
-import org.metaagent.framework.core.agent.output.AgentOutput;
 import org.metaagent.framework.core.agents.coordinator.AbstractCoordinateAgent;
 import org.springframework.ai.chat.messages.AssistantMessage;
 import org.springframework.ai.chat.messages.Message;
@@ -40,7 +37,7 @@ import org.springframework.ai.chat.prompt.Prompt;
 import java.util.List;
 import java.util.Objects;
 
-public class TaskCoordinateAgent extends AbstractCoordinateAgent {
+public class TaskCoordinateAgent extends AbstractCoordinateAgent<TaskAssignInput, TaskAssignOutput> {
     protected final ChatModel chatModel;
     protected ChatOptions chatOptions;
 
@@ -55,17 +52,8 @@ public class TaskCoordinateAgent extends AbstractCoordinateAgent {
     }
 
     @Override
-    protected void beforeRun(AgentExecutionContext context, AgentInput input) {
-        super.beforeRun(context, input);
-        if (!(input instanceof TaskAssignInput)) {
-            throw new IllegalArgumentException("Input must be an instance of TaskAssignInput");
-        }
-    }
-
-    @Override
-    protected AgentOutput doStep(AgentExecutionContext context, AgentInput input) {
-        TaskAssignInput assignInput = (TaskAssignInput) input;
-        Prompt prompt = buildPrompt(context, assignInput);
+    protected TaskAssignOutput doStep(TaskAssignInput assignInput) {
+        Prompt prompt = buildPrompt(assignInput);
 
         ChatResponse chatResponse = chatModel.call(prompt);
         Generation result = chatResponse.getResult();
@@ -73,7 +61,7 @@ public class TaskCoordinateAgent extends AbstractCoordinateAgent {
         return parseAssignOutput(assistantMessage);
     }
 
-    protected Prompt buildPrompt(AgentExecutionContext context, TaskAssignInput input) {
+    protected Prompt buildPrompt(TaskAssignInput input) {
         List<Message> messages = Lists.newArrayList();
         // TODO: implement it
         return chatOptions != null ? new Prompt(messages, chatOptions) : new Prompt(messages);

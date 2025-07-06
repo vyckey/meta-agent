@@ -24,7 +24,7 @@
 
 package org.metaagent.framework.core.agent.observability;
 
-import org.metaagent.framework.core.agent.AgentContext;
+import org.metaagent.framework.core.agent.MetaAgent;
 import org.metaagent.framework.core.agent.input.AgentInput;
 import org.metaagent.framework.core.agent.output.AgentOutput;
 import org.metaagent.framework.core.agent.state.AgentState;
@@ -38,7 +38,8 @@ import org.metaagent.framework.core.agent.state.AgentState;
  * @see AgentRunListener
  * @see AgentStepListener
  */
-public class AgentLogListener implements AgentRunListener, AgentStepListener {
+public class AgentLogListener<I extends AgentInput, O extends AgentOutput>
+        implements AgentRunListener<I, O>, AgentStepListener<I, O> {
     private final AgentState agentState;
     private final AgentLogger agentLogger;
 
@@ -48,39 +49,39 @@ public class AgentLogListener implements AgentRunListener, AgentStepListener {
     }
 
     @Override
-    public void onAgentStart(AgentContext context, AgentInput input) {
+    public void onAgentStart(MetaAgent<I, O> agent, I input) {
         agentLogger.debug("Agent is ready to run...");
     }
 
     @Override
-    public void onAgentOutput(AgentContext context, AgentInput input, AgentOutput output) {
+    public void onAgentOutput(MetaAgent<I, O> agent, I input, O output) {
         agentLogger.debug("Agent run finished.");
     }
 
     @Override
-    public void onAgentException(AgentContext context, AgentInput input, Exception exception) {
+    public void onAgentException(MetaAgent<I, O> agent, I input, Exception exception) {
         agentLogger.error("Agent run exception.", exception);
     }
 
     @Override
-    public void onAgentNextLoop(AgentContext context) {
-        AgentStepListener.super.onAgentNextLoop(context);
+    public void onAgentNextLoop(MetaAgent<I, O> agent) {
+        AgentStepListener.super.onAgentNextLoop(agent);
     }
 
     @Override
-    public void onAgentStepStart(AgentContext context, AgentInput input) {
+    public void onAgentStepStart(MetaAgent<I, O> agent, AgentInput input) {
         int turn = agentState.getLoopCount() + 1;
         agentLogger.debug("Agent is ready to execute... (Turn#{})", turn);
     }
 
     @Override
-    public void onAgentStepFinish(AgentContext context, AgentInput input, AgentOutput output) {
+    public void onAgentStepFinish(MetaAgent<I, O> agent, AgentInput input, AgentOutput output) {
         int turn = agentState.getLoopCount() + 1;
         agentLogger.debug("Agent executes finished. (Turn#{})", turn);
     }
 
     @Override
-    public void onAgentStepError(AgentContext context, AgentInput input, Exception exception) {
+    public void onAgentStepError(MetaAgent<I, O> agent, AgentInput input, Exception exception) {
         int turn = agentState.getLoopCount() + 1;
         agentLogger.error("Agent executes occurs error. (Turn#{})", turn, exception);
     }

@@ -27,6 +27,8 @@ package org.metaagent.framework.core.agents.coordinator;
 import com.google.common.collect.Lists;
 import org.metaagent.framework.core.agent.AbstractAgent;
 import org.metaagent.framework.core.agent.Agent;
+import org.metaagent.framework.core.agent.input.AgentInput;
+import org.metaagent.framework.core.agent.output.AgentOutput;
 
 import java.util.List;
 
@@ -36,25 +38,26 @@ import java.util.List;
  *
  * @author vyckey
  */
-public abstract class AbstractCoordinateAgent extends AbstractAgent implements CoordinateAgent {
-    protected final List<Agent> executeAgents = Lists.newArrayList();
+public abstract class AbstractCoordinateAgent<I extends AgentInput, O extends AgentOutput>
+        extends AbstractAgent<I, O> implements CoordinateAgent<I, O> {
+    protected final List<Agent<?, ?>> executeAgents = Lists.newArrayList();
 
     protected AbstractCoordinateAgent(String name) {
         super(name);
     }
 
     @Override
-    public List<Agent> getExecuteAgents() {
+    public List<Agent<?, ?>> getExecuteAgents() {
         return executeAgents;
     }
 
     @Override
-    public void addExecuteAgent(Agent executeAgent) {
+    public void addExecuteAgent(Agent<?, ?> executeAgent) {
         this.executeAgents.add(executeAgent);
     }
 
     @Override
-    public void removeExecuteAgent(Agent executeAgent) {
+    public void removeExecuteAgent(Agent<?, ?> executeAgent) {
         this.executeAgents.remove(executeAgent);
     }
 }

@@ -27,9 +27,7 @@ package org.metaagent.framework.core.agent;
 import org.metaagent.framework.core.agent.ability.AgentAbility;
 import org.metaagent.framework.core.agent.ability.AgentAbilityManager;
 import org.metaagent.framework.core.agent.fallback.AgentFallbackStrategy;
-import org.metaagent.framework.core.agent.input.AgentInput;
 import org.metaagent.framework.core.agent.memory.Memory;
-import org.metaagent.framework.core.agent.output.AgentOutput;
 import org.metaagent.framework.core.agent.profile.AgentProfile;
 import org.metaagent.framework.core.agent.state.AgentState;
 import reactor.core.publisher.Flux;
@@ -41,7 +39,10 @@ import java.util.concurrent.CompletableFuture;
  *
  * @author vyckey
  */
-public interface MetaAgent {
+public interface MetaAgent<
+        AgentInput extends org.metaagent.framework.core.agent.input.AgentInput,
+        AgentOutput extends org.metaagent.framework.core.agent.output.AgentOutput> {
+
     /**
      * Gets agent name.
      *
@@ -93,55 +94,51 @@ public interface MetaAgent {
     /**
      * Runs agent logic.
      *
-     * @param context the agent execution context.
-     * @param input   the agent input.
+     * @param input the agent input.
      * @return the agent output.
      */
-    default AgentOutput run(AgentExecutionContext context, AgentInput input) {
+    default AgentOutput run(AgentInput input) {
         try {
-            return step(context, input);
+            return step(input);
         } catch (Exception ex) {
-            return getFallbackStrategy().fallback(this, context, input, ex);
+            return getFallbackStrategy().fallback(this, input, ex);
         }
     }
 
     /**
      * Runs agent logic in a streaming way.
      *
-     * @param context the agent execution context.
-     * @param input   the agent input.
+     * @param input the agent input.
      * @return the streaming agent output.
      */
-    default Flux<AgentOutput> runFlux(AgentExecutionContext context, AgentInput input) {
+    default Flux<AgentOutput> runFlux(AgentInput input) {
         throw new UnsupportedOperationException("Streaming run is not supported");
     }
 
     /**
      * Runs agent synchronously.
      *
-     * @param context the agent execution context.
-     * @param input   the agent input
+     * @param input the agent input
      * @return the agent out.
      */
-    default CompletableFuture<AgentOutput> runAsync(AgentExecutionContext context, AgentInput input) {
-        return CompletableFuture.supplyAsync(() -> run(context, input));
+    default CompletableFuture<AgentOutput> runAsync(AgentInput input) {
+        return CompletableFuture.supplyAsync(() -> run(input), input.getContext().getExecutor());
     }
 
     /**
      * Start an agent step.
      *
-     * @param context the agent execution context.
-     * @param input   the agent input.
+     * @param input the agent input.
      * @return the agent output.
      */
-    AgentOutput step(AgentExecutionContext context, AgentInput input);
+    AgentOutput step(AgentInput input);
 
     /**
      * Gets agent fallback strategy. It will be used to handle unexpected exceptions while running the agent.
      *
      * @return the fallback strategy.
      */
-    AgentFallbackStrategy getFallbackStrategy();
+    AgentFallbackStrategy<AgentInput, AgentOutput> getFallbackStrategy();
 
     /**
      * Reset the agent to initial state.

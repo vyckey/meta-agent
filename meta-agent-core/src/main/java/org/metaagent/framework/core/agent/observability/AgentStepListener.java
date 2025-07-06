@@ -24,7 +24,7 @@
 
 package org.metaagent.framework.core.agent.observability;
 
-import org.metaagent.framework.core.agent.AgentContext;
+import org.metaagent.framework.core.agent.MetaAgent;
 import org.metaagent.framework.core.agent.input.AgentInput;
 import org.metaagent.framework.core.agent.output.AgentOutput;
 
@@ -33,16 +33,16 @@ import org.metaagent.framework.core.agent.output.AgentOutput;
  *
  * @author vyckey
  */
-public interface AgentStepListener {
-    default void onAgentNextLoop(AgentContext context) {
+public interface AgentStepListener<I extends AgentInput, O extends AgentOutput> {
+    default void onAgentNextLoop(MetaAgent<I, O> agent) {
     }
 
-    default void onAgentStepStart(AgentContext context, AgentInput input) {
+    default void onAgentStepStart(MetaAgent<I, O> agent, AgentInput input) {
     }
 
-    default void onAgentStepFinish(AgentContext context, AgentInput input, AgentOutput output) {
+    default void onAgentStepFinish(MetaAgent<I, O> agent, AgentInput input, AgentOutput output) {
     }
 
-    default void onAgentStepError(AgentContext context, AgentInput input, Exception exception) {
+    default void onAgentStepError(MetaAgent<I, O> agent, AgentInput input, Exception exception) {
     }
 }

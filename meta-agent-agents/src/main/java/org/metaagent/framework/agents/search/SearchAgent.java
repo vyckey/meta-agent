@@ -27,21 +27,15 @@ package org.metaagent.framework.agents.search;
 import org.apache.commons.collections.CollectionUtils;
 import org.metaagent.framework.core.agent.AbstractAgent;
 import org.metaagent.framework.core.agent.AgentExecutionContext;
-import org.metaagent.framework.core.agent.DefaultAgentExecutionContext;
 import org.metaagent.framework.core.agent.fallback.AgentFallbackStrategy;
 import org.metaagent.framework.core.agent.fallback.RetryAgentFallbackStrategy;
-import org.metaagent.framework.core.agent.input.AgentInput;
-import org.metaagent.framework.core.agent.output.AgentOutput;
 import org.metaagent.framework.core.model.chat.ChatModelUtils;
 import org.metaagent.framework.core.model.parser.JsonOutputParser;
 import org.metaagent.framework.core.model.prompt.PromptTemplate;
 import org.metaagent.framework.core.model.prompt.PromptValue;
 import org.metaagent.framework.core.model.prompt.StringPromptTemplate;
 import org.metaagent.framework.core.model.prompt.registry.PromptRegistry;
-import org.metaagent.framework.core.tool.manager.DefaultToolManager;
-import org.metaagent.framework.core.tool.manager.ToolManager;
 import org.metaagent.framework.core.tool.spring.ToolCallbackUtils;
-import org.metaagent.framework.tools.search.searchapi.SearchApiTool;
 import org.springframework.ai.chat.messages.AssistantMessage;
 import org.springframework.ai.chat.messages.Message;
 import org.springframework.ai.chat.messages.SystemMessage;
@@ -61,7 +55,7 @@ import java.util.Map;
  *
  * @author vyckey
  */
-public class SearchAgent extends AbstractAgent {
+public class SearchAgent extends AbstractAgent<SearchAgentInput, SearchAgentOutput> {
     protected final ChatModel chatModel;
     protected final ChatOptions chatOptions;
 
@@ -78,30 +72,20 @@ public class SearchAgent extends AbstractAgent {
     }
 
     @Override
-    public AgentExecutionContext createContext() {
-        SearchApiTool searchApiTool = new SearchApiTool();
-        ToolManager toolManager = DefaultToolManager.fromTools(searchApiTool);
-        return DefaultAgentExecutionContext.builder()
-                .toolManager(toolManager)
-                .build();
+    public AgentFallbackStrategy<SearchAgentInput, SearchAgentOutput> getFallbackStrategy() {
+        return new RetryAgentFallbackStrategy<>(2);
     }
 
     @Override
-    public AgentFallbackStrategy getFallbackStrategy() {
-        return new RetryAgentFallbackStrategy(2);
-    }
-
-    @Override
-    protected AgentOutput doStep(AgentExecutionContext context, AgentInput input) {
-        SearchAgentInput agentInput = (SearchAgentInput) input;
-
-        Prompt prompt = buildPrompt(context, agentInput);
+    protected SearchAgentOutput doStep(SearchAgentInput agentInput) {
+        Prompt prompt = buildPrompt(agentInput);
         ChatResponse response = ChatModelUtils.callWithToolCall(chatModel, prompt);
         AssistantMessage assistantMessage = response.getResult().getOutput();
         return parseOutput(assistantMessage);
     }
 
-    protected Prompt buildPrompt(AgentExecutionContext context, SearchAgentInput agentInput) {
+    protected Prompt buildPrompt(SearchAgentInput agentInput) {
+        AgentExecutionContext context = agentInput.getContext();
         ChatOptions options = ToolCallbackUtils.buildChatOptionsWithTools(this.chatOptions,
                 context.getToolManager(), getAgentState().getToolCallTracker());
 

@@ -25,6 +25,8 @@
 package org.metaagent.framework.core.agents.coordinator;
 
 import org.metaagent.framework.core.agent.Agent;
+import org.metaagent.framework.core.agent.input.AgentInput;
+import org.metaagent.framework.core.agent.output.AgentOutput;
 
 import java.util.List;
 
@@ -33,11 +35,11 @@ import java.util.List;
  *
  * @author vyckey
  */
-public interface CoordinateAgent extends Agent {
-    List<Agent> getExecuteAgents();
+public interface CoordinateAgent<I extends AgentInput, O extends AgentOutput> extends Agent<I, O> {
+    List<Agent<?, ?>> getExecuteAgents();
 
-    void addExecuteAgent(Agent executeAgent);
+    void addExecuteAgent(Agent<?, ?> executeAgent);
 
-    void removeExecuteAgent(Agent executeAgent);
+    void removeExecuteAgent(Agent<?, ?> executeAgent);
 
 }

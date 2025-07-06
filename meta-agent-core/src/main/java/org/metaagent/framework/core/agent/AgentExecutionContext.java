@@ -36,6 +36,23 @@ import java.util.concurrent.Executor;
  * @author vyckey
  */
 public interface AgentExecutionContext {
+    /**
+     * Create a new agent execution context with default settings.
+     *
+     * @return a new AgentExecutionContext instance
+     */
+    static AgentExecutionContext create() {
+        return builder().build();
+    }
+
+    /**
+     * Create a new agent execution context builder.
+     *
+     * @return a DefaultAgentExecutionContext builder instance
+     */
+    static DefaultAgentExecutionContext.Builder builder() {
+        return DefaultAgentExecutionContext.builder();
+    }
 
     /**
      * Get the environment associated with this agent execution context.
