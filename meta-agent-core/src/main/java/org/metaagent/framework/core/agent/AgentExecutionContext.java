@@ -26,6 +26,7 @@ package org.metaagent.framework.core.agent;
 
 import org.metaagent.framework.core.agent.action.executor.ActionExecutor;
 import org.metaagent.framework.core.environment.Environment;
+import org.metaagent.framework.core.tool.executor.ToolExecutor;
 import org.metaagent.framework.core.tool.manager.ToolManager;
 
 import java.util.concurrent.Executor;
@@ -67,6 +68,13 @@ public interface AgentExecutionContext {
      * @return the tool manager
      */
     ToolManager getToolManager();
+
+    /**
+     * Get the tool executor associated with this agent execution context.
+     *
+     * @return the tool executor
+     */
+    ToolExecutor getToolExecutor();
 
     /**
      * Get the action executor associated with this agent execution context.

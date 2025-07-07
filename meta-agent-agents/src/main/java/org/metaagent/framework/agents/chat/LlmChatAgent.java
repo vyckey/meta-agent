@@ -110,7 +110,7 @@ public class LlmChatAgent extends AbstractAgent<AgentMessageInput, AgentMessageO
         inputMessages.stream().map(messageConverter::convert).forEach(messages::add);
 
         ChatOptions options = ToolCallbackUtils.buildChatOptionsWithTools(this.chatOptions,
-                context.getToolManager(), getAgentState().getToolCallTracker());
+                buildToolContext(messageInput), context.getToolExecutor());
         return new Prompt(messages, options);
     }
 

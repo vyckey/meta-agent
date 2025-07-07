@@ -28,6 +28,8 @@ import lombok.Getter;
 import org.metaagent.framework.core.agent.action.executor.ActionExecutor;
 import org.metaagent.framework.core.agent.action.executor.SyncActionExecutor;
 import org.metaagent.framework.core.environment.Environment;
+import org.metaagent.framework.core.tool.executor.DefaultToolExecutor;
+import org.metaagent.framework.core.tool.executor.ToolExecutor;
 import org.metaagent.framework.core.tool.manager.DefaultToolManager;
 import org.metaagent.framework.core.tool.manager.ToolManager;
 
@@ -43,12 +45,14 @@ import java.util.concurrent.Executors;
 public class DefaultAgentExecutionContext implements AgentExecutionContext {
     private final Environment environment;
     private final ToolManager toolManager;
+    private final ToolExecutor toolExecutor;
     private final ActionExecutor actionExecutor;
     private final Executor executor;
 
     protected DefaultAgentExecutionContext(Builder builder) {
         this.environment = builder.environment;
         this.toolManager = builder.toolManager;
+        this.toolExecutor = builder.toolExecutor;
         this.actionExecutor = builder.actionExecutor;
         this.executor = builder.executor;
     }
@@ -64,6 +68,7 @@ public class DefaultAgentExecutionContext implements AgentExecutionContext {
     public static final class Builder {
         private Environment environment;
         private ToolManager toolManager;
+        private ToolExecutor toolExecutor;
         private ActionExecutor actionExecutor;
         private Executor executor;
 
@@ -92,6 +97,11 @@ public class DefaultAgentExecutionContext implements AgentExecutionContext {
             return this;
         }
 
+        public Builder toolExecutor(ToolExecutor toolExecutor) {
+            this.toolExecutor = toolExecutor;
+            return this;
+        }
+
         public Builder actionExecutor(ActionExecutor actionExecutor) {
             this.actionExecutor = actionExecutor;
             return this;
@@ -100,6 +110,9 @@ public class DefaultAgentExecutionContext implements AgentExecutionContext {
         private void setDefault() {
             if (toolManager == null) {
                 this.toolManager = new DefaultToolManager();
+            }
+            if (toolExecutor == null) {
+                this.toolExecutor = DefaultToolExecutor.getInstance();
             }
             if (actionExecutor == null) {
                 actionExecutor = SyncActionExecutor.INSTANCE;

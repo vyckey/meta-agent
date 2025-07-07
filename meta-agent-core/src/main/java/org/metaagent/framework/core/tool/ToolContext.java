@@ -28,12 +28,40 @@ import org.metaagent.framework.core.tool.manager.ToolManager;
 import org.metaagent.framework.core.tool.tracker.ToolCallTracker;
 
 /**
- * description is here
+ * ToolContext provides the context for tool execution,
  *
  * @author vyckey
  */
 public interface ToolContext {
+    /**
+     * Gets the tool executor for executing tools.
+     *
+     * @return the tool executor
+     */
+    static ToolContext create() {
+        return builder().build();
+    }
+
+    /**
+     * Creates a new builder for constructing a ToolContext.
+     *
+     * @return a new ToolContext builder
+     */
+    static DefaultToolContext.Builder builder() {
+        return DefaultToolContext.builder();
+    }
+
+    /**
+     * Gets the tool executor for executing tools.
+     *
+     * @return the tool executor
+     */
     ToolManager getToolManager();
 
+    /**
+     * Gets the tool executor for executing tools.
+     *
+     * @return the tool executor
+     */
     ToolCallTracker getToolCallTracker();
 }
