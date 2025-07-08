@@ -25,21 +25,19 @@
 package org.metaagent.framework.agents.chat;
 
 import com.google.common.collect.Lists;
-import org.apache.commons.lang3.StringUtils;
 import org.metaagent.framework.core.agent.AbstractAgent;
 import org.metaagent.framework.core.agent.AgentExecutionContext;
 import org.metaagent.framework.core.agent.AgentExecutionException;
 import org.metaagent.framework.core.agent.chat.message.Message;
 import org.metaagent.framework.core.agent.chat.message.history.DefaultMessageHistory;
 import org.metaagent.framework.core.agent.chat.message.history.MessageHistory;
-import org.metaagent.framework.core.agent.input.message.AgentMessageInput;
-import org.metaagent.framework.core.agent.output.message.AgentMessageOutput;
+import org.metaagent.framework.core.agents.chat.AgentChatInput;
+import org.metaagent.framework.core.agents.chat.AgentChatOutput;
 import org.metaagent.framework.core.agents.chat.ChatAgent;
 import org.metaagent.framework.core.model.chat.MessageConverter;
 import org.metaagent.framework.core.tool.DefaultToolContext;
 import org.metaagent.framework.core.tool.spring.ToolCallbackUtils;
 import org.springframework.ai.chat.messages.AssistantMessage;
-import org.springframework.ai.chat.messages.SystemMessage;
 import org.springframework.ai.chat.messages.ToolResponseMessage;
 import org.springframework.ai.chat.model.ChatModel;
 import org.springframework.ai.chat.model.ChatResponse;
@@ -55,7 +53,7 @@ import java.util.Objects;
  *
  * @author vyckey
  */
-public class LlmChatAgent extends AbstractAgent<AgentMessageInput, AgentMessageOutput> implements ChatAgent {
+public class LlmChatAgent extends AbstractAgent<AgentChatInput, AgentChatOutput> implements ChatAgent {
     protected final ChatModel chatModel;
     protected final ChatOptions chatOptions;
     protected MessageHistory messageHistory = new DefaultMessageHistory();
@@ -74,7 +72,7 @@ public class LlmChatAgent extends AbstractAgent<AgentMessageInput, AgentMessageO
     }
 
     @Override
-    protected AgentMessageOutput doStep(AgentMessageInput input) {
+    protected AgentChatOutput doStep(AgentChatInput input) {
         AgentExecutionContext context = input.getContext();
         Prompt prompt = buildPrompt(context, input);
         for (int i = 0; i < maxLoopCount; i++) {
@@ -93,21 +91,17 @@ public class LlmChatAgent extends AbstractAgent<AgentMessageInput, AgentMessageO
                 prompt.getInstructions().add(toolResponseMessage);
             } else {
                 Message outputMessage = messageConverter.reverse(assistantMessage);
-                AgentMessageOutput agentOutput = AgentMessageOutput.from(outputMessage);
-                agentOutput.getMessages().forEach(messageHistory::appendMessage);
+                AgentChatOutput agentOutput = AgentChatOutput.builder().messages(outputMessage).build();
+                agentOutput.messages().forEach(messageHistory::appendMessage);
                 return agentOutput;
             }
         }
         throw new AgentExecutionException("Exceed the agent max loop count " + maxLoopCount);
     }
 
-    protected Prompt buildPrompt(AgentExecutionContext context, AgentMessageInput messageInput) {
-        List<Message> inputMessages = messageInput.getMessages();
+    protected Prompt buildPrompt(AgentExecutionContext context, AgentChatInput messageInput) {
         List<org.springframework.ai.chat.messages.Message> messages = Lists.newArrayList();
-        if (StringUtils.isNotEmpty(messageInput.getTopic())) {
-            messages.add(new SystemMessage(messageInput.getTopic()));
-        }
-        inputMessages.stream().map(messageConverter::convert).forEach(messages::add);
+        messageInput.messages().stream().map(messageConverter::convert).forEach(messages::add);
 
         ChatOptions options = ToolCallbackUtils.buildChatOptionsWithTools(this.chatOptions,
                 buildToolContext(messageInput), context.getToolExecutor());

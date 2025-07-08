@@ -22,37 +22,50 @@
  * SOFTWARE.
  */
 
-package org.metaagent.framework.core.agent.input.message;
+package org.metaagent.framework.core.agents.chat;
 
 import org.metaagent.framework.core.agent.chat.message.Message;
-import org.metaagent.framework.core.agent.input.AgentInput;
+import org.metaagent.framework.core.agent.output.AgentOutput;
+import org.metaagent.framework.core.common.metadata.MetadataProvider;
 
-import java.util.Arrays;
 import java.util.List;
 
 /**
- * description is here
+ * {@link ChatAgent} output  interface.
  *
  * @author vyckey
  */
-public interface AgentMessageInput extends AgentInput {
-    String getTopic();
-
-    List<Message> getMessages();
-
-    static AgentMessageInput with(List<Message> messages) {
-        return ImmutableAgentMessageInput.builder().messages(messages).build();
+public interface AgentChatOutput extends AgentOutput {
+    /**
+     * Builder for {@link AgentChatOutput}.
+     *
+     * @return a builder
+     */
+    static DefaultAgentChatOutput.Builder builder() {
+        return DefaultAgentChatOutput.builder();
     }
 
-    static AgentMessageInput with(Message... messages) {
-        return with(Arrays.asList(messages));
+    /**
+     * Gets output messages.
+     *
+     * @return output messages
+     */
+    List<Message> messages();
+
+    /**
+     * Gets the first output message.
+     *
+     * @return the first output message
+     */
+    default Message message() {
+        return messages().isEmpty() ? null : messages().get(0);
     }
 
-    static ImmutableAgentMessageInput.Builder builder(List<Message> messages) {
-        return ImmutableAgentMessageInput.builder().messages(messages);
-    }
+    /**
+     * Gets output metadata.
+     *
+     * @return output metadata
+     */
+    MetadataProvider metadata();
 
-    static ImmutableAgentMessageInput.Builder builder(Message... messages) {
-        return builder(Arrays.asList(messages));
-    }
 }

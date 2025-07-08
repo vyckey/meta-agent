@@ -22,31 +22,44 @@
  * SOFTWARE.
  */
 
-package org.metaagent.framework.core.agent.output.message;
+package org.metaagent.framework.core.agents.chat;
 
 import org.metaagent.framework.core.agent.chat.message.Message;
-import org.metaagent.framework.core.agent.output.AgentOutput;
+import org.metaagent.framework.core.agent.input.AgentInput;
 import org.metaagent.framework.core.common.metadata.MetadataProvider;
 
 import java.util.List;
 
 /**
- * description is here
+ * {@link ChatAgent} input interface.
  *
  * @author vyckey
  */
-public interface AgentMessageOutput extends AgentOutput {
-    MetadataProvider getMetadata();
+public interface AgentChatInput extends AgentInput {
+    String OPTION_SEARCH_ENABLED = "searchEnabled";
+    String OPTION_DEEP_THINK_ENABLED = "deepThinkEnabled";
 
-    boolean isEmpty();
-
-    List<Message> getMessages();
-
-    static AgentMessageOutput from(List<Message> messages) {
-        return new DefaultAgentMessageOutput(messages);
+    /**
+     * Builder for {@link AgentChatInput}.
+     *
+     * @return builder
+     */
+    static DefaultAgentChatInput.Builder builder() {
+        return DefaultAgentChatInput.builder();
     }
 
-    static AgentMessageOutput from(Message message) {
-        return new DefaultAgentMessageOutput(List.of(message));
-    }
+    /**
+     * Messages to be processed by the agent.
+     *
+     * @return messages
+     */
+    List<Message> messages();
+
+    /**
+     * Metadata for the agent.
+     *
+     * @return metadata
+     */
+    MetadataProvider metadata();
+
 }

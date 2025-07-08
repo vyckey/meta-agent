@@ -24,13 +24,13 @@
 
 package org.metaagent.framework.core.agents.coordinator;
 
-import com.google.common.collect.Lists;
+import com.google.common.collect.Maps;
 import org.metaagent.framework.core.agent.AbstractAgent;
 import org.metaagent.framework.core.agent.Agent;
 import org.metaagent.framework.core.agent.input.AgentInput;
 import org.metaagent.framework.core.agent.output.AgentOutput;
 
-import java.util.List;
+import java.util.Map;
 
 /**
  * AbstractCoordinateAgent is an abstract class that implements the CoordinateAgent interface.
@@ -40,24 +40,24 @@ import java.util.List;
  */
 public abstract class AbstractCoordinateAgent<I extends AgentInput, O extends AgentOutput>
         extends AbstractAgent<I, O> implements CoordinateAgent<I, O> {
-    protected final List<Agent<?, ?>> executeAgents = Lists.newArrayList();
+    protected final Map<String, Agent<?, ?>> executeAgents = Maps.newHashMap();
 
     protected AbstractCoordinateAgent(String name) {
         super(name);
     }
 
     @Override
-    public List<Agent<?, ?>> getExecuteAgents() {
+    public Map<String, Agent<?, ?>> getExecuteAgents() {
         return executeAgents;
     }
 
     @Override
     public void addExecuteAgent(Agent<?, ?> executeAgent) {
-        this.executeAgents.add(executeAgent);
+        this.executeAgents.put(executeAgent.getName(), executeAgent);
     }
 
     @Override
     public void removeExecuteAgent(Agent<?, ?> executeAgent) {
-        this.executeAgents.remove(executeAgent);
+        this.executeAgents.remove(executeAgent.getName());
     }
 }

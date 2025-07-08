@@ -24,34 +24,47 @@
 
 package org.metaagent.framework.core.agents.chat;
 
-import org.metaagent.framework.core.agent.Agent;
 import org.metaagent.framework.core.agent.chat.message.Message;
-import org.metaagent.framework.core.agent.chat.message.MessageFactory;
-import org.metaagent.framework.core.agent.chat.message.history.MessageHistory;
+import org.metaagent.framework.core.common.metadata.MapMetadataProvider;
+import org.metaagent.framework.core.common.metadata.MetadataProvider;
 
-/**
- * ChatAgent is an agent that has an ability to chat with message history.
- *
- * @author vyckey
- */
-public interface ChatAgent extends Agent<AgentChatInput, AgentChatOutput> {
-    /**
-     * Get the message history of this agent.
-     *
-     * @return the message history of this agent
-     */
-    MessageHistory getMessageHistory();
+import java.util.List;
 
-    @Override
-    default AgentChatOutput run(String input) {
-        return run(MessageFactory.textMessage("user", input));
+public record DefaultAgentChatOutput(
+        List<Message> messages,
+        MetadataProvider metadata) implements AgentChatOutput {
+
+    public static Builder builder() {
+        return new Builder();
     }
 
-    default AgentChatOutput run(Message message) {
-        AgentChatInput messageInput = AgentChatInput.builder().messages(message).build();
-        return run(messageInput);
+    public static class Builder {
+        private List<Message> messages;
+        private MetadataProvider metadata;
+
+        public Builder messages(List<Message> messages) {
+            this.messages = messages;
+            return this;
+        }
+
+        public Builder messages(Message... messages) {
+            this.messages = List.of(messages);
+            return this;
+        }
+
+        public Builder metadata(MetadataProvider metadata) {
+            this.metadata = metadata;
+            return this;
+        }
+
+        public DefaultAgentChatOutput build() {
+            if (messages == null) {
+                messages = List.of();
+            }
+            if (metadata == null) {
+                metadata = new MapMetadataProvider();
+            }
+            return new DefaultAgentChatOutput(messages, metadata);
+        }
     }
-
-    AgentChatOutput run(AgentChatInput input);
-
 }
