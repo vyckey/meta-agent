@@ -30,7 +30,7 @@ import lombok.Getter;
 import org.apache.commons.lang3.NotImplementedException;
 import org.apache.commons.lang3.StringUtils;
 import org.metaagent.framework.core.agent.chat.message.Message;
-import org.metaagent.framework.core.agent.chat.message.MessageFactory;
+import org.metaagent.framework.core.agent.chat.message.RoleMessage;
 import org.metaagent.framework.core.mcp.client.UnifiedMcpClient;
 import org.metaagent.framework.core.model.prompt.ChatPromptValue;
 import org.metaagent.framework.core.model.prompt.PromptFormatException;
@@ -90,7 +90,7 @@ public class McpPrompt implements PromptTemplate {
         switch (contentType) {
             case "text" -> {
                 McpSchema.TextContent textContent = (McpSchema.TextContent) promptMessage.content();
-                message = MessageFactory.textMessage(promptMessage.role().name(), textContent.text());
+                message = RoleMessage.create(promptMessage.role().name(), textContent.text());
             }
             case "image" -> {
                 McpSchema.ImageContent imageContent = (McpSchema.ImageContent) promptMessage.content();

@@ -26,7 +26,7 @@ package org.metaagent.framework.core.agents.chat;
 
 import org.metaagent.framework.core.agent.Agent;
 import org.metaagent.framework.core.agent.chat.message.Message;
-import org.metaagent.framework.core.agent.chat.message.MessageFactory;
+import org.metaagent.framework.core.agent.chat.message.RoleMessage;
 import org.metaagent.framework.core.agent.chat.message.history.MessageHistory;
 
 /**
@@ -44,7 +44,7 @@ public interface ChatAgent extends Agent<AgentChatInput, AgentChatOutput> {
 
     @Override
     default AgentChatOutput run(String input) {
-        return run(MessageFactory.textMessage("user", input));
+        return run(RoleMessage.user(input));
     }
 
     default AgentChatOutput run(Message message) {

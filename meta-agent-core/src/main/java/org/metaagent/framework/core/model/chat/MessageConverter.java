@@ -25,12 +25,10 @@
 package org.metaagent.framework.core.model.chat;
 
 import org.metaagent.framework.core.agent.chat.message.Message;
-import org.metaagent.framework.core.agent.chat.message.MessageFactory;
-import org.metaagent.framework.core.agent.chat.message.TextMessage;
+import org.metaagent.framework.core.agent.chat.message.RoleMessage;
 import org.metaagent.framework.core.converter.BiConverter;
 import org.springframework.ai.chat.messages.AssistantMessage;
 import org.springframework.ai.chat.messages.MessageType;
-import org.springframework.ai.chat.messages.UserMessage;
 
 /**
  * description is here
@@ -42,10 +40,9 @@ public class MessageConverter implements BiConverter<Message, org.springframewor
 
     @Override
     public org.springframework.ai.chat.messages.Message convert(Message message) {
-        String role = message.getSender();
-        return switch (MessageType.fromValue(role)) {
+        return switch (MessageType.fromValue(message.getRole())) {
             case ASSISTANT -> new AssistantMessage(message.getContent(), message.getMetadata().getProperties());
-            case USER -> new UserMessage(message.getContent());
+            case USER -> new org.springframework.ai.chat.messages.UserMessage(message.getContent());
             default -> throw new IllegalArgumentException("message cannot be converted");
         };
     }
@@ -55,9 +52,9 @@ public class MessageConverter implements BiConverter<Message, org.springframewor
         switch (message.getMessageType()) {
             case USER, ASSISTANT -> {
                 String role = message.getMessageType().getValue();
-                TextMessage userMessage = MessageFactory.textMessage(role, message.getText());
-                message.getMetadata().forEach(userMessage.getMetadata()::setProperty);
-                return userMessage;
+                RoleMessage roleMessage = RoleMessage.create(role, message.getText());
+                message.getMetadata().forEach(roleMessage.getMetadata()::setProperty);
+                return roleMessage;
             }
             default -> throw new IllegalArgumentException("message cannot be converted");
         }

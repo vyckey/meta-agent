@@ -119,7 +119,7 @@ public class DefaultMessageHistory implements MessageHistory {
                 sb.insert(0, "...\n");
                 break;
             }
-            sb.insert(0, message.getSender() + ": " + message.getContent() + "\n");
+            sb.insert(0, message.getRole() + ": " + message.getContent() + "\n");
         }
         sb.insert(0, "Message history:\n");
         return sb.toString();

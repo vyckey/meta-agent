@@ -24,42 +24,42 @@
 
 package org.metaagent.framework.core.agent.chat.message;
 
-import org.metaagent.framework.core.common.metadata.MapMetadataProvider;
-import org.metaagent.framework.core.common.metadata.MetadataProvider;
+import lombok.Getter;
+import org.metaagent.framework.core.agent.chat.media.MediaResource;
 
-import java.time.Instant;
+import java.util.List;
 import java.util.Objects;
 
 /**
- * The abstract class for the message interface.
+ * RoleMessage is a message that contains role, content and media resources.
  *
  * @author vyckey
  */
-public abstract class AbstractMessage implements Message {
-    protected final MetadataProvider metadata;
-    protected Instant createdAt;
+@Getter
+public class RoleMessage extends AbstractMessage {
+    public static final String ROLE_USER = "user";
+    public static final String ROLE_ASSISTANT = "assistant";
 
-    protected AbstractMessage(MetadataProvider metadata) {
-        this.metadata = Objects.requireNonNull(metadata, "metadata is required");
-        this.createdAt = Instant.now();
+    private final String role;
+    private final String content;
+    private final List<MediaResource> media;
+
+    public RoleMessage(String role, String content, List<MediaResource> media) {
+        this.role = Objects.requireNonNull(role, "role is required");
+        this.content = Objects.requireNonNull(content, "content is required");
+        this.media = Objects.requireNonNull(media, "media is required");
     }
 
-    protected AbstractMessage() {
-        this(new MapMetadataProvider());
+    public static RoleMessage create(String role, String content, MediaResource... media) {
+        return new RoleMessage(role, content, List.of(media));
     }
 
-    @Override
-    public MetadataProvider getMetadata() {
-        return metadata;
+    public static RoleMessage user(String content, MediaResource... media) {
+        return new RoleMessage(RoleMessage.ROLE_USER, content, List.of(media));
     }
 
-    @Override
-    public Instant getCreatedAt() {
-        return createdAt;
+    public static RoleMessage assistant(String content, MediaResource... media) {
+        return new RoleMessage(RoleMessage.ROLE_ASSISTANT, content, List.of(media));
     }
 
-    @Override
-    public String toString() {
-        return getRole() + ": " + getContent();
-    }
 }
