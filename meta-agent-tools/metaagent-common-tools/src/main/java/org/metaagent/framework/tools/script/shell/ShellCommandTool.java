@@ -49,7 +49,7 @@ public class ShellCommandTool implements Tool<ShellCommandInput, ShellCommandOut
 
     @Override
     public ToolDefinition getDefinition() {
-        return ToolDefinition.builder("shell command tool")
+        return ToolDefinition.builder("execute_shell_command")
                 .description("Run shell command")
                 .inputSchema(ShellCommandInput.class)
                 .outputSchema(ShellCommandOutput.class)
@@ -82,7 +82,6 @@ public class ShellCommandTool implements Tool<ShellCommandInput, ShellCommandOut
             }
             System.out.println("Please enter Y or n");
         }
-//        return false;
     }
 
     @Override

@@ -53,7 +53,7 @@ public class HttpRequestTool implements Tool<HttpRequest, HttpResponse> {
 
     @Override
     public ToolDefinition getDefinition() {
-        return ToolDefinition.builder("HttpRequest")
+        return ToolDefinition.builder("http_request")
                 .description("This tool sends an HTTP request")
                 .inputSchema(HttpRequest.class)
                 .outputSchema(HttpResponse.class)

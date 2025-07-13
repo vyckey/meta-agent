@@ -52,7 +52,7 @@ public class ScriptEngineTool implements Tool<ScriptInput, ScriptOutput> {
 
     @Override
     public ToolDefinition getDefinition() {
-        return ToolDefinition.builder("ScriptEngineTool")
+        return ToolDefinition.builder("execute_script")
                 .description("This tool is used to execute script.")
                 .inputSchema(ScriptInput.class)
                 .outputSchema(ScriptOutput.class)

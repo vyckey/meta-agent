@@ -42,7 +42,7 @@ import java.util.Scanner;
 public class HumanInputTool implements Tool<String, String> {
     @Override
     public ToolDefinition getDefinition() {
-        return ToolDefinition.builder("Human Input Tool")
+        return ToolDefinition.builder("human_input")
                 .description("Human Input Tool")
                 .inputSchema(String.class)
                 .outputSchema(String.class)
