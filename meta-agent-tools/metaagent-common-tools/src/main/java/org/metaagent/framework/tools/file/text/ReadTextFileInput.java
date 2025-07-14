@@ -22,35 +22,45 @@
  * SOFTWARE.
  */
 
-package org.metaagent.framework.tools.file;
+package org.metaagent.framework.tools.file.text;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 import lombok.Getter;
-import lombok.experimental.SuperBuilder;
+import lombok.Setter;
 
-import java.io.IOException;
+import java.util.Objects;
 
 /**
- * ReadTextFileOutput is the output of the {@link ReadTextFileTool}.
+ * ReadTextFileInput represents the input to the {@link ReadTextFileTool}.
  *
  * @author vyckey
  * @see ReadTextFileTool
  */
 @Getter
-@SuperBuilder
-public class ReadTextFileOutput {
-    @JsonPropertyDescription("The size of the file in bytes")
-    private Long fileSize;
+@Setter
+public class ReadTextFileInput {
+    @JsonPropertyDescription("The absolute path to the file to read. Relative paths are not supported.")
+    private final String filePath;
 
-    @JsonPropertyDescription("The text content of the file. Base64 format for image file")
-    private String content;
+    @JsonPropertyDescription("The line number to start reading from for text file. Optional, default 0")
+    private long offset;
 
-    @JsonIgnore
-    private IOException exception;
+    @JsonPropertyDescription("The maximum number of lines to read for text file. If omitted, reads the entire file. Optional, default -1")
+    private int limit = -1;
 
-    @JsonPropertyDescription("The error message if fail to read")
-    public String getError() {
-        return exception != null ? exception.getMessage() : null;
+    @JsonPropertyDescription("Whether to truncate file content if needed. Optional, default true")
+    private boolean truncate = true;
+
+    @JsonCreator
+    public ReadTextFileInput(@JsonProperty("filePath") String filePath) {
+        this.filePath = Objects.requireNonNull(filePath, "filePath is required");
+    }
+
+    public ReadTextFileInput(String filePath, long offset, int limit) {
+        this(filePath);
+        this.offset = offset;
+        this.limit = limit;
     }
 }

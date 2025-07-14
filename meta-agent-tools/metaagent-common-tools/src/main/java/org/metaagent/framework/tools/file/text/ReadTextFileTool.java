@@ -22,9 +22,10 @@
  * SOFTWARE.
  */
 
-package org.metaagent.framework.tools.file;
+package org.metaagent.framework.tools.file.text;
 
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 import org.metaagent.framework.core.tool.Tool;
 import org.metaagent.framework.core.tool.ToolContext;
 import org.metaagent.framework.core.tool.ToolExecutionException;
@@ -36,22 +37,24 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.nio.file.Files;
-import java.util.Base64;
+import java.util.List;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
- * Read image file content tool
+ * Read text file content tool.
  *
  * @author vyckey
  */
 @Slf4j
-public class ReadImageFileTool implements Tool<ReadImageFileInput, ReadImageFileOutput> {
-    private final ToolDefinition toolDefinition = ToolDefinition.builder("read_image_file")
-            .description("Read image file content tool")
-            .inputSchema(ReadImageFileInput.class)
-            .outputSchema(ReadImageFileOutput.class)
+public class ReadTextFileTool implements Tool<ReadTextFileInput, ReadTextFileOutput> {
+    private final ToolDefinition toolDefinition = ToolDefinition.builder("read_text_file")
+            .description("Read text file content tool")
+            .inputSchema(ReadTextFileInput.class)
+            .outputSchema(ReadTextFileOutput.class)
             .build();
-    private final ToolConverter<ReadImageFileInput, ReadImageFileOutput> toolConverter =
-            JsonToolConverter.create(ReadImageFileInput.class);
+    private final ToolConverter<ReadTextFileInput, ReadTextFileOutput> toolConverter =
+            JsonToolConverter.create(ReadTextFileInput.class);
 
     @Override
     public ToolDefinition getDefinition() {
@@ -59,21 +62,21 @@ public class ReadImageFileTool implements Tool<ReadImageFileInput, ReadImageFile
     }
 
     @Override
-    public ToolConverter<ReadImageFileInput, ReadImageFileOutput> getConverter() {
+    public ToolConverter<ReadTextFileInput, ReadTextFileOutput> getConverter() {
         return toolConverter;
     }
 
     @Override
-    public ReadImageFileOutput run(ToolContext toolContext, ReadImageFileInput input) throws ToolExecutionException {
+    public ReadTextFileOutput run(ToolContext toolContext, ReadTextFileInput input) throws ToolExecutionException {
         try {
             return readFile(input);
         } catch (IOException e) {
-            log.warn("Error reading image file {}. err: {}", input.getFilePath(), e.getMessage());
-            return ReadImageFileOutput.builder().exception(e).build();
+            log.warn("Error reading text file {}. err: {}", input.getFilePath(), e.getMessage());
+            return ReadTextFileOutput.builder().exception(e).build();
         }
     }
 
-    private ReadImageFileOutput readFile(ReadImageFileInput input) throws IOException {
+    private ReadTextFileOutput readFile(ReadTextFileInput input) throws IOException {
         File file = new File(input.getFilePath());
         if (!file.exists()) {
             throw new FileNotFoundException("File not found: " + input.getFilePath());
@@ -82,8 +85,23 @@ public class ReadImageFileTool implements Tool<ReadImageFileInput, ReadImageFile
             throw new IOException("File is a directory: " + input.getFilePath());
         }
 
-        String base64 = Base64.getEncoder().encodeToString(Files.readAllBytes(file.toPath()));
-        return ReadImageFileOutput.builder().fileSize(file.length()).base64(base64).build();
+        String content = readFileContent(file, input);
+        return ReadTextFileOutput.builder().fileSize(file.length()).content(content).build();
+    }
+
+    static String readFileContent(File file, ReadTextFileInput input) throws IOException {
+        String lineLength = System.getenv("MAX_TEXT_FILE_LINE_LENGTH");
+        final int maxLineLength = StringUtils.isNotEmpty(lineLength) ? Integer.parseInt(lineLength) : 2000;
+        List<String> lines = Files.readAllLines(file.toPath());
+        Stream<String> lineStream = lines.stream().skip(input.getOffset());
+        if (input.getLimit() >= 0) {
+            lineStream = lineStream.limit(input.getLimit());
+        }
+        if (input.isTruncate()) {
+            lineStream = lineStream.map(line ->
+                    line.length() > maxLineLength ? line.substring(0, maxLineLength) + "... [truncated]" : line);
+        }
+        return lineStream.collect(Collectors.joining("\n"));
     }
 
 }

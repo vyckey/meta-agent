@@ -22,7 +22,7 @@
  * SOFTWARE.
  */
 
-package org.metaagent.framework.tools.file;
+package org.metaagent.framework.tools.file.image;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -33,34 +33,19 @@ import lombok.Setter;
 import java.util.Objects;
 
 /**
- * ReadTextFileInput represents the input to the {@link ReadTextFileTool}.
+ * ReadImageFileInput represents the input to the {@link ReadImageFileTool}.
  *
  * @author vyckey
- * @see ReadTextFileTool
+ * @see ReadImageFileTool
  */
 @Getter
 @Setter
-public class ReadTextFileInput {
+public class ReadImageFileInput {
     @JsonPropertyDescription("The absolute path to the file to read. Relative paths are not supported.")
     private final String filePath;
 
-    @JsonPropertyDescription("The line number to start reading from for text file. Optional, default 0")
-    private long offset;
-
-    @JsonPropertyDescription("The maximum number of lines to read for text file. If omitted, reads the entire file. Optional, default -1")
-    private int limit = -1;
-
-    @JsonPropertyDescription("Whether to truncate file content if needed. Optional, default true")
-    private boolean truncate = true;
-
     @JsonCreator
-    public ReadTextFileInput(@JsonProperty("filePath") String filePath) {
+    public ReadImageFileInput(@JsonProperty("filePath") String filePath) {
         this.filePath = Objects.requireNonNull(filePath, "filePath is required");
-    }
-
-    public ReadTextFileInput(String filePath, long offset, int limit) {
-        this(filePath);
-        this.offset = offset;
-        this.limit = limit;
     }
 }

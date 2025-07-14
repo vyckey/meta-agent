@@ -26,6 +26,9 @@ package org.metaagent.framework.tools.file;
 
 import org.junit.jupiter.api.Test;
 import org.metaagent.framework.core.tool.ToolContext;
+import org.metaagent.framework.tools.file.text.ReadTextFileInput;
+import org.metaagent.framework.tools.file.text.ReadTextFileOutput;
+import org.metaagent.framework.tools.file.text.ReadTextFileTool;
 
 import java.net.URL;
 import java.util.Objects;

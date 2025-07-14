@@ -22,30 +22,35 @@
  * SOFTWARE.
  */
 
-package org.metaagent.framework.tools.file;
+package org.metaagent.framework.tools.file.text;
 
-import com.fasterxml.jackson.annotation.JsonCreator;
-import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 import lombok.Getter;
-import lombok.Setter;
+import lombok.experimental.SuperBuilder;
 
-import java.util.Objects;
+import java.io.IOException;
 
 /**
- * ReadImageFileInput represents the input to the {@link ReadImageFileTool}.
+ * ReadTextFileOutput is the output of the {@link ReadTextFileTool}.
  *
  * @author vyckey
- * @see ReadImageFileTool
+ * @see ReadTextFileTool
  */
 @Getter
-@Setter
-public class ReadImageFileInput {
-    @JsonPropertyDescription("The absolute path to the file to read. Relative paths are not supported.")
-    private final String filePath;
+@SuperBuilder
+public class ReadTextFileOutput {
+    @JsonPropertyDescription("The size of the file in bytes")
+    private Long fileSize;
 
-    @JsonCreator
-    public ReadImageFileInput(@JsonProperty("filePath") String filePath) {
-        this.filePath = Objects.requireNonNull(filePath, "filePath is required");
+    @JsonPropertyDescription("The text content of the file. Base64 format for image file")
+    private String content;
+
+    @JsonIgnore
+    private IOException exception;
+
+    @JsonPropertyDescription("The error message if fail to read")
+    public String getError() {
+        return exception != null ? exception.getMessage() : null;
     }
 }
