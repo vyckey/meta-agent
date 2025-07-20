@@ -26,8 +26,10 @@ package org.metaagent.framework.tools.script.shell;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 import com.google.common.collect.Maps;
 import lombok.Getter;
+import lombok.Setter;
 
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -40,17 +42,23 @@ import java.util.stream.Collectors;
 @Getter
 public class ShellCommandInput {
     @JsonProperty(required = true)
-    private String command;
+    private final String command;
 
+    @JsonPropertyDescription("The environment variables to be passed to the command")
     private final Map<String, String> envs;
 
-    public ShellCommandInput(String command, Map<String, String> envs) {
+    @Setter
+    @JsonPropertyDescription("The timeout in seconds for the command to complete. Default no timeout")
+    private Long timeoutSeconds;
+
+    @JsonCreator
+    public ShellCommandInput(@JsonProperty("command") String command,
+                             @JsonProperty("envs") Map<String, String> envs) {
         this.command = command;
         this.envs = envs;
     }
 
-    @JsonCreator
-    public ShellCommandInput(@JsonProperty("command") String command) {
+    public ShellCommandInput(String command) {
         this(command, Maps.newHashMap());
     }
 

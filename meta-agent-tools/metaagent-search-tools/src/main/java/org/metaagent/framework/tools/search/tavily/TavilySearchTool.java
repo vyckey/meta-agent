@@ -57,6 +57,13 @@ import java.util.Map;
  * @author vyckey
  */
 public class TavilySearchTool implements SearchTool {
+    private static final ToolDefinition TOOL_DEFINITION = ToolDefinition.builder("tavily_search")
+            .description("Web search tool by Tavily API")
+            .inputSchema(WebSearchRequest.class)
+            .outputSchema(WebSearchResponse.class)
+            .build();
+    private static final ToolConverter<WebSearchRequest, WebSearchResponse> TOOL_CONVERTER =
+            ToolConverters.jsonConverter(WebSearchRequest.class);
     private static final String DEFAULT_BASE_URL = "https://api.tavily.com/";
     private final TavilyClient tavilyClient;
     private final String apiKey;
@@ -86,16 +93,12 @@ public class TavilySearchTool implements SearchTool {
 
     @Override
     public ToolDefinition getDefinition() {
-        return ToolDefinition.builder("tavily_search")
-                .description("Web search tool by Tavily API")
-                .inputSchema(WebSearchRequest.class)
-                .outputSchema(WebSearchResponse.class)
-                .build();
+        return TOOL_DEFINITION;
     }
 
     @Override
     public ToolConverter<WebSearchRequest, WebSearchResponse> getConverter() {
-        return ToolConverters.jsonConverter(WebSearchRequest.class);
+        return TOOL_CONVERTER;
     }
 
     @Override

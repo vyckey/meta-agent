@@ -22,19 +22,36 @@
  * SOFTWARE.
  */
 
-package org.metaagent.framework.core.agent;
+package org.metaagent.framework.core.tool.human;
 
+import java.util.Scanner;
 
 /**
- * AgentContext holds the context of an agent, including its metadata and execution context.
- * It is used to pass information between different components of the agent framework.
+ * Terminal Human Approver
  *
- * @param agent            The metadata of the agent.
- * @param executionContext The execution context of the agent, which contains information about the current run.
  * @author vyckey
  */
-public record AgentContext(MetaAgent agent, AgentExecutionContext executionContext) {
-    public static AgentContext from(MetaAgent agent, AgentExecutionContext executionContext) {
-        return new AgentContext(agent, executionContext);
+public class TerminalHumanApprover implements HumanApprover {
+    public static final TerminalHumanApprover INSTANCE = new TerminalHumanApprover();
+
+    private TerminalHumanApprover() {
     }
+
+    @Override
+    public ApprovalOutput request(ApprovalInput input) {
+        System.out.println(input.content() + "Please approve the above request, enter Y/n:");
+        Scanner scanner = new Scanner(System.in);
+        do {
+            String confirmation = scanner.nextLine().trim();
+            if ("y".equalsIgnoreCase(confirmation) || "n".equalsIgnoreCase(confirmation)) {
+                if ("y".equalsIgnoreCase(confirmation)) {
+                    return new ApprovalOutput(ApprovalStatus.APPROVED, null);
+                } else {
+                    return new ApprovalOutput(ApprovalStatus.REJECTED, "User reject approval");
+                }
+            }
+            System.out.println("Please enter Y or n:");
+        } while (true);
+    }
+
 }

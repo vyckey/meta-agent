@@ -25,6 +25,7 @@
 package org.metaagent.framework.core.common.metadata;
 
 import java.util.Map;
+import java.util.Optional;
 
 /**
  * MetadataProvider interface for managing metadata.
@@ -32,6 +33,15 @@ import java.util.Map;
  * @author vyckey
  */
 public interface MetadataProvider {
+    /**
+     * Creates a new MetadataProvider instance.
+     *
+     * @return a new MetadataProvider instance.
+     */
+    static MetadataProvider create() {
+        return new MapMetadataProvider();
+    }
+
     /**
      * Gets all metadata as a map.
      *
@@ -56,6 +66,20 @@ public interface MetadataProvider {
      * @return the metadata value associated with the key, cast to the specified type.
      */
     <T> T getProperty(String key, Class<T> type);
+
+    /**
+     * Gets metadata by key and type with default value.
+     *
+     * @param key          the metadata key.
+     * @param type         the expected type of the metadata value.
+     * @param defaultValue the default value to return if the metadata key does not exist.
+     * @param <T>          the expected type of the metadata value.
+     * @return the metadata value associated with the key, cast to the specified type,
+     * or the default value if the metadata key does not exist.
+     */
+    default <T> T getProperty(String key, Class<T> type, T defaultValue) {
+        return Optional.ofNullable(getProperty(key, type)).orElse(defaultValue);
+    }
 
     /**
      * Sets metadata with a key-value pair.

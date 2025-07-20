@@ -24,13 +24,14 @@
 
 package org.metaagent.framework.core.tool.spring;
 
-import org.metaagent.framework.core.tool.DefaultToolContext;
 import org.metaagent.framework.core.tool.Tool;
+import org.metaagent.framework.core.tool.executor.ToolExecutor;
 import org.springframework.ai.chat.model.ToolContext;
 import org.springframework.ai.tool.ToolCallback;
 import org.springframework.ai.tool.definition.ToolDefinition;
 import org.springframework.ai.tool.metadata.ToolMetadata;
 
+import javax.annotation.Nullable;
 import java.util.Objects;
 
 /**
@@ -39,16 +40,24 @@ import java.util.Objects;
  * @author vyckey
  */
 public class ToolCallbackDelegate implements ToolCallback {
+    public static final String CONTEXT_KEY = "METAAGENT_TOOL_CTX";
     private final Tool<?, ?> tool;
     private final ToolDefinition toolDefinition;
+    @Nullable
+    private final ToolExecutor toolExecutor;
 
-    public ToolCallbackDelegate(Tool<?, ?> tool) {
+    public ToolCallbackDelegate(Tool<?, ?> tool, ToolExecutor toolExecutor) {
         this.tool = Objects.requireNonNull(tool, "tool is required");
         this.toolDefinition = ToolDefinition.builder()
                 .name(tool.getName())
                 .description(tool.getDefinition().description())
                 .inputSchema(tool.getDefinition().inputSchema())
                 .build();
+        this.toolExecutor = toolExecutor;
+    }
+
+    public ToolCallbackDelegate(Tool<?, ?> tool) {
+        this(tool, null);
     }
 
     @Override
@@ -67,9 +76,19 @@ public class ToolCallbackDelegate implements ToolCallback {
     }
 
     @Override
-    public String call(String toolInput, ToolContext tooContext) {
-        DefaultToolContext context = DefaultToolContext.builder().build();
-        return tool.call(context, toolInput);
+    public String call(String toolInput, ToolContext toolContext) {
+        org.metaagent.framework.core.tool.ToolContext context;
+        if (toolContext != null && toolContext.getContext().get(CONTEXT_KEY)
+                instanceof org.metaagent.framework.core.tool.ToolContext) {
+            context = (org.metaagent.framework.core.tool.ToolContext) toolContext.getContext().get(CONTEXT_KEY);
+        } else {
+            context = org.metaagent.framework.core.tool.ToolContext.create();
+        }
+        if (this.toolExecutor == null) {
+            return tool.call(context, toolInput);
+        } else {
+            return toolExecutor.execute(context, tool, toolInput);
+        }
     }
 
     @Override

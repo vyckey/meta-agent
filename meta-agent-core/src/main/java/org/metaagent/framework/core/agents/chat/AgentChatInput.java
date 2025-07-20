@@ -22,37 +22,44 @@
  * SOFTWARE.
  */
 
-package org.metaagent.framework.core.agent.input.message;
+package org.metaagent.framework.core.agents.chat;
 
 import org.metaagent.framework.core.agent.chat.message.Message;
 import org.metaagent.framework.core.agent.input.AgentInput;
+import org.metaagent.framework.core.common.metadata.MetadataProvider;
 
-import java.util.Arrays;
 import java.util.List;
 
 /**
- * description is here
+ * {@link ChatAgent} input interface.
  *
  * @author vyckey
  */
-public interface AgentMessageInput extends AgentInput {
-    String getTopic();
+public interface AgentChatInput extends AgentInput {
+    String OPTION_SEARCH_ENABLED = "searchEnabled";
+    String OPTION_DEEP_THINK_ENABLED = "deepThinkEnabled";
 
-    List<Message> getMessages();
-
-    static AgentMessageInput with(List<Message> messages) {
-        return ImmutableAgentMessageInput.builder().messages(messages).build();
+    /**
+     * Builder for {@link AgentChatInput}.
+     *
+     * @return builder
+     */
+    static DefaultAgentChatInput.Builder builder() {
+        return DefaultAgentChatInput.builder();
     }
 
-    static AgentMessageInput with(Message... messages) {
-        return with(Arrays.asList(messages));
-    }
+    /**
+     * Messages to be processed by the agent.
+     *
+     * @return messages
+     */
+    List<Message> messages();
 
-    static ImmutableAgentMessageInput.Builder builder(List<Message> messages) {
-        return ImmutableAgentMessageInput.builder().messages(messages);
-    }
+    /**
+     * Metadata for the agent.
+     *
+     * @return metadata
+     */
+    MetadataProvider metadata();
 
-    static ImmutableAgentMessageInput.Builder builder(Message... messages) {
-        return builder(Arrays.asList(messages));
-    }
 }

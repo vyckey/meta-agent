@@ -24,28 +24,28 @@
 
 package org.metaagent.framework.core.agent.chat.message;
 
-import org.apache.commons.lang3.StringUtils;
 import org.metaagent.framework.core.common.metadata.MapMetadataProvider;
 import org.metaagent.framework.core.common.metadata.MetadataProvider;
 
+import java.time.Instant;
+import java.util.Objects;
+
 /**
- * description is here
+ * The abstract class for the message interface.
  *
  * @author vyckey
  */
 public abstract class AbstractMessage implements Message {
     protected final MetadataProvider metadata;
-    protected String sender;
-    protected String receiver;
+    protected Instant createdAt;
 
-    protected AbstractMessage() {
-        this.metadata = new MapMetadataProvider();
+    protected AbstractMessage(MetadataProvider metadata) {
+        this.metadata = Objects.requireNonNull(metadata, "metadata is required");
+        this.createdAt = Instant.now();
     }
 
-    protected AbstractMessage(String sender, String receiver) {
-        this();
-        this.sender = sender;
-        this.receiver = receiver;
+    protected AbstractMessage() {
+        this(new MapMetadataProvider());
     }
 
     @Override
@@ -54,20 +54,12 @@ public abstract class AbstractMessage implements Message {
     }
 
     @Override
-    public String getSender() {
-        return sender;
-    }
-
-    @Override
-    public String getReceiver() {
-        return receiver;
+    public Instant getCreatedAt() {
+        return createdAt;
     }
 
     @Override
     public String toString() {
-        if (StringUtils.isEmpty(sender)) {
-            return getContent();
-        }
-        return "[" + sender + "] " + getContent();
+        return getRole() + ": " + getContent();
     }
 }

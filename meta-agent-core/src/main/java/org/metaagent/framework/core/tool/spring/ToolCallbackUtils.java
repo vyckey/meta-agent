@@ -30,8 +30,8 @@ import org.apache.commons.collections.CollectionUtils;
 import org.metaagent.framework.core.tool.Tool;
 import org.metaagent.framework.core.tool.ToolContext;
 import org.metaagent.framework.core.tool.ToolExecutionException;
+import org.metaagent.framework.core.tool.executor.ToolExecutor;
 import org.metaagent.framework.core.tool.manager.ToolManager;
-import org.metaagent.framework.core.tool.tracker.ToolCallTracker;
 import org.metaagent.framework.core.tool.tracker.ToolTrackerDelegate;
 import org.springframework.ai.chat.messages.AssistantMessage;
 import org.springframework.ai.chat.messages.ToolResponseMessage;
@@ -40,6 +40,7 @@ import org.springframework.ai.model.function.FunctionCallback;
 import org.springframework.ai.model.tool.ToolCallingChatOptions;
 
 import java.util.List;
+import java.util.Map;
 
 /**
  * Spring ToolCallback utilities.
@@ -52,14 +53,11 @@ public abstract class ToolCallbackUtils {
     }
 
     public static void addToolsToChatOptions(ToolCallingChatOptions chatOptions,
-                                             ToolManager toolManager, ToolCallTracker toolCallTracker) {
+                                             ToolManager toolManager, ToolExecutor toolExecutor) {
         List<FunctionCallback> toolCallbacks = Lists.newArrayList();
         for (String toolName : toolManager.getToolNames()) {
             Tool<Object, Object> tool = toolManager.getTool(toolName);
-            if (toolCallTracker != null && !(tool instanceof ToolTrackerDelegate)) {
-                tool = new ToolTrackerDelegate<>(toolCallTracker, tool);
-            }
-            toolCallbacks.add(new ToolCallbackDelegate(tool));
+            toolCallbacks.add(new ToolCallbackDelegate(tool, toolExecutor));
         }
         if (CollectionUtils.isEmpty(chatOptions.getToolNames())) {
             chatOptions.setToolNames(toolManager.getToolNames());
@@ -73,10 +71,15 @@ public abstract class ToolCallbackUtils {
     }
 
     public static ChatOptions buildChatOptionsWithTools(ChatOptions chatOptions,
-                                                        ToolManager toolManager, ToolCallTracker toolCallTracker) {
+                                                        ToolContext toolContext, ToolExecutor toolExecutor) {
         if (chatOptions instanceof ToolCallingChatOptions) {
             ToolCallingChatOptions toolCallingChatOptions = chatOptions.copy();
-            ToolCallbackUtils.addToolsToChatOptions(toolCallingChatOptions, toolManager, toolCallTracker);
+            ToolManager toolManager = toolContext.getToolManager();
+
+            ToolCallbackUtils.addToolsToChatOptions(toolCallingChatOptions, toolManager, toolExecutor);
+            toolCallingChatOptions.setToolContext(Map.of(
+                    ToolCallbackDelegate.CONTEXT_KEY, toolContext
+            ));
             return toolCallingChatOptions;
         }
         return chatOptions;

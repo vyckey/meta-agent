@@ -25,6 +25,7 @@
 package org.metaagent.framework.tools.script.shell;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 import lombok.Getter;
 import lombok.experimental.SuperBuilder;
 
@@ -36,10 +37,15 @@ import lombok.experimental.SuperBuilder;
 @Getter
 @SuperBuilder
 public class ShellCommandOutput {
+    @JsonPropertyDescription("The process ID")
+    private Long pid;
+
     @JsonProperty(required = true)
     private int exitCode;
 
-    private String output;
+    private String stdOutput;
+
+    private String stdError;
 
     private String error;
 

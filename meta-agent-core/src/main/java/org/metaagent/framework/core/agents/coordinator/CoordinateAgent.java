@@ -28,7 +28,7 @@ import org.metaagent.framework.core.agent.Agent;
 import org.metaagent.framework.core.agent.input.AgentInput;
 import org.metaagent.framework.core.agent.output.AgentOutput;
 
-import java.util.List;
+import java.util.Map;
 
 /**
  * CoordinateAgent is an interface that represents an agent responsible for coordinating.
@@ -36,10 +36,14 @@ import java.util.List;
  * @author vyckey
  */
 public interface CoordinateAgent<I extends AgentInput, O extends AgentOutput> extends Agent<I, O> {
-    List<Agent<?, ?>> getExecuteAgents();
+    Map<String, Agent<?, ?>> getExecuteAgents();
+
+    <IN extends AgentInput, OUT extends AgentOutput> Agent<IN, OUT> getExecuteAgent(String name);
 
     void addExecuteAgent(Agent<?, ?> executeAgent);
 
     void removeExecuteAgent(Agent<?, ?> executeAgent);
+
+
 
 }

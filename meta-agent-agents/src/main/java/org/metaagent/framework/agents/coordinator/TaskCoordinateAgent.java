@@ -25,6 +25,9 @@
 package org.metaagent.framework.agents.coordinator;
 
 import com.google.common.collect.Lists;
+import org.metaagent.framework.core.agent.Agent;
+import org.metaagent.framework.core.agent.input.AgentInput;
+import org.metaagent.framework.core.agent.output.AgentOutput;
 import org.metaagent.framework.core.agents.coordinator.AbstractCoordinateAgent;
 import org.springframework.ai.chat.messages.AssistantMessage;
 import org.springframework.ai.chat.messages.Message;
@@ -69,6 +72,11 @@ public class TaskCoordinateAgent extends AbstractCoordinateAgent<TaskAssignInput
 
     protected TaskAssignOutput parseAssignOutput(AssistantMessage message) {
         // TODO: implement it
+        return null;
+    }
+
+    @Override
+    public <IN extends AgentInput, OUT extends AgentOutput> Agent<IN, OUT> getExecuteAgent(String name) {
         return null;
     }
 }

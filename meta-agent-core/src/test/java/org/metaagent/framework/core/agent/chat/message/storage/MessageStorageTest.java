@@ -25,7 +25,7 @@
 package org.metaagent.framework.core.agent.chat.message.storage;
 
 import org.junit.jupiter.api.Test;
-import org.metaagent.framework.core.agent.chat.message.TextMessage;
+import org.metaagent.framework.core.agent.chat.message.RoleMessage;
 import org.metaagent.framework.core.agent.chat.message.history.DefaultMessageHistory;
 import org.metaagent.framework.core.agent.chat.message.history.MessageHistory;
 
@@ -38,8 +38,8 @@ class MessageStorageTest {
     @Test
     void test() {
         MessageHistory messageHistory = new DefaultMessageHistory();
-        messageHistory.appendMessage(new TextMessage("user", "assistant", "Who are you?"));
-        messageHistory.appendMessage(new TextMessage("assistant", "user", "I am your assistant."));
+        messageHistory.appendMessage(RoleMessage.user("Who are you?"));
+        messageHistory.appendMessage(RoleMessage.assistant("I am your assistant."));
 
         MessageStorage messageStorage = new FileMessageStorage("data/chat/session_%s.json");
         messageStorage.save(messageHistory);

@@ -60,6 +60,13 @@ import java.util.Optional;
  * @author vyckey
  */
 public class GoogleCustomSearchTool implements SearchTool {
+    private static final ToolDefinition TOOL_DEFINITION = ToolDefinition.builder("google_custom_search")
+            .description("Web search tool by Google Custom Search API")
+            .inputSchema(WebSearchRequest.class)
+            .outputSchema(WebSearchResponse.class)
+            .build();
+    private static final ToolConverter<WebSearchRequest, WebSearchResponse> TOOL_CONVERTER =
+            ToolConverters.jsonConverter(WebSearchRequest.class);
     private static final String DEFAULT_ENGINE = "google";
     private static final String DEFAULT_LANGUAGE = "en";
     private final Customsearch customsearch;
@@ -85,16 +92,12 @@ public class GoogleCustomSearchTool implements SearchTool {
 
     @Override
     public ToolDefinition getDefinition() {
-        return ToolDefinition.builder("google_custom_search")
-                .description("Web search tool by Google Custom Search API")
-                .inputSchema(WebSearchRequest.class)
-                .outputSchema(WebSearchResponse.class)
-                .build();
+        return TOOL_DEFINITION;
     }
 
     @Override
     public ToolConverter<WebSearchRequest, WebSearchResponse> getConverter() {
-        return ToolConverters.jsonConverter(WebSearchRequest.class);
+        return TOOL_CONVERTER;
     }
 
     @Override

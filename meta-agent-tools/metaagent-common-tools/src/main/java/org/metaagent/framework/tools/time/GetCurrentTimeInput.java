@@ -22,31 +22,22 @@
  * SOFTWARE.
  */
 
-package org.metaagent.framework.core.agent.output.message;
+package org.metaagent.framework.tools.time;
 
-import org.metaagent.framework.core.agent.chat.message.Message;
-import org.metaagent.framework.core.agent.output.AgentOutput;
-import org.metaagent.framework.core.common.metadata.MetadataProvider;
-
-import java.util.List;
+import com.fasterxml.jackson.annotation.JsonPropertyDescription;
+import lombok.Builder;
 
 /**
- * description is here
+ * GetCurrentTimeInput
  *
  * @author vyckey
  */
-public interface AgentMessageOutput extends AgentOutput {
-    MetadataProvider getMetadata();
+@Builder
+public record GetCurrentTimeInput(
+        @JsonPropertyDescription("The timezone. Optional, default is UTC. e.g Asia/New_York, Asia/Shanghai, Asia/Seoul...")
+        String timezone) {
 
-    boolean isEmpty();
-
-    List<Message> getMessages();
-
-    static AgentMessageOutput from(List<Message> messages) {
-        return new DefaultAgentMessageOutput(messages);
-    }
-
-    static AgentMessageOutput from(Message message) {
-        return new DefaultAgentMessageOutput(List.of(message));
+    public GetCurrentTimeInput() {
+        this(null);
     }
 }

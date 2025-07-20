@@ -24,35 +24,34 @@
 
 package org.metaagent.framework.core.agents.chat;
 
-import com.google.common.collect.Lists;
 import org.metaagent.framework.core.agent.Agent;
 import org.metaagent.framework.core.agent.chat.message.Message;
-import org.metaagent.framework.core.agent.chat.message.MessageFactory;
+import org.metaagent.framework.core.agent.chat.message.RoleMessage;
 import org.metaagent.framework.core.agent.chat.message.history.MessageHistory;
-import org.metaagent.framework.core.agent.input.message.AgentMessageInput;
-import org.metaagent.framework.core.agent.output.message.AgentMessageOutput;
 
 /**
- * description is here
+ * ChatAgent is an agent that has an ability to chat with message history.
  *
  * @author vyckey
  */
-public interface ChatAgent extends Agent<AgentMessageInput, AgentMessageOutput> {
+public interface ChatAgent extends Agent<AgentChatInput, AgentChatOutput> {
+    /**
+     * Get the message history of this agent.
+     *
+     * @return the message history of this agent
+     */
     MessageHistory getMessageHistory();
 
     @Override
-    default AgentMessageOutput run(String input) {
-        return run(MessageFactory.textMessage("user", input));
+    default AgentChatOutput run(String input) {
+        return run(RoleMessage.user(input));
     }
 
-    default AgentMessageOutput run(Message message) {
-        MessageHistory messageHistory = getMessageHistory();
-        messageHistory.appendMessage(message);
-
-        AgentMessageInput messageInput = AgentMessageInput.with(Lists.newArrayList(messageHistory));
+    default AgentChatOutput run(Message message) {
+        AgentChatInput messageInput = AgentChatInput.builder().messages(message).build();
         return run(messageInput);
     }
 
-    AgentMessageOutput run(AgentMessageInput input);
+    AgentChatOutput run(AgentChatInput input);
 
 }

@@ -25,6 +25,7 @@
 package org.metaagent.framework.tools.script.shell;
 
 import org.apache.commons.lang3.StringUtils;
+import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -36,17 +37,17 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
  */
 class ShellCommandToolTest {
 
-    @org.junit.jupiter.api.Test
+    @Test
     void testEchoCommand() {
         ShellCommandTool commandTool = new ShellCommandTool();
         ShellCommandInput commandInput = new ShellCommandInput("echo hello");
         ShellCommandOutput commandOutput = commandTool.run(null, commandInput);
         assertEquals(0, commandOutput.getExitCode());
-        assertEquals("hello\n", commandOutput.getOutput());
+        assertEquals("hello\n", commandOutput.getStdOutput());
         assertTrue(StringUtils.isEmpty(commandOutput.getError()));
     }
 
-    @org.junit.jupiter.api.Test
+    @Test
     void testInvalidCommand() {
         ShellCommandTool commandTool = new ShellCommandTool();
         ShellCommandInput commandInput = new ShellCommandInput("not_exist_command");

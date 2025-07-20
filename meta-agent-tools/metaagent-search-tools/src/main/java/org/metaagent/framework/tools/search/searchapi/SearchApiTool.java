@@ -54,6 +54,13 @@ import java.util.Optional;
  * @author vyckey
  */
 public class SearchApiTool implements SearchTool {
+    private static final ToolDefinition TOOL_DEFINITION = ToolDefinition.builder("google_search_api")
+            .description("Web search tool by SearchAPI")
+            .inputSchema(WebSearchRequest.class)
+            .outputSchema(WebSearchResponse.class)
+            .build();
+    private static final ToolConverter<WebSearchRequest, WebSearchResponse> TOOL_CONVERTER =
+            ToolConverters.jsonConverter(WebSearchRequest.class);
     private static final String DEFAULT_BASE_URL = "https://www.searchapi.io";
     private static final String DEFAULT_ENGINE = "google";
     private final SearchApiClient client;
@@ -84,16 +91,12 @@ public class SearchApiTool implements SearchTool {
 
     @Override
     public ToolDefinition getDefinition() {
-        return ToolDefinition.builder("google_search_api")
-                .description("Web search tool by SearchAPI")
-                .inputSchema(WebSearchRequest.class)
-                .outputSchema(WebSearchResponse.class)
-                .build();
+        return TOOL_DEFINITION;
     }
 
     @Override
     public ToolConverter<WebSearchRequest, WebSearchResponse> getConverter() {
-        return ToolConverters.jsonConverter(WebSearchRequest.class);
+        return TOOL_CONVERTER;
     }
 
 

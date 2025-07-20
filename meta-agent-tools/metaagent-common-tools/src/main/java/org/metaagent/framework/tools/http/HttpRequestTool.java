@@ -24,6 +24,8 @@
 
 package org.metaagent.framework.tools.http;
 
+import lombok.Setter;
+import lombok.extern.slf4j.Slf4j;
 import okhttp3.MediaType;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
@@ -35,13 +37,26 @@ import org.metaagent.framework.core.tool.ToolExecutionException;
 import org.metaagent.framework.core.tool.converter.JsonToolConverter;
 import org.metaagent.framework.core.tool.converter.ToolConverter;
 import org.metaagent.framework.core.tool.definition.ToolDefinition;
+import org.metaagent.framework.core.tool.human.HumanApprover;
+import org.metaagent.framework.core.tool.human.SystemAutoApprover;
 
 import java.io.IOException;
 import java.util.Map;
 import java.util.Objects;
 
+@Slf4j
+@Setter
 public class HttpRequestTool implements Tool<HttpRequest, HttpResponse> {
+    private static final ToolDefinition TOOL_DEFINITION = ToolDefinition.builder("http_request")
+            .description("Sends a HTTP request")
+            .inputSchema(HttpRequest.class)
+            .outputSchema(HttpResponse.class)
+            .build();
+    private static final JsonToolConverter<HttpRequest, HttpResponse> TOOL_CONVERTER =
+            JsonToolConverter.create(HttpRequest.class);
+
     private final OkHttpClient httpClient;
+    private HumanApprover humanApprover = SystemAutoApprover.INSTANCE;
 
     public HttpRequestTool(OkHttpClient httpClient) {
         this.httpClient = Objects.requireNonNull(httpClient, "httpClient must not be null");
@@ -53,16 +68,12 @@ public class HttpRequestTool implements Tool<HttpRequest, HttpResponse> {
 
     @Override
     public ToolDefinition getDefinition() {
-        return ToolDefinition.builder("HttpRequest")
-                .description("This tool sends an HTTP request")
-                .inputSchema(HttpRequest.class)
-                .outputSchema(HttpResponse.class)
-                .build();
+        return TOOL_DEFINITION;
     }
 
     @Override
     public ToolConverter<HttpRequest, HttpResponse> getConverter() {
-        return JsonToolConverter.create(HttpRequest.class);
+        return TOOL_CONVERTER;
     }
 
     private Request buildRequest(HttpRequest request) {
@@ -95,10 +106,21 @@ public class HttpRequestTool implements Tool<HttpRequest, HttpResponse> {
     @Override
     public HttpResponse run(ToolContext toolContext, HttpRequest request) throws ToolExecutionException {
         Request realRequest = buildRequest(request);
+        requestApprovalBeforeRequest(realRequest);
         try (Response response = httpClient.newCall(realRequest).execute()) {
             return buildResponse(response);
         } catch (IOException e) {
+            log.warn("Error to send HTTP request {}", realRequest.url(), e);
             throw new ToolExecutionException("Error to send HTTP request", e);
+        }
+    }
+
+    private void requestApprovalBeforeRequest(Request request) {
+        String approval = request.method() + " " + request.url() + " " + request.body();
+        HumanApprover.ApprovalInput approvalInput = new HumanApprover.ApprovalInput(approval, null);
+        HumanApprover.ApprovalOutput approvalOutput = humanApprover.request(approvalInput);
+        if (!approvalOutput.isApproved()) {
+            throw new ToolExecutionException("User reject to request HTTP URL " + request.url());
         }
     }
 }

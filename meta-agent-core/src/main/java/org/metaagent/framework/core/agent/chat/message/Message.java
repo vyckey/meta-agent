@@ -26,17 +26,39 @@ package org.metaagent.framework.core.agent.chat.message;
 
 import org.metaagent.framework.core.common.metadata.MetadataProvider;
 
+import java.time.Instant;
+
 /**
- * description is here
+ * The message interface represents a message in a chat.
  *
  * @author vyckey
  */
 public interface Message {
+    /**
+     * Get the metadata of the message.
+     *
+     * @return the metadata of the message
+     */
     MetadataProvider getMetadata();
 
-    String getSender();
+    /**
+     * Get the role of the message.
+     *
+     * @return the role of the message
+     */
+    String getRole();
 
-    String getReceiver();
-
+    /**
+     * Get the text content of the message.
+     *
+     * @return the content of the message
+     */
     String getContent();
+
+    /**
+     * Get the time when the message was created.
+     *
+     * @return the time when the message was created
+     */
+    Instant getCreatedAt();
 }

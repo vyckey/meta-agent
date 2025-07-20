@@ -87,7 +87,7 @@ public class SearchAgent extends AbstractAgent<SearchAgentInput, SearchAgentOutp
     protected Prompt buildPrompt(SearchAgentInput agentInput) {
         AgentExecutionContext context = agentInput.getContext();
         ChatOptions options = ToolCallbackUtils.buildChatOptionsWithTools(this.chatOptions,
-                context.getToolManager(), getAgentState().getToolCallTracker());
+                buildToolContext(agentInput), context.getToolExecutor());
 
         PromptTemplate promptTemplate = PromptRegistry.global().getPromptTemplate("framework:search_agent_system_prompt");
         PromptValue promptValue = promptTemplate.format(Map.of(
