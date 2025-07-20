@@ -24,44 +24,26 @@
 
 package org.metaagent.framework.tools.file.text;
 
-import com.fasterxml.jackson.annotation.JsonCreator;
-import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
+import lombok.Builder;
 import lombok.Getter;
-import lombok.Setter;
 
-import java.util.Objects;
+import java.io.IOException;
 
 /**
- * ReadTextFileInput represents the input to the {@link ReadTextFileTool}.
+ * Write text file output.
  *
  * @author vyckey
- * @see ReadTextFileTool
  */
 @Getter
-@Setter
-public class ReadTextFileInput {
-    @JsonProperty(required = true)
-    @JsonPropertyDescription("The absolute path to the file to read. Relative paths are not supported.")
-    private final String filePath;
+@Builder
+public class WriteTextFileOutput {
+    @JsonIgnore
+    private IOException exception;
 
-    @JsonPropertyDescription("The line number to start reading from for text file. Optional, default 0")
-    private long offset;
-
-    @JsonPropertyDescription("The maximum number of lines to read for text file. If omitted, reads the entire file. Optional, default -1")
-    private int limit = -1;
-
-    @JsonPropertyDescription("Whether to truncate file content if needed. Optional, default true")
-    private boolean truncate = true;
-
-    @JsonCreator
-    public ReadTextFileInput(@JsonProperty("filePath") String filePath) {
-        this.filePath = Objects.requireNonNull(filePath, "filePath is required");
-    }
-
-    public ReadTextFileInput(String filePath, long offset, int limit) {
-        this(filePath);
-        this.offset = offset;
-        this.limit = limit;
+    @JsonPropertyDescription("The error message if fail to write")
+    public String getError() {
+        return exception != null ? exception.getMessage() : null;
     }
 }

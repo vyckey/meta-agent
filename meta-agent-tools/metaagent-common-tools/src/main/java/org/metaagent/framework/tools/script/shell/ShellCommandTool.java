@@ -25,6 +25,7 @@
 package org.metaagent.framework.tools.script.shell;
 
 import com.google.common.io.CharStreams;
+import lombok.Setter;
 import org.apache.commons.lang3.BooleanUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.metaagent.framework.core.tool.Tool;
@@ -33,11 +34,12 @@ import org.metaagent.framework.core.tool.ToolExecutionException;
 import org.metaagent.framework.core.tool.converter.JsonToolConverter;
 import org.metaagent.framework.core.tool.converter.ToolConverter;
 import org.metaagent.framework.core.tool.definition.ToolDefinition;
+import org.metaagent.framework.core.tool.human.HumanApprover;
+import org.metaagent.framework.core.tool.human.SystemAutoApprover;
 
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
-import java.util.Scanner;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -45,43 +47,37 @@ import java.util.concurrent.TimeUnit;
  *
  * @author vyckey
  */
+@Setter
 public class ShellCommandTool implements Tool<ShellCommandInput, ShellCommandOutput> {
+    private static final ToolDefinition TOOL_DEFINITION = ToolDefinition.builder("execute_shell_command")
+            .description("Run shell command")
+            .inputSchema(ShellCommandInput.class)
+            .outputSchema(ShellCommandOutput.class)
+            .build();
+    private static final ToolConverter<ShellCommandInput, ShellCommandOutput> TOOL_CONVERTER =
+            JsonToolConverter.create(ShellCommandInput.class);
+    private HumanApprover humanApprover = SystemAutoApprover.INSTANCE;
 
     @Override
     public ToolDefinition getDefinition() {
-        return ToolDefinition.builder("execute_shell_command")
-                .description("Run shell command")
-                .inputSchema(ShellCommandInput.class)
-                .outputSchema(ShellCommandOutput.class)
-                .build();
+        return TOOL_DEFINITION;
     }
 
     @Override
     public ToolConverter<ShellCommandInput, ShellCommandOutput> getConverter() {
-        return JsonToolConverter.create(ShellCommandInput.class);
+        return TOOL_CONVERTER;
     }
 
     private boolean confirmBeforeExecution(ShellCommandInput commandInput) {
-        boolean confirmRequired;
-        if (commandInput.getConfirmBeforeExecution() != null) {
-            confirmRequired = BooleanUtils.isTrue(commandInput.getConfirmBeforeExecution());
-        } else {
-            String value = System.getenv("SHELL_CONFIRM_BEFORE_EXECUTION");
-            confirmRequired = StringUtils.isNotEmpty(value) && BooleanUtils.toBoolean(value);
-        }
+        String value = System.getenv("SHELL_CONFIRM_BEFORE_EXECUTION");
+        boolean confirmRequired = StringUtils.isNotEmpty(value) && BooleanUtils.toBoolean(value);
         if (!confirmRequired) {
             return true;
         }
-        Scanner scanner = new Scanner(System.in);
-        System.out.println("Whether execute the command [" + commandInput.getCommand() + "] ? (Y/n)");
-        while (true) {
-            String confirmation = scanner.nextLine();
-            confirmation = confirmation.trim().toLowerCase();
-            if ("y".equals(confirmation) || "n".equals(confirmation)) {
-                return "y".equals(confirmation);
-            }
-            System.out.println("Please enter Y or n");
-        }
+
+        String approval = "Whether execute the command [\"" + commandInput.getCommand() + "\"] ?";
+        HumanApprover.ApprovalOutput approvalOutput = humanApprover.request(new HumanApprover.ApprovalInput(approval, null));
+        return approvalOutput.isApproved();
     }
 
     @Override

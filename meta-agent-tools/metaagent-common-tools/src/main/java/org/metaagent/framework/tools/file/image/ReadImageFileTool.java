@@ -45,22 +45,22 @@ import java.util.Base64;
  */
 @Slf4j
 public class ReadImageFileTool implements Tool<ReadImageFileInput, ReadImageFileOutput> {
-    private final ToolDefinition toolDefinition = ToolDefinition.builder("read_image_file")
-            .description("Read image file content tool")
+    private static final ToolDefinition TOOL_DEFINITION = ToolDefinition.builder("read_image_file")
+            .description("Read image file content")
             .inputSchema(ReadImageFileInput.class)
             .outputSchema(ReadImageFileOutput.class)
             .build();
-    private final ToolConverter<ReadImageFileInput, ReadImageFileOutput> toolConverter =
+    private static final ToolConverter<ReadImageFileInput, ReadImageFileOutput> TOOL_CONVERTER =
             JsonToolConverter.create(ReadImageFileInput.class);
 
     @Override
     public ToolDefinition getDefinition() {
-        return toolDefinition;
+        return TOOL_DEFINITION;
     }
 
     @Override
     public ToolConverter<ReadImageFileInput, ReadImageFileOutput> getConverter() {
-        return toolConverter;
+        return TOOL_CONVERTER;
     }
 
     @Override

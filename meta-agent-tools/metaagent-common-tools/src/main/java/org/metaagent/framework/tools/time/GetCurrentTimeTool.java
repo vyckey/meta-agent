@@ -41,22 +41,22 @@ import java.time.ZoneId;
  * @author vyckey
  */
 public class GetCurrentTimeTool implements Tool<GetCurrentTimeInput, GetCurrentTimeOutput> {
-    private final ToolDefinition toolDefinition = ToolDefinition.builder("get_current_time")
-            .description("Get current time tool")
+    private static final ToolDefinition TOOL_DEFINITION = ToolDefinition.builder("get_current_time")
+            .description("Get current local time")
             .inputSchema(GetCurrentTimeInput.class)
             .outputSchema(GetCurrentTimeOutput.class)
             .build();
-    private final ToolConverter<GetCurrentTimeInput, GetCurrentTimeOutput> toolConverter =
+    private static final ToolConverter<GetCurrentTimeInput, GetCurrentTimeOutput> TOOL_CONVERTER =
             JsonToolConverter.create(GetCurrentTimeInput.class);
 
     @Override
     public ToolDefinition getDefinition() {
-        return toolDefinition;
+        return TOOL_DEFINITION;
     }
 
     @Override
     public ToolConverter<GetCurrentTimeInput, GetCurrentTimeOutput> getConverter() {
-        return toolConverter;
+        return TOOL_CONVERTER;
     }
 
     @Override

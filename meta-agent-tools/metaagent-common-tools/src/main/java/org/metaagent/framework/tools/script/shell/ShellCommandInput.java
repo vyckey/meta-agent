@@ -51,10 +51,6 @@ public class ShellCommandInput {
     @JsonPropertyDescription("The timeout in seconds for the command to complete. Default no timeout")
     private Long timeoutSeconds;
 
-    @Setter
-    @JsonPropertyDescription("Whether to confirm with human before executing the command.")
-    private Boolean confirmBeforeExecution;
-
     @JsonCreator
     public ShellCommandInput(@JsonProperty("command") String command,
                              @JsonProperty("envs") Map<String, String> envs) {

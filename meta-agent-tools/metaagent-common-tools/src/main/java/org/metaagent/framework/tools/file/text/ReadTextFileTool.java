@@ -48,22 +48,22 @@ import java.util.stream.Stream;
  */
 @Slf4j
 public class ReadTextFileTool implements Tool<ReadTextFileInput, ReadTextFileOutput> {
-    private final ToolDefinition toolDefinition = ToolDefinition.builder("read_text_file")
-            .description("Read text file content tool")
+    private static final ToolDefinition TOOL_DEFINITION = ToolDefinition.builder("read_text_file")
+            .description("Read text file content")
             .inputSchema(ReadTextFileInput.class)
             .outputSchema(ReadTextFileOutput.class)
             .build();
-    private final ToolConverter<ReadTextFileInput, ReadTextFileOutput> toolConverter =
+    private static final ToolConverter<ReadTextFileInput, ReadTextFileOutput> TOOL_CONVERTER =
             JsonToolConverter.create(ReadTextFileInput.class);
 
     @Override
     public ToolDefinition getDefinition() {
-        return toolDefinition;
+        return TOOL_DEFINITION;
     }
 
     @Override
     public ToolConverter<ReadTextFileInput, ReadTextFileOutput> getConverter() {
-        return toolConverter;
+        return TOOL_CONVERTER;
     }
 
     @Override

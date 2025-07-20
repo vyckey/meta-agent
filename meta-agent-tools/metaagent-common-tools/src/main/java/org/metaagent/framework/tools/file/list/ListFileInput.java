@@ -22,46 +22,48 @@
  * SOFTWARE.
  */
 
-package org.metaagent.framework.tools.file.text;
+package org.metaagent.framework.tools.file.list;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 import lombok.Getter;
-import lombok.Setter;
+import lombok.experimental.SuperBuilder;
 
-import java.util.Objects;
+import java.util.List;
+import java.util.regex.Pattern;
 
 /**
- * ReadTextFileInput represents the input to the {@link ReadTextFileTool}.
+ * List files input.
  *
  * @author vyckey
- * @see ReadTextFileTool
  */
 @Getter
-@Setter
-public class ReadTextFileInput {
+@SuperBuilder
+public class ListFileInput {
     @JsonProperty(required = true)
-    @JsonPropertyDescription("The absolute path to the file to read. Relative paths are not supported.")
-    private final String filePath;
+    @JsonPropertyDescription("The target root directory.")
+    private String directory;
 
-    @JsonPropertyDescription("The line number to start reading from for text file. Optional, default 0")
-    private long offset;
+    @JsonPropertyDescription("Whether to include the directories. Default is false")
+    private boolean directoryIncluded;
 
-    @JsonPropertyDescription("The maximum number of lines to read for text file. If omitted, reads the entire file. Optional, default -1")
-    private int limit = -1;
+    @JsonPropertyDescription("The max depth of directory. Default is null")
+    private Integer maxDepth;
 
-    @JsonPropertyDescription("Whether to truncate file content if needed. Optional, default true")
-    private boolean truncate = true;
+    @JsonPropertyDescription("The file patterns to include. e.g. *.java, *.py")
+    private List<Pattern> includeFilePatterns;
+
+    @JsonPropertyDescription("The file patterns to exclude. e.g. *.log, build/, node_modules/")
+    private List<Pattern> excludeFilePatterns;
+
+    @JsonPropertyDescription("The ignore files which are used to contain exclude patterns."
+            + " It's just like .gitignore file. Default is [\".gitignore\"]")
+    private List<String> ignoreLikeFiles;
 
     @JsonCreator
-    public ReadTextFileInput(@JsonProperty("filePath") String filePath) {
-        this.filePath = Objects.requireNonNull(filePath, "filePath is required");
+    public ListFileInput(@JsonProperty("directory") String directory) {
+        this.directory = directory;
     }
 
-    public ReadTextFileInput(String filePath, long offset, int limit) {
-        this(filePath);
-        this.offset = offset;
-        this.limit = limit;
-    }
 }
