@@ -22,29 +22,24 @@
  * SOFTWARE.
  */
 
-package org.metaagent.framework.core.agent.chat.message.storage;
+package org.metaagent.framework.core.model.parser;
 
 import org.junit.jupiter.api.Test;
-import org.metaagent.framework.core.agent.chat.message.RoleMessage;
-import org.metaagent.framework.core.agent.chat.message.history.DefaultMessageHistory;
-import org.metaagent.framework.core.agent.chat.message.history.MessageHistory;
 
-/**
- * description is here
- *
- * @author vyckey
- */
-class MessageStorageTest {
+import static org.junit.jupiter.api.Assertions.assertEquals;
+
+class OutputParserTest {
     @Test
-    void test() {
-        MessageHistory messageHistory = new DefaultMessageHistory();
-        messageHistory.appendMessage(RoleMessage.user("Who are you?"));
-        messageHistory.appendMessage(RoleMessage.assistant("I am your assistant."));
-
-        MessageStorage messageStorage = new FileMessageStorage("data/chat/session_%s.json");
-        messageStorage.save(messageHistory);
-
-        messageStorage.clear(messageHistory.historyId());
+    void markdownParseTest() {
+        String text = "The following code shows how the sort algorithm works:\n"
+                + "```python\ndef quick_sort(elements):\n...```";
+        assertEquals(
+                "```python\ndef quick_sort(elements):\n...```",
+                OutputParsers.codeBlockParser("python", true).parse(text)
+        );
+        assertEquals(
+                "def quick_sort(elements):\n...",
+                OutputParsers.codeBlockParser("python", false).parse(text)
+        );
     }
 }
-

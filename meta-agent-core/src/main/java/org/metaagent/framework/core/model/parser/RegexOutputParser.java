@@ -22,29 +22,38 @@
  * SOFTWARE.
  */
 
-package org.metaagent.framework.core.agent.chat.message.storage;
+package org.metaagent.framework.core.model.parser;
 
-import org.junit.jupiter.api.Test;
-import org.metaagent.framework.core.agent.chat.message.RoleMessage;
-import org.metaagent.framework.core.agent.chat.message.history.DefaultMessageHistory;
-import org.metaagent.framework.core.agent.chat.message.history.MessageHistory;
+import java.util.Objects;
+import java.util.function.Function;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
- * description is here
+ * RegexOutputParser is a parser that uses a regular expression to parse the output of an agent.
  *
+ * @param <T> The type of the parsed output.
  * @author vyckey
  */
-class MessageStorageTest {
-    @Test
-    void test() {
-        MessageHistory messageHistory = new DefaultMessageHistory();
-        messageHistory.appendMessage(RoleMessage.user("Who are you?"));
-        messageHistory.appendMessage(RoleMessage.assistant("I am your assistant."));
+public final class RegexOutputParser<T> implements OutputParser<String, T> {
+    private final Pattern pattern;
+    private final Function<String, T> mapper;
 
-        MessageStorage messageStorage = new FileMessageStorage("data/chat/session_%s.json");
-        messageStorage.save(messageHistory);
+    public RegexOutputParser(Pattern pattern, Function<String, T> mapper) {
+        this.pattern = Objects.requireNonNull(pattern, "pattern is required");
+        this.mapper = Objects.requireNonNull(mapper, "mapper is required");
+    }
 
-        messageStorage.clear(messageHistory.historyId());
+    public RegexOutputParser(String pattern, Function<String, T> mapper) {
+        this(Pattern.compile(pattern), mapper);
+    }
+
+    @Override
+    public T parse(String output) throws OutputParsingException {
+        Matcher matcher = pattern.matcher(output);
+        if (!matcher.find()) {
+            throw new OutputParsingException("No match found for the given regex pattern: " + pattern);
+        }
+        return mapper.apply(matcher.group());
     }
 }
-
