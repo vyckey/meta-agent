@@ -55,6 +55,13 @@ import java.util.Objects;
  * @author vyckey
  */
 public class BochaaiWebSearchTool implements SearchTool {
+    private static final ToolDefinition TOOL_DEFINITION = ToolDefinition.builder("bochaai_web_search")
+            .description("Web search tool by Bochaai")
+            .inputSchema(WebSearchRequest.class)
+            .outputSchema(WebSearchResponse.class)
+            .build();
+    private static final ToolConverter<WebSearchRequest, WebSearchResponse> TOOL_CONVERTER =
+            ToolConverters.jsonConverter(WebSearchRequest.class);
     private final BochaaiClient client;
 
     public BochaaiWebSearchTool(BochaaiClient client) {
@@ -71,16 +78,12 @@ public class BochaaiWebSearchTool implements SearchTool {
 
     @Override
     public ToolDefinition getDefinition() {
-        return ToolDefinition.builder("bochaai_web_search")
-                .description("Web search tool by Bochaai")
-                .inputSchema(WebSearchRequest.class)
-                .outputSchema(WebSearchResponse.class)
-                .build();
+        return TOOL_DEFINITION;
     }
 
     @Override
     public ToolConverter<WebSearchRequest, WebSearchResponse> getConverter() {
-        return ToolConverters.jsonConverter(WebSearchRequest.class);
+        return TOOL_CONVERTER;
     }
 
     @Override
