@@ -41,6 +41,7 @@ import org.metaagent.framework.core.tool.human.HumanApprover;
 import org.metaagent.framework.core.tool.human.SystemAutoApprover;
 
 import java.io.IOException;
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 
@@ -54,6 +55,7 @@ public class HttpRequestTool implements Tool<HttpRequest, HttpResponse> {
             .build();
     private static final JsonToolConverter<HttpRequest, HttpResponse> TOOL_CONVERTER =
             JsonToolConverter.create(HttpRequest.class);
+    private static final List<String> SKIP_APPROVAL_METHODS = List.of("get", "head", "options");
 
     private final OkHttpClient httpClient;
     private HumanApprover humanApprover = SystemAutoApprover.INSTANCE;
@@ -116,6 +118,9 @@ public class HttpRequestTool implements Tool<HttpRequest, HttpResponse> {
     }
 
     private void requestApprovalBeforeRequest(Request request) {
+        if (SKIP_APPROVAL_METHODS.contains(request.method().toLowerCase())) {
+            return;
+        }
         String approval = request.method() + " " + request.url() + " " + request.body();
         HumanApprover.ApprovalInput approvalInput = new HumanApprover.ApprovalInput(approval, null);
         HumanApprover.ApprovalOutput approvalOutput = humanApprover.request(approvalInput);

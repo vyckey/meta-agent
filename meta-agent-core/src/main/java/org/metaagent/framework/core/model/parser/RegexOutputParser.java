@@ -24,6 +24,9 @@
 
 package org.metaagent.framework.core.model.parser;
 
+import lombok.Getter;
+import org.apache.commons.lang3.StringUtils;
+
 import java.util.Objects;
 import java.util.function.Function;
 import java.util.regex.Matcher;
@@ -36,12 +39,24 @@ import java.util.regex.Pattern;
  * @author vyckey
  */
 public final class RegexOutputParser<T> implements OutputParser<String, T> {
+    @Getter
     private final Pattern pattern;
     private final Function<String, T> mapper;
+    @Getter
+    private final String groupName;
 
-    public RegexOutputParser(Pattern pattern, Function<String, T> mapper) {
+    public RegexOutputParser(Pattern pattern, String groupName, Function<String, T> mapper) {
         this.pattern = Objects.requireNonNull(pattern, "pattern is required");
         this.mapper = Objects.requireNonNull(mapper, "mapper is required");
+        this.groupName = groupName;
+    }
+
+    public RegexOutputParser(Pattern pattern, Function<String, T> mapper) {
+        this(pattern, null, mapper);
+    }
+
+    public RegexOutputParser(String pattern, String groupName, Function<String, T> mapper) {
+        this(Pattern.compile(pattern), groupName, mapper);
     }
 
     public RegexOutputParser(String pattern, Function<String, T> mapper) {
@@ -54,6 +69,7 @@ public final class RegexOutputParser<T> implements OutputParser<String, T> {
         if (!matcher.find()) {
             throw new OutputParsingException("No match found for the given regex pattern: " + pattern);
         }
-        return mapper.apply(matcher.group());
+        String value = StringUtils.isEmpty(groupName) ? matcher.group() : matcher.group(groupName);
+        return mapper.apply(value);
     }
 }
