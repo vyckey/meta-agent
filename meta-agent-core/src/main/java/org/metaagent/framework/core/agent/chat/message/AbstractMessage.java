@@ -24,6 +24,8 @@
 
 package org.metaagent.framework.core.agent.chat.message;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import org.metaagent.framework.core.common.metadata.MapMetadataProvider;
 import org.metaagent.framework.core.common.metadata.MetadataProvider;
 
@@ -53,6 +55,7 @@ public abstract class AbstractMessage implements Message {
         return metadata;
     }
 
+    @JsonIgnore
     @Override
     public Instant getCreatedAt() {
         return createdAt;

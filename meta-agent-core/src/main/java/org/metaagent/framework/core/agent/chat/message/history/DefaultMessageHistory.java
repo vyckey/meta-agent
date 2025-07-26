@@ -35,7 +35,7 @@ import java.util.UUID;
 import java.util.function.Predicate;
 
 /**
- * description is here
+ * Default implementation of the {@link MessageHistory} interface.
  *
  * @author vyckey
  */
@@ -71,34 +71,45 @@ public class DefaultMessageHistory implements MessageHistory {
     }
 
     @Override
-    public Iterable<Message> reverse() {
-        return Lists.reverse(messages);
-    }
-
-    @Override
     public void appendMessage(Message message) {
         messages.add(message);
     }
 
     @Override
     public List<Message> findMessages(Predicate<Message> predicate, boolean reverse) {
-        if (reverse) {
-            return Lists.reverse(messages).stream().filter(predicate).toList();
+        Iterable<Message> iterable = reverse ? reverse() : this;
+        List<Message> result = Lists.newArrayList();
+        for (Message message : iterable) {
+            if (predicate.test(message)) {
+                result.add(message);
+            }
         }
-        return messages.stream().filter(predicate).toList();
+        return result;
     }
 
     @Override
     public Optional<Message> findMessage(Predicate<Message> predicate, boolean reverse) {
-        if (reverse) {
-            for (Message message : reverse()) {
-                if (predicate.test(message)) {
-                    return Optional.of(message);
-                }
+        Iterable<Message> iterable = reverse ? reverse() : this;
+        for (Message message : iterable) {
+            if (predicate.test(message)) {
+                return Optional.of(message);
             }
+        }
+        return Optional.empty();
+    }
+
+    @Override
+    public Optional<Message> lastMessage() {
+        if (messages.isEmpty()) {
             return Optional.empty();
         }
-        return messages.stream().filter(predicate).findFirst();
+        return Optional.of(messages.get(messages.size() - 1));
+    }
+
+    @Override
+    public List<Message> lastMessages(int count) {
+        int returnCount = Math.min(count, messages.size());
+        return messages.subList(messages.size() - returnCount, messages.size());
     }
 
     @Override
@@ -108,25 +119,31 @@ public class DefaultMessageHistory implements MessageHistory {
 
     @Override
     public Iterator<Message> iterator() {
-        return messages.iterator();
+        return Lists.reverse(messages).iterator();
     }
 
-    protected String toText(int maxMessageSize) {
-        StringBuilder sb = new StringBuilder();
-        int i = 0;
-        for (Message message : reverse()) {
-            if (++i > maxMessageSize) {
-                sb.insert(0, "...\n");
-                break;
-            }
-            sb.insert(0, message.getRole() + ": " + message.getContent() + "\n");
+    public String asText(int maxMessageSize, int maxMessageLength) {
+        StringBuilder sb = new StringBuilder()
+                .append("Message history (").append(historyId).append("):\n");
+        if (messages.size() > maxMessageSize) {
+            sb.append("... (hidden messages)\n");
         }
-        sb.insert(0, "Message history:\n");
+        for (Message message : lastMessages(maxMessageSize)) {
+            String content = message.getContent();
+            if (content.length() > maxMessageLength) {
+                content = content.substring(0, maxMessageLength) + "...(truncated)";
+            }
+            sb.append(message.getRole()).append(": ").append(content).append("\n");
+        }
         return sb.toString();
+    }
+
+    public Iterable<Message> reverse() {
+        return messages;
     }
 
     @Override
     public String toString() {
-        return toText(10);
+        return asText(10, 1000);
     }
 }
