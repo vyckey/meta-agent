@@ -39,7 +39,7 @@ class StringPromptTemplateTest {
 
     @Test
     void formatWithFileTest() {
-        StringPromptTemplate promptTemplate = StringPromptTemplate.fromFile("default", "classpath:prompts/default_prompt_template_test.md");
+        StringPromptTemplate promptTemplate = StringPromptTemplate.fromFile("classpath:prompts/default_prompt_template_test.md");
         assertEquals(List.of("search_results", "question"), promptTemplate.getVariables().orElse(null));
         PromptValue promptValue = promptTemplate.format("search_results", "1. Apple ...\n2. Banana ...", "question", "What is the best fruit?");
         assertTrue(DefaultStringFormatter.INSTANCE.extractVariables(promptValue.toString()).isEmpty());

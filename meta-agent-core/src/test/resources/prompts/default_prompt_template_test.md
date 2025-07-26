@@ -1,3 +1,6 @@
+---
+formatter: default
+---
 # The following contents are the search results related to the user's message:
 ${search_results}
 
