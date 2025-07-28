@@ -25,25 +25,27 @@
 package org.metaagent.framework.core.agent.group;
 
 import org.metaagent.framework.core.agent.MetaAgent;
+import org.metaagent.framework.core.agent.input.AgentInput;
+import org.metaagent.framework.core.agent.output.AgentOutput;
 
+import java.util.Collections;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 
 /**
- * description is here
+ * Default implementation of the AgentGroup interface.
  *
  * @author vyckey
  */
-public class MultiAgentGroup implements AgentGroup {
-    private final Map<String, MetaAgent> agents;
+public class DefaultAgentGroup implements AgentGroup {
+    private final Map<String, MetaAgent<?, ?>> agents;
 
-    public MultiAgentGroup(Map<String, MetaAgent> agents) {
+    public DefaultAgentGroup(Map<String, MetaAgent<?, ?>> agents) {
         this.agents = Objects.requireNonNull(agents);
     }
 
-    public MultiAgentGroup() {
+    public DefaultAgentGroup() {
         this.agents = new HashMap<>();
     }
 
@@ -52,23 +54,29 @@ public class MultiAgentGroup implements AgentGroup {
         return agents.size();
     }
 
+    @SuppressWarnings("unchecked")
     @Override
-    public MetaAgent getAgent(String name) {
-        return agents.get(name);
+    public <I extends AgentInput, O extends AgentOutput> MetaAgent<I, O> getAgent(String name) {
+        return (MetaAgent<I, O>) agents.get(name);
     }
 
     @Override
-    public List<MetaAgent> getAgents() {
-        return List.of(agents.values().toArray(new MetaAgent[0]));
+    public Map<String, MetaAgent<?, ?>> getAgents() {
+        return Collections.unmodifiableMap(agents);
     }
 
     @Override
-    public void addAgent(MetaAgent agent) {
+    public void addAgent(MetaAgent<?, ?> agent) {
+        Objects.requireNonNull(agent, "agent is required");
         agents.put(agent.getName(), agent);
     }
 
     @Override
-    public void removeAgent(MetaAgent agent) {
+    public void removeAgent(MetaAgent<?, ?> agent) {
+        Objects.requireNonNull(agent, "agent is required");
+        if (!agents.containsKey(agent.getName())) {
+            throw new IllegalArgumentException("Agent " + agent.getName() + " not found in the group");
+        }
         agents.remove(agent.getName());
     }
 }

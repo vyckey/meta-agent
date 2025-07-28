@@ -22,79 +22,68 @@
  * SOFTWARE.
  */
 
-package org.metaagent.framework.core.agents.chat;
+package org.metaagent.framework.core.agents.task.decompose;
 
+import lombok.Getter;
 import org.metaagent.framework.core.agent.AgentExecutionContext;
-import org.metaagent.framework.core.agent.chat.message.Message;
 import org.metaagent.framework.core.agent.input.AbstractAgentInput;
+import org.metaagent.framework.core.agent.input.AgentInput;
+import org.metaagent.framework.core.agent.task.Task;
 import org.metaagent.framework.core.common.metadata.MapMetadataProvider;
-import org.metaagent.framework.core.common.metadata.MetadataProvider;
 
-import java.util.List;
 import java.util.Objects;
 
 /**
- * Default implementation of {@link AgentChatInput}.
+ * Input for the Task Decompose Agent.
  *
  * @author vyckey
  */
-public record DefaultAgentChatInput(
-        AgentExecutionContext context,
-        List<Message> messages,
-        MetadataProvider metadata) implements AgentChatInput {
+@Getter
+public class TaskDecomposeInput extends AbstractAgentInput implements AgentInput {
+    private final Task task;
+    private final String taskContext;
+
+    protected TaskDecomposeInput(Builder builder) {
+        super(builder);
+        this.task = Objects.requireNonNull(builder.task, "task is required");
+        this.taskContext = builder.taskContext;
+    }
+
+    public TaskDecomposeInput(Task task) {
+        this(builder().task(task));
+    }
 
     public static Builder builder() {
         return new Builder();
     }
 
-    @Override
-    public AgentExecutionContext getContext() {
-        return context;
-    }
-
     public static class Builder extends AbstractAgentInput.Builder<Builder> {
-        private AgentExecutionContext context;
-        private List<Message> messages;
-        private MetadataProvider metadata = new MapMetadataProvider();
+        private Task task;
+        private String taskContext;
 
         @Override
         protected Builder self() {
             return this;
         }
 
-        public Builder messages(List<Message> messages) {
-            this.messages = Objects.requireNonNull(messages, "messages is required");
+        public Builder task(Task task) {
+            this.task = task;
             return this;
         }
 
-        public Builder messages(Message... messages) {
-            this.messages = List.of(messages);
+        public Builder taskContext(String taskContext) {
+            this.taskContext = taskContext;
             return this;
         }
 
-        public Builder deepThinkEnabled(boolean deepThinkEnabled) {
-            this.metadata.setProperty(AgentChatInput.OPTION_DEEP_THINK_ENABLED, deepThinkEnabled);
-            return this;
-        }
-
-        public Builder searchEnabled(boolean searchEnabled) {
-            this.metadata.setProperty(AgentChatInput.OPTION_SEARCH_ENABLED, searchEnabled);
-            return this;
-        }
-
-        @Override
-        public DefaultAgentChatInput build() {
+        public TaskDecomposeInput build() {
             if (context == null) {
                 context = AgentExecutionContext.create();
             }
             if (metadata == null) {
                 metadata = new MapMetadataProvider();
             }
-            if (messages == null) {
-                messages = List.of();
-            }
-            return new DefaultAgentChatInput(context, messages, metadata);
+            return new TaskDecomposeInput(this);
         }
     }
-
 }

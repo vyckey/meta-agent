@@ -22,19 +22,24 @@
  * SOFTWARE.
  */
 
-package org.metaagent.framework.core.agents.coordinator;
+package org.metaagent.framework.core.agents.task.decompose;
 
 import org.metaagent.framework.core.agent.Agent;
-import org.metaagent.framework.core.agent.group.AgentGroup;
-import org.metaagent.framework.core.agent.input.AgentInput;
-import org.metaagent.framework.core.agent.output.AgentOutput;
+import org.metaagent.framework.core.agent.task.Task;
 
 /**
- * CoordinateAgent is an interface that represents an agent responsible for coordinating.
- *
- * @author vyckey
+ * TaskDecomposeAgent is an interface that extends the Agent interface
+ * for agents that decompose tasks into smaller, manageable parts.
+ * It provides a method to run the agent with a Task object.
  */
-public interface CoordinateAgent<I extends AgentInput, O extends AgentOutput> extends Agent<I, O> {
-    AgentGroup getExecuteAgents();
-
+public interface TaskDecomposeAgent extends Agent<TaskDecomposeInput, TaskDecomposeOutput> {
+    /**
+     * Runs the agent with the provided Task object.
+     *
+     * @param task The Task to be decomposed.
+     * @return A TaskDecomposeOutput containing the results of the decomposition.
+     */
+    default TaskDecomposeOutput run(Task task) {
+        return Agent.super.run(new TaskDecomposeInput(task));
+    }
 }

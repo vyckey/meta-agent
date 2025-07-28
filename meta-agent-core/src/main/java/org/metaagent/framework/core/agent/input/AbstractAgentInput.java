@@ -25,6 +25,9 @@
 package org.metaagent.framework.core.agent.input;
 
 import org.metaagent.framework.core.agent.AgentExecutionContext;
+import org.metaagent.framework.core.common.metadata.MetadataProvider;
+
+import java.util.Objects;
 
 /**
  * AbstractAgentInput is an abstract class that implements the AgentInput interface.
@@ -33,17 +36,41 @@ import org.metaagent.framework.core.agent.AgentExecutionContext;
  */
 public class AbstractAgentInput implements AgentInput {
     protected AgentExecutionContext context;
+    protected MetadataProvider metadata;
 
     protected AbstractAgentInput(AgentExecutionContext context) {
-        this.context = context;
+        this.context = Objects.requireNonNull(context, "context is required");
     }
 
-    protected AbstractAgentInput() {
-        this.context = AgentExecutionContext.create();
+    protected AbstractAgentInput(Builder<?> builder) {
+        this.context = Objects.requireNonNull(builder.context, "context is required");
+        this.metadata = Objects.requireNonNull(builder.metadata, "metadata is required");
     }
 
     @Override
     public AgentExecutionContext getContext() {
         return context;
+    }
+
+    public static abstract class Builder<B extends Builder<B>> {
+        protected AgentExecutionContext context;
+        protected MetadataProvider metadata;
+
+        protected Builder() {
+        }
+
+        protected abstract B self();
+
+        public B context(AgentExecutionContext context) {
+            this.context = context;
+            return self();
+        }
+
+        public B metadata(MetadataProvider metadata) {
+            this.metadata = metadata;
+            return self();
+        }
+
+        public abstract AgentInput build();
     }
 }

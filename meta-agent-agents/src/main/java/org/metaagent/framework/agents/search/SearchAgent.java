@@ -25,12 +25,13 @@
 package org.metaagent.framework.agents.search;
 
 import org.apache.commons.collections.CollectionUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.metaagent.framework.core.agent.AbstractAgent;
 import org.metaagent.framework.core.agent.AgentExecutionContext;
 import org.metaagent.framework.core.agent.fallback.AgentFallbackStrategy;
 import org.metaagent.framework.core.agent.fallback.RetryAgentFallbackStrategy;
 import org.metaagent.framework.core.model.chat.ChatModelUtils;
-import org.metaagent.framework.core.model.parser.JsonOutputParser;
+import org.metaagent.framework.core.model.parser.OutputParsers;
 import org.metaagent.framework.core.model.prompt.PromptTemplate;
 import org.metaagent.framework.core.model.prompt.PromptValue;
 import org.metaagent.framework.core.model.prompt.StringPromptTemplate;
@@ -77,6 +78,11 @@ public class SearchAgent extends AbstractAgent<SearchAgentInput, SearchAgentOutp
     }
 
     @Override
+    public SearchAgentOutput run(String input) {
+        return run(SearchAgentInput.from(input));
+    }
+
+    @Override
     protected SearchAgentOutput doStep(SearchAgentInput agentInput) {
         Prompt prompt = buildPrompt(agentInput);
         ChatResponse response = ChatModelUtils.callWithToolCall(chatModel, prompt);
@@ -94,16 +100,20 @@ public class SearchAgent extends AbstractAgent<SearchAgentInput, SearchAgentOutp
                 "date", LocalDateTime.now().format(DateTimeFormatter.ISO_LOCAL_DATE),
                 "force_search", agentInput.forceSearch()
         ));
+        String message = agentInput.query();
+        if (StringUtils.isNotEmpty(agentInput.queryContext())) {
+            message = "## Context\n" + agentInput.queryContext() + "\n##Query\n" + message;
+        }
         List<Message> messages = List.of(
                 new SystemMessage(promptValue.toString()),
-                new UserMessage(agentInput.query())
+                new UserMessage(message)
         );
         return new Prompt(messages, options);
     }
 
     protected SearchAgentOutput parseOutput(AssistantMessage message) {
         String text = message.getText();
-        SearchAgentOutput output = new JsonOutputParser<>(SearchAgentOutput.class).parse(text);
+        SearchAgentOutput output = OutputParsers.jsonParser(SearchAgentOutput.class).parse(text);
         if (CollectionUtils.isEmpty(output.queryTerms()) && CollectionUtils.isEmpty(output.sources())) {
             return SearchAgentOutput.fromAnswer(output.answer());
         }

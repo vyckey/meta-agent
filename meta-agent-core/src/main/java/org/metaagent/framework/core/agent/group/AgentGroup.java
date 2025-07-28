@@ -25,22 +25,62 @@
 package org.metaagent.framework.core.agent.group;
 
 import org.metaagent.framework.core.agent.MetaAgent;
+import org.metaagent.framework.core.agent.input.AgentInput;
+import org.metaagent.framework.core.agent.output.AgentOutput;
 
-import java.util.List;
+import java.util.Map;
 
 /**
- * description is here
+ * AgentGroup is an interface that represents a group of agents.
  *
  * @author vyckey
  */
 public interface AgentGroup {
+    /**
+     * Creates a new instance of AgentGroup.
+     *
+     * @return a new AgentGroup instance
+     */
+    static AgentGroup create() {
+        return new DefaultAgentGroup();
+    }
+
+    /**
+     * Gets agent count in the group.
+     *
+     * @return the number of agents in the group
+     */
     int getAgentCount();
 
-    MetaAgent getAgent(String name);
+    /**
+     * Gets the agent by name.
+     *
+     * @param name the name of the agent
+     * @param <I>  the type of AgentInput
+     * @param <O>  the type of AgentOutput
+     * @return the agent with the specified name
+     */
+    <I extends AgentInput, O extends AgentOutput>
+    MetaAgent<I, O> getAgent(String name);
 
-    List<MetaAgent> getAgents();
+    /**
+     * Gets all agents in the group.
+     *
+     * @return a map of agent names to agents
+     */
+    Map<String, MetaAgent<?, ?>> getAgents();
 
-    void addAgent(MetaAgent agent);
+    /**
+     * Adds an agent to the group.
+     *
+     * @param agent the agent to add
+     */
+    void addAgent(MetaAgent<?, ?> agent);
 
-    void removeAgent(MetaAgent agent);
+    /**
+     * Removes an agent from the group.
+     *
+     * @param agent the agent to remove
+     */
+    void removeAgent(MetaAgent<?, ?> agent);
 }
