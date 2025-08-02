@@ -22,31 +22,42 @@
  * SOFTWARE.
  */
 
-package org.metaagent.framework.core.tool.converter;
+package org.metaagent.framework.tools.file.find;
 
-import com.fasterxml.jackson.core.type.TypeReference;
-import org.metaagent.framework.core.converter.Converter;
+import com.fasterxml.jackson.annotation.JsonIgnore;
+
+import java.io.File;
+import java.util.List;
+import java.util.Objects;
+import java.util.stream.Collectors;
 
 /**
- * {@link ToolConverters} factory for creating {@link ToolConverter} instances.
+ * GlobFileOutput represents the output of a file search operation using glob patterns.
+ * It contains a list of files that match the specified glob patterns.
  *
  * @author vyckey
  */
-public abstract class ToolConverters {
-    public static <I, O> ToolConverter<I, O> create(Converter<String, I> inputConverter,
-                                                    Converter<O, String> outputConverter) {
-        return new DefaultToolConverter<>(inputConverter, outputConverter);
+public class GlobFileOutput {
+    private final List<File> files;
+
+    public GlobFileOutput(List<File> files) {
+        this.files = Objects.requireNonNull(files, "Files list cannot be null");
     }
 
-    public static <I, O> ToolConverter<I, O> jsonConverter(Class<I> inputType) {
-        return JsonToolConverter.create(inputType);
+    @JsonIgnore
+    public List<File> getFiles() {
+        return files;
     }
 
-    public static <I, O> ToolConverter<I, O> jsonConverter(TypeReference<I> inputType) {
-        return JsonToolConverter.create(inputType);
+    public int getFileCount() {
+        return files.size();
     }
 
-    public static ToolConverter<String, String> stringConverter() {
-        return create(Converter.self(), Converter.self());
+    public String getFileList() {
+        return files.stream().map(GlobFileOutput::formatFile).collect(Collectors.joining("\n"));
+    }
+
+    public static String formatFile(File file) {
+        return file.getAbsolutePath();
     }
 }

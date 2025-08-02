@@ -24,29 +24,14 @@
 
 package org.metaagent.framework.core.tool.converter;
 
-import com.fasterxml.jackson.core.type.TypeReference;
-import org.metaagent.framework.core.converter.Converter;
+import org.metaagent.framework.core.tool.ToolExecutionException;
 
-/**
- * {@link ToolConverters} factory for creating {@link ToolConverter} instances.
- *
- * @author vyckey
- */
-public abstract class ToolConverters {
-    public static <I, O> ToolConverter<I, O> create(Converter<String, I> inputConverter,
-                                                    Converter<O, String> outputConverter) {
-        return new DefaultToolConverter<>(inputConverter, outputConverter);
+public class ToolConvertException extends ToolExecutionException {
+    public ToolConvertException(String message) {
+        super(message);
     }
 
-    public static <I, O> ToolConverter<I, O> jsonConverter(Class<I> inputType) {
-        return JsonToolConverter.create(inputType);
-    }
-
-    public static <I, O> ToolConverter<I, O> jsonConverter(TypeReference<I> inputType) {
-        return JsonToolConverter.create(inputType);
-    }
-
-    public static ToolConverter<String, String> stringConverter() {
-        return create(Converter.self(), Converter.self());
+    public ToolConvertException(String message, Throwable cause) {
+        super(message, cause);
     }
 }

@@ -22,31 +22,22 @@
  * SOFTWARE.
  */
 
-package org.metaagent.framework.core.tool.converter;
+package org.metaagent.framework.tools.file.find;
 
-import com.fasterxml.jackson.core.type.TypeReference;
-import org.metaagent.framework.core.converter.Converter;
+import com.fasterxml.jackson.annotation.JsonProperty;
 
-/**
- * {@link ToolConverters} factory for creating {@link ToolConverter} instances.
- *
- * @author vyckey
- */
-public abstract class ToolConverters {
-    public static <I, O> ToolConverter<I, O> create(Converter<String, I> inputConverter,
-                                                    Converter<O, String> outputConverter) {
-        return new DefaultToolConverter<>(inputConverter, outputConverter);
-    }
+public record GrepMatchLine(
+        @JsonProperty(required = true)
+        String filePath,
 
-    public static <I, O> ToolConverter<I, O> jsonConverter(Class<I> inputType) {
-        return JsonToolConverter.create(inputType);
-    }
+        @JsonProperty(required = true)
+        int lineNumber,
 
-    public static <I, O> ToolConverter<I, O> jsonConverter(TypeReference<I> inputType) {
-        return JsonToolConverter.create(inputType);
-    }
+        @JsonProperty(required = true)
+        String lineContent) {
 
-    public static ToolConverter<String, String> stringConverter() {
-        return create(Converter.self(), Converter.self());
+    @Override
+    public String toString() {
+        return String.format("%s:%d: %s", filePath, lineNumber, lineContent.trim());
     }
 }

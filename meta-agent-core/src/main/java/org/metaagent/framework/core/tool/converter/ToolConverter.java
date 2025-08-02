@@ -27,7 +27,9 @@ package org.metaagent.framework.core.tool.converter;
 import org.metaagent.framework.core.converter.Converter;
 
 /**
- * description is here
+ * ToolConverter is an interface that defines the contract for converting
+ * tool inputs and outputs. It provides methods to get the input and output
+ * converters for a tool.
  *
  * @author vyckey
  */

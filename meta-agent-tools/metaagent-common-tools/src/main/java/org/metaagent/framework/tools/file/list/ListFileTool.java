@@ -24,7 +24,9 @@
 
 package org.metaagent.framework.tools.file.list;
 
+import com.google.common.collect.Lists;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.collections.CollectionUtils;
 import org.metaagent.framework.core.tool.Tool;
 import org.metaagent.framework.core.tool.ToolContext;
 import org.metaagent.framework.core.tool.ToolExecutionException;
@@ -32,12 +34,17 @@ import org.metaagent.framework.core.tool.converter.JsonToolConverter;
 import org.metaagent.framework.core.tool.converter.ToolConverter;
 import org.metaagent.framework.core.tool.definition.ToolDefinition;
 import org.metaagent.framework.tools.file.util.FilePathFilter;
+import org.metaagent.framework.tools.file.util.FileUtils;
+import org.metaagent.framework.tools.file.util.GitIgnoreLikeFileFilter;
+import org.metaagent.framework.tools.file.util.GitUtils;
 
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
+import java.util.Optional;
+import java.util.regex.Pattern;
 
 /**
  * List files tool
@@ -67,8 +74,12 @@ public class ListFileTool implements Tool<ListFileInput, ListFileOutput> {
     @Override
     public ListFileOutput run(ToolContext toolContext, ListFileInput input) throws ToolExecutionException {
         Path directory = Path.of(input.getDirectory());
+        if (!Files.exists(directory)) {
+            throw new ToolExecutionException("Directory " + directory + " does not exist");
+        }
+
         try {
-            FilePathFilter filePathFilter = FilePathFilter.create(input, directory);
+            FilePathFilter filePathFilter = buildFilePathFilter(input, directory);
             int maxDepth = input.getMaxDepth() == null || input.getMaxDepth() < 0 ? Integer.MAX_VALUE : input.getMaxDepth();
             List<File> files = Files.walk(directory, maxDepth)
                     .filter(path -> {
@@ -85,6 +96,23 @@ public class ListFileTool implements Tool<ListFileInput, ListFileOutput> {
             log.warn("Error when listing files for dir {}", directory, e);
             throw new ToolExecutionException(e);
         }
+    }
+
+    protected FilePathFilter buildFilePathFilter(ListFileInput input, Path directory) throws IOException {
+        List<Pattern> includePatterns = CollectionUtils.isNotEmpty(input.getIncludeFilePatterns()) ?
+                List.copyOf(input.getIncludeFilePatterns()) : List.of();
+        List<Pattern> excludePatterns = CollectionUtils.isNotEmpty(input.getExcludeFilePatterns()) ?
+                List.copyOf(input.getExcludeFilePatterns()) : List.of();
+
+        List<GitIgnoreLikeFileFilter> ignoreLikeFileFilters = Lists.newArrayList();
+        Optional<Path> gitIgnorePath = GitUtils.findGitIgnorePath(directory);
+        if (gitIgnorePath.isPresent()) {
+            ignoreLikeFileFilters.add(new GitIgnoreLikeFileFilter(gitIgnorePath.get()));
+        }
+        for (Path path : FileUtils.resolvePaths(directory, input.getIgnoreLikeFiles(), true)) {
+            ignoreLikeFileFilters.add(new GitIgnoreLikeFileFilter(path));
+        }
+        return new FilePathFilter(includePatterns, excludePatterns, ignoreLikeFileFilters);
     }
 
     public static void main(String[] args) {

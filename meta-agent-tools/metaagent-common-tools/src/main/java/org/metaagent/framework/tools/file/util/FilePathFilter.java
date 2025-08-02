@@ -24,11 +24,6 @@
 
 package org.metaagent.framework.tools.file.util;
 
-import com.google.common.collect.Lists;
-import org.apache.commons.collections.CollectionUtils;
-import org.metaagent.framework.tools.file.list.ListFileInput;
-
-import java.io.IOException;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.Optional;
@@ -36,31 +31,6 @@ import java.util.regex.Pattern;
 
 public record FilePathFilter(List<Pattern> includePatterns, List<Pattern> excludePatterns,
                              List<GitIgnoreLikeFileFilter> ignoreLikeFileFilters) {
-    public static FilePathFilter create(ListFileInput input, Path directory) throws IOException {
-        List<Pattern> includePatterns = Lists.newArrayList();
-        List<Pattern> excludePatterns = Lists.newArrayList();
-        if (CollectionUtils.isNotEmpty(input.getIncludeFilePatterns())) {
-            includePatterns.addAll(input.getIncludeFilePatterns());
-        }
-        if (CollectionUtils.isNotEmpty(input.getExcludeFilePatterns())) {
-            excludePatterns.addAll(input.getExcludeFilePatterns());
-        }
-
-        List<GitIgnoreLikeFileFilter> ignoreLikeFileFilters = Lists.newArrayList();
-        Optional<Path> gitIgnorePath = GitUtils.findGitIgnorePath(directory);
-        if (gitIgnorePath.isPresent()) {
-            ignoreLikeFileFilters.add(new GitIgnoreLikeFileFilter(gitIgnorePath.get()));
-        }
-        if (CollectionUtils.isNotEmpty(input.getIgnoreLikeFiles())) {
-            for (String ignoreFile : input.getIgnoreLikeFiles()) {
-                Path filePath = Path.of(ignoreFile);
-                if (filePath.toFile().exists()) {
-                    ignoreLikeFileFilters.add(new GitIgnoreLikeFileFilter(filePath));
-                }
-            }
-        }
-        return new FilePathFilter(includePatterns, excludePatterns, ignoreLikeFileFilters);
-    }
 
     String relativizePath(Path directory, Path filePath) {
         directory = directory.toAbsolutePath();

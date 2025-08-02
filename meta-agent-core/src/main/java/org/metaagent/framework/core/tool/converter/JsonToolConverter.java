@@ -25,21 +25,17 @@
 package org.metaagent.framework.core.tool.converter;
 
 import com.fasterxml.jackson.core.type.TypeReference;
-import org.metaagent.framework.core.converter.Converter;
 import org.metaagent.framework.core.converter.JsonBiConverter;
 import org.metaagent.framework.core.converter.JsonStringConverter;
 
 /**
- * description is here
+ * A converter that handles JSON serialization and deserialization for tool inputs and outputs.
  *
  * @author vyckey
  */
-public class JsonToolConverter<I, O> implements ToolConverter<I, O> {
-    private final JsonBiConverter<I> inputConverter;
-    private final JsonStringConverter<O> outputConverter = new JsonStringConverter<>();
-
+public class JsonToolConverter<I, O> extends DefaultToolConverter<I, O> implements ToolConverter<I, O> {
     public JsonToolConverter(JsonBiConverter<I> inputConverter) {
-        this.inputConverter = inputConverter;
+        super(inputConverter, new JsonStringConverter<>());
     }
 
     public static <I, O> JsonToolConverter<I, O> create(Class<I> inputType) {
@@ -50,13 +46,4 @@ public class JsonToolConverter<I, O> implements ToolConverter<I, O> {
         return new JsonToolConverter<>(JsonBiConverter.create(inputType));
     }
 
-    @Override
-    public Converter<String, I> inputConverter() {
-        return inputConverter;
-    }
-
-    @Override
-    public Converter<O, String> outputConverter() {
-        return outputConverter;
-    }
 }
