@@ -91,7 +91,7 @@ public class ListFileTool implements Tool<ListFileInput, ListFileOutput> {
                         }
                         return Files.isRegularFile(path);
                     })
-                    .filter(path -> filePathFilter.accept(directory, path))
+                    .filter(path -> filePathFilter.matchPath(directory, path) == FilePathFilter.MatchType.MATCHED)
                     .map(Path::toFile)
                     .toList();
         } catch (IOException e) {
@@ -101,27 +101,17 @@ public class ListFileTool implements Tool<ListFileInput, ListFileOutput> {
 
         StringBuilder displayBuilder = new StringBuilder("Found ")
                 .append(files.size()).append(" file(s) in directory '").append(directory).append("'");
-        if (CollectionUtils.isNotEmpty(input.getIncludeFilePatterns())) {
-            displayBuilder.append(" with include patterns (")
-                    .append(StringUtils.join(input.getIncludeFilePatterns(), ",")).append(")");
-        }
-        if (CollectionUtils.isNotEmpty(input.getExcludeFilePatterns())) {
+        if (CollectionUtils.isNotEmpty(input.getExcludePatterns())) {
             displayBuilder.append(" with exclude patterns (")
-                    .append(StringUtils.join(input.getExcludeFilePatterns(), ",")).append(")");
+                    .append(StringUtils.join(input.getExcludePatterns(), ",")).append(")");
         }
         return new ListFileOutput(files, displayBuilder.toString());
     }
 
     protected FilePathFilter buildFilePathFilter(ListFileInput input, Path directory) throws IOException {
-        List<Pattern> includePatterns;
-        if (CollectionUtils.isNotEmpty(input.getIncludeFilePatterns())) {
-            includePatterns = input.getIncludeFilePatterns().stream().map(GitIgnoreLikeFileFilter::compileAsPattern).toList();
-        } else {
-            includePatterns = List.of();
-        }
         List<Pattern> excludePatterns;
-        if (CollectionUtils.isNotEmpty(input.getExcludeFilePatterns())) {
-            excludePatterns = input.getExcludeFilePatterns().stream().map(GitIgnoreLikeFileFilter::compileAsPattern).toList();
+        if (CollectionUtils.isNotEmpty(input.getExcludePatterns())) {
+            excludePatterns = input.getExcludePatterns().stream().map(GitIgnoreLikeFileFilter::compileAsPattern).toList();
         } else {
             excludePatterns = List.of();
         }
@@ -134,7 +124,10 @@ public class ListFileTool implements Tool<ListFileInput, ListFileOutput> {
         for (Path path : FileUtils.resolvePaths(directory, input.getIgnoreLikeFiles(), true)) {
             ignoreLikeFileFilters.add(new GitIgnoreLikeFileFilter(path));
         }
-        return new FilePathFilter(includePatterns, excludePatterns, ignoreLikeFileFilters);
+        return FilePathFilter.builder()
+                .excludePatterns(excludePatterns)
+                .ignoreLikeFileFilters(ignoreLikeFileFilters)
+                .build();
     }
 
     public static void main(String[] args) {

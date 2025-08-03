@@ -53,11 +53,8 @@ public class ListFileInput implements ToolDisplayable {
     @JsonPropertyDescription("The max depth of directory. Default is null")
     private Integer maxDepth;
 
-    @JsonPropertyDescription("The file patterns to include. e.g. *.java, *.py")
-    private List<String> includeFilePatterns;
-
     @JsonPropertyDescription("The file patterns to exclude. e.g. *.log, build/, node_modules/")
-    private List<String> excludeFilePatterns;
+    private List<String> excludePatterns;
 
     @JsonPropertyDescription("The ignore files which are used to contain exclude patterns."
             + " It's just like .gitignore file. Default is [\".gitignore\"]")
@@ -70,13 +67,9 @@ public class ListFileInput implements ToolDisplayable {
 
     @Override
     public String display() {
-        StringBuilder sb = new StringBuilder("List files in directory '")
-                .append(directory).append("' with ");
-        if (CollectionUtils.isNotEmpty(includeFilePatterns)) {
-            sb.append("include patterns (").append(StringUtils.join(includeFilePatterns, ",")).append(")");
-        }
-        if (CollectionUtils.isNotEmpty(excludeFilePatterns)) {
-            sb.append(" and exclude patterns (").append(StringUtils.join(excludeFilePatterns, ",")).append(")");
+        StringBuilder sb = new StringBuilder("List files in directory '").append(directory).append("'");
+        if (CollectionUtils.isNotEmpty(excludePatterns)) {
+            sb.append(" with exclude patterns (").append(StringUtils.join(excludePatterns, ",")).append(")");
         }
         return sb.toString();
     }

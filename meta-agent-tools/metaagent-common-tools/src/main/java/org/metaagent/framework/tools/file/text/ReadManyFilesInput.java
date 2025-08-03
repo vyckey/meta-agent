@@ -22,52 +22,58 @@
  * SOFTWARE.
  */
 
-package org.metaagent.framework.tools.file.find;
+package org.metaagent.framework.tools.file.text;
 
-import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
-import lombok.AccessLevel;
-import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
+import lombok.experimental.SuperBuilder;
+import org.apache.commons.collections.CollectionUtils;
 import org.metaagent.framework.core.tool.schema.ToolDisplayable;
 
 import java.util.List;
 
-/**
- * Input for the GlobFile tool.
- * This class represents the input parameters required to perform a file search using glob patterns.
- *
- * @author vyckey
- */
 @Getter
-@Builder
-@AllArgsConstructor(access = AccessLevel.PRIVATE)
-public class GlobFileInput implements ToolDisplayable {
-    @JsonPropertyDescription("The directory to search in. Optional, defaults to current working directory")
+@SuperBuilder
+public class ReadManyFilesInput implements ToolDisplayable {
+    @JsonPropertyDescription("The target root directory. Optional, default is current working directory.")
     private String directory;
 
     @JsonProperty(required = true)
-    @JsonPropertyDescription("The glob pattern to match files against")
-    private String pattern;
+    @JsonPropertyDescription("An array of glob patterns or paths relative to current working directory to read from. (e.g. [\"src/**/*.ts\"], [\"README.md\", \"docs/\"])")
+    private List<String> pathPatterns;
 
-    @JsonPropertyDescription("Whether the search should be case-sensitive. Optional, defaults to false")
-    private Boolean caseSensitive;
+    @JsonPropertyDescription("Glob patterns to exclude files from reading (e.g. [\"**/node_modules/**\", \"**/*.test.ts\"]). Optional.")
+    private List<String> excludePatterns;
+
+    @JsonPropertyDescription("Glob patterns to include files for reading. Optional.")
+    private List<String> includePatterns;
+
+    @Builder.Default
+    @JsonPropertyDescription("Read files recursively from subdirectories. Optional, default is true.")
+    private Boolean recursive = true;
 
     @JsonPropertyDescription("The ignore files which are used to contain exclude patterns."
             + " It's just like .gitignore file. Default is [\".gitignore\"]")
     private List<String> ignoreLikeFiles;
 
-    @JsonCreator
-    public GlobFileInput(@JsonProperty("pattern") String pattern) {
-        this.pattern = pattern;
+    public ReadManyFilesInput(String directory, List<String> pathPatterns) {
+        this.directory = directory;
+        this.pathPatterns = pathPatterns;
     }
 
     @Override
     public String display() {
-        String dir = directory == null ? System.getenv("CWD") : directory;
-        return "Find files in directory '" + dir + "': " + pattern;
+        StringBuilder sb = new StringBuilder("Read many files in directory '")
+                .append(directory).append("' with patterns (");
+        sb.append(String.join(", ", pathPatterns)).append(")");
+        if (CollectionUtils.isNotEmpty(excludePatterns)) {
+            sb.append(" excluding (").append(String.join(", ", excludePatterns)).append(")");
+        }
+        if (CollectionUtils.isNotEmpty(includePatterns)) {
+            sb.append(" including (").append(String.join(", ", includePatterns)).append(")");
+        }
+        return sb.toString();
     }
-
 }

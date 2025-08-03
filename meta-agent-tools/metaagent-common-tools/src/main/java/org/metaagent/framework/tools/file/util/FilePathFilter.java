@@ -24,13 +24,36 @@
 
 package org.metaagent.framework.tools.file.util;
 
+import lombok.Builder;
+
 import java.nio.file.Path;
 import java.util.List;
 import java.util.Optional;
 import java.util.regex.Pattern;
 
-public record FilePathFilter(List<Pattern> includePatterns, List<Pattern> excludePatterns,
+/**
+ * FilePathFilter is a utility class that provides methods to filter file paths based on specified patterns.
+ *
+ * @param patterns              patterns to match file paths against.
+ * @param excludePatterns       patterns to exclude from the file paths.
+ * @param includePatterns       patterns to include in the file paths after exclusion.
+ * @param ignoreLikeFileFilters list of filters that behave like .gitignore files, allowing for more complex ignore rules.
+ * @author vyckey
+ */
+public record FilePathFilter(List<Pattern> patterns,
+                             List<Pattern> excludePatterns,
+                             List<Pattern> includePatterns,
                              List<GitIgnoreLikeFileFilter> ignoreLikeFileFilters) {
+    @Builder
+    public FilePathFilter(List<Pattern> patterns,
+                          List<Pattern> excludePatterns,
+                          List<Pattern> includePatterns,
+                          List<GitIgnoreLikeFileFilter> ignoreLikeFileFilters) {
+        this.patterns = patterns != null ? patterns : List.of();
+        this.excludePatterns = excludePatterns != null ? excludePatterns : List.of();
+        this.includePatterns = includePatterns != null ? includePatterns : List.of();
+        this.ignoreLikeFileFilters = ignoreLikeFileFilters != null ? ignoreLikeFileFilters : List.of();
+    }
 
     String relativizePath(Path directory, Path filePath) {
         directory = directory.toAbsolutePath();
@@ -41,30 +64,45 @@ public record FilePathFilter(List<Pattern> includePatterns, List<Pattern> exclud
                 directory = gitRootPath.get();
             }
         }
-        try {
-            return directory.relativize(filePath).toString();
-        } catch (Exception e) {
-            throw e;
-        }
+        return directory.relativize(filePath).toString();
     }
 
-    public boolean accept(Path directory, Path filePath) {
+    public MatchType matchPath(Path directory, Path filePath) {
         String path = relativizePath(directory, filePath);
-        for (Pattern pattern : includePatterns) {
-            if (!pattern.matcher(path).matches()) {
-                return false;
+        boolean matched = patterns.isEmpty();
+        for (Pattern pattern : patterns) {
+            if (pattern.matcher(path).matches()) {
+                matched = true;
+                break;
             }
         }
-        for (Pattern pattern : excludePatterns) {
-            if (pattern.matcher(path).matches()) {
-                return false;
+        if (!matched) {
+            return MatchType.UNMATCHED;
+        }
+
+        for (Pattern excludePattern : excludePatterns) {
+            if (!excludePattern.matcher(path).matches()) {
+                continue;
+            }
+            boolean excluded = true;
+            for (Pattern includePattern : includePatterns) {
+                if (includePattern.matcher(path).matches()) {
+                    excluded = false;
+                }
+            }
+            if (excluded) {
+                return MatchType.EXCLUDED;
             }
         }
         for (GitIgnoreLikeFileFilter ignoreLikeFileFilter : ignoreLikeFileFilters) {
             if (ignoreLikeFileFilter.ignoreFile(path)) {
-                return false;
+                return MatchType.IGNORED;
             }
         }
-        return true;
+        return MatchType.MATCHED;
+    }
+
+    public enum MatchType {
+        MATCHED, UNMATCHED, EXCLUDED, IGNORED
     }
 }

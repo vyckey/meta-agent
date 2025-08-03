@@ -103,7 +103,7 @@ public class GlobFileTool implements Tool<GlobFileInput, GlobFileOutput> {
             FilePathFilter filePathFilter = buildFilePathFilter(input, directory);
             List<File> files = Files.walk(directory)
                     .filter(Files::isRegularFile)
-                    .filter(path -> filePathFilter.accept(directory, path))
+                    .filter(path -> filePathFilter.matchPath(directory, path) == FilePathFilter.MatchType.MATCHED)
                     .map(Path::toFile)
                     .sorted(new FileOrderComparator(TimeUnit.HOURS, 6))
                     .toList();
@@ -129,7 +129,8 @@ public class GlobFileTool implements Tool<GlobFileInput, GlobFileOutput> {
         for (Path path : FileUtils.resolvePaths(directory, input.getIgnoreLikeFiles(), true)) {
             ignoreLikeFileFilters.add(new GitIgnoreLikeFileFilter(path));
         }
-        return new FilePathFilter(List.of(pattern), List.of(), ignoreLikeFileFilters);
+        return FilePathFilter.builder().patterns(List.of(pattern))
+                .ignoreLikeFileFilters(ignoreLikeFileFilters).build();
     }
 
     record FileOrderComparator(TimeUnit timeUnit, long timeThreshold) implements Comparator<File> {
