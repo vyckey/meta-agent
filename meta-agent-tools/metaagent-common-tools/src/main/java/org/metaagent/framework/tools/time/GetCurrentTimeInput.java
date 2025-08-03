@@ -25,19 +25,23 @@
 package org.metaagent.framework.tools.time;
 
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
-import lombok.Builder;
+import org.metaagent.framework.core.tool.schema.ToolDisplayable;
 
 /**
  * GetCurrentTimeInput
  *
  * @author vyckey
  */
-@Builder
 public record GetCurrentTimeInput(
-        @JsonPropertyDescription("The timezone. Optional, default is UTC. e.g Asia/New_York, Asia/Shanghai, Asia/Seoul...")
-        String timezone) {
+        @JsonPropertyDescription("The timezone (e.g Asia/New_York, Asia/Shanghai, Asia/Seoul...). Optional, default is UTC.")
+        String timezone) implements ToolDisplayable {
 
     public GetCurrentTimeInput() {
         this(null);
+    }
+
+    @Override
+    public String display() {
+        return "Get current time" + (timezone != null ? "(Timezone: " + timezone + ")" : "");
     }
 }

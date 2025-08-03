@@ -30,8 +30,8 @@ import org.jetbrains.annotations.NotNull;
 import org.metaagent.framework.core.tool.Tool;
 import org.metaagent.framework.core.tool.ToolContext;
 import org.metaagent.framework.core.tool.ToolExecutionException;
-import org.metaagent.framework.core.tool.converter.JsonToolConverter;
 import org.metaagent.framework.core.tool.converter.ToolConverter;
+import org.metaagent.framework.core.tool.converter.ToolConverters;
 import org.metaagent.framework.core.tool.definition.ToolDefinition;
 import org.metaagent.framework.core.tool.human.HumanApprover;
 import org.metaagent.framework.core.tool.human.SystemAutoApprover;
@@ -55,7 +55,7 @@ public class WriteTextFileTool implements Tool<WriteTextFileInput, WriteTextFile
             .inputSchema(WriteTextFileInput.class)
             .outputSchema(WriteTextFileOutput.class).build();
     private static final ToolConverter<WriteTextFileInput, WriteTextFileOutput> TOOL_CONVERTER =
-            JsonToolConverter.create(WriteTextFileInput.class);
+            ToolConverters.jsonConverter(WriteTextFileInput.class);
     private HumanApprover humanApprover = SystemAutoApprover.INSTANCE;
 
     @Override
@@ -83,10 +83,10 @@ public class WriteTextFileTool implements Tool<WriteTextFileInput, WriteTextFile
             try (FileWriter writer = new FileWriter(file, input.isAppend())) {
                 writer.write(content);
             }
-            return WriteTextFileOutput.builder().build();
+            return WriteTextFileOutput.builder().filePath(filePath.toString()).success(true).build();
         } catch (IOException e) {
             log.warn("Error writing text file {}. err: {}", input.getFilePath(), e.getMessage());
-            return WriteTextFileOutput.builder().exception(e).build();
+            return WriteTextFileOutput.builder().filePath(filePath.toString()).success(false).exception(e).build();
         }
     }
 

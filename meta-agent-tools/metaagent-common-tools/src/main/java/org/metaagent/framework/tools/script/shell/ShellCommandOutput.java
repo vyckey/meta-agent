@@ -28,6 +28,8 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 import lombok.Getter;
 import lombok.experimental.SuperBuilder;
+import org.metaagent.framework.core.tool.schema.ToolDisplayable;
+import org.metaagent.framework.core.tool.schema.ToolErrorOutput;
 
 /**
  * description is here
@@ -36,20 +38,40 @@ import lombok.experimental.SuperBuilder;
  */
 @Getter
 @SuperBuilder
-public class ShellCommandOutput {
+public class ShellCommandOutput implements ToolErrorOutput, ToolDisplayable {
     @JsonPropertyDescription("The process ID")
     private Long pid;
 
     @JsonProperty(required = true)
+    @JsonPropertyDescription("The exit code of the command execution. 0 indicates success, non-zero indicates failure.")
     private int exitCode;
 
+    @JsonPropertyDescription("The standard output of the command execution")
     private String stdOutput;
 
+    @JsonPropertyDescription("The standard output of the command execution")
     private String stdError;
 
+    @JsonPropertyDescription("An error message if the command execution failed")
     private String error;
 
     public boolean isSuccessful() {
         return exitCode == 0;
+    }
+
+    @Override
+    public String display() {
+        StringBuilder displayBuilder = new StringBuilder();
+        displayBuilder.append("Exit Code: ").append(exitCode).append("\n");
+        if (stdOutput != null && !stdOutput.isEmpty()) {
+            displayBuilder.append("Standard Output:\n").append(stdOutput).append("\n");
+        }
+        if (stdError != null && !stdError.isEmpty()) {
+            displayBuilder.append("Standard Error:\n").append(stdError).append("\n");
+        }
+        if (error != null && !error.isEmpty()) {
+            displayBuilder.append("Error:\n").append(error).append("\n");
+        }
+        return displayBuilder.toString();
     }
 }

@@ -25,6 +25,8 @@
 package org.metaagent.framework.tools.file.list;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import org.metaagent.framework.core.tool.schema.ToolDisplayable;
+import org.metaagent.framework.tools.file.util.FileUtils;
 
 import java.io.File;
 import java.time.LocalDateTime;
@@ -39,11 +41,17 @@ import java.util.stream.Collectors;
  *
  * @author vyckey
  */
-public class ListFileOutput {
+public class ListFileOutput implements ToolDisplayable {
     private final List<File> files;
+    private final String display;
+
+    public ListFileOutput(List<File> files, String display) {
+        this.files = Objects.requireNonNull(files, "files cannot be null");
+        this.display = display;
+    }
 
     public ListFileOutput(List<File> files) {
-        this.files = Objects.requireNonNull(files, "files cannot be null");
+        this(files, "Found " + files.size() + " files");
     }
 
     @JsonIgnore
@@ -67,7 +75,7 @@ public class ListFileOutput {
                 .append(file.canWrite() ? 'w' : '-')
                 .append(file.canExecute() ? 'x' : '-')
                 .append('\t')
-                .append(formatFileSize(file.length()))
+                .append(FileUtils.formatFileSize(file.length()))
                 .append('\t')
                 .append(filePath)
                 .append('\t')
@@ -75,18 +83,8 @@ public class ListFileOutput {
                 .toString();
     }
 
-    private static String formatFileSize(long byteSize) {
-        if (byteSize < 1024) {
-            return byteSize + "B";
-        }
-        double kbSize = byteSize / 1024.0;
-        if (kbSize < 1024.0) {
-            return String.format("%.2fKB", kbSize);
-        }
-        double mbSize = kbSize / 1024.0;
-        if (mbSize < 1024.0) {
-            return String.format("%.2fMB", mbSize);
-        }
-        return String.format("%.2fGB", mbSize / 1024.0);
+    @Override
+    public String display() {
+        return display;
     }
 }

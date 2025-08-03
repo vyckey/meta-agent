@@ -22,40 +22,20 @@
  * SOFTWARE.
  */
 
-package org.metaagent.framework.core.agent.output.message;
-
-import com.google.common.collect.Maps;
-import lombok.Getter;
-import org.metaagent.framework.core.agent.chat.message.Message;
-import org.metaagent.framework.core.common.metadata.MapMetadataProvider;
-import org.metaagent.framework.core.common.metadata.MetadataProvider;
-
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
+package org.metaagent.framework.core.tool.schema;
 
 /**
- * description is here
+ * Interface for tools that can be displayed in a user interface.
+ * Provides a method to get a string representation of the tool for display purposes.
+ * This is useful for tools that need to present information in a user-friendly format.
  *
  * @author vyckey
  */
-@Getter
-public class DefaultAgentMessageOutput implements AgentMessageOutput {
-    private final MetadataProvider metadata;
-    private final List<Message> messages;
-
-    public DefaultAgentMessageOutput(List<Message> messages, Map<String, Object> metadata) {
-        this.messages = Objects.requireNonNull(messages, "messages is required");
-        this.metadata = new MapMetadataProvider(metadata);
-    }
-
-    public DefaultAgentMessageOutput(List<Message> messages) {
-        this(messages, Maps.newHashMap());
-    }
-
-    @Override
-    public boolean isEmpty() {
-        return messages.isEmpty();
-    }
-
+public interface ToolDisplayable {
+    /**
+     * Returns a string representation of the tool for display purposes.
+     *
+     * @return a string that describes the tool, suitable for user interfaces.
+     */
+    String display();
 }

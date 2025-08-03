@@ -22,53 +22,22 @@
  * SOFTWARE.
  */
 
-package org.metaagent.framework.core.agent.group;
+package org.metaagent.framework.tools.file.find;
 
-import org.metaagent.framework.core.agent.MetaAgent;
+import com.fasterxml.jackson.annotation.JsonProperty;
 
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
+public record GrepMatchLine(
+        @JsonProperty(required = true)
+        String filePath,
 
-/**
- * description is here
- *
- * @author vyckey
- */
-public class MultiAgentGroup implements AgentGroup {
-    private final Map<String, MetaAgent> agents;
+        @JsonProperty(required = true)
+        int lineNumber,
 
-    public MultiAgentGroup(Map<String, MetaAgent> agents) {
-        this.agents = Objects.requireNonNull(agents);
-    }
-
-    public MultiAgentGroup() {
-        this.agents = new HashMap<>();
-    }
+        @JsonProperty(required = true)
+        String lineContent) {
 
     @Override
-    public int getAgentCount() {
-        return agents.size();
-    }
-
-    @Override
-    public MetaAgent getAgent(String name) {
-        return agents.get(name);
-    }
-
-    @Override
-    public List<MetaAgent> getAgents() {
-        return List.of(agents.values().toArray(new MetaAgent[0]));
-    }
-
-    @Override
-    public void addAgent(MetaAgent agent) {
-        agents.put(agent.getName(), agent);
-    }
-
-    @Override
-    public void removeAgent(MetaAgent agent) {
-        agents.remove(agent.getName());
+    public String toString() {
+        return String.format("%s:%d: %s", filePath, lineNumber, lineContent.trim());
     }
 }

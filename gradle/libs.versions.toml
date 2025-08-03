@@ -4,6 +4,7 @@
 junit = '4.13.2'
 jmockit = '1.49'
 jackson = '2.13.3'
+jacksonYaml = '2.19.2'
 jsonschema = '4.37.0'
 lombok = '1.18.30'
 slf4j = '2.0.13'
@@ -26,6 +27,7 @@ jmockit = { module = 'org.jmockit:jmockit', version.ref = 'jmockit' }
 jackson-core = { module = 'com.fasterxml.jackson.core:jackson-core', version.ref = 'jackson' }
 jackson-databind = { module = 'com.fasterxml.jackson.core:jackson-databind', version.ref = 'jackson' }
 jackson-annotations = { module = 'com.fasterxml.jackson.core:jackson-annotations', version.ref = 'jackson' }
+jackson-yaml = { module = 'com.fasterxml.jackson.dataformat:jackson-dataformat-yaml', version.ref = 'jacksonYaml' }
 jsonschema = { module = 'com.github.victools:jsonschema-generator', version = 'jsonschema' }
 lombok = { module = 'org.projectlombok:lombok', version.ref = 'lombok' }
 commons-lang3 = { module = 'org.apache.commons:commons-lang3', version.ref = 'apacheCommon' }
@@ -51,6 +53,7 @@ picocli = { module = 'info.picocli:picocli', version = '4.7.6' }
 unittest = ['junit', 'jmockit']
 jackson = ['jackson-annotations', 'jackson-core', 'jackson-databind']
 jsonschema = ['jsonschema']
+jacksonYaml = ['jackson-yaml']
 lombok = ['lombok']
 utilies = ['commons-lang3', 'commons-config', 'commons-io', 'commons-text', 'collections4', 'guava']
 log = ['slf4j-api', 'log4j', 'log4j-core', 'log4j-api', 'slf4j-impl']

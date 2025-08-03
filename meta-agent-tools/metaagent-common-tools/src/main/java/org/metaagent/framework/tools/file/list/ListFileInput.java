@@ -29,9 +29,11 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 import lombok.Getter;
 import lombok.experimental.SuperBuilder;
+import org.apache.commons.collections.CollectionUtils;
+import org.apache.commons.lang3.StringUtils;
+import org.metaagent.framework.core.tool.schema.ToolDisplayable;
 
 import java.util.List;
-import java.util.regex.Pattern;
 
 /**
  * List files input.
@@ -40,7 +42,7 @@ import java.util.regex.Pattern;
  */
 @Getter
 @SuperBuilder
-public class ListFileInput {
+public class ListFileInput implements ToolDisplayable {
     @JsonProperty(required = true)
     @JsonPropertyDescription("The target root directory.")
     private String directory;
@@ -51,11 +53,8 @@ public class ListFileInput {
     @JsonPropertyDescription("The max depth of directory. Default is null")
     private Integer maxDepth;
 
-    @JsonPropertyDescription("The file patterns to include. e.g. *.java, *.py")
-    private List<Pattern> includeFilePatterns;
-
     @JsonPropertyDescription("The file patterns to exclude. e.g. *.log, build/, node_modules/")
-    private List<Pattern> excludeFilePatterns;
+    private List<String> excludePatterns;
 
     @JsonPropertyDescription("The ignore files which are used to contain exclude patterns."
             + " It's just like .gitignore file. Default is [\".gitignore\"]")
@@ -66,4 +65,12 @@ public class ListFileInput {
         this.directory = directory;
     }
 
+    @Override
+    public String display() {
+        StringBuilder sb = new StringBuilder("List files in directory '").append(directory).append("'");
+        if (CollectionUtils.isNotEmpty(excludePatterns)) {
+            sb.append(" with exclude patterns (").append(StringUtils.join(excludePatterns, ",")).append(")");
+        }
+        return sb.toString();
+    }
 }

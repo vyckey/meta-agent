@@ -27,8 +27,7 @@ package org.metaagent.framework.tools.file.image;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
-import lombok.Getter;
-import lombok.Setter;
+import org.metaagent.framework.core.tool.schema.ToolDisplayable;
 
 import java.util.Objects;
 
@@ -38,14 +37,17 @@ import java.util.Objects;
  * @author vyckey
  * @see ReadImageFileTool
  */
-@Getter
-@Setter
-public class ReadImageFileInput {
-    @JsonPropertyDescription("The absolute path to the file to read. Relative paths are not supported.")
-    private final String filePath;
-
+public record ReadImageFileInput(
+        @JsonPropertyDescription("The absolute path to the file to read. Relative paths are not supported.")
+        String filePath
+) implements ToolDisplayable {
     @JsonCreator
     public ReadImageFileInput(@JsonProperty("filePath") String filePath) {
         this.filePath = Objects.requireNonNull(filePath, "filePath is required");
+    }
+
+    @Override
+    public String display() {
+        return "Read image file: " + filePath;
     }
 }

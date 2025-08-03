@@ -22,23 +22,16 @@
  * SOFTWARE.
  */
 
-package org.metaagent.framework.core.agent.chat.message;
+package org.metaagent.framework.core.tool.converter;
 
-/**
- * description is here
- *
- * @author vyckey
- */
-public abstract class MessageFactory {
-    public static TextMessage textMessage(String content) {
-        return new TextMessage(content);
+import org.metaagent.framework.core.tool.ToolExecutionException;
+
+public class ToolConvertException extends ToolExecutionException {
+    public ToolConvertException(String message) {
+        super(message);
     }
 
-    public static TextMessage textMessage(String role, String content) {
-        return new TextMessage(role, null, content);
-    }
-
-    public static TextMessage textMessage(String sender, String receiver, String content) {
-        return new TextMessage(sender, receiver, content);
+    public ToolConvertException(String message, Throwable cause) {
+        super(message, cause);
     }
 }

@@ -26,6 +26,7 @@ package org.metaagent.framework.core.agents.chat;
 
 import org.metaagent.framework.core.agent.AgentExecutionContext;
 import org.metaagent.framework.core.agent.chat.message.Message;
+import org.metaagent.framework.core.agent.input.AbstractAgentInput;
 import org.metaagent.framework.core.common.metadata.MapMetadataProvider;
 import org.metaagent.framework.core.common.metadata.MetadataProvider;
 
@@ -51,13 +52,13 @@ public record DefaultAgentChatInput(
         return context;
     }
 
-    public static class Builder {
+    public static class Builder extends AbstractAgentInput.Builder<Builder> {
         private AgentExecutionContext context;
         private List<Message> messages;
         private MetadataProvider metadata = new MapMetadataProvider();
 
-        public Builder context(AgentExecutionContext context) {
-            this.context = context;
+        @Override
+        protected Builder self() {
             return this;
         }
 
@@ -71,11 +72,6 @@ public record DefaultAgentChatInput(
             return this;
         }
 
-        public Builder metadata(MetadataProvider metadata) {
-            this.metadata = Objects.requireNonNull(metadata, "metadata is required");
-            return this;
-        }
-
         public Builder deepThinkEnabled(boolean deepThinkEnabled) {
             this.metadata.setProperty(AgentChatInput.OPTION_DEEP_THINK_ENABLED, deepThinkEnabled);
             return this;
@@ -86,9 +82,13 @@ public record DefaultAgentChatInput(
             return this;
         }
 
+        @Override
         public DefaultAgentChatInput build() {
             if (context == null) {
                 context = AgentExecutionContext.create();
+            }
+            if (metadata == null) {
+                metadata = new MapMetadataProvider();
             }
             if (messages == null) {
                 messages = List.of();

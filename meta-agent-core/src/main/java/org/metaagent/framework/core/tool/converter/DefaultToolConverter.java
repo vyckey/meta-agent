@@ -33,23 +33,35 @@ import java.util.Objects;
  *
  * @author vyckey
  */
-class DefaultToolConverter<I, O> implements ToolConverter<I, O> {
+public class DefaultToolConverter<I, O> implements ToolConverter<I, O> {
     private final Converter<String, I> inputConverter;
     private final Converter<O, String> outputConverter;
 
-    DefaultToolConverter(Converter<String, I> inputConverter, Converter<O, String> outputConverter) {
+    public DefaultToolConverter(Converter<String, I> inputConverter, Converter<O, String> outputConverter) {
         this.inputConverter = Objects.requireNonNull(inputConverter, "inputConverter is required");
         this.outputConverter = Objects.requireNonNull(outputConverter, "outputConverter is required");
     }
 
     @Override
     public Converter<String, I> inputConverter() {
-        return inputConverter;
+        return input -> {
+            try {
+                return inputConverter.convert(input);
+            } catch (Exception e) {
+                throw new ToolConvertException("Failed to convert string to tool input", e);
+            }
+        };
     }
 
     @Override
     public Converter<O, String> outputConverter() {
-        return outputConverter;
+        return output -> {
+            try {
+                return outputConverter.convert(output);
+            } catch (Exception e) {
+                throw new ToolConvertException("Failed to convert tool output to string", e);
+            }
+        };
     }
 
 }

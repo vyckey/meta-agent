@@ -26,10 +26,9 @@ package org.metaagent.framework.core.tool.converter;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import org.metaagent.framework.core.converter.Converter;
-import org.metaagent.framework.core.converter.JsonBiConverter;
 
 /**
- * description is here
+ * {@link ToolConverters} factory for creating {@link ToolConverter} instances.
  *
  * @author vyckey
  */
@@ -44,7 +43,7 @@ public abstract class ToolConverters {
     }
 
     public static <I, O> ToolConverter<I, O> jsonConverter(TypeReference<I> inputType) {
-        return new JsonToolConverter<>(JsonBiConverter.create(inputType));
+        return JsonToolConverter.create(inputType);
     }
 
     public static ToolConverter<String, String> stringConverter() {

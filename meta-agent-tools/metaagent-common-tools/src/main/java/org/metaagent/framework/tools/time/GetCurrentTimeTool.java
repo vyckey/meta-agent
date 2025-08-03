@@ -28,8 +28,8 @@ import org.apache.commons.lang3.StringUtils;
 import org.metaagent.framework.core.tool.Tool;
 import org.metaagent.framework.core.tool.ToolContext;
 import org.metaagent.framework.core.tool.ToolExecutionException;
-import org.metaagent.framework.core.tool.converter.JsonToolConverter;
 import org.metaagent.framework.core.tool.converter.ToolConverter;
+import org.metaagent.framework.core.tool.converter.ToolConverters;
 import org.metaagent.framework.core.tool.definition.ToolDefinition;
 
 import java.time.DateTimeException;
@@ -42,12 +42,12 @@ import java.time.ZoneId;
  */
 public class GetCurrentTimeTool implements Tool<GetCurrentTimeInput, GetCurrentTimeOutput> {
     private static final ToolDefinition TOOL_DEFINITION = ToolDefinition.builder("get_current_time")
-            .description("Get current local time")
+            .description("Gets the current time in a specified timezone.")
             .inputSchema(GetCurrentTimeInput.class)
             .outputSchema(GetCurrentTimeOutput.class)
             .build();
     private static final ToolConverter<GetCurrentTimeInput, GetCurrentTimeOutput> TOOL_CONVERTER =
-            JsonToolConverter.create(GetCurrentTimeInput.class);
+            ToolConverters.jsonConverter(GetCurrentTimeInput.class);
 
     @Override
     public ToolDefinition getDefinition() {

@@ -74,8 +74,13 @@ public class DefaultToolManager extends AbstractToolManager implements ToolManag
         }
     }
 
-    public void loadSpiTools() {
-        ServiceLoader.load(Tool.class).forEach(this::addTool);
+    public void loadSpiTools(String... toolNames) {
+        List<String> limitedToolNames = Arrays.asList(toolNames);
+        for (Tool<?, ?> tool : ServiceLoader.load(Tool.class)) {
+            if (toolNames.length == 0 || limitedToolNames.contains(tool.getName())) {
+                addTool(tool);
+            }
+        }
     }
 
     @Override

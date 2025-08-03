@@ -28,6 +28,9 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 import lombok.Getter;
 import lombok.experimental.SuperBuilder;
+import org.metaagent.framework.core.tool.schema.ToolDisplayable;
+import org.metaagent.framework.core.tool.schema.ToolErrorOutput;
+import org.metaagent.framework.tools.file.util.FileUtils;
 
 import java.io.IOException;
 
@@ -39,7 +42,10 @@ import java.io.IOException;
  */
 @Getter
 @SuperBuilder
-public class ReadTextFileOutput {
+public class ReadTextFileOutput implements ToolErrorOutput, ToolDisplayable {
+    @JsonIgnore
+    private String filePath;
+
     @JsonPropertyDescription("The size of the file in bytes")
     private Long fileSize;
 
@@ -49,8 +55,17 @@ public class ReadTextFileOutput {
     @JsonIgnore
     private IOException exception;
 
+    @Override
     @JsonPropertyDescription("The error message if fail to read")
     public String getError() {
         return exception != null ? exception.getMessage() : null;
+    }
+
+    @Override
+    public String display() {
+        if (exception != null) {
+            return "Failed to read text file " + filePath + ": " + exception.getMessage();
+        }
+        return "Successfully to read text file " + filePath + " with size " + FileUtils.formatFileSize(fileSize);
     }
 }

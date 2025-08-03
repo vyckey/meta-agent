@@ -54,13 +54,14 @@ public class OutputParsers {
     }
 
     public static OutputParser<String, String> codeBlockParser(String extType, boolean backticksIncluded) {
-        return output -> {
-            String regex = "```" + extType + "(?<content>((.|\\n)*?))```";
-            RegexGroupOutputParser.GroupResult groupResult = new RegexGroupOutputParser(regex, "content").parse(output);
-            if (backticksIncluded) {
-                return groupResult.value().trim();
-            }
-            return groupResult.groups().get("content").trim();
-        };
+        String regex = "```" + extType + "(?<content>((.|\\n)*?))```";
+        String groupName = backticksIncluded ? null : "content";
+        return new RegexOutputParser<>(regex, groupName, Function.identity());
+    }
+
+    public static OutputParser<String, String> htmlTagParser(String tagName, boolean tagIncluded) {
+        String regex = "<" + tagName + ">(?<content>([\\s\\S]*?))</" + tagName + ">";
+        String groupName = tagIncluded ? null : "content";
+        return new RegexOutputParser<>(regex, groupName, Function.identity());
     }
 }

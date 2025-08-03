@@ -24,25 +24,35 @@
 
 package org.metaagent.framework.tools.http;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Getter;
 import lombok.experimental.SuperBuilder;
+import org.metaagent.framework.core.tool.schema.ToolDisplayable;
 
 import java.util.List;
 import java.util.Map;
 
 /**
- * description is here
+ * Represents an HTTP response with a status code, headers, and body.
  *
  * @author vyckey
  */
 @Getter
-@SuperBuilder()
-public class HttpResponse {
+@SuperBuilder
+public class HttpResponse implements ToolDisplayable {
+    @JsonIgnore
+    private String display;
+
     @JsonProperty(required = true)
     private Integer statusCode;
 
     private Map<String, List<String>> headers;
 
     private String body;
+
+    @Override
+    public String display() {
+        return display;
+    }
 }

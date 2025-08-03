@@ -55,10 +55,12 @@ public class GitIgnoreLikeFileFilter {
 
     private void parseRule(String rule) {
         boolean whitelist = rule.startsWith("!");
+        Pattern pattern;
         if (whitelist) {
-            rule = rule.substring(1);
+            pattern = compileAsPattern(rule.substring(1));
+        } else {
+            pattern = compileAsPattern(rule);
         }
-        Pattern pattern = Pattern.compile(convertToRegex(rule));
         ignorePatterns.add(new IgnorePattern(pattern, whitelist));
     }
 
@@ -78,7 +80,7 @@ public class GitIgnoreLikeFileFilter {
         return ignored;
     }
 
-    private static String convertToRegex(String rule) {
+    public static Pattern compileAsPattern(String rule) {
         boolean fromRoot = rule.startsWith("/");
         if (fromRoot) {
             rule = rule.substring(1);
@@ -107,7 +109,7 @@ public class GitIgnoreLikeFileFilter {
         } else {
             regex.append("$");
         }
-        return regex.toString();
+        return Pattern.compile(regex.toString());
     }
 
     record IgnorePattern(Pattern pattern, boolean whitelist) {

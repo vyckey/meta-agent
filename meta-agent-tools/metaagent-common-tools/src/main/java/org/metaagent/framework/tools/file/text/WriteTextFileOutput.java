@@ -25,9 +25,12 @@
 package org.metaagent.framework.tools.file.text;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 import lombok.Builder;
 import lombok.Getter;
+import org.metaagent.framework.core.tool.schema.ToolDisplayable;
+import org.metaagent.framework.core.tool.schema.ToolErrorOutput;
 
 import java.io.IOException;
 
@@ -38,12 +41,26 @@ import java.io.IOException;
  */
 @Getter
 @Builder
-public class WriteTextFileOutput {
+public class WriteTextFileOutput implements ToolErrorOutput, ToolDisplayable {
+    @JsonIgnore
+    private String filePath;
+
+    @JsonProperty(required = true)
+    private boolean success;
+
     @JsonIgnore
     private IOException exception;
 
     @JsonPropertyDescription("The error message if fail to write")
     public String getError() {
         return exception != null ? exception.getMessage() : null;
+    }
+
+    @Override
+    public String display() {
+        if (exception != null) {
+            return "Failed to write text file " + filePath + ": " + exception.getMessage();
+        }
+        return "Successfully write to text file " + filePath;
     }
 }

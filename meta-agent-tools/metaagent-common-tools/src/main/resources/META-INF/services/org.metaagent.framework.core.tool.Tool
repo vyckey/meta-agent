@@ -1,7 +1,10 @@
 org.metaagent.framework.tools.file.text.ReadTextFileTool
 org.metaagent.framework.tools.file.text.WriteTextFileTool
+org.metaagent.framework.tools.file.text.EditTextFileTool
 org.metaagent.framework.tools.file.image.ReadImageFileTool
 org.metaagent.framework.tools.file.list.ListFileTool
+org.metaagent.framework.tools.file.find.GlobFileTool
+org.metaagent.framework.tools.file.find.GrepFileTool
 org.metaagent.framework.tools.http.HttpRequestTool
 org.metaagent.framework.tools.human.HumanInputTool
 org.metaagent.framework.tools.script.shell.ShellCommandTool

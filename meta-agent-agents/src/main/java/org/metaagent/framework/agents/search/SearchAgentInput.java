@@ -25,7 +25,11 @@
 package org.metaagent.framework.agents.search;
 
 import org.metaagent.framework.core.agent.AgentExecutionContext;
+import org.metaagent.framework.core.agent.input.AbstractAgentInput;
 import org.metaagent.framework.core.agent.input.AgentInput;
+import org.metaagent.framework.core.common.metadata.MapMetadataProvider;
+
+import java.util.Objects;
 
 /**
  * Search agent input schema.
@@ -36,10 +40,11 @@ import org.metaagent.framework.core.agent.input.AgentInput;
 public record SearchAgentInput(
         AgentExecutionContext context,
         String query,
+        String queryContext,
         boolean forceSearch,
         boolean detailIncluded) implements AgentInput {
 
-    public SearchAgentInput from(String query) {
+    public static SearchAgentInput from(String query) {
         return SearchAgentInput.builder().query(query).build();
     }
 
@@ -52,13 +57,19 @@ public record SearchAgentInput(
         return new Builder();
     }
 
-    public static class Builder {
+    public static class Builder extends AbstractAgentInput.Builder<Builder> {
         private AgentExecutionContext context;
         private String query;
+        private String queryContext;
         private boolean forceSearch = false;
         private boolean detailIncluded = true;
 
         private Builder() {
+        }
+
+        @Override
+        protected Builder self() {
+            return this;
         }
 
         public Builder context(AgentExecutionContext context) {
@@ -67,7 +78,12 @@ public record SearchAgentInput(
         }
 
         public Builder query(String query) {
-            this.query = query;
+            this.query = Objects.requireNonNull(query, "query is required");
+            return this;
+        }
+
+        public Builder queryContext(String queryContext) {
+            this.queryContext = queryContext;
             return this;
         }
 
@@ -85,7 +101,10 @@ public record SearchAgentInput(
             if (context == null) {
                 context = AgentExecutionContext.create();
             }
-            return new SearchAgentInput(context, query, forceSearch, detailIncluded);
+            if (metadata == null) {
+                metadata = new MapMetadataProvider();
+            }
+            return new SearchAgentInput(context, query, queryContext, forceSearch, detailIncluded);
         }
     }
 }

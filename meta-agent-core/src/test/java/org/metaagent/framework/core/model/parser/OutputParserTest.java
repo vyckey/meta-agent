@@ -30,16 +30,30 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 
 class OutputParserTest {
     @Test
-    void markdownParseTest() {
+    void codeBlockParseTest() {
         String text = "The following code shows how the sort algorithm works:\n"
-                + "```python\ndef quick_sort(elements):\n...```";
+                + "```python\ndef quick_sort(elements):\n\t...\n\tpass\n```";
         assertEquals(
-                "```python\ndef quick_sort(elements):\n...```",
+                "```python\ndef quick_sort(elements):\n\t...\n\tpass\n```",
                 OutputParsers.codeBlockParser("python", true).parse(text)
         );
         assertEquals(
-                "def quick_sort(elements):\n...",
+                "\ndef quick_sort(elements):\n\t...\n\tpass\n",
                 OutputParsers.codeBlockParser("python", false).parse(text)
+        );
+    }
+
+    @Test
+    void htmlTagParseTest() {
+        String text = "The following HTML code shows how the sort algorithm works:\n"
+                + "<html>\n<body>\n<h1>Sorting Algorithm</h1>\n<p>...</p>\n</body>\n</html>";
+        assertEquals(
+                "<html>\n<body>\n<h1>Sorting Algorithm</h1>\n<p>...</p>\n</body>\n</html>",
+                OutputParsers.htmlTagParser("html", true).parse(text)
+        );
+        assertEquals(
+                "\n<h1>Sorting Algorithm</h1>\n<p>...</p>\n",
+                OutputParsers.htmlTagParser("body", false).parse(text)
         );
     }
 }

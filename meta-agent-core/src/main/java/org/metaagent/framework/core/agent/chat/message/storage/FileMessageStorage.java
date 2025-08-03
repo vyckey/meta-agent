@@ -63,7 +63,7 @@ public class FileMessageStorage implements MessageStorage {
             file.getParentFile().mkdirs();
         }
         try {
-            OBJECT_MAPPER.writeValue(file, Lists.newArrayList(messageHistory));
+            OBJECT_MAPPER.writeValue(file, Lists.newArrayList(messageHistory.reverse()));
         } catch (IOException e) {
             throw new IllegalStateException(e.getMessage(), e);
         }

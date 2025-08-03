@@ -29,8 +29,8 @@ import org.apache.commons.lang3.StringUtils;
 import org.metaagent.framework.core.tool.Tool;
 import org.metaagent.framework.core.tool.ToolContext;
 import org.metaagent.framework.core.tool.ToolExecutionException;
-import org.metaagent.framework.core.tool.converter.JsonToolConverter;
 import org.metaagent.framework.core.tool.converter.ToolConverter;
+import org.metaagent.framework.core.tool.converter.ToolConverters;
 import org.metaagent.framework.core.tool.definition.ToolDefinition;
 
 import java.io.File;
@@ -49,12 +49,12 @@ import java.util.stream.Stream;
 @Slf4j
 public class ReadTextFileTool implements Tool<ReadTextFileInput, ReadTextFileOutput> {
     private static final ToolDefinition TOOL_DEFINITION = ToolDefinition.builder("read_text_file")
-            .description("Read text file content")
+            .description("Read and return text file content. Can optionally specialize the start number and limit of lines to read.")
             .inputSchema(ReadTextFileInput.class)
             .outputSchema(ReadTextFileOutput.class)
             .build();
     private static final ToolConverter<ReadTextFileInput, ReadTextFileOutput> TOOL_CONVERTER =
-            JsonToolConverter.create(ReadTextFileInput.class);
+            ToolConverters.jsonConverter(ReadTextFileInput.class);
 
     @Override
     public ToolDefinition getDefinition() {
@@ -86,7 +86,8 @@ public class ReadTextFileTool implements Tool<ReadTextFileInput, ReadTextFileOut
         }
 
         String content = readFileContent(file, input);
-        return ReadTextFileOutput.builder().fileSize(file.length()).content(content).build();
+        return ReadTextFileOutput.builder().filePath(file.getCanonicalPath())
+                .fileSize(file.length()).content(content).build();
     }
 
     static String readFileContent(File file, ReadTextFileInput input) throws IOException {

@@ -22,42 +22,25 @@
  * SOFTWARE.
  */
 
-package org.metaagent.framework.core.agents.coordinator;
+package org.metaagent.framework.core.agents.task.decompose;
 
-import com.google.common.collect.Maps;
-import org.metaagent.framework.core.agent.AbstractAgent;
-import org.metaagent.framework.core.agent.Agent;
-import org.metaagent.framework.core.agent.input.AgentInput;
+import lombok.Getter;
 import org.metaagent.framework.core.agent.output.AgentOutput;
+import org.metaagent.framework.core.agent.task.Task;
 
-import java.util.Map;
+import java.util.List;
+import java.util.Objects;
 
 /**
- * AbstractCoordinateAgent is an abstract class that implements the CoordinateAgent interface.
- * It provides a base implementation for agents that coordinate the execution of other agents.
+ * Represents the output of a task decomposition operation.
  *
  * @author vyckey
  */
-public abstract class AbstractCoordinateAgent<I extends AgentInput, O extends AgentOutput>
-        extends AbstractAgent<I, O> implements CoordinateAgent<I, O> {
-    protected final Map<String, Agent<?, ?>> executeAgents = Maps.newHashMap();
+@Getter
+public class TaskDecomposeOutput implements AgentOutput {
+    private final List<Task> subTasks;
 
-    protected AbstractCoordinateAgent(String name) {
-        super(name);
-    }
-
-    @Override
-    public Map<String, Agent<?, ?>> getExecuteAgents() {
-        return executeAgents;
-    }
-
-    @Override
-    public void addExecuteAgent(Agent<?, ?> executeAgent) {
-        this.executeAgents.put(executeAgent.getName(), executeAgent);
-    }
-
-    @Override
-    public void removeExecuteAgent(Agent<?, ?> executeAgent) {
-        this.executeAgents.remove(executeAgent.getName());
+    public TaskDecomposeOutput(List<Task> subTasks) {
+        this.subTasks = Objects.requireNonNull(subTasks, "subTasks cannot be null");
     }
 }

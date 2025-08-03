@@ -29,9 +29,11 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import org.apache.commons.lang3.StringUtils;
+import org.metaagent.framework.core.tool.schema.ToolDisplayable;
 
 /**
- * description is here
+ * Represents the output of a script execution.
  *
  * @author vyckey
  */
@@ -39,11 +41,21 @@ import lombok.NoArgsConstructor;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class ScriptOutput {
+public class ScriptOutput implements ToolDisplayable {
     @JsonPropertyDescription("The result of the script execution")
     private String result;
 
     @JsonPropertyDescription("The error message if the script execution failed")
     private String error;
 
+    @Override
+    public String display() {
+        if (StringUtils.isNotEmpty(error)) {
+            return "Script execution failed with error: " + error;
+        }
+        if (StringUtils.isEmpty(result)) {
+            return "Script execution successful";
+        }
+        return "Script executed result: " + (result.length() > 100 ? result.substring(0, 100) + "..." : result);
+    }
 }
