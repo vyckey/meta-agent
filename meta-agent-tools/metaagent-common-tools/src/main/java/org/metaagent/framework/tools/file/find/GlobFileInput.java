@@ -31,21 +31,23 @@ import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
+import org.metaagent.framework.core.tool.schema.ToolDisplayable;
 
 import java.util.List;
-import java.util.regex.Pattern;
 
 /**
  * Input for the GlobFile tool.
  * This class represents the input parameters required to perform a file search using glob patterns.
+ *
+ * @author vyckey
  */
 @Getter
 @Builder
 @AllArgsConstructor(access = AccessLevel.PRIVATE)
-public class GlobFileInput {
+public class GlobFileInput implements ToolDisplayable {
     @JsonProperty(required = true)
     @JsonPropertyDescription("The glob pattern to match files against")
-    private Pattern pattern;
+    private String pattern;
 
     @JsonPropertyDescription("The directory to search in. Optional, defaults to current working directory")
     private String directory;
@@ -58,7 +60,14 @@ public class GlobFileInput {
     private List<String> ignoreLikeFiles;
 
     @JsonCreator
-    public GlobFileInput(@JsonProperty("pattern") Pattern pattern) {
+    public GlobFileInput(@JsonProperty("pattern") String pattern) {
         this.pattern = pattern;
     }
+
+    @Override
+    public String display() {
+        String dir = directory == null ? System.getenv("CWD") : directory;
+        return "Find files in directory '" + dir + "': " + pattern;
+    }
+
 }

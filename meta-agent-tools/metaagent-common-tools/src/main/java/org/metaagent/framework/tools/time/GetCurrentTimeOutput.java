@@ -26,6 +26,7 @@ package org.metaagent.framework.tools.time;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
+import org.metaagent.framework.core.tool.schema.ToolDisplayable;
 
 import java.time.DayOfWeek;
 import java.time.Instant;
@@ -53,7 +54,8 @@ public record GetCurrentTimeOutput(
 
         @JsonProperty(required = true)
         @JsonPropertyDescription("The day of week")
-        DayOfWeek dayOfWeek) {
+        DayOfWeek dayOfWeek) implements ToolDisplayable {
+
     public static GetCurrentTimeOutput fromTime(Instant instant, ZoneId zoneId) {
         ZonedDateTime dateTime = ZonedDateTime.ofInstant(instant, zoneId);
         String dateStr = dateTime.withNano(0).format(DateTimeFormatter.ISO_LOCAL_DATE_TIME);
@@ -62,5 +64,10 @@ public record GetCurrentTimeOutput(
 
     public static GetCurrentTimeOutput fromNow(ZoneId zoneId) {
         return fromTime(Instant.now(), zoneId);
+    }
+
+    @Override
+    public String display() {
+        return dateTime + " (Timezone: " + timezone + ")";
     }
 }

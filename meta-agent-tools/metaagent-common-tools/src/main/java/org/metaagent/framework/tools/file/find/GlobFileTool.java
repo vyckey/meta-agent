@@ -55,6 +55,8 @@ import java.util.regex.Pattern;
  * returning absolute paths sorted by modification time (newest first).
  * It is particularly useful for quickly locating files based on their name or path structure,
  * especially in large codebases.
+ *
+ * @author vyckey
  */
 @Slf4j
 public class GlobFileTool implements Tool<GlobFileInput, GlobFileOutput> {
@@ -105,7 +107,8 @@ public class GlobFileTool implements Tool<GlobFileInput, GlobFileOutput> {
                     .map(Path::toFile)
                     .sorted(new FileOrderComparator(TimeUnit.HOURS, 6))
                     .toList();
-            return new GlobFileOutput(files);
+            String display = "Found " + files.size() + " file(s) matching pattern '" + input.getPattern() + "' in directory '" + directory + "'";
+            return new GlobFileOutput(files, display);
         } catch (IOException e) {
             log.warn("Error while searching files in directory {}: {}", directory, e.getMessage());
             throw new ToolExecutionException("Error while searching files: " + e.getMessage(), e);
@@ -113,9 +116,9 @@ public class GlobFileTool implements Tool<GlobFileInput, GlobFileOutput> {
     }
 
     protected FilePathFilter buildFilePathFilter(GlobFileInput input, Path directory) throws IOException {
-        Pattern pattern = input.getPattern();
+        Pattern pattern = GitIgnoreLikeFileFilter.compileAsPattern(input.getPattern());
         if (BooleanUtils.isTrue(input.getCaseSensitive())) {
-            pattern = Pattern.compile(input.getPattern().toString(), Pattern.CASE_INSENSITIVE);
+            pattern = Pattern.compile(pattern.toString(), Pattern.CASE_INSENSITIVE);
         }
 
         List<GitIgnoreLikeFileFilter> ignoreLikeFileFilters = Lists.newArrayList();

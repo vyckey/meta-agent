@@ -25,6 +25,7 @@
 package org.metaagent.framework.tools.file.find;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import org.metaagent.framework.core.tool.schema.ToolDisplayable;
 
 import java.io.File;
 import java.util.List;
@@ -37,11 +38,17 @@ import java.util.stream.Collectors;
  *
  * @author vyckey
  */
-public class GlobFileOutput {
+public class GlobFileOutput implements ToolDisplayable {
     private final List<File> files;
+    private final String display;
 
     public GlobFileOutput(List<File> files) {
+        this(files, "Found " + files.size() + " file(s).");
+    }
+
+    public GlobFileOutput(List<File> files, String display) {
         this.files = Objects.requireNonNull(files, "Files list cannot be null");
+        this.display = display;
     }
 
     @JsonIgnore
@@ -59,5 +66,10 @@ public class GlobFileOutput {
 
     public static String formatFile(File file) {
         return file.getAbsolutePath();
+    }
+
+    @Override
+    public String display() {
+        return display;
     }
 }

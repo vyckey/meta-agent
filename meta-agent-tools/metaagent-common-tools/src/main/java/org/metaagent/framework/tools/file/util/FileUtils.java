@@ -61,4 +61,19 @@ public abstract class FileUtils {
         }
         return filePaths;
     }
+
+    public static String formatFileSize(long byteSize) {
+        if (byteSize < 1024) {
+            return byteSize + "B";
+        }
+        double kbSize = byteSize / 1024.0;
+        if (kbSize < 1024.0) {
+            return String.format("%.2fKB", kbSize);
+        }
+        double mbSize = kbSize / 1024.0;
+        if (mbSize < 1024.0) {
+            return String.format("%.2fMB", mbSize);
+        }
+        return String.format("%.2fGB", mbSize / 1024.0);
+    }
 }

@@ -28,7 +28,8 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 import lombok.Getter;
-import lombok.Setter;
+import lombok.experimental.SuperBuilder;
+import org.metaagent.framework.core.tool.schema.ToolDisplayable;
 
 import java.util.Objects;
 
@@ -39,8 +40,8 @@ import java.util.Objects;
  * @see ReadTextFileTool
  */
 @Getter
-@Setter
-public class ReadTextFileInput {
+@SuperBuilder
+public class ReadTextFileInput implements ToolDisplayable {
     @JsonProperty(required = true)
     @JsonPropertyDescription("The absolute path to the file to read. Relative paths are not supported.")
     private final String filePath;
@@ -63,5 +64,14 @@ public class ReadTextFileInput {
         this(filePath);
         this.offset = offset;
         this.limit = limit;
+    }
+
+    @Override
+    public String display() {
+        String display = "Read text file " + filePath;
+        if (offset >= 0) {
+            display += "#L" + (offset + 1) + "-" + (limit > 0 ? (offset + limit) : "eof");
+        }
+        return display;
     }
 }

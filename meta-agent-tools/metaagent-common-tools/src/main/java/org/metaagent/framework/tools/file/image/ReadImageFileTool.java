@@ -28,8 +28,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.metaagent.framework.core.tool.Tool;
 import org.metaagent.framework.core.tool.ToolContext;
 import org.metaagent.framework.core.tool.ToolExecutionException;
-import org.metaagent.framework.core.tool.converter.JsonToolConverter;
 import org.metaagent.framework.core.tool.converter.ToolConverter;
+import org.metaagent.framework.core.tool.converter.ToolConverters;
 import org.metaagent.framework.core.tool.definition.ToolDefinition;
 
 import java.io.File;
@@ -46,12 +46,13 @@ import java.util.Base64;
 @Slf4j
 public class ReadImageFileTool implements Tool<ReadImageFileInput, ReadImageFileOutput> {
     private static final ToolDefinition TOOL_DEFINITION = ToolDefinition.builder("read_image_file")
-            .description("Read image file content")
+            .description("Read image file content and return it as a Base64 encoded string. "
+                    + "The file must be an image file (e.g., PNG, JPEG). ")
             .inputSchema(ReadImageFileInput.class)
             .outputSchema(ReadImageFileOutput.class)
             .build();
     private static final ToolConverter<ReadImageFileInput, ReadImageFileOutput> TOOL_CONVERTER =
-            JsonToolConverter.create(ReadImageFileInput.class);
+            ToolConverters.jsonConverter(ReadImageFileInput.class);
 
     @Override
     public ToolDefinition getDefinition() {
@@ -68,18 +69,18 @@ public class ReadImageFileTool implements Tool<ReadImageFileInput, ReadImageFile
         try {
             return readFile(input);
         } catch (IOException e) {
-            log.warn("Error reading image file {}. err: {}", input.getFilePath(), e.getMessage());
+            log.warn("Error reading image file {}. err: {}", input.filePath(), e.getMessage());
             return ReadImageFileOutput.builder().exception(e).build();
         }
     }
 
     private ReadImageFileOutput readFile(ReadImageFileInput input) throws IOException {
-        File file = new File(input.getFilePath());
+        File file = new File(input.filePath());
         if (!file.exists()) {
-            throw new FileNotFoundException("File not found: " + input.getFilePath());
+            throw new FileNotFoundException("File not found: " + input.filePath());
         }
         if (!file.isFile()) {
-            throw new IOException("File is a directory: " + input.getFilePath());
+            throw new IOException("File is a directory: " + input.filePath());
         }
 
         String base64 = Base64.getEncoder().encodeToString(Files.readAllBytes(file.toPath()));

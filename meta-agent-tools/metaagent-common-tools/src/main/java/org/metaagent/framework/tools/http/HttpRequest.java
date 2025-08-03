@@ -25,28 +25,35 @@
 package org.metaagent.framework.tools.http;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
-import lombok.Getter;
-import lombok.experimental.SuperBuilder;
+import com.fasterxml.jackson.annotation.JsonPropertyDescription;
+import lombok.Builder;
+import org.metaagent.framework.core.tool.schema.ToolDisplayable;
 
-import javax.validation.constraints.NotNull;
 import java.util.Map;
 
 /**
- * description is here
+ * Represents an HTTP request with a URL, method, headers, and body.
  *
  * @author vyckey
  */
-@Getter
-@SuperBuilder
-public class HttpRequest {
-    @JsonProperty(required = true)
-    private String url;
+@Builder
+public record HttpRequest(
+        @JsonProperty(required = true)
+        @JsonPropertyDescription("The request URL")
+        String url,
 
-    @JsonProperty(required = true, defaultValue = "GET")
-    private String method;
+        @JsonProperty(defaultValue = "GET")
+        @JsonPropertyDescription("HTTP method (GET, POST, PUT, DELETE, etc.). Optional, default is GET")
+        String method,
 
-    private Map<String, String> headers;
+        @JsonPropertyDescription("HTTP request headers. Optional")
+        Map<String, String> headers,
 
-    private String body;
+        @JsonPropertyDescription("HTTP request body if exists. Optional")
+        String body) implements ToolDisplayable {
 
+    @Override
+    public String display() {
+        return method + " " + url;
+    }
 }

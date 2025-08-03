@@ -27,11 +27,12 @@ package org.metaagent.framework.tools.file.list;
 import com.google.common.collect.Lists;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections.CollectionUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.metaagent.framework.core.tool.Tool;
 import org.metaagent.framework.core.tool.ToolContext;
 import org.metaagent.framework.core.tool.ToolExecutionException;
-import org.metaagent.framework.core.tool.converter.JsonToolConverter;
 import org.metaagent.framework.core.tool.converter.ToolConverter;
+import org.metaagent.framework.core.tool.converter.ToolConverters;
 import org.metaagent.framework.core.tool.definition.ToolDefinition;
 import org.metaagent.framework.tools.file.util.FilePathFilter;
 import org.metaagent.framework.tools.file.util.FileUtils;
@@ -54,12 +55,13 @@ import java.util.regex.Pattern;
 @Slf4j
 public class ListFileTool implements Tool<ListFileInput, ListFileOutput> {
     private static final ToolDefinition TOOL_DEFINITION = ToolDefinition.builder("list_files")
-            .description("List files under specialized directory")
+            .description("List files which contains file name, size and permissions under specialized directory."
+                    + "Can optionally include or ignore files by glob patterns.")
             .inputSchema(ListFileInput.class)
             .outputSchema(ListFileOutput.class)
             .build();
     private static final ToolConverter<ListFileInput, ListFileOutput> TOOL_CONVERTER =
-            JsonToolConverter.create(ListFileInput.class);
+            ToolConverters.jsonConverter(ListFileInput.class);
 
     @Override
     public ToolDefinition getDefinition() {
@@ -78,10 +80,11 @@ public class ListFileTool implements Tool<ListFileInput, ListFileOutput> {
             throw new ToolExecutionException("Directory " + directory + " does not exist");
         }
 
+        List<File> files;
         try {
             FilePathFilter filePathFilter = buildFilePathFilter(input, directory);
             int maxDepth = input.getMaxDepth() == null || input.getMaxDepth() < 0 ? Integer.MAX_VALUE : input.getMaxDepth();
-            List<File> files = Files.walk(directory, maxDepth)
+            files = Files.walk(directory, maxDepth)
                     .filter(path -> {
                         if (input.isDirectoryIncluded()) {
                             return true;
@@ -91,18 +94,37 @@ public class ListFileTool implements Tool<ListFileInput, ListFileOutput> {
                     .filter(path -> filePathFilter.accept(directory, path))
                     .map(Path::toFile)
                     .toList();
-            return new ListFileOutput(files);
         } catch (IOException e) {
             log.warn("Error when listing files for dir {}", directory, e);
             throw new ToolExecutionException(e);
         }
+
+        StringBuilder displayBuilder = new StringBuilder("Found ")
+                .append(files.size()).append(" file(s) in directory '").append(directory).append("'");
+        if (CollectionUtils.isNotEmpty(input.getIncludeFilePatterns())) {
+            displayBuilder.append(" with include patterns (")
+                    .append(StringUtils.join(input.getIncludeFilePatterns(), ",")).append(")");
+        }
+        if (CollectionUtils.isNotEmpty(input.getExcludeFilePatterns())) {
+            displayBuilder.append(" with exclude patterns (")
+                    .append(StringUtils.join(input.getExcludeFilePatterns(), ",")).append(")");
+        }
+        return new ListFileOutput(files, displayBuilder.toString());
     }
 
     protected FilePathFilter buildFilePathFilter(ListFileInput input, Path directory) throws IOException {
-        List<Pattern> includePatterns = CollectionUtils.isNotEmpty(input.getIncludeFilePatterns()) ?
-                List.copyOf(input.getIncludeFilePatterns()) : List.of();
-        List<Pattern> excludePatterns = CollectionUtils.isNotEmpty(input.getExcludeFilePatterns()) ?
-                List.copyOf(input.getExcludeFilePatterns()) : List.of();
+        List<Pattern> includePatterns;
+        if (CollectionUtils.isNotEmpty(input.getIncludeFilePatterns())) {
+            includePatterns = input.getIncludeFilePatterns().stream().map(GitIgnoreLikeFileFilter::compileAsPattern).toList();
+        } else {
+            includePatterns = List.of();
+        }
+        List<Pattern> excludePatterns;
+        if (CollectionUtils.isNotEmpty(input.getExcludeFilePatterns())) {
+            excludePatterns = input.getExcludeFilePatterns().stream().map(GitIgnoreLikeFileFilter::compileAsPattern).toList();
+        } else {
+            excludePatterns = List.of();
+        }
 
         List<GitIgnoreLikeFileFilter> ignoreLikeFileFilters = Lists.newArrayList();
         Optional<Path> gitIgnorePath = GitUtils.findGitIgnorePath(directory);

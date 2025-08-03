@@ -24,7 +24,9 @@
 
 package org.metaagent.framework.tools.file.find;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import org.metaagent.framework.core.tool.schema.ToolDisplayable;
 
 import java.util.List;
 
@@ -36,6 +38,17 @@ import java.util.List;
  */
 public record GrepFileOutput(
         @JsonProperty(required = true)
-        List<GrepMatchLine> matchLines) {
+        List<GrepMatchLine> matchLines,
 
+        @JsonIgnore
+        String display) implements ToolDisplayable {
+
+    public GrepFileOutput(List<GrepMatchLine> matchLines) {
+        this(matchLines, "Found " + matchLines.size() + " matching lines");
+    }
+
+    @Override
+    public String display() {
+        return display;
+    }
 }

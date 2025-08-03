@@ -30,11 +30,12 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import org.metaagent.framework.core.tool.schema.ToolDisplayable;
 
 import java.util.Map;
 
 /**
- * description is here
+ * Represents the input for executing a script using a specific engine.
  *
  * @author vyckey
  */
@@ -42,12 +43,12 @@ import java.util.Map;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class ScriptInput {
+public class ScriptInput implements ToolDisplayable {
     @JsonProperty(required = true)
     @JsonPropertyDescription("The engine to be used to execute the script")
     private String engine;
 
-    @JsonPropertyDescription("The language of the script")
+    @JsonPropertyDescription("The language of the script (e.g., JavaScript, Python)")
     private String language;
 
     @JsonProperty(required = true)
@@ -56,4 +57,10 @@ public class ScriptInput {
 
     @JsonPropertyDescription("The variables to be passed to the script")
     private Map<String, Object> variables;
+
+    @Override
+    public String display() {
+        String scriptSnippet = script.length() > 50 ? script.substring(0, 50) + "..." : script;
+        return "Execute " + language + " script: " + scriptSnippet;
+    }
 }

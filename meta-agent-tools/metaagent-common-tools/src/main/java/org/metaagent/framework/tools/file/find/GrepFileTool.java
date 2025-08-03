@@ -35,7 +35,6 @@ import org.metaagent.framework.core.tool.converter.ToolConverter;
 import org.metaagent.framework.core.tool.converter.ToolConverters;
 import org.metaagent.framework.core.tool.definition.ToolDefinition;
 import org.metaagent.framework.tools.file.util.FileUtils;
-import org.metaagent.framework.tools.file.util.GitIgnoreLikeFileFilter;
 
 import java.io.File;
 import java.io.IOException;
@@ -53,8 +52,10 @@ import java.util.regex.Pattern;
  */
 @Slf4j
 public class GrepFileTool implements Tool<GrepFileInput, GrepFileOutput> {
-    private static final ToolDefinition TOOL_DEFINITION = ToolDefinition.builder("glob_files")
-            .description("List files under specialized directory")
+    private static final ToolDefinition TOOL_DEFINITION = ToolDefinition.builder("grep_files")
+            .description("Searches for a regular expression pattern within the content of files in a specified directory" +
+                    " (default current working directory). Can filter files by a glob pattern. Returns the lines " +
+                    "containing matches, along with their file paths and line numbers.")
             .inputSchema(GrepFileInput.class)
             .outputSchema(GrepFileOutput.class)
             .build();
@@ -90,21 +91,23 @@ public class GrepFileTool implements Tool<GrepFileInput, GrepFileOutput> {
             throw new ToolExecutionException("Directory does not exist: " + directory);
         }
 
+        List<GrepMatchLine> matchLines;
         try {
             if (FileUtils.hasCommand("git", "--version")) {
-                return searchByGitGrep(directory, input.getPattern(), input.getInclude());
+                matchLines = searchByGitGrep(directory, input.getPattern(), input.getInclude());
             } else if (FileUtils.hasCommand("grep", "-h")) {
-                return searchByGrep(directory, input.getPattern(), input.getInclude());
+                matchLines = searchByGrep(directory, input.getPattern(), input.getInclude());
             } else {
-                return searchByRead(directory, input.getPattern(), input.getInclude());
+                matchLines = searchByRead(directory, input.getPattern(), input.getInclude());
             }
         } catch (Exception e) {
             log.warn("Failed to execute grep command", e);
             throw new ToolExecutionException(e.getMessage(), e);
         }
+        return buildGrepFileOutput(input, matchLines);
     }
 
-    protected GrepFileOutput searchByGitGrep(Path directory, Pattern pattern, String include) throws IOException {
+    protected List<GrepMatchLine> searchByGitGrep(Path directory, Pattern pattern, String include) throws IOException {
         List<String> command = Lists.newArrayList("git", "grep", "--untracked", "-n", "-E", "--ignore-case", pattern.toString());
         if (StringUtils.isNotBlank(include)) {
             command.add("--");
@@ -120,7 +123,7 @@ public class GrepFileTool implements Tool<GrepFileInput, GrepFileOutput> {
         return parseSearchOutput(directory, output);
     }
 
-    protected GrepFileOutput searchByGrep(Path directory, Pattern pattern, String include) throws IOException {
+    protected List<GrepMatchLine> searchByGrep(Path directory, Pattern pattern, String include) throws IOException {
         final String[] ignoreDirectories = {
                 ".git", "node_modules", "build", "dist"
         };
@@ -143,7 +146,7 @@ public class GrepFileTool implements Tool<GrepFileInput, GrepFileOutput> {
         return parseSearchOutput(directory, output);
     }
 
-    protected GrepFileOutput parseSearchOutput(Path directory, String output) {
+    protected List<GrepMatchLine> parseSearchOutput(Path directory, String output) {
         List<GrepMatchLine> matchLines = Lists.newArrayList();
         String[] lines = output.split("\n");
         for (String line : lines) {
@@ -159,15 +162,13 @@ public class GrepFileTool implements Tool<GrepFileInput, GrepFileOutput> {
             String content = parts[2];
             matchLines.add(new GrepMatchLine(filePath.toString(), lineNumber, content));
         }
-        return new GrepFileOutput(matchLines);
+        return matchLines;
     }
 
-    protected GrepFileOutput searchByRead(Path directory, Pattern pattern, String include) throws IOException {
-        Pattern filePattern = StringUtils.isEmpty(include) ? Pattern.compile(".*") :
-                GitIgnoreLikeFileFilter.compileAsPattern(include);
+    protected List<GrepMatchLine> searchByRead(Path directory, Pattern pattern, String include) throws IOException {
         GlobFileInput globFileInput = GlobFileInput.builder()
                 .directory(directory.toString())
-                .pattern(filePattern)
+                .pattern(StringUtils.isEmpty(include) ? "**/*" : include)
                 .build();
         GlobFileOutput globFileOutput = new GlobFileTool().run(ToolContext.create(), globFileInput);
 
@@ -189,7 +190,20 @@ public class GrepFileTool implements Tool<GrepFileInput, GrepFileOutput> {
                 }
             }
         }
-        return new GrepFileOutput(matchLines);
+        return matchLines;
     }
 
+    protected GrepFileOutput buildGrepFileOutput(GrepFileInput input, List<GrepMatchLine> matchLines) {
+        long matchFileCount = matchLines.stream().map(GrepMatchLine::filePath).distinct().count();
+        StringBuilder displayBuilder = new StringBuilder("Found " + matchLines.size() + " matched line(s) in ")
+                .append(matchFileCount).append(" file(s)");
+        if (StringUtils.isNotBlank(input.getInclude())) {
+            displayBuilder.append(" (").append(input.getInclude()).append(")");
+        }
+        displayBuilder.append(" with pattern '").append(input.getPattern().pattern()).append("'");
+        matchLines = matchLines.stream().map(l ->
+                new GrepMatchLine(l.filePath(), l.lineNumber(), l.lineContent().trim())
+        ).toList();
+        return new GrepFileOutput(matchLines, displayBuilder.toString());
+    }
 }

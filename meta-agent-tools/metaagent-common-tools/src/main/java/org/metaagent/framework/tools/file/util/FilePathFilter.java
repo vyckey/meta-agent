@@ -51,8 +51,8 @@ public record FilePathFilter(List<Pattern> includePatterns, List<Pattern> exclud
     public boolean accept(Path directory, Path filePath) {
         String path = relativizePath(directory, filePath);
         for (Pattern pattern : includePatterns) {
-            if (pattern.matcher(path).matches()) {
-                return true;
+            if (!pattern.matcher(path).matches()) {
+                return false;
             }
         }
         for (Pattern pattern : excludePatterns) {

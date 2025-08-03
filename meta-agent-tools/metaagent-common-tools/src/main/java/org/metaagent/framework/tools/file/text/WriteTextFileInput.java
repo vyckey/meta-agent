@@ -30,6 +30,7 @@ import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
+import org.metaagent.framework.core.tool.schema.ToolDisplayable;
 
 /**
  * Write text file input.
@@ -39,7 +40,7 @@ import lombok.Getter;
 @Getter
 @Builder
 @AllArgsConstructor(access = lombok.AccessLevel.PRIVATE)
-public class WriteTextFileInput {
+public class WriteTextFileInput implements ToolDisplayable {
     @JsonProperty(required = true)
     @JsonPropertyDescription("The absolute path to the file to write. Relative paths are not supported.")
     private final String filePath;
@@ -55,5 +56,11 @@ public class WriteTextFileInput {
     @JsonCreator
     public WriteTextFileInput(@JsonProperty("filePath") String filePath) {
         this.filePath = filePath;
+    }
+
+    @Override
+    public String display() {
+        String snippet = content != null ? content.substring(0, Math.min(content.length(), 50)) : "";
+        return "Write text file " + filePath + " with content: " + snippet + "...";
     }
 }

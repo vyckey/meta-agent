@@ -28,34 +28,33 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 import com.google.common.collect.Maps;
-import lombok.Getter;
 import lombok.Setter;
+import org.metaagent.framework.core.tool.schema.ToolDisplayable;
 
 import java.util.Map;
 import java.util.stream.Collectors;
 
 /**
- * description is here
+ * Represents the input for executing a shell command.
  *
  * @author vyckey
  */
-@Getter
-public class ShellCommandInput {
-    @JsonProperty(required = true)
-    private final String command;
+public record ShellCommandInput(
+        @JsonProperty(required = true)
+        @JsonPropertyDescription("The shell command to be executed")
+        String command,
 
-    @JsonPropertyDescription("The environment variables to be passed to the command")
-    private final Map<String, String> envs;
+        @JsonPropertyDescription("The environment variables to be passed to the command. Optional")
+        Map<String, String> envs,
 
-    @Setter
-    @JsonPropertyDescription("The timeout in seconds for the command to complete. Default no timeout")
-    private Long timeoutSeconds;
+        @Setter
+        @JsonPropertyDescription("The timeout in seconds for the command to complete. Optional, default no timeout")
+        Long timeoutSeconds) implements ToolDisplayable {
 
     @JsonCreator
     public ShellCommandInput(@JsonProperty("command") String command,
                              @JsonProperty("envs") Map<String, String> envs) {
-        this.command = command;
-        this.envs = envs;
+        this(command, envs, null);
     }
 
     public ShellCommandInput(String command) {
@@ -68,21 +67,17 @@ public class ShellCommandInput {
                 .toArray(String[]::new);
     }
 
-    public ShellCommandInput addEnv(String key, String value) {
-        envs.put(key, value);
-        return this;
-    }
-
-    public void clearEnvs() {
-        envs.clear();
-    }
-
     @Override
-    public String toString() {
+    public String display() {
         if (envs.isEmpty()) {
             return command;
         }
         return envs.entrySet().stream().map(entry -> entry.getKey() + "=" + entry.getValue())
                 .collect(Collectors.joining(" ", "", " " + command));
+    }
+
+    @Override
+    public String toString() {
+        return display();
     }
 }

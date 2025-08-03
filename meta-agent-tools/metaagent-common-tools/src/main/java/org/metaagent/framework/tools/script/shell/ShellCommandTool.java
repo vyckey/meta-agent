@@ -31,8 +31,8 @@ import org.apache.commons.lang3.StringUtils;
 import org.metaagent.framework.core.tool.Tool;
 import org.metaagent.framework.core.tool.ToolContext;
 import org.metaagent.framework.core.tool.ToolExecutionException;
-import org.metaagent.framework.core.tool.converter.JsonToolConverter;
 import org.metaagent.framework.core.tool.converter.ToolConverter;
+import org.metaagent.framework.core.tool.converter.ToolConverters;
 import org.metaagent.framework.core.tool.definition.ToolDefinition;
 import org.metaagent.framework.core.tool.human.HumanApprover;
 import org.metaagent.framework.core.tool.human.SystemAutoApprover;
@@ -50,12 +50,12 @@ import java.util.concurrent.TimeUnit;
 @Setter
 public class ShellCommandTool implements Tool<ShellCommandInput, ShellCommandOutput> {
     private static final ToolDefinition TOOL_DEFINITION = ToolDefinition.builder("execute_shell_command")
-            .description("Run shell command")
+            .description("Executes a shell command and returns standard output, error, and exit code.")
             .inputSchema(ShellCommandInput.class)
             .outputSchema(ShellCommandOutput.class)
             .build();
     private static final ToolConverter<ShellCommandInput, ShellCommandOutput> TOOL_CONVERTER =
-            JsonToolConverter.create(ShellCommandInput.class);
+            ToolConverters.jsonConverter(ShellCommandInput.class);
     private HumanApprover humanApprover = SystemAutoApprover.INSTANCE;
 
     @Override
@@ -75,7 +75,7 @@ public class ShellCommandTool implements Tool<ShellCommandInput, ShellCommandOut
             return true;
         }
 
-        String approval = "Whether execute the command [\"" + commandInput.getCommand() + "\"] ?";
+        String approval = "Whether execute the command [\"" + commandInput.command() + "\"] ?";
         HumanApprover.ApprovalOutput approvalOutput = humanApprover.request(new HumanApprover.ApprovalInput(approval, null));
         return approvalOutput.isApproved();
     }
@@ -89,11 +89,11 @@ public class ShellCommandTool implements Tool<ShellCommandInput, ShellCommandOut
         }
 
         try {
-            Process process = Runtime.getRuntime().exec(commandInput.getCommand(), commandInput.getEnvArray());
+            Process process = Runtime.getRuntime().exec(commandInput.command(), commandInput.getEnvArray());
             outputBuilder.pid(process.pid());
 
-            if (commandInput.getTimeoutSeconds() != null) {
-                boolean exited = process.waitFor(commandInput.getTimeoutSeconds(), TimeUnit.SECONDS);
+            if (commandInput.timeoutSeconds() != null) {
+                boolean exited = process.waitFor(commandInput.timeoutSeconds(), TimeUnit.SECONDS);
                 if (exited) {
                     outputBuilder.exitCode(process.exitValue());
                 } else {

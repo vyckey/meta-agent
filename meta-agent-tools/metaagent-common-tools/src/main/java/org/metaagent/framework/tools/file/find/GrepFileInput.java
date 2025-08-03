@@ -27,8 +27,12 @@ package org.metaagent.framework.tools.file.find;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
+import lombok.AccessLevel;
+import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
+import org.apache.commons.lang3.StringUtils;
+import org.metaagent.framework.core.tool.schema.ToolDisplayable;
 
 import java.util.Objects;
 import java.util.regex.Pattern;
@@ -40,7 +44,8 @@ import java.util.regex.Pattern;
  */
 @Getter
 @Builder
-public class GrepFileInput {
+@AllArgsConstructor(access = AccessLevel.PRIVATE)
+public class GrepFileInput implements ToolDisplayable {
     @JsonProperty(required = true)
     @JsonPropertyDescription("The regular expression pattern to search for in file contents " +
             "(e.g., 'function\\s+testFunc', 'import\\\\s+\\\\{.*\\\\}\\\\s+from\\\\s+.*')")
@@ -57,4 +62,17 @@ public class GrepFileInput {
         this.directory = directory;
         this.pattern = Objects.requireNonNull(pattern, "Pattern is required");
     }
+
+    @Override
+    public String display() {
+        String dir = directory == null ? System.getenv("CWD") : directory;
+        StringBuilder sb = new StringBuilder("Search content in directory '")
+                .append(dir).append('\'');
+        if (StringUtils.isNotEmpty(include)) {
+            sb.append('(').append(include).append(')');
+        }
+        sb.append(": ").append(pattern.pattern());
+        return sb.toString();
+    }
+
 }

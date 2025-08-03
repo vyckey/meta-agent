@@ -28,6 +28,8 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 import lombok.Getter;
 import lombok.experimental.SuperBuilder;
+import org.metaagent.framework.core.tool.schema.ToolDisplayable;
+import org.metaagent.framework.core.tool.schema.ToolErrorOutput;
 
 import java.io.IOException;
 
@@ -39,7 +41,7 @@ import java.io.IOException;
  */
 @Getter
 @SuperBuilder
-public class ReadImageFileOutput {
+public class ReadImageFileOutput implements ToolErrorOutput, ToolDisplayable {
     @JsonPropertyDescription("The size of the file in bytes")
     private Long fileSize;
 
@@ -49,8 +51,17 @@ public class ReadImageFileOutput {
     @JsonIgnore
     private IOException exception;
 
+    @Override
     @JsonPropertyDescription("The error message if fail to read")
     public String getError() {
         return exception != null ? exception.getMessage() : null;
+    }
+
+    @Override
+    public String display() {
+        if (exception != null) {
+            return "Faild to read image file error: " + exception.getMessage();
+        }
+        return "Successfully to read image file.";
     }
 }

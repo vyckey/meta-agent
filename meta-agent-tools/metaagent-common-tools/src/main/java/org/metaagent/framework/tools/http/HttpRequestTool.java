@@ -34,8 +34,8 @@ import okhttp3.Response;
 import org.metaagent.framework.core.tool.Tool;
 import org.metaagent.framework.core.tool.ToolContext;
 import org.metaagent.framework.core.tool.ToolExecutionException;
-import org.metaagent.framework.core.tool.converter.JsonToolConverter;
 import org.metaagent.framework.core.tool.converter.ToolConverter;
+import org.metaagent.framework.core.tool.converter.ToolConverters;
 import org.metaagent.framework.core.tool.definition.ToolDefinition;
 import org.metaagent.framework.core.tool.human.HumanApprover;
 import org.metaagent.framework.core.tool.human.SystemAutoApprover;
@@ -45,16 +45,21 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 
+/**
+ * Tool for sending HTTP requests.
+ *
+ * @author vyckey
+ */
 @Slf4j
 @Setter
 public class HttpRequestTool implements Tool<HttpRequest, HttpResponse> {
     private static final ToolDefinition TOOL_DEFINITION = ToolDefinition.builder("http_request")
-            .description("Sends a HTTP request")
+            .description("Sends a HTTP request and returns the response.")
             .inputSchema(HttpRequest.class)
             .outputSchema(HttpResponse.class)
             .build();
-    private static final JsonToolConverter<HttpRequest, HttpResponse> TOOL_CONVERTER =
-            JsonToolConverter.create(HttpRequest.class);
+    private static final ToolConverter<HttpRequest, HttpResponse> TOOL_CONVERTER =
+            ToolConverters.jsonConverter(HttpRequest.class);
     private static final List<String> SKIP_APPROVAL_METHODS = List.of("get", "head", "options");
 
     private final OkHttpClient httpClient;
@@ -79,22 +84,22 @@ public class HttpRequestTool implements Tool<HttpRequest, HttpResponse> {
     }
 
     private Request buildRequest(HttpRequest request) {
-        Request.Builder requestBuilder = new Request.Builder().url(request.getUrl());
-        if (request.getHeaders() != null) {
-            for (Map.Entry<String, String> entry : request.getHeaders().entrySet()) {
+        Request.Builder requestBuilder = new Request.Builder().url(request.url());
+        if (request.headers() != null) {
+            for (Map.Entry<String, String> entry : request.headers().entrySet()) {
                 requestBuilder.addHeader(entry.getKey(), entry.getValue());
             }
         }
 
         RequestBody requestBody = null;
-        if (request.getBody() != null) {
-            requestBody = RequestBody.create(request.getBody(), MediaType.parse("application/json"));
+        if (request.body() != null) {
+            requestBody = RequestBody.create(request.body(), MediaType.parse("application/json"));
         }
-        requestBuilder.method(request.getMethod(), requestBody);
+        requestBuilder.method(request.method().toUpperCase(), requestBody);
         return requestBuilder.build();
     }
 
-    private HttpResponse buildResponse(Response response) throws IOException {
+    private HttpResponse buildResponse(HttpRequest request, Response response) throws IOException {
         int statusCode = response.code();
         HttpResponse.HttpResponseBuilder<?, ?> builder = HttpResponse.builder()
                 .statusCode(statusCode)
@@ -102,6 +107,13 @@ public class HttpRequestTool implements Tool<HttpRequest, HttpResponse> {
         if (response.body() != null) {
             builder.body(response.body().string());
         }
+        StringBuilder displayBuilder = new StringBuilder(request.method()).append(" ").append(request.url());
+        if (statusCode >= 200 && statusCode < 300) {
+            displayBuilder.append(" - Success");
+        } else {
+            displayBuilder.append(" - Error: ").append(statusCode);
+        }
+        builder.display(displayBuilder.toString());
         return builder.build();
     }
 
@@ -110,7 +122,7 @@ public class HttpRequestTool implements Tool<HttpRequest, HttpResponse> {
         Request realRequest = buildRequest(request);
         requestApprovalBeforeRequest(realRequest);
         try (Response response = httpClient.newCall(realRequest).execute()) {
-            return buildResponse(response);
+            return buildResponse(request, response);
         } catch (IOException e) {
             log.warn("Error to send HTTP request {}", realRequest.url(), e);
             throw new ToolExecutionException("Error to send HTTP request", e);
