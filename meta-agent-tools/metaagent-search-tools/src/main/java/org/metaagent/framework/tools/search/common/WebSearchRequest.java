@@ -24,7 +24,10 @@
 
 package org.metaagent.framework.tools.search.common;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 import lombok.Builder;
+import org.metaagent.framework.core.tool.schema.ToolDisplayable;
 
 import java.util.Map;
 
@@ -35,12 +38,37 @@ import java.util.Map;
  */
 @Builder
 public record WebSearchRequest(
+        @JsonProperty(required = true)
+        @JsonPropertyDescription("Search terms to query the web with.")
         String searchTerms,
+
+        @JsonPropertyDescription("Search engine to use for the query.")
         String searchEngine,
+
+        @JsonPropertyDescription("Maximum number of results to return. Optional.")
         Integer maxResults,
+
+        @JsonPropertyDescription("Language to search in. Optional, default is based on user query.")
         String language,
+
+        @JsonPropertyDescription("Geolocation to use for the search. Optional, default is based on user information.")
         String geoLocation,
+
+        @JsonPropertyDescription("Start page for pagination. Optional, default is 1.")
         Integer startPage,
+
+        @JsonPropertyDescription("Index to start returning results from. Optional, default is 0.")
         Integer startIndex,
-        Map<String, Object> additionalParams) {
+
+        @JsonPropertyDescription("Additional parameters for the search request. Optional.")
+        Map<String, Object> additionalParams) implements ToolDisplayable {
+
+    @Override
+    public String display() {
+        StringBuilder sb = new StringBuilder("Web Search [").append(searchTerms).append(']');
+        if (searchEngine != null) {
+            sb.append(" by ").append(searchEngine);
+        }
+        return sb.toString();
+    }
 }
