@@ -1,5 +1,6 @@
 org.metaagent.framework.tools.file.text.ReadTextFileTool
 org.metaagent.framework.tools.file.text.WriteTextFileTool
+org.metaagent.framework.tools.file.text.EditTextFileTool
 org.metaagent.framework.tools.file.image.ReadImageFileTool
 org.metaagent.framework.tools.file.list.ListFileTool
 org.metaagent.framework.tools.file.find.GlobFileTool
