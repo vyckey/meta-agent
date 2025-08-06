@@ -123,31 +123,48 @@ public class DefaultMessageHistory implements MessageHistory {
         return Lists.reverse(messages).iterator();
     }
 
-    public String asText(int maxMessageSize, int maxMessageLength) {
+    public String asText(int maxMessageSize, int maxMessageLength, boolean roleMessageOnly) {
         StringBuilder sb = new StringBuilder()
                 .append("Message history (").append(historyId).append("):\n");
-        if (messages.size() > maxMessageSize) {
-            sb.append("... (hidden messages)\n");
-        }
-        List<RoleMessage> lastRoleMessages = Lists.newArrayList();
+        boolean hasMoreMessages = false;
+        List<Message> lastMessages = Lists.newArrayList();
         for (Message message : reverse()) {
-            if (lastRoleMessages.size() >= maxMessageSize) {
+            if (lastMessages.size() >= maxMessageSize) {
+                hasMoreMessages = true;
                 break;
             }
-            if (message instanceof RoleMessage roleMessage) {
-                lastRoleMessages.add(roleMessage);
+            if (!roleMessageOnly || message instanceof RoleMessage) {
+                lastMessages.add(message);
             }
         }
+        if (hasMoreMessages) {
+            sb.append("... (hidden messages)\n");
+        }
 
-        lastRoleMessages = Lists.reverse(lastRoleMessages);
-        for (RoleMessage message : lastRoleMessages) {
+        if (lastMessages.isEmpty()) {
+            sb.append("<empty messages>\n");
+        } else {
+            appendMessages(sb, Lists.reverse(lastMessages), maxMessageLength);
+        }
+        return sb.toString();
+    }
+
+    private void appendMessages(StringBuilder sb, List<Message> messages, int maxMessageLength) {
+        for (Message message : messages) {
             String content = message.getContent();
             if (content.length() > maxMessageLength) {
                 content = content.substring(0, maxMessageLength) + "...(truncated)";
             }
-            sb.append(message.getRole()).append(": ").append(content).append("\n");
+            if (message instanceof RoleMessage roleMessage) {
+                sb.append(roleMessage.getRole()).append(": ").append(content);
+            } else {
+                sb.append(message.getClass().getCanonicalName());
+                if (!content.isEmpty()) {
+                    sb.append(": ").append(content);
+                }
+            }
+            sb.append("\n");
         }
-        return sb.toString();
     }
 
     public Iterable<Message> reverse() {
@@ -156,6 +173,6 @@ public class DefaultMessageHistory implements MessageHistory {
 
     @Override
     public String toString() {
-        return asText(10, 1000);
+        return asText(10, 1000, true);
     }
 }
