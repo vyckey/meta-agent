@@ -30,6 +30,7 @@ import org.metaagent.framework.core.agent.fallback.AgentFallbackStrategy;
 import org.metaagent.framework.core.agent.loop.AgentLoopControlStrategy;
 import org.metaagent.framework.core.agent.state.AgentRunStatus;
 import org.metaagent.framework.core.agent.state.AgentState;
+import org.metaagent.framework.core.tool.manager.ToolManager;
 
 /**
  * The core agent abstraction.
@@ -49,6 +50,13 @@ public interface Agent<
     default AgentIOConverter<AgentInput, AgentOutput> getIOConverter() {
         throw new NotImplementedException("not implement yet");
     }
+
+    /**
+     * Gets the agent tool manager.
+     *
+     * @return the tool manager.
+     */
+    ToolManager getToolManager();
 
     /**
      * Gets loop control strategy which controls if the agent will continue to do next loop.
