@@ -24,51 +24,38 @@
 
 package org.metaagent.framework.core.agent.chat.message;
 
+import lombok.EqualsAndHashCode;
+import lombok.Getter;
+import org.metaagent.framework.core.common.media.MediaResource;
 import org.metaagent.framework.core.common.metadata.MetadataProvider;
 
-import java.time.Instant;
-import java.util.UUID;
+import java.util.List;
+import java.util.Objects;
 
 /**
- * The message interface represents a message in a chat.
+ * A message from the assistant role.
  *
  * @author vyckey
  */
-public interface Message {
-    /**
-     * Generate a unique identifier for the message.
-     *
-     * @return a unique identifier for the message
-     */
-    static String generateId() {
-        return UUID.randomUUID().toString().replace("-", "");
+@Getter
+@EqualsAndHashCode(callSuper = true)
+public class AssistantMessage extends DefaultRoleMessage {
+    private final List<ToolCall> toolCalls;
+
+    public AssistantMessage(String content, List<MediaResource> media, List<ToolCall> toolCalls, MetadataProvider metadata) {
+        super(RoleMessage.ROLE_ASSISTANT, content, media);
+        this.toolCalls = Objects.requireNonNull(toolCalls, "toolCalls is required");
+        this.metadata = metadata;
     }
 
-    /**
-     * Get the unique identifier of the message.
-     *
-     * @return the unique identifier of the message
-     */
-    String getId();
+    public AssistantMessage(String content, List<MediaResource> media, List<ToolCall> toolCalls) {
+        this(content, media, toolCalls, MetadataProvider.create());
+    }
 
-    /**
-     * Get the text content of the message.
-     *
-     * @return the content of the message
-     */
-    String getContent();
+    public AssistantMessage(String content, List<MediaResource> media) {
+        this(content, media, List.of());
+    }
 
-    /**
-     * Get the metadata of the message.
-     *
-     * @return the metadata of the message
-     */
-    MetadataProvider getMetadata();
-
-    /**
-     * Get the time when the message was created.
-     *
-     * @return the time when the message was created
-     */
-    Instant getCreatedAt();
+    public record ToolCall(String id, String type, String name, String arguments) {
+    }
 }

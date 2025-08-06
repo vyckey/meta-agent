@@ -30,7 +30,7 @@ import org.metaagent.framework.core.agent.action.result.ActionResult;
 import org.metaagent.framework.core.agent.action.result.DefaultActionResult;
 import org.metaagent.framework.core.agent.chat.channel.Channel;
 import org.metaagent.framework.core.agent.chat.channel.ChannelManager;
-import org.metaagent.framework.core.agent.chat.message.Message;
+import org.metaagent.framework.core.agent.chat.message.RoleMessage;
 
 import java.util.Objects;
 
@@ -43,16 +43,16 @@ import java.util.Objects;
 public class SendMessageAction extends AbstractAction {
     public static final String NAME = "SendMessage";
     private final Channel channel;
-    private final Message message;
+    private final RoleMessage message;
 
-    public SendMessageAction(Channel channel, Message message) {
+    public SendMessageAction(Channel channel, RoleMessage message) {
         super(NAME);
         this.channel = Objects.requireNonNull(channel, "channel is required");
         this.message = Objects.requireNonNull(message, "message is required");
         this.description = message.getContent();
     }
 
-    public SendMessageAction(ChannelManager channelManager, String channelName, Message message) {
+    public SendMessageAction(ChannelManager channelManager, String channelName, RoleMessage message) {
         this(channelManager.getChannel(channelName), message);
     }
 

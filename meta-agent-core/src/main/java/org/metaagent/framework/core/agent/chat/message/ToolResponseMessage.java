@@ -24,51 +24,44 @@
 
 package org.metaagent.framework.core.agent.chat.message;
 
+import lombok.EqualsAndHashCode;
 import org.metaagent.framework.core.common.metadata.MetadataProvider;
 
-import java.time.Instant;
-import java.util.UUID;
+import java.util.List;
+import java.util.Objects;
 
 /**
- * The message interface represents a message in a chat.
+ * Represents a message containing tool responses in a chat context.
+ * This message is used to convey the results of tool executions back to the user.
  *
  * @author vyckey
  */
-public interface Message {
-    /**
-     * Generate a unique identifier for the message.
-     *
-     * @return a unique identifier for the message
-     */
-    static String generateId() {
-        return UUID.randomUUID().toString().replace("-", "");
+@EqualsAndHashCode(callSuper = true)
+public class ToolResponseMessage extends AbstractMessage {
+    private final List<ToolResponse> toolResponses;
+
+    public ToolResponseMessage(List<ToolResponse> toolResponses, MetadataProvider metadata) {
+        this.toolResponses = Objects.requireNonNull(toolResponses);
+        this.metadata = metadata;
     }
 
-    /**
-     * Get the unique identifier of the message.
-     *
-     * @return the unique identifier of the message
-     */
-    String getId();
+    public ToolResponseMessage(List<ToolResponse> toolResponses) {
+        this(toolResponses, MetadataProvider.create());
+    }
 
-    /**
-     * Get the text content of the message.
-     *
-     * @return the content of the message
-     */
-    String getContent();
+    public ToolResponseMessage(ToolResponse... toolResponses) {
+        this.toolResponses = List.of(toolResponses);
+    }
 
-    /**
-     * Get the metadata of the message.
-     *
-     * @return the metadata of the message
-     */
-    MetadataProvider getMetadata();
+    public List<ToolResponse> getToolResponses() {
+        return toolResponses;
+    }
 
-    /**
-     * Get the time when the message was created.
-     *
-     * @return the time when the message was created
-     */
-    Instant getCreatedAt();
+    @Override
+    public String getContent() {
+        return "";
+    }
+
+    public record ToolResponse(String id, String name, String responseData) {
+    }
 }

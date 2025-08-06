@@ -22,36 +22,27 @@
  * SOFTWARE.
  */
 
-package org.metaagent.framework.core.agent.chat.channel;
+package org.metaagent.framework.core.agent.chat.message;
 
-import org.metaagent.framework.core.agent.chat.message.MessageListener;
-import org.metaagent.framework.core.agent.chat.message.RoleMessage;
-import org.metaagent.framework.core.agent.chat.message.history.MessageHistory;
+import lombok.EqualsAndHashCode;
+import lombok.Getter;
+import org.metaagent.framework.core.common.metadata.MapMetadataProvider;
 
-import java.io.Closeable;
-import java.io.IOException;
-import java.util.concurrent.CompletableFuture;
+import java.util.Map;
 
 /**
- * description is here
+ * Represents a system message in a chat application.
+ * This message type is typically used to convey system-level information or instructions.
  *
  * @author vyckey
  */
-public interface Channel extends Closeable {
-    String getName();
+@Getter
+@EqualsAndHashCode(callSuper = true)
+public class SystemMessage extends AbstractMessage {
+    private final String content;
 
-    boolean isOpen();
-
-    @Override
-    void close() throws IOException;
-
-    void send(RoleMessage message);
-
-    CompletableFuture<Void> sendAsync(RoleMessage message);
-
-    void receive(MessageListener messageListener);
-
-    void remove(MessageListener messageListener);
-
-    MessageHistory messageHistory();
+    public SystemMessage(String content) {
+        this.metadata = new MapMetadataProvider(Map.of());
+        this.content = content;
+    }
 }

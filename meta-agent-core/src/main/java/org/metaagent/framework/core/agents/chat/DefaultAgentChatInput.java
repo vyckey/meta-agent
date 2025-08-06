@@ -53,7 +53,6 @@ public record DefaultAgentChatInput(
     }
 
     public static class Builder extends AbstractAgentInput.Builder<Builder> {
-        private AgentExecutionContext context;
         private List<Message> messages;
         private MetadataProvider metadata = new MapMetadataProvider();
 

@@ -26,6 +26,7 @@ package org.metaagent.framework.core.agent.chat.message.history;
 
 import com.google.common.collect.Lists;
 import org.metaagent.framework.core.agent.chat.message.Message;
+import org.metaagent.framework.core.agent.chat.message.RoleMessage;
 
 import java.util.Iterator;
 import java.util.List;
@@ -128,7 +129,18 @@ public class DefaultMessageHistory implements MessageHistory {
         if (messages.size() > maxMessageSize) {
             sb.append("... (hidden messages)\n");
         }
-        for (Message message : lastMessages(maxMessageSize)) {
+        List<RoleMessage> lastRoleMessages = Lists.newArrayList();
+        for (Message message : reverse()) {
+            if (lastRoleMessages.size() >= maxMessageSize) {
+                break;
+            }
+            if (message instanceof RoleMessage roleMessage) {
+                lastRoleMessages.add(roleMessage);
+            }
+        }
+
+        lastRoleMessages = Lists.reverse(lastRoleMessages);
+        for (RoleMessage message : lastRoleMessages) {
             String content = message.getContent();
             if (content.length() > maxMessageLength) {
                 content = content.substring(0, maxMessageLength) + "...(truncated)";

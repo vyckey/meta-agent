@@ -27,8 +27,8 @@ package org.metaagent.framework.core.agent.ability.chat;
 import org.metaagent.framework.core.agent.ability.AbstractAgentAbility;
 import org.metaagent.framework.core.agent.chat.channel.Channel;
 import org.metaagent.framework.core.agent.chat.channel.ChannelManager;
-import org.metaagent.framework.core.agent.chat.message.Message;
 import org.metaagent.framework.core.agent.chat.message.MessageListener;
+import org.metaagent.framework.core.agent.chat.message.RoleMessage;
 
 import java.util.concurrent.CompletableFuture;
 
@@ -63,13 +63,13 @@ public class DefaultAgentGroupChatAbility extends AbstractAgentAbility implement
     }
 
     @Override
-    public void sendMessage(String channelName, Message message) {
+    public void sendMessage(String channelName, RoleMessage message) {
         checkActivated();
         getChannel(channelName).send(message);
     }
 
     @Override
-    public CompletableFuture<Void> sendMessageAsync(String channelName, Message message) {
+    public CompletableFuture<Void> sendMessageAsync(String channelName, RoleMessage message) {
         checkActivated();
         return getChannel(channelName).sendAsync(message);
     }

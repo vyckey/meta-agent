@@ -24,51 +24,39 @@
 
 package org.metaagent.framework.core.agent.chat.message;
 
+import lombok.EqualsAndHashCode;
+import lombok.Getter;
+import org.metaagent.framework.core.common.media.MediaResource;
 import org.metaagent.framework.core.common.metadata.MetadataProvider;
 
-import java.time.Instant;
-import java.util.UUID;
+import java.util.List;
+import java.util.Objects;
 
 /**
- * The message interface represents a message in a chat.
+ * RoleMessage is a message that contains role, content and media resources.
  *
  * @author vyckey
  */
-public interface Message {
-    /**
-     * Generate a unique identifier for the message.
-     *
-     * @return a unique identifier for the message
-     */
-    static String generateId() {
-        return UUID.randomUUID().toString().replace("-", "");
+@Getter
+@EqualsAndHashCode(callSuper = true)
+public class DefaultRoleMessage extends AbstractMessage implements RoleMessage {
+    private final String role;
+    private final String content;
+    private final List<MediaResource> media;
+
+    public DefaultRoleMessage(String role, String content, List<MediaResource> media, MetadataProvider metadata) {
+        this.role = Objects.requireNonNull(role, "role is required");
+        this.content = Objects.requireNonNull(content, "content is required");
+        this.media = Objects.requireNonNull(media, "media is required");
+        this.metadata = metadata;
     }
 
-    /**
-     * Get the unique identifier of the message.
-     *
-     * @return the unique identifier of the message
-     */
-    String getId();
+    public DefaultRoleMessage(String role, String content, List<MediaResource> media) {
+        this(role, content, media, MetadataProvider.create());
+    }
 
-    /**
-     * Get the text content of the message.
-     *
-     * @return the content of the message
-     */
-    String getContent();
-
-    /**
-     * Get the metadata of the message.
-     *
-     * @return the metadata of the message
-     */
-    MetadataProvider getMetadata();
-
-    /**
-     * Get the time when the message was created.
-     *
-     * @return the time when the message was created
-     */
-    Instant getCreatedAt();
+    @Override
+    public String toString() {
+        return getRole() + ": " + getContent();
+    }
 }

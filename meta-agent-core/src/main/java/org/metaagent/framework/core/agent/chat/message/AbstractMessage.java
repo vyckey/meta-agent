@@ -24,13 +24,10 @@
 
 package org.metaagent.framework.core.agent.chat.message;
 
-import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import org.metaagent.framework.core.common.metadata.MapMetadataProvider;
 import org.metaagent.framework.core.common.metadata.MetadataProvider;
 
 import java.time.Instant;
-import java.util.Objects;
 
 /**
  * The abstract class for the message interface.
@@ -38,20 +35,23 @@ import java.util.Objects;
  * @author vyckey
  */
 public abstract class AbstractMessage implements Message {
-    protected final MetadataProvider metadata;
-    protected Instant createdAt;
+    protected String id;
+    protected MetadataProvider metadata;
+    protected Instant createdAt = Instant.now();
 
-    protected AbstractMessage(MetadataProvider metadata) {
-        this.metadata = Objects.requireNonNull(metadata, "metadata is required");
-        this.createdAt = Instant.now();
-    }
-
-    protected AbstractMessage() {
-        this(new MapMetadataProvider());
+    @Override
+    public String getId() {
+        if (id == null) {
+            id = Message.generateId();
+        }
+        return id;
     }
 
     @Override
     public MetadataProvider getMetadata() {
+        if (metadata == null) {
+            metadata = MetadataProvider.create();
+        }
         return metadata;
     }
 
@@ -63,6 +63,6 @@ public abstract class AbstractMessage implements Message {
 
     @Override
     public String toString() {
-        return getRole() + ": " + getContent();
+        return getContent();
     }
 }
