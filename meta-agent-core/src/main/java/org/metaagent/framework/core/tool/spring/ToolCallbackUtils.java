@@ -70,13 +70,12 @@ public abstract class ToolCallbackUtils {
         chatOptions.setToolCallbacks(toolCallbacks);
     }
 
-    public static ChatOptions buildChatOptionsWithTools(ChatOptions chatOptions,
-                                                        ToolContext toolContext, ToolExecutor toolExecutor) {
+    public static ChatOptions buildChatOptionsWithTools(ChatOptions chatOptions, ToolContext toolContext) {
         if (chatOptions instanceof ToolCallingChatOptions) {
             ToolCallingChatOptions toolCallingChatOptions = chatOptions.copy();
             ToolManager toolManager = toolContext.getToolManager();
 
-            ToolCallbackUtils.addToolsToChatOptions(toolCallingChatOptions, toolManager, toolExecutor);
+            ToolCallbackUtils.addToolsToChatOptions(toolCallingChatOptions, toolManager, toolContext.getToolExecutor());
             toolCallingChatOptions.setToolContext(Map.of(
                     ToolCallbackDelegate.CONTEXT_KEY, toolContext
             ));

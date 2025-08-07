@@ -24,51 +24,35 @@
 
 package org.metaagent.framework.core.tool.tracker;
 
-import com.google.common.collect.Lists;
-
+import java.util.Collections;
 import java.util.List;
-import java.util.Objects;
 import java.util.function.Predicate;
 
-/**
- * description is here
- *
- * @author vyckey
- */
-public class DefaultToolCallTracker implements ToolCallTracker {
-    protected final List<ToolCallRecord> records;
+public class EmptyToolCallTracker implements ToolCallTracker {
+    public static final EmptyToolCallTracker INSTANCE = new EmptyToolCallTracker();
 
-    public DefaultToolCallTracker(List<ToolCallRecord> records) {
-        this.records = Objects.requireNonNull(records);
-    }
-
-    public DefaultToolCallTracker() {
-        this(Lists.newArrayList());
+    private EmptyToolCallTracker() {
     }
 
     @Override
     public void track(ToolCallRecord record) {
-        this.records.add(record);
     }
 
     @Override
     public List<ToolCallRecord> find(Predicate<ToolCallRecord> predicate) {
-        return this.records.stream().filter(predicate).toList();
+        return Collections.emptyList();
     }
 
     @Override
     public List<ToolCallRecord> findByToolName(String toolName) {
-        return find(record -> record.getToolName().equals(toolName));
+        return Collections.emptyList();
     }
 
     @Override
     public void merge(ToolCallTracker other) {
-        this.records.addAll(other.find(record -> true));
     }
 
     @Override
     public void clear() {
-        this.records.clear();
     }
-
 }
