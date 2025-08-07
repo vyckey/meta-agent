@@ -27,15 +27,14 @@ package org.metaagent.framework.core.model.chat;
 import com.google.common.collect.BiMap;
 import com.google.common.collect.HashBiMap;
 import org.metaagent.framework.core.agent.chat.message.AssistantMessage;
-import org.metaagent.framework.core.agent.chat.message.DefaultRoleMessage;
 import org.metaagent.framework.core.agent.chat.message.Message;
 import org.metaagent.framework.core.agent.chat.message.RoleMessage;
 import org.metaagent.framework.core.agent.chat.message.SystemMessage;
 import org.metaagent.framework.core.agent.chat.message.ToolResponseMessage;
+import org.metaagent.framework.core.agent.chat.message.UserMessage;
 import org.metaagent.framework.core.common.media.MediaResource;
 import org.metaagent.framework.core.common.metadata.MapMetadataProvider;
 import org.metaagent.framework.core.converter.BiConverter;
-import org.springframework.ai.chat.messages.UserMessage;
 import org.springframework.ai.model.Media;
 
 import java.net.URI;
@@ -88,7 +87,8 @@ public class MessageConverter implements BiConverter<Message, org.springframewor
                         media
                 );
             }
-            return new UserMessage(message.getContent(), media, message.getMetadata().getProperties());
+            return new org.springframework.ai.chat.messages.UserMessage(
+                    message.getContent(), media, message.getMetadata().getProperties());
         } else if (message instanceof SystemMessage systemMessage) {
             return new org.springframework.ai.chat.messages.SystemMessage(
                     systemMessage.getContent()
@@ -126,7 +126,7 @@ public class MessageConverter implements BiConverter<Message, org.springframewor
                         (org.springframework.ai.chat.messages.UserMessage) message;
                 List<MediaResource> media = userMessage.getMedia().stream().map(this::toMedia).toList();
                 MapMetadataProvider metadata = new MapMetadataProvider(userMessage.getMetadata());
-                return new DefaultRoleMessage(RoleMessage.ROLE_USER, message.getText(), media, metadata);
+                return new UserMessage(message.getText(), media, metadata);
             }
             case ASSISTANT -> {
                 org.springframework.ai.chat.messages.AssistantMessage assistantMessage =

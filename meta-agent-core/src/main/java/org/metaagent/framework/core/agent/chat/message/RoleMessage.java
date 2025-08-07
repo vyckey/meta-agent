@@ -57,7 +57,7 @@ public interface RoleMessage extends Message {
      * @return a new RoleMessage instance with the user role
      */
     static RoleMessage user(String content, MediaResource... media) {
-        return create(DefaultRoleMessage.ROLE_USER, content, media);
+        return new UserMessage(content, List.of(media));
     }
 
     /**
