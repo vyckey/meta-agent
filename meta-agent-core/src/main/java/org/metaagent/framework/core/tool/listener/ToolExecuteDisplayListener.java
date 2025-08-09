@@ -28,9 +28,12 @@ import lombok.extern.slf4j.Slf4j;
 import org.metaagent.framework.core.tool.Tool;
 import org.metaagent.framework.core.tool.ToolExecutionException;
 import org.metaagent.framework.core.tool.schema.ToolDisplayable;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 @Slf4j
 public class ToolExecuteDisplayListener implements ToolExecuteListener {
+    private static final Logger logger = LoggerFactory.getLogger("Tool");
     public static final ToolExecuteDisplayListener INSTANCE = new ToolExecuteDisplayListener();
 
     private ToolExecuteDisplayListener() {
@@ -40,7 +43,7 @@ public class ToolExecuteDisplayListener implements ToolExecuteListener {
     public <I> void onToolInput(Tool<I, ?> tool, I input) {
         if (input instanceof ToolDisplayable) {
             String display = ((ToolDisplayable) input).display();
-            System.out.println("Tool Input - " + tool.getName() + " > " + display);
+            logger.info("Tool [{}] Input > {}", tool.getName(), display);
         }
     }
 
@@ -48,12 +51,12 @@ public class ToolExecuteDisplayListener implements ToolExecuteListener {
     public <I, O> void onToolOutput(Tool<I, O> tool, I input, O output) {
         if (input instanceof ToolDisplayable) {
             String inputDisplay = ((ToolDisplayable) input).display();
-            System.out.println("Tool Output - " + tool.getName() + " > " + inputDisplay);
+            logger.info("Tool [{}] Output > {}", tool.getName(), inputDisplay);
         }
     }
 
     @Override
     public <I> void onToolException(Tool<I, ?> tool, I input, ToolExecutionException exception) {
-        System.out.println("Tool Exception - " + tool.getName() + " > " + exception.getMessage());
+        logger.error("Tool [{}] Exception > {}", tool.getName(), exception.getMessage(), exception);
     }
 }

@@ -30,10 +30,9 @@ import org.metaagent.framework.core.tool.ToolContext;
 import org.metaagent.framework.core.tool.ToolExecutionException;
 import org.metaagent.framework.core.tool.converter.ToolConverter;
 import org.metaagent.framework.core.tool.listener.ToolExecuteListener;
+import org.metaagent.framework.core.tool.listener.ToolExecuteListenerRegistry;
 import org.metaagent.framework.core.tool.tracker.ToolTrackerDelegate;
 
-import java.util.ArrayList;
-import java.util.List;
 import java.util.function.Consumer;
 
 /**
@@ -43,24 +42,11 @@ import java.util.function.Consumer;
  */
 @Slf4j
 public class DefaultToolExecutor implements ToolExecutor {
-    private static final DefaultToolExecutor INSTANCE = new DefaultToolExecutor();
+    public static final DefaultToolExecutor INSTANCE = new DefaultToolExecutor();
 
-    private final List<ToolExecuteListener> executeListeners = new ArrayList<>();
-
-    public static DefaultToolExecutor getInstance() {
-        return INSTANCE;
-    }
-
-    public void registerExecuteListener(ToolExecuteListener executeListener) {
-        executeListeners.add(executeListener);
-    }
-
-    public void unregisterExecuteListener(ToolExecuteListener executeListener) {
-        executeListeners.remove(executeListener);
-    }
-
-    protected void notifyListeners(Consumer<ToolExecuteListener> consumer) {
-        for (ToolExecuteListener listener : executeListeners) {
+    protected void notifyListeners(ToolExecuteListenerRegistry listenerRegistry,
+                                   Consumer<ToolExecuteListener> consumer) {
+        for (ToolExecuteListener listener : listenerRegistry.getListeners()) {
             try {
                 consumer.accept(listener);
             } catch (Exception e) {
@@ -71,20 +57,21 @@ public class DefaultToolExecutor implements ToolExecutor {
 
     @Override
     public <I, O> O execute(ToolContext context, Tool<I, O> tool, I input) throws ToolExecutionException {
+        ToolExecuteListenerRegistry listenerRegistry = context.getToolListenerRegistry();
         try {
-            notifyListeners(listener -> listener.onToolInput(tool, input));
+            notifyListeners(listenerRegistry, listener -> listener.onToolInput(tool, input));
 
             ToolTrackerDelegate<I, O> delegate = new ToolTrackerDelegate<>(context.getToolCallTracker(), tool);
             O output = delegate.run(context, input);
 
-            notifyListeners(listener -> listener.onToolInput(tool, input));
+            notifyListeners(listenerRegistry, listener -> listener.onToolInput(tool, input));
             return output;
         } catch (ToolExecutionException e) {
-            notifyListeners(listener -> listener.onToolException(tool, input, e));
+            notifyListeners(listenerRegistry, listener -> listener.onToolException(tool, input, e));
             throw e;
         } catch (Exception e) {
             ToolExecutionException ex = new ToolExecutionException("Call tool " + tool.getName() + " fail", e);
-            notifyListeners(listener -> listener.onToolException(tool, input, ex));
+            notifyListeners(listenerRegistry, listener -> listener.onToolException(tool, input, ex));
             throw ex;
         }
     }

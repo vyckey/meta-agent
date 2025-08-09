@@ -27,12 +27,13 @@ package org.metaagent.framework.core.tool;
 import lombok.Getter;
 import org.metaagent.framework.core.tool.executor.DefaultToolExecutor;
 import org.metaagent.framework.core.tool.executor.ToolExecutor;
+import org.metaagent.framework.core.tool.listener.ToolExecuteListenerRegistry;
 import org.metaagent.framework.core.tool.manager.DefaultToolManager;
 import org.metaagent.framework.core.tool.manager.ToolManager;
 import org.metaagent.framework.core.tool.tracker.ToolCallTracker;
 
 /**
- * description is here
+ * Default implementation of {@link ToolContext} interface.
  *
  * @author vyckey
  */
@@ -41,11 +42,13 @@ public class DefaultToolContext implements ToolContext {
     protected ToolManager toolManager;
     protected ToolExecutor toolExecutor;
     protected ToolCallTracker toolCallTracker;
+    protected ToolExecuteListenerRegistry toolListenerRegistry;
 
     protected DefaultToolContext(Builder builder) {
         this.toolManager = builder.toolManager;
         this.toolExecutor = builder.toolExecutor;
         this.toolCallTracker = builder.toolCallTracker;
+        this.toolListenerRegistry = builder.toolExecuteListenerRegistry;
     }
 
     public static Builder builder() {
@@ -56,6 +59,7 @@ public class DefaultToolContext implements ToolContext {
         private ToolManager toolManager;
         private ToolExecutor toolExecutor;
         private ToolCallTracker toolCallTracker;
+        private ToolExecuteListenerRegistry toolExecuteListenerRegistry;
 
         public Builder toolManager(ToolManager toolManager) {
             this.toolManager = toolManager;
@@ -72,15 +76,23 @@ public class DefaultToolContext implements ToolContext {
             return this;
         }
 
+        public Builder toolExecuteListenerRegistry(ToolExecuteListenerRegistry toolExecuteListenerRegistry) {
+            this.toolExecuteListenerRegistry = toolExecuteListenerRegistry;
+            return this;
+        }
+
         public DefaultToolContext build() {
             if (toolManager == null) {
                 this.toolManager = new DefaultToolManager();
             }
             if (toolExecutor == null) {
-                this.toolExecutor = new DefaultToolExecutor();
+                this.toolExecutor = DefaultToolExecutor.INSTANCE;
             }
             if (toolCallTracker == null) {
                 this.toolCallTracker = ToolCallTracker.empty();
+            }
+            if (toolExecuteListenerRegistry == null) {
+                this.toolExecuteListenerRegistry = ToolExecuteListenerRegistry.DEFAULT;
             }
             return new DefaultToolContext(this);
         }
