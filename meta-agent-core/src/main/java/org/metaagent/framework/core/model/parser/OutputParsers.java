@@ -25,8 +25,11 @@
 package org.metaagent.framework.core.model.parser;
 
 import com.fasterxml.jackson.core.type.TypeReference;
+import org.metaagent.framework.core.converter.Converter;
 
-import java.util.function.Function;
+import java.util.List;
+import java.util.Map;
+import java.util.regex.Pattern;
 
 /**
  * {@link OutputParser} factory.
@@ -37,16 +40,41 @@ public class OutputParsers {
     private OutputParsers() {
     }
 
-    public static <T> OutputParser<String, T> jsonParser(Class<T> classType) {
+    public static OutputParser<String, List<String>> listParser(String delimiter) {
+        return new ListStringOutputParser(delimiter, true);
+    }
+
+    public static OutputParser<String, List<String>> listParser(String delimiter, boolean trim) {
+        return new ListStringOutputParser(delimiter, trim);
+    }
+
+    public static StringOutputParser<Map<String, Object>> mapParser() {
+        return jsonParser(new TypeReference<>() {
+        });
+    }
+
+    public static <T> StringOutputParser<T> jsonParser(Class<T> classType) {
         return new JsonOutputParser<>(classType);
     }
 
-    public static <T> OutputParser<String, T> jsonParser(TypeReference<T> typeRef) {
+    public static <T> StringOutputParser<T> jsonParser(TypeReference<T> typeRef) {
         return new JsonOutputParser<>(typeRef);
     }
 
-    public static <T> RegexOutputParser<T> regexParser(String regex, Function<String, T> mapper) {
-        return new RegexOutputParser<>(regex, mapper);
+    public static <T> RegexOutputParser<T> regexParser(String regex, Converter<String, T> converter) {
+        return new RegexOutputParser<>(Pattern.compile(regex), converter);
+    }
+
+    public static <T> RegexOutputParser<T> regexParser(String regex, Converter<String, T> converter, boolean optional) {
+        return new RegexOutputParser<>(Pattern.compile(regex), converter, optional);
+    }
+
+    public static <T> RegexOutputParser<T> regexParser(String regex, String group, Converter<String, T> converter) {
+        return new RegexOutputParser<>(Pattern.compile(regex), group, converter);
+    }
+
+    public static <T> RegexOutputParser<T> regexParser(String regex, String group, Converter<String, T> converter, boolean optional) {
+        return new RegexOutputParser<>(Pattern.compile(regex), group, converter, optional);
     }
 
     public static RegexGroupOutputParser regexGroupParser(String regex, String... groupNames) {
@@ -56,12 +84,12 @@ public class OutputParsers {
     public static OutputParser<String, String> codeBlockParser(String extType, boolean backticksIncluded) {
         String regex = "```" + extType + "(?<content>((.|\\n)*?))```";
         String groupName = backticksIncluded ? null : "content";
-        return new RegexOutputParser<>(regex, groupName, Function.identity());
+        return new RegexOutputParser<>(Pattern.compile(regex), groupName, Converter.self(), true);
     }
 
     public static OutputParser<String, String> htmlTagParser(String tagName, boolean tagIncluded) {
         String regex = "<" + tagName + ">(?<content>([\\s\\S]*?))</" + tagName + ">";
         String groupName = tagIncluded ? null : "content";
-        return new RegexOutputParser<>(regex, groupName, Function.identity());
+        return new RegexOutputParser<>(Pattern.compile(regex), groupName, Converter.self(), true);
     }
 }

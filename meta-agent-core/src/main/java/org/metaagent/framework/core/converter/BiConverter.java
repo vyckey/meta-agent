@@ -25,26 +25,44 @@
 package org.metaagent.framework.core.converter;
 
 /**
- * description is here
+ * BiConverter is a two-way converter interface that allows conversion.
  *
  * @author vyckey
  */
 public interface BiConverter<S, T> extends Converter<S, T> {
+    /**
+     * Converts the source object to the target type.
+     *
+     * @param source the source object to convert
+     * @return the converted object of type T
+     */
     @Override
     T convert(S source);
 
+    /**
+     * Converts the target object back to the source type.
+     *
+     * @param target the target object to convert
+     * @return the converted object of type S
+     */
     S reverse(T target);
 
+    /**
+     * Creates a BiConverter that reverses the conversion.
+     *
+     * @return a BiConverter that reverses the conversion
+     */
     default BiConverter<T, S> reverse() {
-        return new BiConverter<T, S>() {
+        BiConverter<S, T> self = this;
+        return new BiConverter<>() {
             @Override
             public S convert(T target) {
-                return BiConverter.this.reverse(target);
+                return self.reverse(target);
             }
 
             @Override
             public T reverse(S source) {
-                return BiConverter.this.convert(source);
+                return self.convert(source);
             }
         };
     }

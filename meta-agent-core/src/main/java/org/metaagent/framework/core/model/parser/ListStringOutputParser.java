@@ -24,36 +24,41 @@
 
 package org.metaagent.framework.core.model.parser;
 
-import org.metaagent.framework.core.converter.Converter;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Objects;
 
 /**
- * Interface for parsing the output of an agent into a specific type.
+ * Parses a string output into a list of strings based on a specified delimiter.
+ * Optionally trims whitespace from each string in the list.
  *
- * @param <O> the type of output
- * @param <T> the type to parse the output into
  * @author vyckey
  */
-@FunctionalInterface
-public interface OutputParser<O, T> extends Converter<O, T> {
+public class ListStringOutputParser implements OutputParser<String, List<String>> {
+    public static final ListStringOutputParser INSTANCE = new ListStringOutputParser();
+    private final String delimiter;
+    private final boolean trim;
 
-    /**
-     * Parses the output of an agent into a specific type.
-     *
-     * @param output the output to parse
-     * @return the parsed output
-     * @throws OutputParsingException if parsing fails
-     */
-    T parse(O output) throws OutputParsingException;
+    public ListStringOutputParser(String delimiter, boolean trim) {
+        this.delimiter = Objects.requireNonNull(delimiter, "Delimiter cannot be null");
+        this.trim = trim;
+    }
 
-    /**
-     * Default implementation of the convert method, which calls the parse method.
-     *
-     * @param source the source output to convert
-     * @return the converted output
-     * @throws OutputParsingException if parsing fails
-     */
+    public ListStringOutputParser() {
+        this(",", true);
+    }
+
     @Override
-    default T convert(O source) throws OutputParsingException {
-        return parse(source);
+    public List<String> parse(String output) throws OutputParsingException {
+        if (output == null) {
+            return List.of();
+        }
+        try {
+            return Arrays.stream(output.split(delimiter))
+                    .map(s -> trim ? s.trim() : s)
+                    .toList();
+        } catch (Exception e) {
+            throw new OutputParsingException("Failed to parse output as string list: " + e.getMessage(), e);
+        }
     }
 }

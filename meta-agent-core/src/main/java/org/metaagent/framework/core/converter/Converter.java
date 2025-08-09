@@ -24,23 +24,57 @@
 
 package org.metaagent.framework.core.converter;
 
-import java.util.function.Function;
+import java.util.Objects;
+import java.util.Optional;
 
 /**
- * description is here
+ * Converter interface for converting objects from one type to another.
  *
  * @author vyckey
  */
 @FunctionalInterface
-public interface Converter<S, T> extends Function<S, T> {
-    T convert(S source);
-
-    @Override
-    default T apply(S source) {
-        return convert(source);
-    }
-
+public interface Converter<S, T> {
+    /**
+     * Creates a converter that returns the source object as is.
+     *
+     * @param <T> the type of the source and target
+     * @return a converter that returns the source object unchanged
+     */
     static <T> Converter<T, T> self() {
         return source -> source;
+    }
+
+    /**
+     * Converts the source object to the target type.
+     *
+     * @param source the source object to convert
+     * @return the converted object of type T
+     */
+    T convert(S source);
+
+    /**
+     * Converts the source object to an Optional of the target type.
+     *
+     * @param source the source object to convert
+     * @return an Optional containing the converted object, or empty if the source is null
+     */
+    default Optional<T> convertOptional(S source) {
+        return Optional.ofNullable(convert(source));
+    }
+
+    /**
+     * Creates a new converter that first converts the source object to type T
+     * and then applies the next converter to the result.
+     *
+     * @param next the next converter to apply
+     * @param <R>  the type of the final result
+     * @return a new converter that applies both conversions
+     */
+    default <R> Converter<S, R> andThen(Converter<T, R> next) {
+        Objects.requireNonNull(next, "Next converter cannot be null");
+        return s -> {
+            T target = convert(s);
+            return target == null ? null : next.convert(target);
+        };
     }
 }
