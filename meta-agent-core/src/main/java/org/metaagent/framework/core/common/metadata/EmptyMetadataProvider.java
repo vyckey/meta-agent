@@ -22,41 +22,48 @@
  * SOFTWARE.
  */
 
-package org.metaagent.framework.core.agent.input;
+package org.metaagent.framework.core.common.metadata;
 
-import org.metaagent.framework.core.agent.AgentExecutionContext;
-import org.metaagent.framework.core.common.metadata.MetadataProvider;
+import java.util.Map;
 
 /**
- * AgentInput is an interface that represents the input for an agent.
+ * Immutable empty metadata implementation of {@link MetadataProvider}.
  *
  * @author vyckey
  */
-public interface AgentInput {
-    /**
-     * Gets the context of the agent execution.
-     *
-     * @return the AgentExecutionContext associated with this input
-     */
-    AgentExecutionContext getContext();
+public class EmptyMetadataProvider implements MetadataProvider {
+    public static final EmptyMetadataProvider INSTANCE = new EmptyMetadataProvider();
 
-    /**
-     * Gets the metadata of agent input.
-     *
-     * @return the metadata.
-     */
-    default MetadataProvider getMetadata() {
-        return MetadataProvider.empty();
+    private EmptyMetadataProvider() {
     }
 
-    /**
-     * Builder class for AgentInput.
-     */
-    interface Builder {
-        Builder context(AgentExecutionContext context);
+    @Override
+    public Map<String, Object> getProperties() {
+        return Map.of();
+    }
 
-        Builder metadata(MetadataProvider metadata);
+    @Override
+    public Object getProperty(String key) {
+        return null;
+    }
 
-        AgentInput build();
+    @Override
+    public <T> T getProperty(String key, Class<T> type) {
+        return null;
+    }
+
+    @Override
+    public void setProperty(String key, Object value) {
+        throw new UnsupportedOperationException("Not supported operation for empty metadata");
+    }
+
+    @Override
+    public void removeProperty(String key) {
+        throw new UnsupportedOperationException("Not supported operation for empty metadata");
+    }
+
+    @Override
+    public void merge(MetadataProvider other) {
+        throw new UnsupportedOperationException("Not supported operation for empty metadata");
     }
 }

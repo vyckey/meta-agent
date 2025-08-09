@@ -52,7 +52,7 @@ public class AbstractAgentInput implements AgentInput {
         return context;
     }
 
-    public static abstract class Builder<B extends Builder<B>> {
+    public static abstract class Builder<B extends Builder<B>> implements AgentInput.Builder {
         protected AgentExecutionContext context;
         protected MetadataProvider metadata;
 
@@ -61,16 +61,19 @@ public class AbstractAgentInput implements AgentInput {
 
         protected abstract B self();
 
+        @Override
         public B context(AgentExecutionContext context) {
-            this.context = context;
+            this.context = Objects.requireNonNull(context, "context is required");
             return self();
         }
 
+        @Override
         public B metadata(MetadataProvider metadata) {
-            this.metadata = metadata;
+            this.metadata = Objects.requireNonNull(metadata, "metadata is required");
             return self();
         }
 
+        @Override
         public abstract AgentInput build();
     }
 }

@@ -34,6 +34,15 @@ import java.util.Optional;
  */
 public interface MetadataProvider {
     /**
+     * Returns an empty MetadataProvider instance.
+     *
+     * @return an empty metadata.
+     */
+    static MetadataProvider empty() {
+        return EmptyMetadataProvider.INSTANCE;
+    }
+
+    /**
      * Creates a new MetadataProvider instance.
      *
      * @return a new MetadataProvider instance.
