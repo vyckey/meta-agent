@@ -24,11 +24,10 @@
 
 package org.metaagent.framework.core.model.parser;
 
-import lombok.Getter;
 import org.apache.commons.lang3.StringUtils;
+import org.metaagent.framework.core.converter.Converter;
 
 import java.util.Objects;
-import java.util.function.Function;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -38,38 +37,49 @@ import java.util.regex.Pattern;
  * @param <T> The type of the parsed output.
  * @author vyckey
  */
-public final class RegexOutputParser<T> implements OutputParser<String, T> {
-    @Getter
+public final class RegexOutputParser<T> implements StringOutputParser<T> {
     private final Pattern pattern;
-    private final Function<String, T> mapper;
-    @Getter
+    private final Converter<String, T> converter;
     private final String groupName;
+    private final boolean optional;
 
-    public RegexOutputParser(Pattern pattern, String groupName, Function<String, T> mapper) {
+    public Pattern getPattern() {
+        return pattern;
+    }
+
+    public String getGroupName() {
+        return groupName;
+    }
+
+    public RegexOutputParser(Pattern pattern, String groupName, Converter<String, T> converter, boolean optional) {
         this.pattern = Objects.requireNonNull(pattern, "pattern is required");
-        this.mapper = Objects.requireNonNull(mapper, "mapper is required");
+        this.converter = Objects.requireNonNull(converter, "converter is required");
         this.groupName = groupName;
+        this.optional = optional;
     }
 
-    public RegexOutputParser(Pattern pattern, Function<String, T> mapper) {
-        this(pattern, null, mapper);
+    public RegexOutputParser(Pattern pattern, String groupName, Converter<String, T> converter) {
+        this(pattern, groupName, converter, false);
     }
 
-    public RegexOutputParser(String pattern, String groupName, Function<String, T> mapper) {
-        this(Pattern.compile(pattern), groupName, mapper);
+    public RegexOutputParser(Pattern pattern, Converter<String, T> converter, boolean optional) {
+        this(pattern, null, converter, optional);
     }
 
-    public RegexOutputParser(String pattern, Function<String, T> mapper) {
-        this(Pattern.compile(pattern), mapper);
+    public RegexOutputParser(Pattern pattern, Converter<String, T> converter) {
+        this(pattern, null, converter, false);
     }
 
     @Override
     public T parse(String output) throws OutputParsingException {
         Matcher matcher = pattern.matcher(output);
         if (!matcher.find()) {
+            if (optional) {
+                return null;
+            }
             throw new OutputParsingException("No match found for the given regex pattern: " + pattern);
         }
         String value = StringUtils.isEmpty(groupName) ? matcher.group() : matcher.group(groupName);
-        return mapper.apply(value);
+        return converter.convert(value);
     }
 }

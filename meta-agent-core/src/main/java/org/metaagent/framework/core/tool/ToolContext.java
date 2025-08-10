@@ -24,6 +24,8 @@
 
 package org.metaagent.framework.core.tool;
 
+import org.metaagent.framework.core.tool.executor.ToolExecutor;
+import org.metaagent.framework.core.tool.listener.ToolExecuteListenerRegistry;
 import org.metaagent.framework.core.tool.manager.ToolManager;
 import org.metaagent.framework.core.tool.tracker.ToolCallTracker;
 
@@ -57,6 +59,20 @@ public interface ToolContext {
      * @return the tool executor
      */
     ToolManager getToolManager();
+
+    /**
+     * Gets the tool executor for executing tools.
+     *
+     * @return the tool executor
+     */
+    ToolExecutor getToolExecutor();
+
+    /**
+     * Gets the tool listener registry for managing tool execution listeners.
+     *
+     * @return the tool listener registry
+     */
+    ToolExecuteListenerRegistry getToolListenerRegistry();
 
     /**
      * Gets the tool executor for executing tools.

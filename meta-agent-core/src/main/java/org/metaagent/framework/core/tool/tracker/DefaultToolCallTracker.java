@@ -62,6 +62,11 @@ public class DefaultToolCallTracker implements ToolCallTracker {
     }
 
     @Override
+    public void merge(ToolCallTracker other) {
+        this.records.addAll(other.find(record -> true));
+    }
+
+    @Override
     public void clear() {
         this.records.clear();
     }

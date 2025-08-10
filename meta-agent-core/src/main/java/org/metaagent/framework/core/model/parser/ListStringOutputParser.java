@@ -22,32 +22,43 @@
  * SOFTWARE.
  */
 
-package org.metaagent.framework.agents.coordinator;
+package org.metaagent.framework.core.model.parser;
 
-import lombok.Getter;
-import org.metaagent.framework.core.agent.input.AbstractAgentInput;
-import org.metaagent.framework.core.agent.input.AgentInput;
-import org.metaagent.framework.core.agent.task.Task;
-
+import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
 
 /**
- * Input for task assignment in the coordinator agent.
- * This class encapsulates a list of tasks to be assigned.
+ * Parses a string output into a list of strings based on a specified delimiter.
+ * Optionally trims whitespace from each string in the list.
  *
  * @author vyckey
  */
-@Getter
-public class TaskAssignInput extends AbstractAgentInput implements AgentInput {
-    private final List<Task> tasks;
+public class ListStringOutputParser implements OutputParser<String, List<String>> {
+    public static final ListStringOutputParser INSTANCE = new ListStringOutputParser();
+    private final String delimiter;
+    private final boolean trim;
 
-    public TaskAssignInput(List<Task> tasks) {
-        this.tasks = Objects.requireNonNull(tasks, "Tasks cannot be null");
+    public ListStringOutputParser(String delimiter, boolean trim) {
+        this.delimiter = Objects.requireNonNull(delimiter, "Delimiter cannot be null");
+        this.trim = trim;
     }
 
-    public TaskAssignInput(Task... tasks) {
-        this(List.of(tasks));
+    public ListStringOutputParser() {
+        this(",", true);
     }
 
+    @Override
+    public List<String> parse(String output) throws OutputParsingException {
+        if (output == null) {
+            return List.of();
+        }
+        try {
+            return Arrays.stream(output.split(delimiter))
+                    .map(s -> trim ? s.trim() : s)
+                    .toList();
+        } catch (Exception e) {
+            throw new OutputParsingException("Failed to parse output as string list: " + e.getMessage(), e);
+        }
+    }
 }

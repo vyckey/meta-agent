@@ -27,6 +27,7 @@ package org.metaagent.framework.core.agent.chat.message;
 import org.metaagent.framework.core.common.metadata.MetadataProvider;
 
 import java.time.Instant;
+import java.util.UUID;
 
 /**
  * The message interface represents a message in a chat.
@@ -35,18 +36,20 @@ import java.time.Instant;
  */
 public interface Message {
     /**
-     * Get the metadata of the message.
+     * Generate a unique identifier for the message.
      *
-     * @return the metadata of the message
+     * @return a unique identifier for the message
      */
-    MetadataProvider getMetadata();
+    static String generateId() {
+        return UUID.randomUUID().toString().replace("-", "");
+    }
 
     /**
-     * Get the role of the message.
+     * Get the unique identifier of the message.
      *
-     * @return the role of the message
+     * @return the unique identifier of the message
      */
-    String getRole();
+    String getId();
 
     /**
      * Get the text content of the message.
@@ -54,6 +57,13 @@ public interface Message {
      * @return the content of the message
      */
     String getContent();
+
+    /**
+     * Get the metadata of the message.
+     *
+     * @return the metadata of the message
+     */
+    MetadataProvider getMetadata();
 
     /**
      * Get the time when the message was created.

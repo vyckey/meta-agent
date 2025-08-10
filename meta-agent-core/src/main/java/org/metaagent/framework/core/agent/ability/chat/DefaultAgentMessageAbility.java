@@ -26,8 +26,8 @@ package org.metaagent.framework.core.agent.ability.chat;
 
 import org.metaagent.framework.core.agent.ability.AbstractAgentAbility;
 import org.metaagent.framework.core.agent.chat.channel.Channel;
-import org.metaagent.framework.core.agent.chat.message.Message;
 import org.metaagent.framework.core.agent.chat.message.MessageListener;
+import org.metaagent.framework.core.agent.chat.message.RoleMessage;
 
 import java.util.concurrent.Future;
 
@@ -55,13 +55,13 @@ public class DefaultAgentMessageAbility extends AbstractAgentAbility implements 
     }
 
     @Override
-    public void sendMessage(Message message) {
+    public void sendMessage(RoleMessage message) {
         checkActivated();
         this.channel.send(message);
     }
 
     @Override
-    public Future<Void> sendMessageAsync(Message message) {
+    public Future<Void> sendMessageAsync(RoleMessage message) {
         checkActivated();
         return this.channel.sendAsync(message);
     }

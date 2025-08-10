@@ -25,8 +25,8 @@
 package org.metaagent.framework.core.tool.manager;
 
 import org.metaagent.framework.core.tool.Tool;
-
-import java.util.Set;
+import org.metaagent.framework.core.tool.container.ToolContainer;
+import org.metaagent.framework.core.tool.toolkit.Toolkit;
 
 /**
  * ToolManager is responsible for managing the lifecycle and access to various tools.
@@ -35,62 +35,90 @@ import java.util.Set;
  *
  * @author vyckey
  */
-public interface ToolManager {
+public interface ToolManager extends ToolContainer {
     /**
-     * Retrieves the names of all registered tools.
+     * Create a new instance of ToolManager.
      *
-     * @return a set of tool names.
+     * @return a new instance of ToolManager
      */
-    Set<String> getToolNames();
+    static ToolManager create() {
+        return new DefaultToolManager();
+    }
 
     /**
-     * Checks if a tool with the specified name exists.
+     * Add a tool to the tool manager.
      *
-     * @param name the name of the tool.
-     * @return true if the tool exists, false otherwise.
+     * @param tools the tools to add
+     * @return the tool manager
      */
-    boolean hasTool(String name);
+    static ToolManager fromTools(Tool<?, ?>... tools) {
+        ToolManager toolManager = create();
+        toolManager.addTools(tools);
+        return toolManager;
+    }
 
     /**
-     * Retrieves a tool by its name.
+     * Create a tool manager from toolkits.
      *
-     * @param name the name of the tool.
-     * @return the tool instance, or null if no tool with the specified name exists.
+     * @param toolkits the toolkits to add
+     * @return the tool manager
      */
-    <I, O> Tool<I, O> getTool(String name);
+    static ToolManager fromToolkits(Toolkit... toolkits) {
+        ToolManager toolManager = create();
+        for (Toolkit toolkit : toolkits) {
+            toolManager.addToolkit(toolkit);
+        }
+        return toolManager;
+    }
 
     /**
-     * Adds a new tool to the manager.
+     * Add toolkit to the tool manager.
      *
-     * @param tool the tool to be added.
+     * @param toolkit the toolkit to add
+     * @return the tool manager
      */
-    void addTool(Tool<?, ?> tool);
+    ToolManager addToolkit(Toolkit toolkit);
 
     /**
-     * Removes a tool from the manager.
+     * Add toolkit to the tool manager with specific tool names.
      *
-     * @param tool the tool to be removed.
+     * @param toolkit   the toolkit
+     * @param toolNames the specific tool names to add
+     * @return the tool manager
      */
-    void removeTool(Tool<?, ?> tool);
+    ToolManager addToolkit(Toolkit toolkit, String... toolNames);
 
     /**
-     * Removes a tool from the manager by its name.
+     * Remove toolkit from the tool manager.
+     * The namespace is used to identify the tools from the tool manager.
+     * The names of tools in the toolkit will have a prefix of the namespace.
+     * e.g. if the namespace is "file", the tool name "read_file" in the toolkit will be "file.read_file".
      *
-     * @param name the name of the tool to be removed.
+     * @param namespace the namespace of the toolkit
+     * @param toolkit   the toolkit
+     * @param toolNames the specific tool names to add
+     * @return the tool manager
      */
-    void removeTool(String name);
+    ToolManager addToolkit(String namespace, Toolkit toolkit, String... toolNames);
+
+    /**
+     * Remove toolkit from the tool manager.
+     *
+     * @param toolkitName the toolkit name to remove
+     */
+    void removeToolkit(String toolkitName);
 
     /**
      * Add a tool change listener.
      *
      * @param listener the tool change listener.
      */
-    void addChangeListener(ToolChangeListener listener);
+    void addToolChangeListener(ToolChangeListener listener);
 
     /**
      * Remove a tool change listener.
      *
      * @param listener the tool change listener.
      */
-    void removeChangeListener(ToolChangeListener listener);
+    void removeToolChangeListener(ToolChangeListener listener);
 }

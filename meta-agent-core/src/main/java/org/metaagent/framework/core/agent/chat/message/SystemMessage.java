@@ -22,47 +22,27 @@
  * SOFTWARE.
  */
 
-package org.metaagent.framework.core.agent.group;
+package org.metaagent.framework.core.agent.chat.message;
 
-import org.metaagent.framework.core.agent.MetaAgent;
+import lombok.EqualsAndHashCode;
+import lombok.Getter;
+import org.metaagent.framework.core.common.metadata.MapMetadataProvider;
 
-import java.util.List;
-import java.util.Objects;
+import java.util.Map;
 
 /**
- * description is here
+ * Represents a system message in a chat application.
+ * This message type is typically used to convey system-level information or instructions.
  *
  * @author vyckey
  */
-public class SingleAgentGroup implements AgentGroup {
-    private final MetaAgent agent;
+@Getter
+@EqualsAndHashCode(callSuper = true)
+public class SystemMessage extends AbstractMessage {
+    private final String content;
 
-    public SingleAgentGroup(MetaAgent agent) {
-        this.agent = Objects.requireNonNull(agent, "agent is required");
-    }
-
-    @Override
-    public int getAgentCount() {
-        return 1;
-    }
-
-    @Override
-    public MetaAgent getAgent(String name) {
-        return agent.getName().equals(name) ? agent : null;
-    }
-
-    @Override
-    public List<MetaAgent> getAgents() {
-        return List.of(agent);
-    }
-
-    @Override
-    public void addAgent(MetaAgent agent) {
-        throw new UnsupportedOperationException();
-    }
-
-    @Override
-    public void removeAgent(MetaAgent agent) {
-        throw new UnsupportedOperationException();
+    public SystemMessage(String content) {
+        this.metadata = new MapMetadataProvider(Map.of());
+        this.content = content;
     }
 }

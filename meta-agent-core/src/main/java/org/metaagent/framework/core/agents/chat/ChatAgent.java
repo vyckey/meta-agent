@@ -34,7 +34,7 @@ import org.metaagent.framework.core.agent.chat.message.history.MessageHistory;
  *
  * @author vyckey
  */
-public interface ChatAgent extends Agent<AgentChatInput, AgentChatOutput> {
+public interface ChatAgent extends Agent<ChatAgentInput, ChatAgentOutput> {
     /**
      * Get the message history of this agent.
      *
@@ -43,15 +43,15 @@ public interface ChatAgent extends Agent<AgentChatInput, AgentChatOutput> {
     MessageHistory getMessageHistory();
 
     @Override
-    default AgentChatOutput run(String input) {
+    default ChatAgentOutput run(String input) {
         return run(RoleMessage.user(input));
     }
 
-    default AgentChatOutput run(Message message) {
-        AgentChatInput messageInput = AgentChatInput.builder().messages(message).build();
+    default ChatAgentOutput run(Message message) {
+        ChatAgentInput messageInput = ChatAgentInput.builder().messages(message).build();
         return run(messageInput);
     }
 
-    AgentChatOutput run(AgentChatInput input);
+    ChatAgentOutput run(ChatAgentInput input);
 
 }

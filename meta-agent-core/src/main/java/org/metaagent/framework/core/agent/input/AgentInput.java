@@ -25,6 +25,7 @@
 package org.metaagent.framework.core.agent.input;
 
 import org.metaagent.framework.core.agent.AgentExecutionContext;
+import org.metaagent.framework.core.common.metadata.MetadataProvider;
 
 /**
  * AgentInput is an interface that represents the input for an agent.
@@ -37,5 +38,42 @@ public interface AgentInput {
      *
      * @return the AgentExecutionContext associated with this input
      */
-    AgentExecutionContext getContext();
+    AgentExecutionContext context();
+
+    /**
+     * Gets the metadata of agent input.
+     *
+     * @return the metadata.
+     */
+    default MetadataProvider metadata() {
+        return MetadataProvider.empty();
+    }
+
+    /**
+     * Builder class for AgentInput.
+     */
+    interface Builder<B extends Builder<B>> {
+        /**
+         * Sets the context of the agent execution.
+         *
+         * @param context the AgentExecutionContext associated with this input
+         * @return the builder
+         */
+        B context(AgentExecutionContext context);
+
+        /**
+         * Sets the metadata of agent input.
+         *
+         * @param metadata the metadata.
+         * @return the builder
+         */
+        B metadata(MetadataProvider metadata);
+
+        /**
+         * Builds an AgentInput instance.
+         *
+         * @return the AgentInput instance
+         */
+        AgentInput build();
+    }
 }

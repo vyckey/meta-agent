@@ -22,49 +22,41 @@
  * SOFTWARE.
  */
 
-package org.metaagent.framework.core.agents.chat;
+package org.metaagent.framework.core.agent.chat.message;
 
-import org.metaagent.framework.core.agent.chat.message.Message;
-import org.metaagent.framework.core.common.metadata.MapMetadataProvider;
+import lombok.EqualsAndHashCode;
+import lombok.Getter;
+import org.metaagent.framework.core.common.media.MediaResource;
 import org.metaagent.framework.core.common.metadata.MetadataProvider;
 
 import java.util.List;
+import java.util.Objects;
 
-public record DefaultAgentChatOutput(
-        List<Message> messages,
-        MetadataProvider metadata) implements AgentChatOutput {
+/**
+ * RoleMessage is a message that contains role, content and media resources.
+ *
+ * @author vyckey
+ */
+@Getter
+@EqualsAndHashCode(callSuper = true)
+public class DefaultRoleMessage extends AbstractMessage implements RoleMessage {
+    private final String role;
+    private final String content;
+    private final List<MediaResource> media;
 
-    public static Builder builder() {
-        return new Builder();
+    public DefaultRoleMessage(String role, String content, List<MediaResource> media, MetadataProvider metadata) {
+        this.role = Objects.requireNonNull(role, "role is required");
+        this.content = Objects.requireNonNull(content, "content is required");
+        this.media = Objects.requireNonNull(media, "media is required");
+        this.metadata = metadata;
     }
 
-    public static class Builder {
-        private List<Message> messages;
-        private MetadataProvider metadata;
+    public DefaultRoleMessage(String role, String content, List<MediaResource> media) {
+        this(role, content, media, MetadataProvider.create());
+    }
 
-        public Builder messages(List<Message> messages) {
-            this.messages = messages;
-            return this;
-        }
-
-        public Builder messages(Message... messages) {
-            this.messages = List.of(messages);
-            return this;
-        }
-
-        public Builder metadata(MetadataProvider metadata) {
-            this.metadata = metadata;
-            return this;
-        }
-
-        public DefaultAgentChatOutput build() {
-            if (messages == null) {
-                messages = List.of();
-            }
-            if (metadata == null) {
-                metadata = new MapMetadataProvider();
-            }
-            return new DefaultAgentChatOutput(messages, metadata);
-        }
+    @Override
+    public String toString() {
+        return getRole() + ": " + getContent();
     }
 }

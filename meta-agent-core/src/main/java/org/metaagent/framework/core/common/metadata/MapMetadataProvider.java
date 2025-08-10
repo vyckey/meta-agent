@@ -26,6 +26,7 @@ package org.metaagent.framework.core.common.metadata;
 
 import com.google.common.collect.Maps;
 
+import java.util.Collections;
 import java.util.Map;
 import java.util.Objects;
 
@@ -44,6 +45,10 @@ public class MapMetadataProvider implements MetadataProvider {
 
     public MapMetadataProvider() {
         this.metadata = Maps.newHashMap();
+    }
+
+    public static MapMetadataProvider immutable(Map<String, Object> metadata) {
+        return new MapMetadataProvider(Collections.unmodifiableMap(metadata));
     }
 
     @Override
@@ -66,8 +71,9 @@ public class MapMetadataProvider implements MetadataProvider {
     }
 
     @Override
-    public void setProperty(String key, Object value) {
+    public MetadataProvider setProperty(String key, Object value) {
         metadata.put(key, value);
+        return this;
     }
 
     @Override

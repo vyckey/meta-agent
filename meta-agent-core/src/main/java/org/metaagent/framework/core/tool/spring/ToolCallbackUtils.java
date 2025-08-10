@@ -37,6 +37,7 @@ import org.springframework.ai.chat.messages.AssistantMessage;
 import org.springframework.ai.chat.messages.ToolResponseMessage;
 import org.springframework.ai.chat.prompt.ChatOptions;
 import org.springframework.ai.model.function.FunctionCallback;
+import org.springframework.ai.model.tool.DefaultToolCallingChatOptions;
 import org.springframework.ai.model.tool.ToolCallingChatOptions;
 
 import java.util.List;
@@ -70,16 +71,21 @@ public abstract class ToolCallbackUtils {
         chatOptions.setToolCallbacks(toolCallbacks);
     }
 
-    public static ChatOptions buildChatOptionsWithTools(ChatOptions chatOptions,
-                                                        ToolContext toolContext, ToolExecutor toolExecutor) {
-        if (chatOptions instanceof ToolCallingChatOptions) {
-            ToolCallingChatOptions toolCallingChatOptions = chatOptions.copy();
+    public static ChatOptions buildChatOptionsWithTools(ChatOptions chatOptions, ToolContext toolContext,
+                                                        Boolean internalToolExecutionEnabled) {
+        ToolCallingChatOptions toolCallingChatOptions = null;
+        if (chatOptions == null) {
+            toolCallingChatOptions = new DefaultToolCallingChatOptions();
+        } else if (chatOptions instanceof ToolCallingChatOptions) {
+            toolCallingChatOptions = chatOptions.copy();
+        }
+        if (toolCallingChatOptions != null) {
             ToolManager toolManager = toolContext.getToolManager();
-
-            ToolCallbackUtils.addToolsToChatOptions(toolCallingChatOptions, toolManager, toolExecutor);
+            ToolCallbackUtils.addToolsToChatOptions(toolCallingChatOptions, toolManager, toolContext.getToolExecutor());
             toolCallingChatOptions.setToolContext(Map.of(
                     ToolCallbackDelegate.CONTEXT_KEY, toolContext
             ));
+            toolCallingChatOptions.setInternalToolExecutionEnabled(internalToolExecutionEnabled);
             return toolCallingChatOptions;
         }
         return chatOptions;

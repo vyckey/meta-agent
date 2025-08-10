@@ -22,7 +22,7 @@
  * SOFTWARE.
  */
 
-package org.metaagent.framework.core.agent.chat.media;
+package org.metaagent.framework.core.common.media;
 
 import org.springframework.util.MimeType;
 

@@ -22,50 +22,37 @@
  * SOFTWARE.
  */
 
-package org.metaagent.framework.core.agents.chat;
+package org.metaagent.framework.core.tool.toolkit;
 
-import org.metaagent.framework.core.agent.chat.message.Message;
-import org.metaagent.framework.core.agent.output.AgentOutput;
-import org.metaagent.framework.core.common.metadata.MetadataProvider;
+import com.google.common.collect.Maps;
+import org.metaagent.framework.core.tool.Tool;
 
-import java.util.List;
+import java.util.Map;
+import java.util.ServiceLoader;
 
 /**
- * {@link ChatAgent} output  interface.
+ * Service Provider Interface (SPI) toolkit.
  *
  * @author vyckey
  */
-public interface AgentChatOutput extends AgentOutput {
-    /**
-     * Builder for {@link AgentChatOutput}.
-     *
-     * @return a builder
-     */
-    static DefaultAgentChatOutput.Builder builder() {
-        return DefaultAgentChatOutput.builder();
+public final class SpiToolkit extends ImmutableToolkit {
+    public static final String NAME = "SPI_TOOLKIT";
+    public static final SpiToolkit INSTANCE = new SpiToolkit();
+
+    private SpiToolkit() {
+        super(NAME, "Toolkit loaded from SPI", loadTools());
     }
 
-    /**
-     * Gets output messages.
-     *
-     * @return output messages
-     */
-    List<Message> messages();
-
-    /**
-     * Gets the first output message.
-     *
-     * @return the first output message
-     */
-    default Message message() {
-        return messages().isEmpty() ? null : messages().get(0);
+    private static Map<String, Tool<?, ?>> loadTools() {
+        Map<String, Tool<?, ?>> toolMap = Maps.newHashMap();
+        for (Tool<?, ?> tool : ServiceLoader.load(Tool.class)) {
+            toolMap.put(tool.getName(), tool);
+        }
+        return toolMap;
     }
 
-    /**
-     * Gets output metadata.
-     *
-     * @return output metadata
-     */
-    MetadataProvider metadata();
+    public static <I, O> Tool<I, O> findTool(String name) {
+        return INSTANCE.getTool(name);
+    }
 
 }

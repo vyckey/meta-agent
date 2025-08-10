@@ -22,50 +22,41 @@
  * SOFTWARE.
  */
 
-package org.metaagent.framework.core.tool.manager;
+package org.metaagent.framework.core.tool.listener;
 
-import com.google.common.collect.Lists;
 import lombok.extern.slf4j.Slf4j;
 import org.metaagent.framework.core.tool.Tool;
+import org.metaagent.framework.core.tool.ToolExecutionException;
+import org.metaagent.framework.core.tool.schema.ToolDisplayable;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
-import java.util.List;
-
-/**
- * description is here
- *
- * @author vyckey
- */
 @Slf4j
-public abstract class AbstractToolManager implements ToolManager {
-    protected final List<ToolChangeListener> listeners = Lists.newArrayList();
+public class ToolExecuteDisplayListener implements ToolExecuteListener {
+    private static final Logger logger = LoggerFactory.getLogger("Tool");
+    public static final ToolExecuteDisplayListener INSTANCE = new ToolExecuteDisplayListener();
 
-    @Override
-    public boolean hasTool(String name) {
-        return getTool(name) != null;
+    private ToolExecuteDisplayListener() {
     }
 
     @Override
-    public void removeTool(Tool<?, ?> tool) {
-        removeTool(tool.getName());
-    }
-
-    @Override
-    public void addChangeListener(ToolChangeListener listener) {
-        listeners.add(listener);
-    }
-
-    @Override
-    public void removeChangeListener(ToolChangeListener listener) {
-        listeners.remove(listener);
-    }
-
-    protected void notifyChangeListeners(Tool<?, ?> tool, ToolChangeListener.EventType eventType) {
-        for (ToolChangeListener listener : listeners) {
-            try {
-                listener.onToolChange(tool, eventType);
-            } catch (Exception e) {
-                log.error("Failed to notify tool change listener", e);
-            }
+    public <I> void onToolInput(Tool<I, ?> tool, I input) {
+        if (input instanceof ToolDisplayable) {
+            String display = ((ToolDisplayable) input).display();
+            logger.info("Tool [{}] Input > {}", tool.getName(), display);
         }
+    }
+
+    @Override
+    public <I, O> void onToolOutput(Tool<I, O> tool, I input, O output) {
+        if (input instanceof ToolDisplayable) {
+            String inputDisplay = ((ToolDisplayable) input).display();
+            logger.info("Tool [{}] Output > {}", tool.getName(), inputDisplay);
+        }
+    }
+
+    @Override
+    public <I> void onToolException(Tool<I, ?> tool, I input, ToolExecutionException exception) {
+        logger.error("Tool [{}] Exception > {}", tool.getName(), exception.getMessage(), exception);
     }
 }

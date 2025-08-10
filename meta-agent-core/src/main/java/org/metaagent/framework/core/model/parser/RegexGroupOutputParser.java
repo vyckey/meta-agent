@@ -36,7 +36,7 @@ import java.util.regex.Pattern;
  *
  * @author vyckey
  */
-public final class RegexGroupOutputParser implements OutputParser<String, RegexGroupOutputParser.GroupResult> {
+public final class RegexGroupOutputParser implements StringOutputParser<RegexGroupOutputParser.GroupResult> {
     private final Pattern pattern;
     private final String[] groupNames;
 
@@ -47,6 +47,14 @@ public final class RegexGroupOutputParser implements OutputParser<String, RegexG
 
     public RegexGroupOutputParser(String regex, String... groupNames) {
         this(Pattern.compile(regex), groupNames);
+    }
+
+    public Pattern getPattern() {
+        return pattern;
+    }
+
+    public String[] getGroupNames() {
+        return groupNames;
     }
 
     @Override

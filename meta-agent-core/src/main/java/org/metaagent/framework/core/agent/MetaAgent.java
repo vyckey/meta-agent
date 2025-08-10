@@ -122,7 +122,7 @@ public interface MetaAgent<
      * @return the agent out.
      */
     default CompletableFuture<AgentOutput> runAsync(AgentInput input) {
-        return CompletableFuture.supplyAsync(() -> run(input), input.getContext().getExecutor());
+        return CompletableFuture.supplyAsync(() -> run(input), input.context().getExecutor());
     }
 
     /**

@@ -27,7 +27,7 @@ package org.metaagent.framework.agents.search;
 import org.metaagent.framework.core.agent.AgentExecutionContext;
 import org.metaagent.framework.core.agent.input.AbstractAgentInput;
 import org.metaagent.framework.core.agent.input.AgentInput;
-import org.metaagent.framework.core.common.metadata.MapMetadataProvider;
+import org.metaagent.framework.core.common.metadata.MetadataProvider;
 
 import java.util.Objects;
 
@@ -46,11 +46,6 @@ public record SearchAgentInput(
 
     public static SearchAgentInput from(String query) {
         return SearchAgentInput.builder().query(query).build();
-    }
-
-    @Override
-    public AgentExecutionContext getContext() {
-        return context;
     }
 
     public static Builder builder() {
@@ -102,7 +97,7 @@ public record SearchAgentInput(
                 context = AgentExecutionContext.create();
             }
             if (metadata == null) {
-                metadata = new MapMetadataProvider();
+                metadata = MetadataProvider.empty();
             }
             return new SearchAgentInput(context, query, queryContext, forceSearch, detailIncluded);
         }

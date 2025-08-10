@@ -24,6 +24,8 @@
 
 package org.metaagent.framework.core.model.parser;
 
+import org.metaagent.framework.core.converter.Converter;
+
 /**
  * Interface for parsing the output of an agent into a specific type.
  *
@@ -31,7 +33,8 @@ package org.metaagent.framework.core.model.parser;
  * @param <T> the type to parse the output into
  * @author vyckey
  */
-public interface OutputParser<O, T> {
+@FunctionalInterface
+public interface OutputParser<O, T> extends Converter<O, T> {
 
     /**
      * Parses the output of an agent into a specific type.
@@ -41,4 +44,16 @@ public interface OutputParser<O, T> {
      * @throws OutputParsingException if parsing fails
      */
     T parse(O output) throws OutputParsingException;
+
+    /**
+     * Default implementation of the convert method, which calls the parse method.
+     *
+     * @param source the source output to convert
+     * @return the converted output
+     * @throws OutputParsingException if parsing fails
+     */
+    @Override
+    default T convert(O source) throws OutputParsingException {
+        return parse(source);
+    }
 }

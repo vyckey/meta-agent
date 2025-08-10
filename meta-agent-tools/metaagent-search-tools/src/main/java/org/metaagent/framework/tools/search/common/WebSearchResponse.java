@@ -25,6 +25,7 @@
 package org.metaagent.framework.tools.search.common;
 
 import lombok.Builder;
+import org.metaagent.framework.core.tool.schema.ToolDisplayable;
 
 import java.util.List;
 
@@ -37,5 +38,10 @@ import java.util.List;
 public record WebSearchResponse(
         WebSearchInformation searchInfo,
         List<WebSearchResult> searchResults
-) {
+) implements ToolDisplayable {
+
+    @Override
+    public String display() {
+        return "Web search returned " + searchResults.size() + " results";
+    }
 }

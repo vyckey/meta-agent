@@ -24,42 +24,64 @@
 
 package org.metaagent.framework.core.agent.chat.message;
 
-import lombok.Getter;
-import org.metaagent.framework.core.agent.chat.media.MediaResource;
+import org.metaagent.framework.core.common.media.MediaResource;
 
 import java.util.List;
-import java.util.Objects;
 
 /**
- * RoleMessage is a message that contains role, content and media resources.
+ * A message that has a role associated with it, such as "user" or "assistant".
  *
  * @author vyckey
  */
-@Getter
-public class RoleMessage extends AbstractMessage {
-    public static final String ROLE_USER = "user";
-    public static final String ROLE_ASSISTANT = "assistant";
+public interface RoleMessage extends Message {
+    String ROLE_USER = "user";
+    String ROLE_ASSISTANT = "assistant";
 
-    private final String role;
-    private final String content;
-    private final List<MediaResource> media;
-
-    public RoleMessage(String role, String content, List<MediaResource> media) {
-        this.role = Objects.requireNonNull(role, "role is required");
-        this.content = Objects.requireNonNull(content, "content is required");
-        this.media = Objects.requireNonNull(media, "media is required");
+    /**
+     * Creates a new RoleMessage with the specified role, content, and media resources.
+     *
+     * @param role    the role of the message
+     * @param content the content of the message
+     * @param media   optional media resources associated with the message
+     * @return a new RoleMessage instance
+     */
+    static RoleMessage create(String role, String content, MediaResource... media) {
+        return new DefaultRoleMessage(role, content, List.of(media));
     }
 
-    public static RoleMessage create(String role, String content, MediaResource... media) {
-        return new RoleMessage(role, content, List.of(media));
+    /**
+     * Creates a new RoleMessage with the user role.
+     *
+     * @param content the content of the message
+     * @param media   optional media resources associated with the message
+     * @return a new RoleMessage instance with the user role
+     */
+    static RoleMessage user(String content, MediaResource... media) {
+        return new UserMessage(content, List.of(media));
     }
 
-    public static RoleMessage user(String content, MediaResource... media) {
-        return new RoleMessage(RoleMessage.ROLE_USER, content, List.of(media));
+    /**
+     * Creates a new RoleMessage with the assistant role.
+     *
+     * @param content the content of the message
+     * @param media   optional media resources associated with the message
+     * @return a new RoleMessage instance with the assistant role
+     */
+    static AssistantMessage assistant(String content, MediaResource... media) {
+        return new AssistantMessage(content, List.of(media));
     }
 
-    public static RoleMessage assistant(String content, MediaResource... media) {
-        return new RoleMessage(RoleMessage.ROLE_ASSISTANT, content, List.of(media));
-    }
+    /**
+     * Get the role of the message.
+     *
+     * @return the role of the message
+     */
+    String getRole();
 
+    /**
+     * Get the media resources associated with the message.
+     *
+     * @return a list of media resources
+     */
+    List<MediaResource> getMedia();
 }

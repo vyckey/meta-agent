@@ -22,26 +22,40 @@
  * SOFTWARE.
  */
 
-package org.metaagent.framework.agents.coordinator;
+package org.metaagent.framework.core.agent.chat.message;
 
-import com.google.common.collect.Lists;
+import lombok.EqualsAndHashCode;
 import lombok.Getter;
-import org.metaagent.framework.core.agent.output.AgentOutput;
+import org.metaagent.framework.core.common.media.MediaResource;
+import org.metaagent.framework.core.common.metadata.MetadataProvider;
 
 import java.util.List;
+import java.util.Objects;
 
+/**
+ * A message from the assistant role.
+ *
+ * @author vyckey
+ */
 @Getter
-public class TaskAssignOutput implements AgentOutput {
-    private final List<TaskAssignment> assignments = Lists.newArrayList();
+@EqualsAndHashCode(callSuper = true)
+public class AssistantMessage extends DefaultRoleMessage {
+    private final List<ToolCall> toolCalls;
 
-    @Getter
-    public static class TaskAssignment {
-        private final String taskId;
-        private final String assignee;
+    public AssistantMessage(String content, List<MediaResource> media, List<ToolCall> toolCalls, MetadataProvider metadata) {
+        super(RoleMessage.ROLE_ASSISTANT, content, media);
+        this.toolCalls = Objects.requireNonNull(toolCalls, "toolCalls is required");
+        this.metadata = metadata;
+    }
 
-        public TaskAssignment(String taskId, String assignee) {
-            this.taskId = taskId;
-            this.assignee = assignee;
-        }
+    public AssistantMessage(String content, List<MediaResource> media, List<ToolCall> toolCalls) {
+        this(content, media, toolCalls, MetadataProvider.create());
+    }
+
+    public AssistantMessage(String content, List<MediaResource> media) {
+        this(content, media, List.of());
+    }
+
+    public record ToolCall(String id, String type, String name, String arguments) {
     }
 }

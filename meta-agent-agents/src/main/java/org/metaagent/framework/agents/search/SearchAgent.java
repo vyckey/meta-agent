@@ -27,7 +27,6 @@ package org.metaagent.framework.agents.search;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.metaagent.framework.core.agent.AbstractAgent;
-import org.metaagent.framework.core.agent.AgentExecutionContext;
 import org.metaagent.framework.core.agent.fallback.AgentFallbackStrategy;
 import org.metaagent.framework.core.agent.fallback.RetryAgentFallbackStrategy;
 import org.metaagent.framework.core.model.chat.ChatModelUtils;
@@ -91,9 +90,8 @@ public class SearchAgent extends AbstractAgent<SearchAgentInput, SearchAgentOutp
     }
 
     protected Prompt buildPrompt(SearchAgentInput agentInput) {
-        AgentExecutionContext context = agentInput.getContext();
         ChatOptions options = ToolCallbackUtils.buildChatOptionsWithTools(this.chatOptions,
-                buildToolContext(agentInput), context.getToolExecutor());
+                buildToolContext(agentInput), true);
 
         PromptTemplate promptTemplate = PromptRegistry.global().getPromptTemplate("framework:search_agent_system_prompt");
         PromptValue promptValue = promptTemplate.format(Map.of(

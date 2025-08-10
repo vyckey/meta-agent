@@ -84,8 +84,9 @@ public class ConfigurationMetadataProvider implements MetadataProvider {
     }
 
     @Override
-    public void setProperty(String key, Object value) {
+    public MetadataProvider setProperty(String key, Object value) {
         configuration.setProperty(key, value);
+        return this;
     }
 
     @Override

@@ -188,7 +188,7 @@ public abstract class AbstractMetaAgent<
     protected abstract AgentOutput doStep(AgentInput input);
 
     protected ToolContext buildToolContext(AgentInput input) {
-        AgentExecutionContext context = input.getContext();
+        AgentExecutionContext context = input.context();
         return ToolContext.builder()
                 .toolManager(context.getToolManager())
                 .toolCallTracker(agentState.getToolCallTracker())

@@ -28,16 +28,61 @@ import java.util.List;
 import java.util.function.Predicate;
 
 /**
- * description is here
+ * Interface for tracking tool calls.
  *
  * @author vyckey
  */
 public interface ToolCallTracker {
+    /**
+     * Returns an empty implementation of ToolCallTracker.
+     *
+     * @return an empty ToolCallTracker
+     */
+    static ToolCallTracker empty() {
+        return EmptyToolCallTracker.INSTANCE;
+    }
+
+    /**
+     * Creates a new instance of ToolCallTracker.
+     *
+     * @return a new ToolCallTracker instance
+     */
+    static ToolCallTracker create() {
+        return new DefaultToolCallTracker();
+    }
+
+    /**
+     * Tracks a tool call record.
+     *
+     * @param record the tool call record to track
+     */
     void track(ToolCallRecord record);
 
+    /**
+     * Finds tool call records that match the given predicate.
+     *
+     * @param predicate the predicate to filter records
+     * @return a list of matching tool call records
+     */
     List<ToolCallRecord> find(Predicate<ToolCallRecord> predicate);
 
+    /**
+     * Finds tool call records by tool name.
+     *
+     * @param toolName the name of the tool to search for
+     * @return a list of tool call records matching the tool name
+     */
     List<ToolCallRecord> findByToolName(String toolName);
 
+    /**
+     * Merges another ToolCallTracker into this one.
+     *
+     * @param other the ToolCallTracker to merge
+     */
+    void merge(ToolCallTracker other);
+
+    /**
+     * Clears all tracked tool call records.
+     */
     void clear();
 }

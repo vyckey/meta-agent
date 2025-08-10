@@ -22,44 +22,38 @@
  * SOFTWARE.
  */
 
-package org.metaagent.framework.core.agents.chat;
+package org.metaagent.framework.core.tool.container;
 
-import org.metaagent.framework.core.agent.chat.message.Message;
-import org.metaagent.framework.core.agent.input.AgentInput;
-import org.metaagent.framework.core.common.metadata.MetadataProvider;
-
-import java.util.List;
+import org.metaagent.framework.core.tool.Tool;
 
 /**
- * {@link ChatAgent} input interface.
+ * An immutable tool container.
  *
  * @author vyckey
  */
-public interface AgentChatInput extends AgentInput {
-    String OPTION_SEARCH_ENABLED = "searchEnabled";
-    String OPTION_DEEP_THINK_ENABLED = "deepThinkEnabled";
-
-    /**
-     * Builder for {@link AgentChatInput}.
-     *
-     * @return builder
-     */
-    static DefaultAgentChatInput.Builder builder() {
-        return DefaultAgentChatInput.builder();
+public interface ImmutableToolContainer extends ToolContainer {
+    @Override
+    default void addTool(Tool<?, ?> tool) {
+        throw new UnsupportedOperationException("Not support adding tool.");
     }
 
-    /**
-     * Messages to be processed by the agent.
-     *
-     * @return messages
-     */
-    List<Message> messages();
+    @Override
+    default void addTools(Tool<?, ?>... tools) {
+        throw new UnsupportedOperationException("Not support adding tools.");
+    }
 
-    /**
-     * Metadata for the agent.
-     *
-     * @return metadata
-     */
-    MetadataProvider metadata();
+    @Override
+    default void removeTool(String name) {
+        throw new UnsupportedOperationException("Not support removing tools.");
+    }
 
+    @Override
+    default void removeTool(Tool<?, ?> tool) {
+        throw new UnsupportedOperationException("Not support removing tools.");
+    }
+
+    @Override
+    default void removeAll() {
+        throw new UnsupportedOperationException("Not support removing tools.");
+    }
 }

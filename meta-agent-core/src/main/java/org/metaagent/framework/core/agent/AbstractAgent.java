@@ -26,6 +26,7 @@ package org.metaagent.framework.core.agent;
 
 import org.metaagent.framework.core.agent.loop.AgentLoopControlStrategy;
 import org.metaagent.framework.core.agent.loop.MaxLoopCountAgentLoopControl;
+import org.metaagent.framework.core.tool.manager.ToolManager;
 
 /**
  * Abstract {@link Agent} implementation.
@@ -36,8 +37,15 @@ public abstract class AbstractAgent<
         AgentInput extends org.metaagent.framework.core.agent.input.AgentInput,
         AgentOutput extends org.metaagent.framework.core.agent.output.AgentOutput>
         extends AbstractMetaAgent<AgentInput, AgentOutput> implements Agent<AgentInput, AgentOutput> {
+    protected ToolManager toolManager = ToolManager.create();
+
     protected AbstractAgent(String name) {
         super(name);
+    }
+
+    @Override
+    public ToolManager getToolManager() {
+        return toolManager;
     }
 
     @Override

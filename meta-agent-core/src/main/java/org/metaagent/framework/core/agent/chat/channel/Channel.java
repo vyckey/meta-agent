@@ -24,9 +24,9 @@
 
 package org.metaagent.framework.core.agent.chat.channel;
 
-import org.metaagent.framework.core.agent.chat.message.Message;
-import org.metaagent.framework.core.agent.chat.message.history.MessageHistory;
 import org.metaagent.framework.core.agent.chat.message.MessageListener;
+import org.metaagent.framework.core.agent.chat.message.RoleMessage;
+import org.metaagent.framework.core.agent.chat.message.history.MessageHistory;
 
 import java.io.Closeable;
 import java.io.IOException;
@@ -45,9 +45,9 @@ public interface Channel extends Closeable {
     @Override
     void close() throws IOException;
 
-    void send(Message message);
+    void send(RoleMessage message);
 
-    CompletableFuture<Void> sendAsync(Message message);
+    CompletableFuture<Void> sendAsync(RoleMessage message);
 
     void receive(MessageListener messageListener);
 
