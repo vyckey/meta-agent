@@ -69,7 +69,7 @@ public abstract class AbstractReActAgent<
 
     @Override
     public ActionResult act(AgentInput input, Action action) {
-        AgentExecutionContext context = input.getContext();
+        AgentExecutionContext context = input.context();
         DefaultActionExecutionContext executionContext = DefaultActionExecutionContext.builder()
                 .environment(context.getEnvironment())
                 .toolManager(context.getToolManager())

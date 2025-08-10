@@ -29,7 +29,7 @@ import org.metaagent.framework.core.agent.AgentExecutionContext;
 import org.metaagent.framework.core.agent.input.AbstractAgentInput;
 import org.metaagent.framework.core.agent.input.AgentInput;
 import org.metaagent.framework.core.agent.task.Task;
-import org.metaagent.framework.core.common.metadata.MapMetadataProvider;
+import org.metaagent.framework.core.common.metadata.MetadataProvider;
 
 import java.util.Objects;
 
@@ -81,7 +81,7 @@ public class TaskDecomposeInput extends AbstractAgentInput implements AgentInput
                 context = AgentExecutionContext.create();
             }
             if (metadata == null) {
-                metadata = new MapMetadataProvider();
+                metadata = MetadataProvider.empty();
             }
             return new TaskDecomposeInput(this);
         }

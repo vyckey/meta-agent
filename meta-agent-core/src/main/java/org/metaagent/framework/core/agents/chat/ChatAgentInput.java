@@ -25,47 +25,47 @@
 package org.metaagent.framework.core.agents.chat;
 
 import org.metaagent.framework.core.agent.chat.message.Message;
-import org.metaagent.framework.core.agent.output.AgentOutput;
-import org.metaagent.framework.core.common.metadata.MetadataProvider;
+import org.metaagent.framework.core.agent.input.AgentInput;
 
 import java.util.List;
 
 /**
- * {@link ChatAgent} output  interface.
+ * {@link ChatAgent} input interface.
  *
  * @author vyckey
  */
-public interface AgentChatOutput extends AgentOutput {
+public interface ChatAgentInput extends AgentInput {
+    String OPTION_SEARCH_ENABLED = "searchEnabled";
+    String OPTION_DEEP_THINK_ENABLED = "deepThinkEnabled";
+
     /**
-     * Builder for {@link AgentChatOutput}.
+     * Builder for {@link ChatAgentInput}.
      *
-     * @return a builder
+     * @return builder
      */
-    static DefaultAgentChatOutput.Builder builder() {
-        return DefaultAgentChatOutput.builder();
+    static Builder builder() {
+        return DefaultChatAgentInput.builder();
     }
 
     /**
-     * Gets output messages.
+     * Messages to be processed by the agent.
      *
-     * @return output messages
+     * @return messages
      */
     List<Message> messages();
 
     /**
-     * Gets the first output message.
-     *
-     * @return the first output message
+     * Builder class for {@link ChatAgentInput}
      */
-    default Message message() {
-        return messages().isEmpty() ? null : messages().get(0);
+    interface Builder extends AgentInput.Builder<Builder> {
+
+        Builder messages(List<Message> messages);
+
+        Builder messages(Message... messages);
+
+        Builder withOption(String key, Object value);
+
+        @Override
+        ChatAgentInput build();
     }
-
-    /**
-     * Gets output metadata.
-     *
-     * @return output metadata
-     */
-    MetadataProvider metadata();
-
 }

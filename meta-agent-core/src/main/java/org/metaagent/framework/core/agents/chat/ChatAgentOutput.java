@@ -25,46 +25,46 @@
 package org.metaagent.framework.core.agents.chat;
 
 import org.metaagent.framework.core.agent.chat.message.Message;
-import org.metaagent.framework.core.common.metadata.MapMetadataProvider;
-import org.metaagent.framework.core.common.metadata.MetadataProvider;
+import org.metaagent.framework.core.agent.output.AgentOutput;
 
 import java.util.List;
 
-public record DefaultAgentChatOutput(
-        List<Message> messages,
-        MetadataProvider metadata) implements AgentChatOutput {
-
-    public static Builder builder() {
-        return new Builder();
+/**
+ * {@link ChatAgent} output interface.
+ *
+ * @author vyckey
+ */
+public interface ChatAgentOutput extends AgentOutput {
+    /**
+     * Builder for {@link ChatAgentOutput}.
+     *
+     * @return a builder
+     */
+    static DefaultChatAgentOutput.Builder builder() {
+        return DefaultChatAgentOutput.builder();
     }
 
-    public static class Builder {
-        private List<Message> messages;
-        private MetadataProvider metadata;
+    /**
+     * Gets output messages.
+     *
+     * @return output messages
+     */
+    List<Message> messages();
 
-        public Builder messages(List<Message> messages) {
-            this.messages = messages;
-            return this;
-        }
-
-        public Builder messages(Message... messages) {
-            this.messages = List.of(messages);
-            return this;
-        }
-
-        public Builder metadata(MetadataProvider metadata) {
-            this.metadata = metadata;
-            return this;
-        }
-
-        public DefaultAgentChatOutput build() {
-            if (messages == null) {
-                messages = List.of();
-            }
-            if (metadata == null) {
-                metadata = new MapMetadataProvider();
-            }
-            return new DefaultAgentChatOutput(messages, metadata);
-        }
+    /**
+     * Gets the first output message.
+     *
+     * @return the first output message
+     */
+    default Message message() {
+        return messages().isEmpty() ? null : messages().get(0);
     }
+
+    /**
+     * Gets the thought process.
+     *
+     * @return the thought process
+     */
+    String thoughtProcess();
+
 }

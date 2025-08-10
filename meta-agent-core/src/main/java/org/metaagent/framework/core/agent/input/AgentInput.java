@@ -38,25 +38,42 @@ public interface AgentInput {
      *
      * @return the AgentExecutionContext associated with this input
      */
-    AgentExecutionContext getContext();
+    AgentExecutionContext context();
 
     /**
      * Gets the metadata of agent input.
      *
      * @return the metadata.
      */
-    default MetadataProvider getMetadata() {
+    default MetadataProvider metadata() {
         return MetadataProvider.empty();
     }
 
     /**
      * Builder class for AgentInput.
      */
-    interface Builder {
-        Builder context(AgentExecutionContext context);
+    interface Builder<B extends Builder<B>> {
+        /**
+         * Sets the context of the agent execution.
+         *
+         * @param context the AgentExecutionContext associated with this input
+         * @return the builder
+         */
+        B context(AgentExecutionContext context);
 
-        Builder metadata(MetadataProvider metadata);
+        /**
+         * Sets the metadata of agent input.
+         *
+         * @param metadata the metadata.
+         * @return the builder
+         */
+        B metadata(MetadataProvider metadata);
 
+        /**
+         * Builds an AgentInput instance.
+         *
+         * @return the AgentInput instance
+         */
         AgentInput build();
     }
 }

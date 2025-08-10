@@ -95,8 +95,9 @@ public interface MetadataProvider {
      *
      * @param key   the metadata key.
      * @param value the metadata value.
+     * @return the metadata self.
      */
-    void setProperty(String key, Object value);
+    MetadataProvider setProperty(String key, Object value);
 
     /**
      * Removes metadata by key.

@@ -53,7 +53,7 @@ public class EmptyMetadataProvider implements MetadataProvider {
     }
 
     @Override
-    public void setProperty(String key, Object value) {
+    public MetadataProvider setProperty(String key, Object value) {
         throw new UnsupportedOperationException("Not supported operation for empty metadata");
     }
 

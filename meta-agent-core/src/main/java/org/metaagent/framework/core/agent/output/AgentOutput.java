@@ -24,10 +24,20 @@
 
 package org.metaagent.framework.core.agent.output;
 
+import org.metaagent.framework.core.common.metadata.MetadataProvider;
+
 /**
- * description is here
+ * AgentOutput is an interface that represents the output for an agent.
  *
  * @author vyckey
  */
 public interface AgentOutput {
+    /**
+     * Gets agent output metadata.
+     *
+     * @return output metadata.
+     */
+    default MetadataProvider metadata() {
+        return MetadataProvider.empty();
+    }
 }

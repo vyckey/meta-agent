@@ -25,41 +25,52 @@
 package org.metaagent.framework.core.agents.chat;
 
 import org.metaagent.framework.core.agent.chat.message.Message;
-import org.metaagent.framework.core.agent.input.AgentInput;
 import org.metaagent.framework.core.common.metadata.MetadataProvider;
 
 import java.util.List;
 
-/**
- * {@link ChatAgent} input interface.
- *
- * @author vyckey
- */
-public interface AgentChatInput extends AgentInput {
-    String OPTION_SEARCH_ENABLED = "searchEnabled";
-    String OPTION_DEEP_THINK_ENABLED = "deepThinkEnabled";
+public record DefaultChatAgentOutput(
+        List<Message> messages,
+        String thoughtProcess,
+        MetadataProvider metadata) implements ChatAgentOutput {
 
-    /**
-     * Builder for {@link AgentChatInput}.
-     *
-     * @return builder
-     */
-    static DefaultAgentChatInput.Builder builder() {
-        return DefaultAgentChatInput.builder();
+    public static Builder builder() {
+        return new Builder();
     }
 
-    /**
-     * Messages to be processed by the agent.
-     *
-     * @return messages
-     */
-    List<Message> messages();
+    public static class Builder {
+        private List<Message> messages;
+        private String thoughtProcess;
+        private MetadataProvider metadata;
 
-    /**
-     * Metadata for the agent.
-     *
-     * @return metadata
-     */
-    MetadataProvider metadata();
+        public Builder messages(List<Message> messages) {
+            this.messages = messages;
+            return this;
+        }
 
+        public Builder messages(Message... messages) {
+            this.messages = List.of(messages);
+            return this;
+        }
+
+        public Builder thoughtProcess(String thoughtProcess) {
+            this.thoughtProcess = thoughtProcess;
+            return this;
+        }
+
+        public Builder metadata(MetadataProvider metadata) {
+            this.metadata = metadata;
+            return this;
+        }
+
+        public DefaultChatAgentOutput build() {
+            if (messages == null) {
+                messages = List.of();
+            }
+            if (metadata == null) {
+                metadata = MetadataProvider.empty();
+            }
+            return new DefaultChatAgentOutput(messages, thoughtProcess, metadata);
+        }
+    }
 }

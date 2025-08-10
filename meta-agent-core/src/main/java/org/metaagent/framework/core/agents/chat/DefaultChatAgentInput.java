@@ -24,6 +24,7 @@
 
 package org.metaagent.framework.core.agents.chat;
 
+import org.apache.commons.collections.CollectionUtils;
 import org.metaagent.framework.core.agent.AgentExecutionContext;
 import org.metaagent.framework.core.agent.chat.message.Message;
 import org.metaagent.framework.core.agent.input.AbstractAgentInput;
@@ -34,25 +35,21 @@ import java.util.List;
 import java.util.Objects;
 
 /**
- * Default implementation of {@link AgentChatInput}.
+ * Default implementation of {@link ChatAgentInput}.
  *
  * @author vyckey
  */
-public record DefaultAgentChatInput(
+public record DefaultChatAgentInput(
         AgentExecutionContext context,
         List<Message> messages,
-        MetadataProvider metadata) implements AgentChatInput {
+        MetadataProvider metadata) implements ChatAgentInput {
 
     public static Builder builder() {
         return new Builder();
     }
 
-    @Override
-    public AgentExecutionContext getContext() {
-        return context;
-    }
-
-    public static class Builder extends AbstractAgentInput.Builder<Builder> {
+    public static class Builder extends AbstractAgentInput.Builder<ChatAgentInput.Builder>
+            implements ChatAgentInput.Builder {
         private List<Message> messages;
         private MetadataProvider metadata = new MapMetadataProvider();
 
@@ -66,33 +63,33 @@ public record DefaultAgentChatInput(
             return this;
         }
 
+        @Override
         public Builder messages(Message... messages) {
             this.messages = List.of(messages);
             return this;
         }
 
-        public Builder deepThinkEnabled(boolean deepThinkEnabled) {
-            this.metadata.setProperty(AgentChatInput.OPTION_DEEP_THINK_ENABLED, deepThinkEnabled);
-            return this;
-        }
-
-        public Builder searchEnabled(boolean searchEnabled) {
-            this.metadata.setProperty(AgentChatInput.OPTION_SEARCH_ENABLED, searchEnabled);
+        @Override
+        public ChatAgentInput.Builder withOption(String key, Object value) {
+            if (metadata == null) {
+                metadata = MetadataProvider.create();
+            }
+            metadata.setProperty(key, value);
             return this;
         }
 
         @Override
-        public DefaultAgentChatInput build() {
+        public DefaultChatAgentInput build() {
             if (context == null) {
                 context = AgentExecutionContext.create();
             }
             if (metadata == null) {
-                metadata = new MapMetadataProvider();
+                metadata = MetadataProvider.empty();
             }
-            if (messages == null) {
-                messages = List.of();
+            if (CollectionUtils.isEmpty(messages)) {
+                throw new IllegalArgumentException("At least one message needs to be provided");
             }
-            return new DefaultAgentChatInput(context, messages, metadata);
+            return new DefaultChatAgentInput(context, messages, metadata);
         }
     }
 

@@ -112,7 +112,7 @@ public class DefaultAgentExecutionContext implements AgentExecutionContext {
                 this.toolManager = new DefaultToolManager();
             }
             if (toolExecutor == null) {
-                this.toolExecutor = DefaultToolExecutor.getInstance();
+                this.toolExecutor = DefaultToolExecutor.INSTANCE;
             }
             if (actionExecutor == null) {
                 actionExecutor = SyncActionExecutor.INSTANCE;

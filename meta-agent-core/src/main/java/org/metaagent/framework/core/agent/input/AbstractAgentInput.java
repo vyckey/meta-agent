@@ -36,7 +36,7 @@ import java.util.Objects;
  */
 public class AbstractAgentInput implements AgentInput {
     protected AgentExecutionContext context;
-    protected MetadataProvider metadata;
+    protected MetadataProvider metadata = MetadataProvider.empty();
 
     protected AbstractAgentInput(AgentExecutionContext context) {
         this.context = Objects.requireNonNull(context, "context is required");
@@ -48,11 +48,16 @@ public class AbstractAgentInput implements AgentInput {
     }
 
     @Override
-    public AgentExecutionContext getContext() {
+    public AgentExecutionContext context() {
         return context;
     }
 
-    public static abstract class Builder<B extends Builder<B>> implements AgentInput.Builder {
+    @Override
+    public MetadataProvider metadata() {
+        return metadata;
+    }
+
+    public static abstract class Builder<B extends AgentInput.Builder<B>> implements AgentInput.Builder<B> {
         protected AgentExecutionContext context;
         protected MetadataProvider metadata;
 
