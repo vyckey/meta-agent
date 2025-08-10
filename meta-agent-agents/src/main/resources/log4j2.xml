@@ -17,6 +17,12 @@
         <File name="AGENT_FILE" fileName="logs/agent.log">
             <PatternLayout pattern="[%d{yyyy-MM-dd HH:mm:ss}] [%-5level] [%t] [%c{1.1.1.*}][%M#L%L] %msg%n"/>
         </File>
+        <Console name="TOOL_CONSOLE" target="SYSTEM_OUT">
+            <PatternLayout pattern="%highlight{%msg%n}"/>
+        </Console>
+        <File name="TOOL_FILE" fileName="logs/tool.log">
+            <PatternLayout pattern="[%d{yyyy-MM-dd HH:mm:ss}] [%-5level] [%t] [%c{1.1.1.*}][%M#L%L] %msg%n"/>
+        </File>
     </Appenders>
     <Loggers>
         <Root level="INFO">
@@ -26,6 +32,10 @@
         <Logger name="Agent" level="DEBUG" additivity="false">
             <AppenderRef ref="AGENT_CONSOLE"/>
             <AppenderRef ref="AGENT_FILE"/>
+        </Logger>
+        <Logger name="Tool" level="DEBUG" additivity="false">
+            <AppenderRef ref="TOOL_CONSOLE"/>
+            <AppenderRef ref="TOOL_FILE"/>
         </Logger>
     </Loggers>
 </Configuration>

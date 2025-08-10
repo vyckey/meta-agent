@@ -27,9 +27,12 @@ package org.metaagent.framework.core.tool.manager;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
-import org.apache.commons.lang3.NotImplementedException;
 import org.metaagent.framework.core.tool.Tool;
+import org.metaagent.framework.core.tool.ToolContext;
+import org.metaagent.framework.core.tool.ToolExecutionException;
 import org.metaagent.framework.core.tool.container.ToolContainerImpl;
+import org.metaagent.framework.core.tool.converter.ToolConverter;
+import org.metaagent.framework.core.tool.definition.ToolDefinition;
 import org.metaagent.framework.core.tool.toolkit.Toolkit;
 
 import java.util.Collection;
@@ -102,12 +105,32 @@ public class DefaultToolManager extends ToolContainerImpl implements ToolManager
 
     @Override
     public void addTool(Tool<?, ?> tool) {
-        throw new UnsupportedOperationException("Unsupported operation for mixed tool manager.");
+        if (tools.containsKey(tool.getName())) {
+            throw new IllegalStateException("Tool with name '" + tool.getName() + "' already exists.");
+        }
+        for (ToolkitWrapper wrapper : toolkitMap.values()) {
+            if (wrapper.availableToolNames().contains(tool.getName())) {
+                throw new IllegalStateException("Tool with name '" + tool.getName() + "' already exists.");
+            }
+        }
+        this.tools.put(tool.getName(), tool);
+        notifyChangeListeners(tool, ToolChangeListener.EventType.ADDED);
     }
 
     @Override
     public void removeTool(String name) {
-        tools.remove(name);
+        if (tools.containsKey(name)) {
+            Tool<?, ?> removedTool = tools.remove(name);
+            notifyChangeListeners(removedTool, ToolChangeListener.EventType.REMOVED);
+        } else {
+            for (ToolkitWrapper wrapper : toolkitMap.values()) {
+                Tool<?, ?> removedTool = wrapper.removeTool(name);
+                if (removedTool != null) {
+                    notifyChangeListeners(removedTool, ToolChangeListener.EventType.REMOVED);
+                    return;
+                }
+            }
+        }
     }
 
     @Override
@@ -145,11 +168,7 @@ public class DefaultToolManager extends ToolContainerImpl implements ToolManager
             this(toolkit, toolNames, null);
         }
 
-        ToolkitWrapper(Toolkit toolkit) {
-            this(toolkit, null);
-        }
-
-        String getToolName(String namespace, String toolName) {
+        static String getToolName(String namespace, String toolName) {
             return namespace != null ? namespace + "." + toolName : toolName;
         }
 
@@ -162,12 +181,62 @@ public class DefaultToolManager extends ToolContainerImpl implements ToolManager
         }
 
         <I, O> Tool<I, O> getTool(String name) {
-            Tool<I, O> tool = toolkit.getTool(name);
-            if (tool != null && namespace != null) {
-                // create a tool proxy and modify getName
-                throw new NotImplementedException();
+            if (namespace != null) {
+                if (!name.startsWith(namespace)) {
+                    return null;
+                }
+                return toolkit.getTool(name.substring(namespace.length() + 1));
             }
-            return tool;
+            return toolkit.getTool(name);
+        }
+
+        Tool<?, ?> removeTool(String name) {
+            if (namespace != null) {
+                if (name.startsWith(namespace)) {
+                    name = name.substring(namespace.length() + 1);
+                }
+            }
+            if (toolkit.hasTool(name)) {
+                Tool<Object, Object> removedTool = toolkit.getTool(name);
+                toolkit.removeTool(name);
+                return namespace == null ? removedTool : new ToolWithNamespace<>(removedTool, namespace);
+            }
+            return null;
+        }
+    }
+
+    static class ToolWithNamespace<I, O> implements Tool<I, O> {
+        final Tool<I, O> tool;
+        final ToolDefinition definition;
+
+        ToolWithNamespace(Tool<I, O> tool, String namespace) {
+            this.tool = tool;
+            String toolName = ToolkitWrapper.getToolName(namespace, tool.getName());
+            this.definition = ToolDefinition.builder(toolName)
+                    .description(tool.getDefinition().description())
+                    .inputSchema(tool.getDefinition().inputSchema())
+                    .outputSchema(tool.getDefinition().outputSchema())
+                    .build();
+        }
+
+        @Override
+        public ToolDefinition getDefinition() {
+            return definition;
+        }
+
+        @Override
+        public ToolConverter<I, O> getConverter() {
+            return tool.getConverter();
+        }
+
+        @Override
+        public O run(ToolContext context, I input) throws ToolExecutionException {
+            return tool.run(context, input);
+        }
+
+        @Override
+        public String call(ToolContext context, String input) throws ToolExecutionException {
+            return tool.call(context, input);
         }
     }
 

@@ -64,7 +64,7 @@ public class DefaultToolExecutor implements ToolExecutor {
             ToolTrackerDelegate<I, O> delegate = new ToolTrackerDelegate<>(context.getToolCallTracker(), tool);
             O output = delegate.run(context, input);
 
-            notifyListeners(listenerRegistry, listener -> listener.onToolInput(tool, input));
+            notifyListeners(listenerRegistry, listener -> listener.onToolOutput(tool, input, output));
             return output;
         } catch (ToolExecutionException e) {
             notifyListeners(listenerRegistry, listener -> listener.onToolException(tool, input, e));

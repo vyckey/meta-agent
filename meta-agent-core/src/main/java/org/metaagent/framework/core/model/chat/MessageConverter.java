@@ -39,6 +39,7 @@ import org.springframework.ai.model.Media;
 
 import java.net.URI;
 import java.util.List;
+import java.util.Optional;
 
 /**
  * description is here
@@ -133,7 +134,8 @@ public class MessageConverter implements BiConverter<Message, org.springframewor
                         (org.springframework.ai.chat.messages.AssistantMessage) message;
                 List<MediaResource> media = assistantMessage.getMedia().stream().map(this::toMedia).toList();
                 MapMetadataProvider metadata = new MapMetadataProvider(assistantMessage.getMetadata());
-                return new AssistantMessage(message.getText(), media,
+                String content = Optional.ofNullable(message.getText()).orElse("");
+                return new AssistantMessage(content, media,
                         assistantMessage.getToolCalls().stream().map(toolCall ->
                                 new AssistantMessage.ToolCall(
                                         toolCall.id(), toolCall.type(), toolCall.name(), toolCall.arguments())

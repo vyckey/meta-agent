@@ -24,28 +24,25 @@
 
 package org.metaagent.framework.agents.chat;
 
-import com.google.common.collect.Lists;
 import org.metaagent.framework.core.agent.AbstractAgent;
-import org.metaagent.framework.core.agent.AgentExecutionContext;
-import org.metaagent.framework.core.agent.AgentExecutionException;
-import org.metaagent.framework.core.agent.chat.message.Message;
+import org.metaagent.framework.core.agent.chat.message.AssistantMessage;
+import org.metaagent.framework.core.agent.chat.message.SystemMessage;
 import org.metaagent.framework.core.agent.chat.message.history.DefaultMessageHistory;
 import org.metaagent.framework.core.agent.chat.message.history.MessageHistory;
-import org.metaagent.framework.core.agents.chat.AgentChatInput;
-import org.metaagent.framework.core.agents.chat.AgentChatOutput;
 import org.metaagent.framework.core.agents.chat.ChatAgent;
-import org.metaagent.framework.core.model.chat.MessageConverter;
-import org.metaagent.framework.core.tool.DefaultToolContext;
-import org.metaagent.framework.core.tool.spring.ToolCallbackUtils;
-import org.springframework.ai.chat.messages.AssistantMessage;
-import org.springframework.ai.chat.messages.ToolResponseMessage;
+import org.metaagent.framework.core.agents.chat.ChatAgentInput;
+import org.metaagent.framework.core.agents.chat.ChatAgentOutput;
+import org.metaagent.framework.core.model.parser.OutputParsers;
+import org.metaagent.framework.core.model.prompt.PromptTemplate;
+import org.metaagent.framework.core.model.prompt.PromptValue;
+import org.metaagent.framework.core.model.prompt.StringPromptTemplate;
+import org.metaagent.framework.core.model.prompt.registry.PromptRegistry;
+import org.metaagent.framework.core.tool.ToolContext;
 import org.springframework.ai.chat.model.ChatModel;
-import org.springframework.ai.chat.model.ChatResponse;
-import org.springframework.ai.chat.model.Generation;
-import org.springframework.ai.chat.prompt.ChatOptions;
-import org.springframework.ai.chat.prompt.Prompt;
 
-import java.util.List;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+import java.util.Map;
 import java.util.Objects;
 
 /**
@@ -53,17 +50,29 @@ import java.util.Objects;
  *
  * @author vyckey
  */
-public class LlmChatAgent extends AbstractAgent<AgentChatInput, AgentChatOutput> implements ChatAgent {
-    protected final ChatModel chatModel;
-    protected final ChatOptions chatOptions;
+public class LlmChatAgent extends AbstractAgent<ChatAgentInput, ChatAgentOutput> implements ChatAgent {
+    public static final String SYSTEM_PROMPT_ID = "framework:chat_agent_system_prompt";
+    private static final boolean DEFAULT_SEARCH_ENABLED = true;
+    private static final boolean DEFAULT_DEEP_THINK_ENABLED = false;
     protected MessageHistory messageHistory = new DefaultMessageHistory();
-    protected MessageConverter messageConverter = MessageConverter.INSTANCE;
-    protected int maxLoopCount = 3;
+    protected final ChatModel chatModel;
+    protected ChatModelClient chatModelClient;
+    protected String systemPromptId;
 
-    public LlmChatAgent(String name, ChatModel chatModel, ChatOptions chatOptions) {
+    public LlmChatAgent(String name, ChatModel chatModel, String systemPromptId) {
         super(name);
         this.chatModel = Objects.requireNonNull(chatModel, "chatModel is required");
-        this.chatOptions = Objects.requireNonNull(chatOptions, "chatOptions is required");
+        this.chatModelClient = new ChatModelClient(chatModel);
+        this.systemPromptId = Objects.requireNonNull(systemPromptId, "systemPromptId is required");
+    }
+
+    public LlmChatAgent(String name, ChatModel chatModel) {
+        this(name, chatModel, SYSTEM_PROMPT_ID);
+    }
+
+    static {
+        PromptRegistry.global().registerPromptTemplate(SYSTEM_PROMPT_ID,
+                StringPromptTemplate.fromFile("agents/prompts/chat_agent_system_prompt.md"));
     }
 
     @Override
@@ -72,40 +81,48 @@ public class LlmChatAgent extends AbstractAgent<AgentChatInput, AgentChatOutput>
     }
 
     @Override
-    protected AgentChatOutput doStep(AgentChatInput input) {
-        AgentExecutionContext context = input.getContext();
-        Prompt prompt = buildPrompt(context, input);
-        for (int i = 0; i < maxLoopCount; i++) {
-            ChatResponse chatResponse = chatModel.call(prompt);
-            Generation result = chatResponse.getResult();
-            AssistantMessage assistantMessage = result.getOutput();
-            if (assistantMessage.hasToolCalls()) {
-                List<AssistantMessage.ToolCall> toolCalls = assistantMessage.getToolCalls();
-                DefaultToolContext toolContext = DefaultToolContext.builder()
-                        .toolManager(context.getToolManager())
-                        .toolCallTracker(getAgentState().getToolCallTracker())
-                        .build();
-                List<ToolResponseMessage.ToolResponse> toolResponses =
-                        ToolCallbackUtils.callTools(context.getToolManager(), toolContext, toolCalls);
-                ToolResponseMessage toolResponseMessage = new ToolResponseMessage(toolResponses);
-                prompt.getInstructions().add(toolResponseMessage);
-            } else {
-                Message outputMessage = messageConverter.reverse(assistantMessage);
-                AgentChatOutput agentOutput = AgentChatOutput.builder().messages(outputMessage).build();
-                agentOutput.messages().forEach(messageHistory::appendMessage);
-                return agentOutput;
-            }
-        }
-        throw new AgentExecutionException("Exceed the agent max loop count " + maxLoopCount);
+    protected ChatAgentOutput doRun(ChatAgentInput input) {
+        setSystemPrompt(input);
+
+        ToolContext toolContext = ToolContext.builder()
+                .toolManager(getToolManager())
+                .toolCallTracker(agentState.getToolCallTracker())
+                .build();
+        chatModelClient.setToolContext(toolContext);
+        return super.doRun(input);
     }
 
-    protected Prompt buildPrompt(AgentExecutionContext context, AgentChatInput messageInput) {
-        List<org.springframework.ai.chat.messages.Message> messages = Lists.newArrayList();
-        messageInput.messages().stream().map(messageConverter::convert).forEach(messages::add);
+    protected void setSystemPrompt(ChatAgentInput input) {
+        boolean searchEnabled = input.metadata().getProperty(ChatAgentInput.OPTION_SEARCH_ENABLED,
+                Boolean.class, DEFAULT_SEARCH_ENABLED);
+        boolean deepThinkEnabled = input.metadata().getProperty(ChatAgentInput.OPTION_DEEP_THINK_ENABLED,
+                Boolean.class, DEFAULT_DEEP_THINK_ENABLED);
 
-        ChatOptions options = ToolCallbackUtils.buildChatOptionsWithTools(this.chatOptions,
-                buildToolContext(messageInput), context.getToolExecutor());
-        return new Prompt(messages, options);
+        PromptTemplate promptTemplate = PromptRegistry.global().getPromptTemplate(systemPromptId);
+        PromptValue systemPrompt = promptTemplate.format(Map.of(
+                "date", LocalDateTime.now().format(DateTimeFormatter.ISO_LOCAL_DATE),
+                "search_enabled", searchEnabled,
+                "deep_thinking", deepThinkEnabled
+        ));
+        chatModelClient.setSystemMessage(new SystemMessage(systemPrompt.toString()));
+    }
+
+    @Override
+    protected ChatAgentOutput doStep(ChatAgentInput input) {
+        AssistantMessage outputMessage = chatModelClient.sendMessage(input.messages().get(0));
+        String outputText = outputMessage.getContent();
+
+        String thoughtProcess = null;
+        boolean deepThinkEnabled = input.metadata().getProperty(ChatAgentInput.OPTION_DEEP_THINK_ENABLED,
+                Boolean.class, DEFAULT_DEEP_THINK_ENABLED);
+        if (deepThinkEnabled) {
+            thoughtProcess = OutputParsers.htmlTagParser("think", false).parse(outputText);
+        }
+
+        chatModelClient.getNewMessages().forEach(messageHistory::appendMessage);
+        return ChatAgentOutput.builder().messages(outputMessage)
+                .thoughtProcess(thoughtProcess)
+                .build();
     }
 
     @Override
