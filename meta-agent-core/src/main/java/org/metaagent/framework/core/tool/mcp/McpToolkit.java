@@ -24,7 +24,6 @@
 
 package org.metaagent.framework.core.tool.mcp;
 
-import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import io.modelcontextprotocol.client.McpAsyncClient;
 import io.modelcontextprotocol.client.McpSyncClient;
@@ -33,7 +32,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.metaagent.framework.core.mcp.client.UnifiedMcpClient;
 import org.metaagent.framework.core.tool.Tool;
 import org.metaagent.framework.core.tool.manager.ToolChangeListener;
-import org.metaagent.framework.core.tool.toolkit.AbstractToolkit;
+import org.metaagent.framework.core.tool.toolkit.DefaultToolkit;
 import reactor.core.publisher.Mono;
 
 import java.util.List;
@@ -48,12 +47,15 @@ import java.util.function.Function;
  * @see McpSyncClient
  * @see McpAsyncClient
  */
-public abstract class McpToolkit extends AbstractToolkit {
-    protected final Map<String, McpTool> mcpToolCache;
+public abstract class McpToolkit extends DefaultToolkit {
+    protected McpToolkit(String name, String description, Map<String, McpTool> mcpTools) {
+        super(name, description, asToolMap(mcpTools));
+    }
 
-    protected McpToolkit(String name, String description, Map<String, McpTool> mcpToolCache) {
-        super(name, description);
-        this.mcpToolCache = Objects.requireNonNull(mcpToolCache, "McpToolCache is required");
+    @SuppressWarnings("unchecked")
+    private static Map<String, Tool<?, ?>> asToolMap(Map<String, McpTool> mcpTools) {
+        Map<String, ?> toolMap = mcpTools;
+        return (Map<String, Tool<?, ?>>) toolMap;
     }
 
     public static McpToolkit sync(String name, String description, McpSyncClient mcpSyncClient) {
@@ -73,19 +75,29 @@ public abstract class McpToolkit extends AbstractToolkit {
     }
 
     @Override
-    public List<Tool<?, ?>> listTools() {
-        return Lists.newArrayList(mcpToolCache.values());
+    public void addTool(Tool<?, ?> tool) {
+        throw new UnsupportedOperationException("McpToolkit does not support adding tools");
     }
 
     @Override
-    public Tool<?, ?> getTool(String name) {
-        return mcpToolCache.get(name);
+    public void addTools(Tool<?, ?>... tools) {
+        throw new UnsupportedOperationException("McpToolkit does not support adding tools");
+    }
+
+    @Override
+    public void removeTool(String name) {
+        throw new UnsupportedOperationException("McpToolkit does not support removing tools");
+    }
+
+    @Override
+    public void removeTool(Tool<?, ?> tool) {
+        throw new UnsupportedOperationException("McpToolkit does not support removing tools");
     }
 
     protected void onToolsChange(List<McpSchema.Tool> tools, Function<McpSchema.Tool, McpTool> toolCreator) {
         for (McpSchema.Tool tool : tools) {
             McpTool mcpTool = toolCreator.apply(tool);
-            McpTool oldTool = mcpToolCache.put(mcpTool.getName(), mcpTool);
+            McpTool oldTool = (McpTool) this.tools.put(mcpTool.getName(), mcpTool);
             if (oldTool != null) {
                 notifyChangeListeners(mcpTool, ToolChangeListener.EventType.UPDATED);
             } else {
@@ -122,7 +134,7 @@ public abstract class McpToolkit extends AbstractToolkit {
                 List<McpSchema.Tool> tools = toolsResult.tools();
                 for (McpSchema.Tool tool : tools) {
                     McpTool mcpTool = new McpTool(mcpSyncClient, tool);
-                    mcpToolCache.put(mcpTool.getDefinition().name(), mcpTool);
+                    this.tools.put(mcpTool.getDefinition().name(), mcpTool);
                 }
                 nextCursor = toolsResult.nextCursor();
             } while (StringUtils.isNotEmpty(nextCursor));
@@ -158,7 +170,7 @@ public abstract class McpToolkit extends AbstractToolkit {
                 List<McpSchema.Tool> tools = toolsResult.tools();
                 for (McpSchema.Tool tool : tools) {
                     McpTool mcpTool = new McpTool(mcpAsyncClient, tool);
-                    mcpToolCache.put(mcpTool.getDefinition().name(), mcpTool);
+                    this.tools.put(mcpTool.getDefinition().name(), mcpTool);
                 }
                 nextCursor = toolsResult.nextCursor();
             } while (StringUtils.isNotEmpty(nextCursor));

@@ -22,48 +22,31 @@
  * SOFTWARE.
  */
 
-package org.metaagent.framework.core.tool.toolkit;
+package org.metaagent.framework.core.tool.container;
 
 import com.google.common.collect.Lists;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.lang3.StringUtils;
 import org.metaagent.framework.core.tool.Tool;
 import org.metaagent.framework.core.tool.manager.ToolChangeListener;
+import org.metaagent.framework.core.tool.manager.ToolManager;
 
 import java.util.List;
 
 /**
- * Abstract base class for toolkits.
+ * Abstract implementation of {@link ToolManager}
+ *
+ * @author vyckey
  */
 @Slf4j
-public abstract class AbstractToolkit implements Toolkit {
-    protected final String name;
-    protected String description;
+public abstract class AbstractToolContainer implements ToolContainer {
     protected final List<ToolChangeListener> listeners = Lists.newArrayList();
 
-    protected AbstractToolkit(String name, String description) {
-        if (StringUtils.isEmpty(name)) {
-            throw new IllegalArgumentException("Toolkit name is required");
-        }
-        this.name = name;
-        this.description = description;
+    public void addToolChangeListener(ToolChangeListener listener) {
+        listeners.add(listener);
     }
 
-    public void loadTools() {
-    }
-
-    @Override
-    public String getName() {
-        return name;
-    }
-
-    @Override
-    public String getDescription() {
-        return description;
-    }
-
-    public void setDescription(String description) {
-        this.description = description;
+    public void removeToolChangeListener(ToolChangeListener listener) {
+        listeners.remove(listener);
     }
 
     protected void notifyChangeListeners(Tool<?, ?> tool, ToolChangeListener.EventType eventType) {

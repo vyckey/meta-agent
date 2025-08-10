@@ -25,15 +25,28 @@
 package org.metaagent.framework.core.tool.toolkit;
 
 import org.metaagent.framework.core.tool.Tool;
+import org.metaagent.framework.core.tool.container.ToolContainer;
 
-import java.util.List;
+import java.util.Arrays;
 
 /**
  * Toolkit is a collection of tools that can be used together to perform a specific task or set of tasks.
  *
  * @author vyckey
  */
-public interface Toolkit {
+public interface Toolkit extends ToolContainer {
+    /**
+     * Create a new toolkit from the given tools.
+     *
+     * @param name        the name of the toolkit
+     * @param description the description of the toolkit
+     * @param tools       the tools to add to the toolkit
+     * @return a new toolkit
+     */
+    static Toolkit fromTools(String name, String description, Tool<?, ?>... tools) {
+        return new DefaultToolkit(name, description, Arrays.asList(tools));
+    }
+
     /**
      * Get the name of the toolkit.
      *
@@ -48,18 +61,4 @@ public interface Toolkit {
      */
     String getDescription();
 
-    /**
-     * Get the list of tools in the toolkit.
-     *
-     * @return the list of tools in the toolkit
-     */
-    List<Tool<?, ?>> listTools();
-
-    /**
-     * Get the list of tool names in the toolkit.
-     *
-     * @param name the name of the tool
-     * @return the tool name
-     */
-    Tool<?, ?> getTool(String name);
 }

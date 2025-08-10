@@ -28,7 +28,6 @@ import lombok.Getter;
 import org.metaagent.framework.core.tool.executor.DefaultToolExecutor;
 import org.metaagent.framework.core.tool.executor.ToolExecutor;
 import org.metaagent.framework.core.tool.listener.ToolExecuteListenerRegistry;
-import org.metaagent.framework.core.tool.manager.DefaultToolManager;
 import org.metaagent.framework.core.tool.manager.ToolManager;
 import org.metaagent.framework.core.tool.tracker.ToolCallTracker;
 
@@ -83,7 +82,7 @@ public class DefaultToolContext implements ToolContext {
 
         public DefaultToolContext build() {
             if (toolManager == null) {
-                this.toolManager = new DefaultToolManager();
+                this.toolManager = ToolManager.create();
             }
             if (toolExecutor == null) {
                 this.toolExecutor = DefaultToolExecutor.INSTANCE;

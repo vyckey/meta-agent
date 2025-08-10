@@ -24,96 +24,151 @@
 
 package org.metaagent.framework.core.tool.manager;
 
+import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
+import com.google.common.collect.Sets;
+import org.apache.commons.lang3.NotImplementedException;
 import org.metaagent.framework.core.tool.Tool;
+import org.metaagent.framework.core.tool.container.ToolContainerImpl;
 import org.metaagent.framework.core.tool.toolkit.Toolkit;
 
-import java.util.Arrays;
-import java.util.Collections;
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
-import java.util.ServiceLoader;
 import java.util.Set;
 
 /**
- * Default {@link ToolManager} implementation.
+ * Default implementation of {@link ToolManager}.
  *
  * @author vyckey
  */
-public class DefaultToolManager extends AbstractToolManager implements ToolManager {
-    protected final Map<String, Tool<?, ?>> tools = Maps.newConcurrentMap();
+public class DefaultToolManager extends ToolContainerImpl implements ToolManager {
+    protected final Map<String, ToolkitWrapper> toolkitMap;
+
+    public DefaultToolManager(Map<String, Tool<?, ?>> tools) {
+        super(tools);
+        this.toolkitMap = Maps.newHashMap();
+    }
 
     public DefaultToolManager() {
-    }
-
-    public DefaultToolManager(List<Tool<?, ?>> tools) {
-        Objects.requireNonNull(tools, "tools is required");
-        tools.forEach(tool -> this.tools.put(tool.getName(), tool));
-    }
-
-    public static DefaultToolManager fromTools(Tool<?, ?>... tools) {
-        return new DefaultToolManager(List.of(tools));
-    }
-
-    public static DefaultToolManager fromToolkits(Toolkit... toolkits) {
-        List<Tool<?, ?>> tools = Arrays.stream(toolkits).map(Toolkit::listTools)
-                .flatMap(List::stream).toList();
-        return new DefaultToolManager(tools);
-    }
-
-    public void addToolkit(Toolkit toolkit) {
-        for (Tool<?, ?> tool : toolkit.listTools()) {
-            addTool(tool);
-        }
-    }
-
-    public void removeToolkit(Toolkit toolkit) {
-        for (Tool<?, ?> tool : toolkit.listTools()) {
-            removeTool(tool.getName());
-        }
-    }
-
-    public void loadSpiTools(String... toolNames) {
-        List<String> limitedToolNames = Arrays.asList(toolNames);
-        for (Tool<?, ?> tool : ServiceLoader.load(Tool.class)) {
-            if (toolNames.length == 0 || limitedToolNames.contains(tool.getName())) {
-                addTool(tool);
-            }
-        }
+        this(Maps.newHashMap());
     }
 
     @Override
     public Set<String> getToolNames() {
-        return Collections.unmodifiableSet(tools.keySet());
+        Set<String> toolNames = Sets.newHashSet(tools.keySet());
+        for (ToolkitWrapper toolkitWrapper : toolkitMap.values()) {
+            toolNames.addAll(toolkitWrapper.availableToolNames());
+        }
+        return toolNames;
+    }
+
+    @Override
+    public List<Tool<?, ?>> listTools() {
+        List<Tool<?, ?>> toolList = Lists.newArrayList(tools.values());
+        for (ToolkitWrapper toolkitWrapper : toolkitMap.values()) {
+            toolList.addAll(toolkitWrapper.toolkit.listTools());
+        }
+        return toolList.stream().filter(Objects::nonNull).toList();
     }
 
     @Override
     public boolean hasTool(String name) {
-        return tools.containsKey(name);
+        if (tools.containsKey(name)) {
+            return true;
+        }
+        for (ToolkitWrapper toolkitWrapper : toolkitMap.values()) {
+            if (toolkitWrapper.availableToolNames().contains(name)) {
+                return true;
+            }
+        }
+        return false;
     }
 
     @SuppressWarnings("unchecked")
     @Override
     public <I, O> Tool<I, O> getTool(String name) {
-        return (Tool<I, O>) tools.get(name);
+        if (tools.containsKey(name)) {
+            return (Tool<I, O>) tools.get(name);
+        }
+        for (ToolkitWrapper wrapper : toolkitMap.values()) {
+            if (wrapper.availableToolNames().contains(name)) {
+                return wrapper.getTool(name);
+            }
+        }
+        return null;
     }
 
     @Override
     public void addTool(Tool<?, ?> tool) {
-        Tool<?, ?> oldTool = this.tools.put(tool.getName(), tool);
-        if (oldTool != null) {
-            notifyChangeListeners(tool, ToolChangeListener.EventType.UPDATED);
-        } else {
-            notifyChangeListeners(tool, ToolChangeListener.EventType.ADDED);
-        }
+        throw new UnsupportedOperationException("Unsupported operation for mixed tool manager.");
     }
 
     @Override
     public void removeTool(String name) {
-        Tool<?, ?> tool = this.tools.remove(name);
-        if (tool != null) {
-            notifyChangeListeners(tool, ToolChangeListener.EventType.REMOVED);
+        tools.remove(name);
+    }
+
+    @Override
+    public ToolManager addToolkit(Toolkit toolkit) {
+        return addToolkit(toolkit.getName(), toolkit);
+    }
+
+    @Override
+    public ToolManager addToolkit(Toolkit toolkit, String... toolNames) {
+        String toolkitName = Objects.requireNonNull(toolkit).getName();
+        ToolkitWrapper wrapper = new ToolkitWrapper(toolkit, Lists.newArrayList(toolNames));
+        if (toolkitMap.putIfAbsent(toolkitName, wrapper) != null) {
+            throw new IllegalArgumentException("Toolkit already exists: " + toolkitName);
+        }
+        return this;
+    }
+
+    @Override
+    public ToolManager addToolkit(String namespace, Toolkit toolkit, String... toolNames) {
+        String toolkitName = Objects.requireNonNull(toolkit).getName();
+        ToolkitWrapper wrapper = new ToolkitWrapper(toolkit, Lists.newArrayList(toolNames), namespace);
+        if (toolkitMap.putIfAbsent(toolkitName, wrapper) != null) {
+            throw new IllegalArgumentException("Toolkit already exists: " + toolkitName);
+        }
+        return this;
+    }
+
+    @Override
+    public void removeToolkit(String toolkitName) {
+        this.toolkitMap.remove(toolkitName);
+    }
+
+    record ToolkitWrapper(Toolkit toolkit, List<String> toolNames, String namespace) {
+        ToolkitWrapper(Toolkit toolkit, List<String> toolNames) {
+            this(toolkit, toolNames, null);
+        }
+
+        ToolkitWrapper(Toolkit toolkit) {
+            this(toolkit, null);
+        }
+
+        String getToolName(String namespace, String toolName) {
+            return namespace != null ? namespace + "." + toolName : toolName;
+        }
+
+        Collection<String> availableToolNames() {
+            Collection<String> availableToolNames = toolNames.isEmpty() ? toolkit.getToolNames() : toolNames;
+            if (namespace == null) {
+                return availableToolNames;
+            }
+            return availableToolNames.stream().map(name -> getToolName(namespace, name)).toList();
+        }
+
+        <I, O> Tool<I, O> getTool(String name) {
+            Tool<I, O> tool = toolkit.getTool(name);
+            if (tool != null && namespace != null) {
+                // create a tool proxy and modify getName
+                throw new NotImplementedException();
+            }
+            return tool;
         }
     }
+
 }

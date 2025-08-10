@@ -22,39 +22,49 @@
  * SOFTWARE.
  */
 
-package org.metaagent.framework.core.agent;
+package org.metaagent.framework.core.tool.toolkit;
 
-import org.metaagent.framework.core.agent.loop.AgentLoopControlStrategy;
-import org.metaagent.framework.core.agent.loop.MaxLoopCountAgentLoopControl;
-import org.metaagent.framework.core.tool.manager.ToolManager;
+import org.apache.commons.lang3.StringUtils;
+import org.metaagent.framework.core.tool.Tool;
+import org.metaagent.framework.core.tool.container.ImmutableToolContainer;
+import org.metaagent.framework.core.tool.container.ImmutableToolContainerImpl;
+
+import java.util.Map;
 
 /**
- * Abstract {@link Agent} implementation.
+ * Immutable Toolkit.
  *
  * @author vyckey
  */
-public abstract class AbstractAgent<
-        AgentInput extends org.metaagent.framework.core.agent.input.AgentInput,
-        AgentOutput extends org.metaagent.framework.core.agent.output.AgentOutput>
-        extends AbstractMetaAgent<AgentInput, AgentOutput> implements Agent<AgentInput, AgentOutput> {
-    protected ToolManager toolManager = ToolManager.create();
+public class ImmutableToolkit extends ImmutableToolContainerImpl implements Toolkit, ImmutableToolContainer {
+    protected final String name;
+    protected final String description;
 
-    protected AbstractAgent(String name) {
-        super(name);
+    public ImmutableToolkit(String name, String description, Map<String, Tool<?, ?>> tools) {
+        super(tools);
+        if (StringUtils.isEmpty(name)) {
+            throw new IllegalArgumentException("Toolkit name cannot be empty");
+        }
+        this.name = name;
+        this.description = description != null ? description : "";
+    }
+
+    public ImmutableToolkit(String name, Map<String, Tool<?, ?>> tools) {
+        this(name, "", tools);
     }
 
     @Override
-    public ToolManager getToolManager() {
-        return toolManager;
+    public String getName() {
+        return name;
     }
 
     @Override
-    public AgentLoopControlStrategy<AgentInput, AgentOutput> getLoopControlStrategy() {
-        return new MaxLoopCountAgentLoopControl<>(1);
+    public String getDescription() {
+        return description;
     }
 
     @Override
-    protected AgentOutput doRun(AgentInput input) {
-        return Agent.super.run(input);
+    public String toString() {
+        return "Toolkit{name=\"" + name + "\"}";
     }
 }

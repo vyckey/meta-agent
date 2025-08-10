@@ -22,39 +22,42 @@
  * SOFTWARE.
  */
 
-package org.metaagent.framework.core.agent;
+package org.metaagent.framework.core.tool.container;
 
-import org.metaagent.framework.core.agent.loop.AgentLoopControlStrategy;
-import org.metaagent.framework.core.agent.loop.MaxLoopCountAgentLoopControl;
-import org.metaagent.framework.core.tool.manager.ToolManager;
+import org.metaagent.framework.core.tool.Tool;
+
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Set;
 
 /**
- * Abstract {@link Agent} implementation.
+ * Default implementation of {@link ImmutableToolContainer}.
  *
  * @author vyckey
  */
-public abstract class AbstractAgent<
-        AgentInput extends org.metaagent.framework.core.agent.input.AgentInput,
-        AgentOutput extends org.metaagent.framework.core.agent.output.AgentOutput>
-        extends AbstractMetaAgent<AgentInput, AgentOutput> implements Agent<AgentInput, AgentOutput> {
-    protected ToolManager toolManager = ToolManager.create();
+public class ImmutableToolContainerImpl implements ImmutableToolContainer {
+    protected final Map<String, Tool<?, ?>> tools;
+    protected final List<Tool<?, ?>> toolList;
 
-    protected AbstractAgent(String name) {
-        super(name);
+    public ImmutableToolContainerImpl(Map<String, Tool<?, ?>> tools) {
+        this.tools = Objects.requireNonNull(tools, "Tools is required");
+        this.toolList = tools.values().stream().toList();
     }
 
     @Override
-    public ToolManager getToolManager() {
-        return toolManager;
+    public Set<String> getToolNames() {
+        return tools.keySet();
     }
 
     @Override
-    public AgentLoopControlStrategy<AgentInput, AgentOutput> getLoopControlStrategy() {
-        return new MaxLoopCountAgentLoopControl<>(1);
+    public List<Tool<?, ?>> listTools() {
+        return toolList;
     }
 
+    @SuppressWarnings("unchecked")
     @Override
-    protected AgentOutput doRun(AgentInput input) {
-        return Agent.super.run(input);
+    public <I, O> Tool<I, O> getTool(String name) {
+        return (Tool<I, O>) tools.get(name);
     }
 }

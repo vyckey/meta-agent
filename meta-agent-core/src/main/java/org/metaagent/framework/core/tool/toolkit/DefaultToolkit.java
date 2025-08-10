@@ -24,49 +24,53 @@
 
 package org.metaagent.framework.core.tool.toolkit;
 
-import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Maps;
+import org.apache.commons.lang3.StringUtils;
 import org.metaagent.framework.core.tool.Tool;
+import org.metaagent.framework.core.tool.container.ToolContainerImpl;
 
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 /**
  * Default implementation of a toolkit.
  *
  * @author vyckey
  */
-public class DefaultToolkit extends AbstractToolkit {
-    protected final Map<String, Tool<?, ?>> tools;
+public class DefaultToolkit extends ToolContainerImpl implements Toolkit {
+    protected final String name;
+    protected final String description;
 
-    protected DefaultToolkit(String name, String description, Map<String, Tool<?, ?>> tools) {
-        super(name, description);
-        this.tools = Objects.requireNonNull(tools, "Tools is required");
+    public DefaultToolkit(String name, String description, Map<String, Tool<?, ?>> tools) {
+        super(tools);
+        if (StringUtils.isEmpty(name)) {
+            throw new IllegalArgumentException("Toolkit name is required");
+        }
+        this.name = name;
+        this.description = description;
+    }
+
+    public DefaultToolkit(String name, String description, List<Tool<?, ?>> tools) {
+        this(name, description, tools.stream().collect(Collectors.toMap(Tool::getName, Function.identity())));
     }
 
     public DefaultToolkit(String name, String description) {
         this(name, description, Maps.newHashMap());
     }
 
-    public DefaultToolkit(String name) {
-        this(name, "");
+    @Override
+    public String getName() {
+        return name;
     }
 
     @Override
-    public List<Tool<?, ?>> listTools() {
-        return ImmutableList.copyOf(tools.values());
+    public String getDescription() {
+        return description;
     }
 
-    @Override
-    public Tool<?, ?> getTool(String name) {
-        return tools.get(name);
-    }
-
-    public void addTools(Tool<?, ?>... tools) {
-        for (Tool<?, ?> tool : tools) {
-            this.tools.put(tool.getName(), tool);
-        }
+    public void loadTools() {
     }
 
     @Override

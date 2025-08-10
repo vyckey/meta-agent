@@ -30,7 +30,6 @@ import org.metaagent.framework.core.agent.action.executor.SyncActionExecutor;
 import org.metaagent.framework.core.agent.action.history.ActionHistory;
 import org.metaagent.framework.core.agent.action.history.DefaultActionHistory;
 import org.metaagent.framework.core.environment.Environment;
-import org.metaagent.framework.core.tool.manager.DefaultToolManager;
 import org.metaagent.framework.core.tool.manager.ToolManager;
 
 /**
@@ -101,7 +100,7 @@ public class DefaultActionExecutionContext implements ActionExecuteContext {
 
         private void setDefault() {
             if (toolManager == null) {
-                this.toolManager = new DefaultToolManager();
+                this.toolManager = ToolManager.create();
             }
             if (actionExecutor == null) {
                 actionExecutor = SyncActionExecutor.INSTANCE;

@@ -22,39 +22,37 @@
  * SOFTWARE.
  */
 
-package org.metaagent.framework.core.agent;
+package org.metaagent.framework.core.tool.toolkit;
 
-import org.metaagent.framework.core.agent.loop.AgentLoopControlStrategy;
-import org.metaagent.framework.core.agent.loop.MaxLoopCountAgentLoopControl;
-import org.metaagent.framework.core.tool.manager.ToolManager;
+import com.google.common.collect.Maps;
+import org.metaagent.framework.core.tool.Tool;
+
+import java.util.Map;
+import java.util.ServiceLoader;
 
 /**
- * Abstract {@link Agent} implementation.
+ * Service Provider Interface (SPI) toolkit.
  *
  * @author vyckey
  */
-public abstract class AbstractAgent<
-        AgentInput extends org.metaagent.framework.core.agent.input.AgentInput,
-        AgentOutput extends org.metaagent.framework.core.agent.output.AgentOutput>
-        extends AbstractMetaAgent<AgentInput, AgentOutput> implements Agent<AgentInput, AgentOutput> {
-    protected ToolManager toolManager = ToolManager.create();
+public final class SpiToolkit extends ImmutableToolkit {
+    public static final String NAME = "SPI_TOOLKIT";
+    public static final SpiToolkit INSTANCE = new SpiToolkit();
 
-    protected AbstractAgent(String name) {
-        super(name);
+    private SpiToolkit() {
+        super(NAME, "Toolkit loaded from SPI", loadTools());
     }
 
-    @Override
-    public ToolManager getToolManager() {
-        return toolManager;
+    private static Map<String, Tool<?, ?>> loadTools() {
+        Map<String, Tool<?, ?>> toolMap = Maps.newHashMap();
+        for (Tool<?, ?> tool : ServiceLoader.load(Tool.class)) {
+            toolMap.put(tool.getName(), tool);
+        }
+        return toolMap;
     }
 
-    @Override
-    public AgentLoopControlStrategy<AgentInput, AgentOutput> getLoopControlStrategy() {
-        return new MaxLoopCountAgentLoopControl<>(1);
+    public static <I, O> Tool<I, O> findTool(String name) {
+        return INSTANCE.getTool(name);
     }
 
-    @Override
-    protected AgentOutput doRun(AgentInput input) {
-        return Agent.super.run(input);
-    }
 }

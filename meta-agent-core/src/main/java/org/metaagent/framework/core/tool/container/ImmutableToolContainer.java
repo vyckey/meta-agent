@@ -22,50 +22,38 @@
  * SOFTWARE.
  */
 
-package org.metaagent.framework.core.tool.manager;
+package org.metaagent.framework.core.tool.container;
 
-import com.google.common.collect.Lists;
-import lombok.extern.slf4j.Slf4j;
 import org.metaagent.framework.core.tool.Tool;
 
-import java.util.List;
-
 /**
- * description is here
+ * An immutable tool container.
  *
  * @author vyckey
  */
-@Slf4j
-public abstract class AbstractToolManager implements ToolManager {
-    protected final List<ToolChangeListener> listeners = Lists.newArrayList();
-
+public interface ImmutableToolContainer extends ToolContainer {
     @Override
-    public boolean hasTool(String name) {
-        return getTool(name) != null;
+    default void addTool(Tool<?, ?> tool) {
+        throw new UnsupportedOperationException("Not support adding tool.");
     }
 
     @Override
-    public void removeTool(Tool<?, ?> tool) {
-        removeTool(tool.getName());
+    default void addTools(Tool<?, ?>... tools) {
+        throw new UnsupportedOperationException("Not support adding tools.");
     }
 
     @Override
-    public void addChangeListener(ToolChangeListener listener) {
-        listeners.add(listener);
+    default void removeTool(String name) {
+        throw new UnsupportedOperationException("Not support removing tools.");
     }
 
     @Override
-    public void removeChangeListener(ToolChangeListener listener) {
-        listeners.remove(listener);
+    default void removeTool(Tool<?, ?> tool) {
+        throw new UnsupportedOperationException("Not support removing tools.");
     }
 
-    protected void notifyChangeListeners(Tool<?, ?> tool, ToolChangeListener.EventType eventType) {
-        for (ToolChangeListener listener : listeners) {
-            try {
-                listener.onToolChange(tool, eventType);
-            } catch (Exception e) {
-                log.error("Failed to notify tool change listener", e);
-            }
-        }
+    @Override
+    default void removeAll() {
+        throw new UnsupportedOperationException("Not support removing tools.");
     }
 }
