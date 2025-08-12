@@ -22,34 +22,30 @@
  * SOFTWARE.
  */
 
-package org.metaagent.framework.core.agent.observability;
+package org.metaagent.framework.core.tool.tracker;
 
+import org.metaagent.framework.core.tool.Tool;
 import org.metaagent.framework.core.util.logger.DelegateLogger;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.Objects;
 
-/**
- * Agent Logger
- *
- * @author vyckey
- */
-public class AgentLogger extends DelegateLogger {
-    private final String agentName;
+public class ToolLogger extends DelegateLogger {
+    private final String toolName;
 
-    public AgentLogger(String agentName, Logger delegate) {
+    public ToolLogger(String toolName, Logger delegate) {
         super(delegate);
-        this.agentName = Objects.requireNonNull(agentName, "Agent name must not be null");
+        this.toolName = Objects.requireNonNull(toolName, "toolName is required");
     }
 
-    public static AgentLogger getLogger(String agentName) {
-        return new AgentLogger(agentName, LoggerFactory.getLogger("Agent"));
+    public static ToolLogger getLogger(Tool<?, ?> tool) {
+        return new ToolLogger(tool.getName(), LoggerFactory.getLogger("Tool"));
     }
 
     @Override
     protected String rebuildFormat(String format) {
-        return "[" + agentName + "] " + format;
+        return "Tool [" + toolName + "] " + format;
     }
 
 }
