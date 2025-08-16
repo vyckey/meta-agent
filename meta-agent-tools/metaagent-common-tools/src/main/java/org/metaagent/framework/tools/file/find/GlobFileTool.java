@@ -34,6 +34,7 @@ import org.metaagent.framework.core.tool.ToolExecutionException;
 import org.metaagent.framework.core.tool.converter.ToolConverter;
 import org.metaagent.framework.core.tool.converter.ToolConverters;
 import org.metaagent.framework.core.tool.definition.ToolDefinition;
+import org.metaagent.framework.core.util.abort.AbortException;
 import org.metaagent.framework.tools.file.util.FilePathFilter;
 import org.metaagent.framework.tools.file.util.FileUtils;
 import org.metaagent.framework.tools.file.util.GitIgnoreLikeFileFilter;
@@ -66,6 +67,8 @@ public class GlobFileTool implements Tool<GlobFileInput, GlobFileOutput> {
                     "Ideal for quickly locating files based on their name or path structure, especially in large codebases.")
             .inputSchema(GlobFileInput.class)
             .outputSchema(GlobFileOutput.class)
+            .isConcurrencySafe(true)
+            .isReadOnly(true)
             .build();
     private static final ToolConverter<GlobFileInput, GlobFileOutput> TOOL_CONVERTER =
             ToolConverters.jsonConverter(GlobFileInput.class);
@@ -97,6 +100,10 @@ public class GlobFileTool implements Tool<GlobFileInput, GlobFileOutput> {
         Path directory = Path.of(dir).toAbsolutePath();
         if (!directory.toFile().exists()) {
             throw new ToolExecutionException("Directory does not exist: " + directory);
+        }
+
+        if (toolContext.getAbortSignal().isAborted()) {
+            throw new AbortException("Tool " + getName() + " is cancelled");
         }
 
         try {

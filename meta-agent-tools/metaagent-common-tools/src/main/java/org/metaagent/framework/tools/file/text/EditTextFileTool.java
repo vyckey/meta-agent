@@ -34,6 +34,7 @@ import org.metaagent.framework.core.tool.converter.ToolConverters;
 import org.metaagent.framework.core.tool.definition.ToolDefinition;
 import org.metaagent.framework.core.tool.human.HumanApprover;
 import org.metaagent.framework.core.tool.human.TerminalHumanApprover;
+import org.metaagent.framework.core.util.abort.AbortException;
 
 import java.io.File;
 import java.io.IOException;
@@ -55,6 +56,8 @@ public class EditTextFileTool implements Tool<EditTextFileInput, EditTextFileOut
                     "Always use the read_text_file tool to examine the file's current content before attempting a text replacement.")
             .inputSchema(EditTextFileInput.class)
             .outputSchema(EditTextFileOutput.class)
+            .isConcurrencySafe(false)
+            .isReadOnly(false)
             .build();
     private static final ToolConverter<EditTextFileInput, EditTextFileOutput> TOOL_CONVERTER =
             ToolConverters.jsonConverter(EditTextFileInput.class);
@@ -89,8 +92,16 @@ public class EditTextFileTool implements Tool<EditTextFileInput, EditTextFileOut
     @Override
     public EditTextFileOutput run(ToolContext toolContext, EditTextFileInput input) throws ToolExecutionException {
         File file = validateFile(input.filePath());
+        if (toolContext.getAbortSignal().isAborted()) {
+            throw new AbortException("Tool " + getName() + " is cancelled");
+        }
+
         FileContentReplacement contentReplacement = buildReplacement(file, input);
         confirmReplacement(contentReplacement);
+
+        if (toolContext.getAbortSignal().isAborted()) {
+            throw new AbortException("Tool " + getName() + " is cancelled");
+        }
         return applyReplacement(contentReplacement);
     }
 

@@ -30,6 +30,7 @@ package org.metaagent.framework.core.util.abort;
  * @author vyckey
  * @see AbortSignal
  */
+@FunctionalInterface
 public interface AbortListener {
     /**
      * Called when an abort signal is received.

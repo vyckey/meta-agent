@@ -36,10 +36,12 @@ import org.metaagent.framework.core.tool.converter.ToolConverters;
 import org.metaagent.framework.core.tool.definition.ToolDefinition;
 import org.metaagent.framework.core.tool.human.HumanApprover;
 import org.metaagent.framework.core.tool.human.SystemAutoApprover;
+import org.metaagent.framework.core.util.abort.AbortException;
 
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
+import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -53,6 +55,8 @@ public class ShellCommandTool implements Tool<ShellCommandInput, ShellCommandOut
             .description("Executes a shell command and returns standard output, error, and exit code.")
             .inputSchema(ShellCommandInput.class)
             .outputSchema(ShellCommandOutput.class)
+            .isConcurrencySafe(false)
+            .isReadOnly(false)
             .build();
     private static final ToolConverter<ShellCommandInput, ShellCommandOutput> TOOL_CONVERTER =
             ToolConverters.jsonConverter(ShellCommandInput.class);
@@ -87,10 +91,25 @@ public class ShellCommandTool implements Tool<ShellCommandInput, ShellCommandOut
             outputBuilder.exitCode(-1).error("User cancelled the command execution.");
             return outputBuilder.build();
         }
+        if (toolContext.getAbortSignal().isAborted()) {
+            throw new AbortException("Tool " + getName() + " is cancelled");
+        }
 
         try {
             Process process = Runtime.getRuntime().exec(commandInput.command(), commandInput.getEnvArray());
             outputBuilder.pid(process.pid());
+
+            toolContext.getAbortSignal().addAbortListener(signal -> {
+                // graceful kill process
+                process.destroy();
+
+                // force kill process
+                Executors.newSingleThreadScheduledExecutor().schedule(() -> {
+                    if (process.isAlive()) {
+                        process.destroyForcibly();
+                    }
+                }, 3, TimeUnit.SECONDS);
+            });
 
             if (commandInput.timeoutSeconds() != null) {
                 boolean exited = process.waitFor(commandInput.timeoutSeconds(), TimeUnit.SECONDS);

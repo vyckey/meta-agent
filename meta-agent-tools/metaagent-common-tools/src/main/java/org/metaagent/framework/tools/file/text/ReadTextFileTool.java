@@ -32,6 +32,7 @@ import org.metaagent.framework.core.tool.ToolExecutionException;
 import org.metaagent.framework.core.tool.converter.ToolConverter;
 import org.metaagent.framework.core.tool.converter.ToolConverters;
 import org.metaagent.framework.core.tool.definition.ToolDefinition;
+import org.metaagent.framework.core.util.abort.AbortException;
 
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -52,6 +53,8 @@ public class ReadTextFileTool implements Tool<ReadTextFileInput, ReadTextFileOut
             .description("Read and return text file content. Can optionally specialize the start number and limit of lines to read.")
             .inputSchema(ReadTextFileInput.class)
             .outputSchema(ReadTextFileOutput.class)
+            .isConcurrencySafe(true)
+            .isReadOnly(true)
             .build();
     private static final ToolConverter<ReadTextFileInput, ReadTextFileOutput> TOOL_CONVERTER =
             ToolConverters.jsonConverter(ReadTextFileInput.class);
@@ -68,6 +71,10 @@ public class ReadTextFileTool implements Tool<ReadTextFileInput, ReadTextFileOut
 
     @Override
     public ReadTextFileOutput run(ToolContext toolContext, ReadTextFileInput input) throws ToolExecutionException {
+        if (toolContext.getAbortSignal().isAborted()) {
+            throw new AbortException("Tool " + getName() + " is cancelled");
+        }
+
         try {
             return readFile(input);
         } catch (IOException e) {

@@ -34,6 +34,7 @@ import org.metaagent.framework.core.tool.converter.ToolConverters;
 import org.metaagent.framework.core.tool.definition.ToolDefinition;
 import org.metaagent.framework.core.tool.human.HumanApprover;
 import org.metaagent.framework.core.tool.human.SystemAutoApprover;
+import org.metaagent.framework.core.util.abort.AbortException;
 
 import javax.script.Bindings;
 import javax.script.Compilable;
@@ -53,6 +54,8 @@ public class ScriptEngineTool implements Tool<ScriptInput, ScriptOutput> {
             .description("Execute script with specialized language")
             .inputSchema(ScriptInput.class)
             .outputSchema(ScriptOutput.class)
+            .isConcurrencySafe(false)
+            .isReadOnly(false)
             .build();
     private static final ToolConverter<ScriptInput, ScriptOutput> TOOL_CONVERTER =
             ToolConverters.jsonConverter(ScriptInput.class);
@@ -76,6 +79,10 @@ public class ScriptEngineTool implements Tool<ScriptInput, ScriptOutput> {
     @Override
     public ScriptOutput run(ToolContext toolContext, ScriptInput scriptInput) throws ToolExecutionException {
         ScriptEngine scriptEngine = this.scriptEngineManager.getEngineByName(scriptInput.getEngine());
+
+        if (toolContext.getAbortSignal().isAborted()) {
+            throw new AbortException("Tool " + getName() + " is cancelled");
+        }
         return executeScript(scriptEngine, scriptInput);
     }
 

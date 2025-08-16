@@ -34,6 +34,7 @@ import org.metaagent.framework.core.tool.ToolExecutionException;
 import org.metaagent.framework.core.tool.converter.ToolConverter;
 import org.metaagent.framework.core.tool.converter.ToolConverters;
 import org.metaagent.framework.core.tool.definition.ToolDefinition;
+import org.metaagent.framework.core.util.abort.AbortException;
 import org.metaagent.framework.tools.file.util.FileUtils;
 
 import java.io.File;
@@ -58,6 +59,8 @@ public class GrepFileTool implements Tool<GrepFileInput, GrepFileOutput> {
                     "containing matches, along with their file paths and line numbers.")
             .inputSchema(GrepFileInput.class)
             .outputSchema(GrepFileOutput.class)
+            .isConcurrencySafe(true)
+            .isReadOnly(true)
             .build();
     private static final ToolConverter<GrepFileInput, GrepFileOutput> TOOL_CONVERTER =
             ToolConverters.jsonConverter(GrepFileInput.class);
@@ -89,6 +92,10 @@ public class GrepFileTool implements Tool<GrepFileInput, GrepFileOutput> {
         Path directory = Path.of(dir).toAbsolutePath();
         if (!directory.toFile().exists()) {
             throw new ToolExecutionException("Directory does not exist: " + directory);
+        }
+
+        if (toolContext.getAbortSignal().isAborted()) {
+            throw new AbortException("Tool " + getName() + " is cancelled");
         }
 
         List<GrepMatchLine> matchLines;

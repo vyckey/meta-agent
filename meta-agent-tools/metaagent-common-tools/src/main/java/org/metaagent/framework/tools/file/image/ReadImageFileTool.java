@@ -31,6 +31,7 @@ import org.metaagent.framework.core.tool.ToolExecutionException;
 import org.metaagent.framework.core.tool.converter.ToolConverter;
 import org.metaagent.framework.core.tool.converter.ToolConverters;
 import org.metaagent.framework.core.tool.definition.ToolDefinition;
+import org.metaagent.framework.core.util.abort.AbortException;
 
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -50,6 +51,8 @@ public class ReadImageFileTool implements Tool<ReadImageFileInput, ReadImageFile
                     + "The file must be an image file (e.g., PNG, JPEG). ")
             .inputSchema(ReadImageFileInput.class)
             .outputSchema(ReadImageFileOutput.class)
+            .isConcurrencySafe(true)
+            .isReadOnly(true)
             .build();
     private static final ToolConverter<ReadImageFileInput, ReadImageFileOutput> TOOL_CONVERTER =
             ToolConverters.jsonConverter(ReadImageFileInput.class);
@@ -66,6 +69,10 @@ public class ReadImageFileTool implements Tool<ReadImageFileInput, ReadImageFile
 
     @Override
     public ReadImageFileOutput run(ToolContext toolContext, ReadImageFileInput input) throws ToolExecutionException {
+        if (toolContext.getAbortSignal().isAborted()) {
+            throw new AbortException("Tool " + getName() + " is cancelled");
+        }
+
         try {
             return readFile(input);
         } catch (IOException e) {

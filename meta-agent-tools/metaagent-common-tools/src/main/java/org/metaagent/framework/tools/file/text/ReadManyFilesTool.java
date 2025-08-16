@@ -35,6 +35,7 @@ import org.metaagent.framework.core.tool.ToolExecutionException;
 import org.metaagent.framework.core.tool.converter.ToolConverter;
 import org.metaagent.framework.core.tool.converter.ToolConverters;
 import org.metaagent.framework.core.tool.definition.ToolDefinition;
+import org.metaagent.framework.core.util.abort.AbortException;
 import org.metaagent.framework.tools.file.util.FilePathFilter;
 import org.metaagent.framework.tools.file.util.FileUtils;
 import org.metaagent.framework.tools.file.util.GitIgnoreLikeFileFilter;
@@ -55,6 +56,8 @@ public class ReadManyFilesTool implements Tool<ReadManyFilesInput, ReadManyFiles
                     " For text files, it concatenates their content into a single string. It is primarily designed for text-based files.")
             .inputSchema(ReadManyFilesInput.class)
             .outputSchema(ReadManyFilesOutput.class)
+            .isConcurrencySafe(true)
+            .isReadOnly(true)
             .build();
     private static final ToolConverter<ReadManyFilesInput, ReadManyFilesOutput> TOOL_CONVERTER =
             ToolConverters.jsonConverter(ReadManyFilesInput.class);
@@ -88,6 +91,10 @@ public class ReadManyFilesTool implements Tool<ReadManyFilesInput, ReadManyFiles
     public ReadManyFilesOutput run(ToolContext toolContext, ReadManyFilesInput input) throws ToolExecutionException {
         Path directory = validateDirectory(input.getDirectory());
         FilteredFiles filteredFiles = filterFiles(input, directory);
+
+        if (toolContext.getAbortSignal().isAborted()) {
+            throw new AbortException("Tool " + getName() + " is cancelled");
+        }
         return readFiles(directory, filteredFiles, input);
     }
 

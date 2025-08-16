@@ -45,6 +45,8 @@ public class GetCurrentTimeTool implements Tool<GetCurrentTimeInput, GetCurrentT
             .description("Gets the current time in a specified timezone.")
             .inputSchema(GetCurrentTimeInput.class)
             .outputSchema(GetCurrentTimeOutput.class)
+            .isConcurrencySafe(true)
+            .isReadOnly(true)
             .build();
     private static final ToolConverter<GetCurrentTimeInput, GetCurrentTimeOutput> TOOL_CONVERTER =
             ToolConverters.jsonConverter(GetCurrentTimeInput.class);
