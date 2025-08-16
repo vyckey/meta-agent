@@ -32,6 +32,7 @@ import org.metaagent.framework.core.tool.ToolExecutionException;
 import org.metaagent.framework.core.tool.converter.ToolConverter;
 import org.metaagent.framework.core.tool.converter.ToolConverters;
 import org.metaagent.framework.core.tool.definition.ToolDefinition;
+import org.metaagent.framework.core.util.abort.AbortException;
 import org.metaagent.framework.tools.search.SearchTool;
 import org.metaagent.framework.tools.search.common.WebSearchInformation;
 import org.metaagent.framework.tools.search.common.WebSearchRequest;
@@ -61,6 +62,8 @@ public class TavilySearchTool implements SearchTool {
             .description("Web search tool by Tavily API")
             .inputSchema(WebSearchRequest.class)
             .outputSchema(WebSearchResponse.class)
+            .isConcurrencySafe(true)
+            .isReadOnly(true)
             .build();
     private static final ToolConverter<WebSearchRequest, WebSearchResponse> TOOL_CONVERTER =
             ToolConverters.jsonConverter(WebSearchRequest.class);
@@ -103,6 +106,10 @@ public class TavilySearchTool implements SearchTool {
 
     @Override
     public WebSearchResponse run(ToolContext toolContext, WebSearchRequest input) throws ToolExecutionException {
+        if (toolContext.getAbortSignal().isAborted()) {
+            throw new AbortException("Tool " + getName() + " is aborted");
+        }
+
         TavilySearchRequest searchRequest = TavilySearchRequest.builder()
                 .apiKey(this.apiKey)
                 .query(input.searchTerms())
