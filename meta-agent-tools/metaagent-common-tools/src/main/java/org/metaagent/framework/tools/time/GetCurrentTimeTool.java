@@ -28,6 +28,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.metaagent.framework.core.tool.Tool;
 import org.metaagent.framework.core.tool.ToolContext;
 import org.metaagent.framework.core.tool.ToolExecutionException;
+import org.metaagent.framework.core.tool.ToolParameterException;
 import org.metaagent.framework.core.tool.converter.ToolConverter;
 import org.metaagent.framework.core.tool.converter.ToolConverters;
 import org.metaagent.framework.core.tool.definition.ToolDefinition;
@@ -67,7 +68,7 @@ public class GetCurrentTimeTool implements Tool<GetCurrentTimeInput, GetCurrentT
         try {
             zoneId = StringUtils.isNotEmpty(input.timezone()) ? ZoneId.of(input.timezone()) : ZoneId.of("UTC");
         } catch (DateTimeException e) {
-            throw new ToolExecutionException("Invalid timezone: " + input.timezone(), e);
+            throw new ToolParameterException("Invalid timezone: " + input.timezone(), e);
         }
         return GetCurrentTimeOutput.fromNow(zoneId);
     }

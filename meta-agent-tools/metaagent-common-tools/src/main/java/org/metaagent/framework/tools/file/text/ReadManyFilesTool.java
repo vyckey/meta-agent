@@ -32,6 +32,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.metaagent.framework.core.tool.Tool;
 import org.metaagent.framework.core.tool.ToolContext;
 import org.metaagent.framework.core.tool.ToolExecutionException;
+import org.metaagent.framework.core.tool.ToolParameterException;
 import org.metaagent.framework.core.tool.converter.ToolConverter;
 import org.metaagent.framework.core.tool.converter.ToolConverters;
 import org.metaagent.framework.core.tool.definition.ToolDefinition;
@@ -74,22 +75,21 @@ public class ReadManyFilesTool implements Tool<ReadManyFilesInput, ReadManyFiles
         return TOOL_CONVERTER;
     }
 
-    private Path validateDirectory(String dir) {
-        dir = StringUtils.isEmpty(dir) ? System.getProperty("CWD") : dir;
-        if (StringUtils.isEmpty(dir)) {
-            throw new ToolExecutionException("Directory or current working directory is not specified");
+    private Path validateDirectory(Path workingDirectory, String dir) {
+        Path directory = workingDirectory;
+        if (StringUtils.isNotEmpty(dir)) {
+            directory = FileUtils.resolvePath(workingDirectory, Path.of(dir));
         }
 
-        Path directory = Path.of(dir);
         if (!Files.exists(directory)) {
-            throw new ToolExecutionException("Directory " + directory + " does not exist");
+            throw new ToolParameterException("Directory " + directory + " does not exist");
         }
         return directory;
     }
 
     @Override
     public ReadManyFilesOutput run(ToolContext toolContext, ReadManyFilesInput input) throws ToolExecutionException {
-        Path directory = validateDirectory(input.getDirectory());
+        Path directory = validateDirectory(toolContext.getWorkingDirectory(), input.getDirectory());
         FilteredFiles filteredFiles = filterFiles(input, directory);
 
         if (toolContext.getAbortSignal().isAborted()) {

@@ -29,18 +29,19 @@ import org.metaagent.framework.core.common.metadata.MetadataProvider;
 import org.metaagent.framework.core.tool.Tool;
 import org.metaagent.framework.core.tool.ToolContext;
 import org.metaagent.framework.core.tool.ToolExecutionException;
+import org.metaagent.framework.core.tool.ToolParameterException;
 import org.metaagent.framework.core.tool.converter.ToolConverter;
 import org.metaagent.framework.core.tool.converter.ToolConverters;
 import org.metaagent.framework.core.tool.definition.ToolDefinition;
 import org.metaagent.framework.core.tool.human.HumanApprover;
 import org.metaagent.framework.core.tool.human.TerminalHumanApprover;
 import org.metaagent.framework.core.util.abort.AbortException;
+import org.metaagent.framework.tools.file.util.FileUtils;
 
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 
 /**
  * Tool for editing text files.
@@ -77,21 +78,21 @@ public class EditTextFileTool implements Tool<EditTextFileInput, EditTextFileOut
         this.humanApprover = humanApprover;
     }
 
-    private File validateFile(String filePath) {
-        Path path = Paths.get(filePath);
+    private File validateFile(Path workingDirectory, String filePath) {
+        Path path = FileUtils.resolvePath(workingDirectory, Path.of(filePath));
         if (!path.isAbsolute()) {
-            throw new ToolExecutionException("File path must be absolute");
+            throw new ToolParameterException("File path must be absolute");
         }
         File file = path.toFile();
         if (file.isDirectory()) {
-            throw new ToolExecutionException("File path cannot be a directory");
+            throw new ToolParameterException("File path cannot be a directory");
         }
         return file;
     }
 
     @Override
     public EditTextFileOutput run(ToolContext toolContext, EditTextFileInput input) throws ToolExecutionException {
-        File file = validateFile(input.filePath());
+        File file = validateFile(toolContext.getWorkingDirectory(), input.filePath());
         if (toolContext.getAbortSignal().isAborted()) {
             throw new AbortException("Tool " + getName() + " is cancelled");
         }

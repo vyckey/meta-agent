@@ -30,12 +30,14 @@ import org.jetbrains.annotations.NotNull;
 import org.metaagent.framework.core.tool.Tool;
 import org.metaagent.framework.core.tool.ToolContext;
 import org.metaagent.framework.core.tool.ToolExecutionException;
+import org.metaagent.framework.core.tool.ToolParameterException;
 import org.metaagent.framework.core.tool.converter.ToolConverter;
 import org.metaagent.framework.core.tool.converter.ToolConverters;
 import org.metaagent.framework.core.tool.definition.ToolDefinition;
 import org.metaagent.framework.core.tool.human.HumanApprover;
 import org.metaagent.framework.core.tool.human.SystemAutoApprover;
 import org.metaagent.framework.core.util.abort.AbortException;
+import org.metaagent.framework.tools.file.util.FileUtils;
 
 import java.io.File;
 import java.io.FileWriter;
@@ -79,7 +81,7 @@ public class WriteTextFileTool implements Tool<WriteTextFileInput, WriteTextFile
         }
 
         final String content = input.getContent() == null ? "" : input.getContent();
-        Path filePath = Path.of(input.getFilePath());
+        Path filePath = FileUtils.resolvePath(toolContext.getWorkingDirectory(), Path.of(input.getFilePath()));
 
         requestApprovalBeforeWriteFile(filePath, content);
         if (toolContext.getAbortSignal().isAborted()) {
@@ -117,7 +119,7 @@ public class WriteTextFileTool implements Tool<WriteTextFileInput, WriteTextFile
         File file = new File(filePath.toString());
         if (file.exists()) {
             if (!file.isFile()) {
-                throw new IOException("File is a directory");
+                throw new ToolParameterException("File is a directory");
             }
         } else {
             if (!file.getParentFile().mkdirs()) {

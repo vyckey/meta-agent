@@ -29,15 +29,17 @@ import org.apache.commons.lang3.StringUtils;
 import org.metaagent.framework.core.tool.Tool;
 import org.metaagent.framework.core.tool.ToolContext;
 import org.metaagent.framework.core.tool.ToolExecutionException;
+import org.metaagent.framework.core.tool.ToolParameterException;
 import org.metaagent.framework.core.tool.converter.ToolConverter;
 import org.metaagent.framework.core.tool.converter.ToolConverters;
 import org.metaagent.framework.core.tool.definition.ToolDefinition;
 import org.metaagent.framework.core.util.abort.AbortException;
+import org.metaagent.framework.tools.file.util.FileUtils;
 
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -76,20 +78,21 @@ public class ReadTextFileTool implements Tool<ReadTextFileInput, ReadTextFileOut
         }
 
         try {
-            return readFile(input);
+            return readFile(toolContext.getWorkingDirectory(), input);
         } catch (IOException e) {
             log.warn("Error reading text file {}. err: {}", input.getFilePath(), e.getMessage());
             return ReadTextFileOutput.builder().exception(e).build();
         }
     }
 
-    private ReadTextFileOutput readFile(ReadTextFileInput input) throws IOException {
-        File file = new File(input.getFilePath());
+    private ReadTextFileOutput readFile(Path workingDirectory, ReadTextFileInput input) throws IOException {
+        Path filePath = FileUtils.resolvePath(workingDirectory, Path.of(input.getFilePath()));
+        File file = filePath.toFile();
         if (!file.exists()) {
-            throw new FileNotFoundException("File not found: " + input.getFilePath());
+            throw new ToolParameterException("File not found: " + input.getFilePath());
         }
         if (!file.isFile()) {
-            throw new IOException("File is a directory: " + input.getFilePath());
+            throw new ToolParameterException("File is a directory: " + input.getFilePath());
         }
 
         String content = readFileContent(file, input);

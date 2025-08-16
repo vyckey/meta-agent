@@ -28,15 +28,17 @@ import lombok.extern.slf4j.Slf4j;
 import org.metaagent.framework.core.tool.Tool;
 import org.metaagent.framework.core.tool.ToolContext;
 import org.metaagent.framework.core.tool.ToolExecutionException;
+import org.metaagent.framework.core.tool.ToolParameterException;
 import org.metaagent.framework.core.tool.converter.ToolConverter;
 import org.metaagent.framework.core.tool.converter.ToolConverters;
 import org.metaagent.framework.core.tool.definition.ToolDefinition;
 import org.metaagent.framework.core.util.abort.AbortException;
+import org.metaagent.framework.tools.file.util.FileUtils;
 
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.Base64;
 
 /**
@@ -74,20 +76,21 @@ public class ReadImageFileTool implements Tool<ReadImageFileInput, ReadImageFile
         }
 
         try {
-            return readFile(input);
+            Path filePath = FileUtils.resolvePath(toolContext.getWorkingDirectory(), Path.of(input.filePath()));
+            return readFile(filePath);
         } catch (IOException e) {
             log.warn("Error reading image file {}. err: {}", input.filePath(), e.getMessage());
             return ReadImageFileOutput.builder().exception(e).build();
         }
     }
 
-    private ReadImageFileOutput readFile(ReadImageFileInput input) throws IOException {
-        File file = new File(input.filePath());
+    private ReadImageFileOutput readFile(Path filePath) throws IOException {
+        File file = filePath.toFile();
         if (!file.exists()) {
-            throw new FileNotFoundException("File not found: " + input.filePath());
+            throw new ToolParameterException("File not found: " + filePath);
         }
         if (!file.isFile()) {
-            throw new IOException("File is a directory: " + input.filePath());
+            throw new ToolParameterException("File is a directory: " + file);
         }
 
         String base64 = Base64.getEncoder().encodeToString(Files.readAllBytes(file.toPath()));
