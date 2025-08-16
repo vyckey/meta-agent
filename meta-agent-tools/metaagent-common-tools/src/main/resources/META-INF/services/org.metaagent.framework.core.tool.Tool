@@ -8,4 +8,6 @@ org.metaagent.framework.tools.file.find.GrepFileTool
 org.metaagent.framework.tools.http.HttpRequestTool
 org.metaagent.framework.tools.human.HumanInputTool
 org.metaagent.framework.tools.script.shell.ShellCommandTool
+org.metaagent.framework.tools.todo.TodoReadTool
+org.metaagent.framework.tools.todo.TodoWriteTool
 org.metaagent.framework.tools.time.GetCurrentTimeTool
