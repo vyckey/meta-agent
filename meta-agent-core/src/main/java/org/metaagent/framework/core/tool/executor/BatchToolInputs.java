@@ -22,48 +22,17 @@
  * SOFTWARE.
  */
 
-package org.metaagent.framework.core.tool;
+package org.metaagent.framework.core.tool.executor;
 
-import org.metaagent.framework.core.util.abort.AbortSignal;
-
-import java.nio.file.Path;
+import java.util.List;
 
 /**
- * ToolContext provides the context for tool execution,
+ * Batch tool inputs.
  *
  * @author vyckey
  */
-public interface ToolContext {
-    /**
-     * Gets the tool executor for executing tools.
-     *
-     * @return the tool executor
-     */
-    static ToolContext create() {
-        return DefaultToolContext.builder().build();
+public record BatchToolInputs(List<ToolInput> inputs) {
+
+    public record ToolInput(String toolName, String input) {
     }
-
-    /**
-     * Creates a new builder for constructing a ToolContext.
-     *
-     * @return a new ToolContext builder
-     */
-    static ToolContextBuilder builder() {
-        return DefaultToolContext.builder();
-    }
-
-    /**
-     * Gets the working directory for executing tools.
-     *
-     * @return the working directory
-     */
-    Path getWorkingDirectory();
-
-    /**
-     * Gets the abort signal for managing tool execution aborts.
-     *
-     * @return the abort signal
-     */
-    AbortSignal getAbortSignal();
-
 }

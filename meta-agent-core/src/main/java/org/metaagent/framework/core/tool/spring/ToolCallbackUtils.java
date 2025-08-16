@@ -30,9 +30,11 @@ import org.apache.commons.collections.CollectionUtils;
 import org.metaagent.framework.core.tool.Tool;
 import org.metaagent.framework.core.tool.ToolContext;
 import org.metaagent.framework.core.tool.ToolExecutionException;
+import org.metaagent.framework.core.tool.executor.BatchToolInputs;
+import org.metaagent.framework.core.tool.executor.BatchToolOutputs;
 import org.metaagent.framework.core.tool.executor.ToolExecutor;
+import org.metaagent.framework.core.tool.executor.ToolExecutorContext;
 import org.metaagent.framework.core.tool.manager.ToolManager;
-import org.metaagent.framework.core.tool.tracker.ToolTrackerDelegate;
 import org.springframework.ai.chat.messages.AssistantMessage;
 import org.springframework.ai.chat.messages.ToolResponseMessage;
 import org.springframework.ai.chat.prompt.ChatOptions;
@@ -50,15 +52,10 @@ import java.util.Map;
  */
 public abstract class ToolCallbackUtils {
     public static void addToolsToChatOptions(ToolCallingChatOptions chatOptions, ToolManager toolManager) {
-        addToolsToChatOptions(chatOptions, toolManager, null);
-    }
-
-    public static void addToolsToChatOptions(ToolCallingChatOptions chatOptions,
-                                             ToolManager toolManager, ToolExecutor toolExecutor) {
         List<FunctionCallback> toolCallbacks = Lists.newArrayList();
         for (String toolName : toolManager.getToolNames()) {
             Tool<Object, Object> tool = toolManager.getTool(toolName);
-            toolCallbacks.add(new ToolCallbackDelegate(tool, toolExecutor));
+            toolCallbacks.add(new ToolCallbackDelegate(tool));
         }
         if (CollectionUtils.isEmpty(chatOptions.getToolNames())) {
             chatOptions.setToolNames(toolManager.getToolNames());
@@ -71,7 +68,9 @@ public abstract class ToolCallbackUtils {
         chatOptions.setToolCallbacks(toolCallbacks);
     }
 
-    public static ChatOptions buildChatOptionsWithTools(ChatOptions chatOptions, ToolContext toolContext,
+    public static ChatOptions buildChatOptionsWithTools(ChatOptions chatOptions,
+                                                        ToolManager toolManager,
+                                                        ToolContext toolContext,
                                                         Boolean internalToolExecutionEnabled) {
         ToolCallingChatOptions toolCallingChatOptions = null;
         if (chatOptions == null) {
@@ -80,8 +79,7 @@ public abstract class ToolCallbackUtils {
             toolCallingChatOptions = chatOptions.copy();
         }
         if (toolCallingChatOptions != null) {
-            ToolManager toolManager = toolContext.getToolManager();
-            ToolCallbackUtils.addToolsToChatOptions(toolCallingChatOptions, toolManager, toolContext.getToolExecutor());
+            ToolCallbackUtils.addToolsToChatOptions(toolCallingChatOptions, toolManager);
             toolCallingChatOptions.setToolContext(Map.of(
                     ToolCallbackDelegate.CONTEXT_KEY, toolContext
             ));
@@ -92,17 +90,22 @@ public abstract class ToolCallbackUtils {
     }
 
     public static List<ToolResponseMessage.ToolResponse> callTools(
-            ToolManager toolManager, ToolContext toolContext, List<AssistantMessage.ToolCall> toolCalls) {
-        List<ToolResponseMessage.ToolResponse> toolResponses = Lists.newArrayList();
+            ToolExecutor toolExecutor,
+            ToolExecutorContext executorContext,
+            List<AssistantMessage.ToolCall> toolCalls) throws ToolExecutionException {
+        ToolManager toolManager = executorContext.getToolManager();
+        List<BatchToolInputs.ToolInput> toolInputs = Lists.newArrayList();
         for (AssistantMessage.ToolCall toolCall : toolCalls) {
             Tool<?, ?> tool = toolManager.getTool(toolCall.name());
             if (tool == null) {
                 throw new ToolExecutionException("Tool \"" + toolCall.name() + "\" not found");
             }
-            String result = new ToolTrackerDelegate<>(toolContext.getToolCallTracker(), tool)
-                    .call(toolContext, toolCall.arguments());
-            toolResponses.add(new ToolResponseMessage.ToolResponse(toolCall.id(), toolCall.name(), result));
+            toolInputs.add(new BatchToolInputs.ToolInput(tool.getName(), toolCall.arguments()));
         }
-        return toolResponses;
+
+        BatchToolOutputs toolOutputs = toolExecutor.execute(executorContext, new BatchToolInputs(toolInputs));
+        return toolOutputs.outputs().stream()
+                .map(output -> new ToolResponseMessage.ToolResponse(output.toolName(), output.toolName(), output.output()))
+                .toList();
     }
 }

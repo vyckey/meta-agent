@@ -24,46 +24,17 @@
 
 package org.metaagent.framework.core.tool;
 
-import org.metaagent.framework.core.util.abort.AbortSignal;
-
-import java.nio.file.Path;
-
 /**
- * ToolContext provides the context for tool execution,
+ * ToolParameterException is thrown when a tool parameter is invalid.
  *
  * @author vyckey
  */
-public interface ToolContext {
-    /**
-     * Gets the tool executor for executing tools.
-     *
-     * @return the tool executor
-     */
-    static ToolContext create() {
-        return DefaultToolContext.builder().build();
+public class ToolParameterException extends ToolExecutionException {
+    public ToolParameterException(String message) {
+        super(message);
     }
 
-    /**
-     * Creates a new builder for constructing a ToolContext.
-     *
-     * @return a new ToolContext builder
-     */
-    static ToolContextBuilder builder() {
-        return DefaultToolContext.builder();
+    public ToolParameterException(String message, Throwable cause) {
+        super(message, cause);
     }
-
-    /**
-     * Gets the working directory for executing tools.
-     *
-     * @return the working directory
-     */
-    Path getWorkingDirectory();
-
-    /**
-     * Gets the abort signal for managing tool execution aborts.
-     *
-     * @return the abort signal
-     */
-    AbortSignal getAbortSignal();
-
 }

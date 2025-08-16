@@ -22,48 +22,43 @@
  * SOFTWARE.
  */
 
-package org.metaagent.framework.core.tool;
+package org.metaagent.framework.core.tool.tools;
 
-import org.metaagent.framework.core.util.abort.AbortSignal;
-
-import java.nio.file.Path;
+import org.metaagent.framework.core.agent.MetaAgent;
+import org.metaagent.framework.core.agent.input.AgentInput;
+import org.metaagent.framework.core.agent.output.AgentOutput;
+import org.metaagent.framework.core.tool.Tool;
+import org.metaagent.framework.core.tool.ToolContext;
+import org.metaagent.framework.core.tool.ToolExecutionException;
 
 /**
- * ToolContext provides the context for tool execution,
+ * AgentAsTool is a tool that can be used to execute an Agent. The agent is treated as a tool.
  *
+ * @param <I> the input type
+ * @param <O> the output type
  * @author vyckey
  */
-public interface ToolContext {
+public interface AgentAsTool<I extends AgentInput, O extends AgentOutput>
+        extends Tool<I, O> {
     /**
-     * Gets the tool executor for executing tools.
+     * Get the agent.
      *
-     * @return the tool executor
+     * @return the agent
      */
-    static ToolContext create() {
-        return DefaultToolContext.builder().build();
+    MetaAgent<I, O> getAgent();
+
+    /**
+     * Get the tool's name.
+     *
+     * @return the tool name
+     */
+    @Override
+    default String getName() {
+        return getAgent().getName();
     }
 
-    /**
-     * Creates a new builder for constructing a ToolContext.
-     *
-     * @return a new ToolContext builder
-     */
-    static ToolContextBuilder builder() {
-        return DefaultToolContext.builder();
+    @Override
+    default O run(ToolContext context, I input) throws ToolExecutionException {
+        return getAgent().run(input);
     }
-
-    /**
-     * Gets the working directory for executing tools.
-     *
-     * @return the working directory
-     */
-    Path getWorkingDirectory();
-
-    /**
-     * Gets the abort signal for managing tool execution aborts.
-     *
-     * @return the abort signal
-     */
-    AbortSignal getAbortSignal();
-
 }

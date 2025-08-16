@@ -29,41 +29,31 @@ import org.metaagent.framework.core.util.abort.AbortSignal;
 import java.nio.file.Path;
 
 /**
- * ToolContext provides the context for tool execution,
+ * Builder for creating instances of {@link ToolContext}.
  *
  * @author vyckey
  */
-public interface ToolContext {
+public interface ToolContextBuilder {
     /**
-     * Gets the tool executor for executing tools.
+     * Sets the working directory for the tool context.
      *
-     * @return the tool executor
+     * @param workingDirectory the working directory
+     * @return the builder instance
      */
-    static ToolContext create() {
-        return DefaultToolContext.builder().build();
-    }
+    ToolContextBuilder workingDirectory(Path workingDirectory);
 
     /**
-     * Creates a new builder for constructing a ToolContext.
+     * Sets the abort signal for the tool context.
      *
-     * @return a new ToolContext builder
+     * @param abortSignal the abort signal
+     * @return the builder instance
      */
-    static ToolContextBuilder builder() {
-        return DefaultToolContext.builder();
-    }
+    ToolContextBuilder abortSignal(AbortSignal abortSignal);
 
     /**
-     * Gets the working directory for executing tools.
+     * Builds the tool context.
      *
-     * @return the working directory
+     * @return the tool context
      */
-    Path getWorkingDirectory();
-
-    /**
-     * Gets the abort signal for managing tool execution aborts.
-     *
-     * @return the abort signal
-     */
-    AbortSignal getAbortSignal();
-
+    ToolContext build();
 }

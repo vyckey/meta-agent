@@ -25,13 +25,11 @@
 package org.metaagent.framework.core.tool.spring;
 
 import org.metaagent.framework.core.tool.Tool;
-import org.metaagent.framework.core.tool.executor.ToolExecutor;
 import org.springframework.ai.chat.model.ToolContext;
 import org.springframework.ai.tool.ToolCallback;
 import org.springframework.ai.tool.definition.ToolDefinition;
 import org.springframework.ai.tool.metadata.ToolMetadata;
 
-import javax.annotation.Nullable;
 import java.util.Objects;
 
 /**
@@ -43,21 +41,14 @@ public class ToolCallbackDelegate implements ToolCallback {
     public static final String CONTEXT_KEY = "METAAGENT_TOOL_CTX";
     private final Tool<?, ?> tool;
     private final ToolDefinition toolDefinition;
-    @Nullable
-    private final ToolExecutor toolExecutor;
 
-    public ToolCallbackDelegate(Tool<?, ?> tool, ToolExecutor toolExecutor) {
+    public ToolCallbackDelegate(Tool<?, ?> tool) {
         this.tool = Objects.requireNonNull(tool, "tool is required");
         this.toolDefinition = ToolDefinition.builder()
                 .name(tool.getName())
                 .description(tool.getDefinition().description())
                 .inputSchema(tool.getDefinition().inputSchema())
                 .build();
-        this.toolExecutor = toolExecutor;
-    }
-
-    public ToolCallbackDelegate(Tool<?, ?> tool) {
-        this(tool, null);
     }
 
     @Override
@@ -84,11 +75,7 @@ public class ToolCallbackDelegate implements ToolCallback {
         } else {
             context = org.metaagent.framework.core.tool.ToolContext.create();
         }
-        if (this.toolExecutor == null) {
-            return tool.call(context, toolInput);
-        } else {
-            return toolExecutor.execute(context, tool, toolInput);
-        }
+        return tool.call(context, toolInput);
     }
 
     @Override

@@ -25,11 +25,11 @@
 package org.metaagent.framework.core.tool;
 
 import lombok.Getter;
-import org.metaagent.framework.core.tool.executor.DefaultToolExecutor;
-import org.metaagent.framework.core.tool.executor.ToolExecutor;
-import org.metaagent.framework.core.tool.listener.ToolExecuteListenerRegistry;
-import org.metaagent.framework.core.tool.manager.ToolManager;
-import org.metaagent.framework.core.tool.tracker.ToolCallTracker;
+import org.apache.commons.lang3.StringUtils;
+import org.metaagent.framework.core.util.abort.AbortController;
+import org.metaagent.framework.core.util.abort.AbortSignal;
+
+import java.nio.file.Path;
 
 /**
  * Default implementation of {@link ToolContext} interface.
@@ -38,60 +38,45 @@ import org.metaagent.framework.core.tool.tracker.ToolCallTracker;
  */
 @Getter
 public class DefaultToolContext implements ToolContext {
-    protected ToolManager toolManager;
-    protected ToolExecutor toolExecutor;
-    protected ToolCallTracker toolCallTracker;
-    protected ToolExecuteListenerRegistry toolListenerRegistry;
+    private final Path workingDirectory;
+    private final AbortSignal abortSignal;
 
     protected DefaultToolContext(Builder builder) {
-        this.toolManager = builder.toolManager;
-        this.toolExecutor = builder.toolExecutor;
-        this.toolCallTracker = builder.toolCallTracker;
-        this.toolListenerRegistry = builder.toolExecuteListenerRegistry;
+        this.workingDirectory = builder.workingDirectory;
+        this.abortSignal = builder.abortSignal;
     }
 
     public static Builder builder() {
         return new Builder();
     }
 
-    public static class Builder {
-        private ToolManager toolManager;
-        private ToolExecutor toolExecutor;
-        private ToolCallTracker toolCallTracker;
-        private ToolExecuteListenerRegistry toolExecuteListenerRegistry;
+    public static class Builder implements ToolContextBuilder {
+        private Path workingDirectory;
+        private AbortSignal abortSignal;
 
-        public Builder toolManager(ToolManager toolManager) {
-            this.toolManager = toolManager;
+        @Override
+        public ToolContextBuilder workingDirectory(Path workingDirectory) {
+            this.workingDirectory = workingDirectory;
             return this;
         }
 
-        public Builder toolExecutor(ToolExecutor toolExecutor) {
-            this.toolExecutor = toolExecutor;
+        @Override
+        public ToolContextBuilder abortSignal(AbortSignal abortSignal) {
+            this.abortSignal = abortSignal;
             return this;
         }
 
-        public Builder toolCallTracker(ToolCallTracker toolCallTracker) {
-            this.toolCallTracker = toolCallTracker;
-            return this;
-        }
-
-        public Builder toolExecuteListenerRegistry(ToolExecuteListenerRegistry toolExecuteListenerRegistry) {
-            this.toolExecuteListenerRegistry = toolExecuteListenerRegistry;
-            return this;
-        }
-
+        @Override
         public DefaultToolContext build() {
-            if (toolManager == null) {
-                this.toolManager = ToolManager.create();
+            if (workingDirectory == null) {
+                if (StringUtils.isNotEmpty(System.getenv("CWD"))) {
+                    workingDirectory = Path.of(System.getenv("CWD"));
+                } else {
+                    workingDirectory = Path.of(".");
+                }
             }
-            if (toolExecutor == null) {
-                this.toolExecutor = DefaultToolExecutor.INSTANCE;
-            }
-            if (toolCallTracker == null) {
-                this.toolCallTracker = ToolCallTracker.empty();
-            }
-            if (toolExecuteListenerRegistry == null) {
-                this.toolExecuteListenerRegistry = ToolExecuteListenerRegistry.DEFAULT;
+            if (abortSignal == null) {
+                this.abortSignal = AbortController.global().signal();
             }
             return new DefaultToolContext(this);
         }

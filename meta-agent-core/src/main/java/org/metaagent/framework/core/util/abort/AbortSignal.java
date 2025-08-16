@@ -22,48 +22,32 @@
  * SOFTWARE.
  */
 
-package org.metaagent.framework.core.tool;
-
-import org.metaagent.framework.core.util.abort.AbortSignal;
-
-import java.nio.file.Path;
+package org.metaagent.framework.core.util.abort;
 
 /**
- * ToolContext provides the context for tool execution,
+ * AbortSignal is a signal that can be used to abort an operation.
  *
  * @author vyckey
  */
-public interface ToolContext {
+public interface AbortSignal {
     /**
-     * Gets the tool executor for executing tools.
+     * Returns true if the operation is aborted.
      *
-     * @return the tool executor
+     * @return true if the operation is aborted
      */
-    static ToolContext create() {
-        return DefaultToolContext.builder().build();
-    }
+    boolean isAborted();
 
     /**
-     * Creates a new builder for constructing a ToolContext.
+     * Returns the reason why the operation is aborted.
      *
-     * @return a new ToolContext builder
+     * @return the reason why the operation is aborted
      */
-    static ToolContextBuilder builder() {
-        return DefaultToolContext.builder();
-    }
+    Throwable abortReason();
 
     /**
-     * Gets the working directory for executing tools.
+     * Adds an abort listener.
      *
-     * @return the working directory
+     * @param listener the abort listener
      */
-    Path getWorkingDirectory();
-
-    /**
-     * Gets the abort signal for managing tool execution aborts.
-     *
-     * @return the abort signal
-     */
-    AbortSignal getAbortSignal();
-
+    void addAbortListener(AbortListener listener);
 }

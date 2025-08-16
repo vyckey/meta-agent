@@ -24,15 +24,18 @@
 
 package org.metaagent.framework.core.tool.executor;
 
+import com.google.common.collect.Lists;
 import lombok.extern.slf4j.Slf4j;
 import org.metaagent.framework.core.tool.Tool;
 import org.metaagent.framework.core.tool.ToolContext;
 import org.metaagent.framework.core.tool.ToolExecutionException;
-import org.metaagent.framework.core.tool.converter.ToolConverter;
 import org.metaagent.framework.core.tool.listener.ToolExecuteListener;
 import org.metaagent.framework.core.tool.listener.ToolExecuteListenerRegistry;
+import org.metaagent.framework.core.tool.manager.ToolManager;
+import org.metaagent.framework.core.tool.tools.WrapExceptionTool;
 import org.metaagent.framework.core.tool.tracker.ToolTrackerDelegate;
 
+import java.util.List;
 import java.util.function.Consumer;
 
 /**
@@ -56,13 +59,12 @@ public class DefaultToolExecutor implements ToolExecutor {
     }
 
     @Override
-    public <I, O> O execute(ToolContext context, Tool<I, O> tool, I input) throws ToolExecutionException {
-        ToolExecuteListenerRegistry listenerRegistry = context.getToolListenerRegistry();
+    public <I, O> O execute(ToolExecutorContext executorContext, Tool<I, O> tool, I input) throws ToolExecutionException {
+        ToolExecuteListenerRegistry listenerRegistry = executorContext.getToolListenerRegistry();
         try {
             notifyListeners(listenerRegistry, listener -> listener.onToolInput(tool, input));
 
-            ToolTrackerDelegate<I, O> delegate = new ToolTrackerDelegate<>(context.getToolCallTracker(), tool);
-            O output = delegate.run(context, input);
+            O output = tool.run(executorContext.getToolContext(), input);
 
             notifyListeners(listenerRegistry, listener -> listener.onToolOutput(tool, input, output));
             return output;
@@ -77,16 +79,27 @@ public class DefaultToolExecutor implements ToolExecutor {
     }
 
     @Override
-    public <I, O> String execute(ToolContext context, Tool<I, O> tool, String input) throws ToolExecutionException {
-        ToolConverter<I, O> converter = tool.getConverter();
-        try {
-            I toolInput = converter.inputConverter().convert(input);
-            O toolOutput = execute(context, tool, toolInput);
-            return converter.outputConverter().convert(toolOutput);
-        } catch (ToolExecutionException e) {
-            throw e;
-        } catch (Exception e) {
-            throw new ToolExecutionException("Call tool " + tool.getName() + " fail", e);
+    public <I, O> String execute(ToolExecutorContext executorContext, Tool<I, O> tool, String input) throws ToolExecutionException {
+        ToolTrackerDelegate<I, O> trackerDelegate = new ToolTrackerDelegate<>(executorContext.getToolCallTracker(), tool) {
+            @Override
+            public O run(ToolContext context, I input) throws ToolExecutionException {
+                return execute(executorContext, tool, input);
+            }
+        };
+        Tool<I, O> delegate = new WrapExceptionTool<>(trackerDelegate);
+        return delegate.call(executorContext.getToolContext(), input);
+    }
+
+    @Override
+    public BatchToolOutputs execute(ToolExecutorContext executorContext, BatchToolInputs toolInputs) throws ToolExecutionException {
+        ToolManager toolManager = executorContext.getToolManager();
+
+        List<BatchToolOutputs.ToolOutput> outputs = Lists.newArrayList();
+        for (BatchToolInputs.ToolInput toolInput : toolInputs.inputs()) {
+            Tool<?, ?> tool = toolManager.getTool(toolInput.toolName());
+            String output = execute(executorContext, tool, toolInput.input());
+            outputs.add(new BatchToolOutputs.ToolOutput(toolInput.toolName(), output));
         }
+        return new BatchToolOutputs(outputs);
     }
 }
