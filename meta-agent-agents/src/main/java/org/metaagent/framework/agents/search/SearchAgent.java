@@ -35,6 +35,7 @@ import org.metaagent.framework.core.model.prompt.PromptTemplate;
 import org.metaagent.framework.core.model.prompt.PromptValue;
 import org.metaagent.framework.core.model.prompt.StringPromptTemplate;
 import org.metaagent.framework.core.model.prompt.registry.PromptRegistry;
+import org.metaagent.framework.core.tool.executor.ToolExecutorContext;
 import org.metaagent.framework.core.tool.spring.ToolCallbackUtils;
 import org.springframework.ai.chat.messages.AssistantMessage;
 import org.springframework.ai.chat.messages.Message;
@@ -90,8 +91,9 @@ public class SearchAgent extends AbstractAgent<SearchAgentInput, SearchAgentOutp
     }
 
     protected Prompt buildPrompt(SearchAgentInput agentInput) {
+        ToolExecutorContext toolExecutorContext = buildToolExecutorContext(agentInput);
         ChatOptions options = ToolCallbackUtils.buildChatOptionsWithTools(this.chatOptions,
-                buildToolContext(agentInput), true);
+                toolExecutorContext.getToolManager(), toolExecutorContext.getToolContext(), true);
 
         PromptTemplate promptTemplate = PromptRegistry.global().getPromptTemplate("framework:search_agent_system_prompt");
         PromptValue promptValue = promptTemplate.format(Map.of(

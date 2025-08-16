@@ -37,7 +37,6 @@ import org.metaagent.framework.core.model.prompt.PromptTemplate;
 import org.metaagent.framework.core.model.prompt.PromptValue;
 import org.metaagent.framework.core.model.prompt.StringPromptTemplate;
 import org.metaagent.framework.core.model.prompt.registry.PromptRegistry;
-import org.metaagent.framework.core.tool.ToolContext;
 import org.springframework.ai.chat.model.ChatModel;
 
 import java.time.LocalDateTime;
@@ -84,11 +83,7 @@ public class LlmChatAgent extends AbstractAgent<ChatAgentInput, ChatAgentOutput>
     protected ChatAgentOutput doRun(ChatAgentInput input) {
         setSystemPrompt(input);
 
-        ToolContext toolContext = ToolContext.builder()
-                .toolManager(getToolManager())
-                .toolCallTracker(agentState.getToolCallTracker())
-                .build();
-        chatModelClient.setToolContext(toolContext);
+        chatModelClient.setToolExecutorContext(buildToolExecutorContext(input));
         return super.doRun(input);
     }
 

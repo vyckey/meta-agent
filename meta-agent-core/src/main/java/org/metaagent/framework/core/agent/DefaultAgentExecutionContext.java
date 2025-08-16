@@ -31,12 +31,14 @@ import org.metaagent.framework.core.environment.Environment;
 import org.metaagent.framework.core.tool.executor.DefaultToolExecutor;
 import org.metaagent.framework.core.tool.executor.ToolExecutor;
 import org.metaagent.framework.core.tool.manager.ToolManager;
+import org.metaagent.framework.core.util.abort.AbortController;
+import org.metaagent.framework.core.util.abort.AbortSignal;
 
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
 
 /**
- * description is here
+ * Default implementation of {@link AgentExecutionContext}.
  *
  * @author vyckey
  */
@@ -46,6 +48,7 @@ public class DefaultAgentExecutionContext implements AgentExecutionContext {
     private final ToolManager toolManager;
     private final ToolExecutor toolExecutor;
     private final ActionExecutor actionExecutor;
+    private final AbortSignal abortSignal;
     private final Executor executor;
 
     protected DefaultAgentExecutionContext(Builder builder) {
@@ -53,6 +56,7 @@ public class DefaultAgentExecutionContext implements AgentExecutionContext {
         this.toolManager = builder.toolManager;
         this.toolExecutor = builder.toolExecutor;
         this.actionExecutor = builder.actionExecutor;
+        this.abortSignal = builder.abortSignal;
         this.executor = builder.executor;
     }
 
@@ -64,11 +68,12 @@ public class DefaultAgentExecutionContext implements AgentExecutionContext {
         return new Builder(context);
     }
 
-    public static final class Builder {
+    public static final class Builder implements AgentExecutionContextBuilder {
         private Environment environment;
         private ToolManager toolManager;
         private ToolExecutor toolExecutor;
         private ActionExecutor actionExecutor;
+        private AbortSignal abortSignal;
         private Executor executor;
 
         private Builder() {
@@ -81,28 +86,39 @@ public class DefaultAgentExecutionContext implements AgentExecutionContext {
             this.executor = context.getExecutor();
         }
 
+        @Override
         public Builder environment(Environment environment) {
             this.environment = environment;
             return this;
         }
 
-        public Builder executor(Executor executor) {
-            this.executor = executor;
-            return this;
-        }
-
+        @Override
         public Builder toolManager(ToolManager toolManager) {
             this.toolManager = toolManager;
             return this;
         }
 
+        @Override
         public Builder toolExecutor(ToolExecutor toolExecutor) {
             this.toolExecutor = toolExecutor;
             return this;
         }
 
+        @Override
         public Builder actionExecutor(ActionExecutor actionExecutor) {
             this.actionExecutor = actionExecutor;
+            return this;
+        }
+
+        @Override
+        public AgentExecutionContextBuilder abortSignal(AbortSignal abortSignal) {
+            this.abortSignal = abortSignal;
+            return this;
+        }
+
+        @Override
+        public Builder executor(Executor executor) {
+            this.executor = executor;
             return this;
         }
 
@@ -116,11 +132,15 @@ public class DefaultAgentExecutionContext implements AgentExecutionContext {
             if (actionExecutor == null) {
                 actionExecutor = SyncActionExecutor.INSTANCE;
             }
+            if (abortSignal == null) {
+                abortSignal = AbortController.global().signal();
+            }
             if (executor == null) {
                 executor = Executors.newSingleThreadExecutor();
             }
         }
 
+        @Override
         public DefaultAgentExecutionContext build() {
             setDefault();
             return new DefaultAgentExecutionContext(this);

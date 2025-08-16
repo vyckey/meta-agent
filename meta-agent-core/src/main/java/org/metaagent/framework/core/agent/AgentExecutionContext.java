@@ -28,6 +28,7 @@ import org.metaagent.framework.core.agent.action.executor.ActionExecutor;
 import org.metaagent.framework.core.environment.Environment;
 import org.metaagent.framework.core.tool.executor.ToolExecutor;
 import org.metaagent.framework.core.tool.manager.ToolManager;
+import org.metaagent.framework.core.util.abort.AbortSignal;
 
 import java.util.concurrent.Executor;
 
@@ -51,7 +52,7 @@ public interface AgentExecutionContext {
      *
      * @return a DefaultAgentExecutionContext builder instance
      */
-    static DefaultAgentExecutionContext.Builder builder() {
+    static AgentExecutionContextBuilder builder() {
         return DefaultAgentExecutionContext.builder();
     }
 
@@ -82,6 +83,13 @@ public interface AgentExecutionContext {
      * @return the action executor
      */
     ActionExecutor getActionExecutor();
+
+    /**
+     * Gets the abort signal for managing agent execution aborts.
+     *
+     * @return the abort signal
+     */
+    AbortSignal getAbortSignal();
 
     /**
      * Get the executor associated with this agent execution context.
