@@ -35,7 +35,7 @@
         </Logger>
         <Logger name="Tool" level="DEBUG" additivity="false">
             <AppenderRef ref="TOOL_CONSOLE"/>
-            <AppenderRef ref="TOOL_FILE"/>
+            <AppenderRef ref="TOOL_FILE" level="INFO"/>
         </Logger>
     </Loggers>
 </Configuration>

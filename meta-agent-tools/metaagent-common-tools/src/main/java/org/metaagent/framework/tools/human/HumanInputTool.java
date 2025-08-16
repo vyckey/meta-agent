@@ -44,6 +44,8 @@ public class HumanInputTool implements Tool<String, String> {
             .description("Gets human input content")
             .inputSchema(String.class)
             .outputSchema(String.class)
+            .isConcurrencySafe(false)
+            .isReadOnly(false)
             .build();
 
     @Override

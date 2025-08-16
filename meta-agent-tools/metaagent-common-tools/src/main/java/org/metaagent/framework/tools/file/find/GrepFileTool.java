@@ -31,9 +31,11 @@ import org.apache.commons.lang3.StringUtils;
 import org.metaagent.framework.core.tool.Tool;
 import org.metaagent.framework.core.tool.ToolContext;
 import org.metaagent.framework.core.tool.ToolExecutionException;
+import org.metaagent.framework.core.tool.ToolParameterException;
 import org.metaagent.framework.core.tool.converter.ToolConverter;
 import org.metaagent.framework.core.tool.converter.ToolConverters;
 import org.metaagent.framework.core.tool.definition.ToolDefinition;
+import org.metaagent.framework.core.util.abort.AbortException;
 import org.metaagent.framework.tools.file.util.FileUtils;
 
 import java.io.File;
@@ -58,6 +60,8 @@ public class GrepFileTool implements Tool<GrepFileInput, GrepFileOutput> {
                     "containing matches, along with their file paths and line numbers.")
             .inputSchema(GrepFileInput.class)
             .outputSchema(GrepFileOutput.class)
+            .isConcurrencySafe(true)
+            .isReadOnly(true)
             .build();
     private static final ToolConverter<GrepFileInput, GrepFileOutput> TOOL_CONVERTER =
             ToolConverters.jsonConverter(GrepFileInput.class);
@@ -74,10 +78,10 @@ public class GrepFileTool implements Tool<GrepFileInput, GrepFileOutput> {
 
     protected void validateInput(GrepFileInput input) throws ToolExecutionException {
         if (input.getPattern() == null) {
-            throw new ToolExecutionException("Grep pattern must be specified.");
+            throw new ToolParameterException("Grep pattern must be specified.");
         }
         if (StringUtils.isBlank(input.getDirectory()) && System.getenv("CWD") == null) {
-            throw new ToolExecutionException("Current working directory is unknown. Please specify a path.");
+            throw new ToolParameterException("Current working directory is unknown. Please specify a path.");
         }
     }
 
@@ -85,10 +89,17 @@ public class GrepFileTool implements Tool<GrepFileInput, GrepFileOutput> {
     public GrepFileOutput run(ToolContext toolContext, GrepFileInput input) throws ToolExecutionException {
         validateInput(input);
 
-        String dir = StringUtils.isBlank(input.getDirectory()) ? System.getenv("CWD") : input.getDirectory();
-        Path directory = Path.of(dir).toAbsolutePath();
+        Path directory = toolContext.getWorkingDirectory();
+        if (StringUtils.isNotEmpty(input.getDirectory())) {
+            directory = FileUtils.resolvePath(toolContext.getWorkingDirectory(), Path.of(input.getDirectory()));
+        }
+        directory = directory.toAbsolutePath();
         if (!directory.toFile().exists()) {
-            throw new ToolExecutionException("Directory does not exist: " + directory);
+            throw new ToolParameterException("Directory does not exist: " + directory);
+        }
+
+        if (toolContext.getAbortSignal().isAborted()) {
+            throw new AbortException("Tool " + getName() + " is cancelled");
         }
 
         List<GrepMatchLine> matchLines;

@@ -43,8 +43,7 @@ import java.util.List;
 @Getter
 @SuperBuilder
 public class ListFileInput implements ToolDisplayable {
-    @JsonProperty(required = true)
-    @JsonPropertyDescription("The target root directory.")
+    @JsonPropertyDescription("The target root directory. Optional, default is current working directory.")
     private String directory;
 
     @JsonPropertyDescription("Whether to include the directories. Default is false")

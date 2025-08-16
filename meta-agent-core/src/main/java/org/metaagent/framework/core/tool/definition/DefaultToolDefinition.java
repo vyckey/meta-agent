@@ -24,17 +24,27 @@
 
 package org.metaagent.framework.core.tool.definition;
 
+import org.apache.commons.lang3.StringUtils;
+import org.metaagent.framework.core.common.metadata.MetadataProvider;
 import org.metaagent.framework.core.util.json.JsonSchemaGenerator;
 
 import java.lang.reflect.Type;
 
 /**
- * description is here
+ * Default implementation of {@link ToolDefinition}.
  *
  * @author vyckey
  */
-public record DefaultToolDefinition(String name, String description, String inputSchema, String outputSchema)
-        implements ToolDefinition {
+public record DefaultToolDefinition(
+        String name,
+        String description,
+        String inputSchema,
+        String outputSchema,
+        MetadataProvider metadata) implements ToolDefinition {
+
+    private DefaultToolDefinition(Builder builder) {
+        this(builder.name, builder.description, builder.inputSchema, builder.outputSchema, builder.metadata);
+    }
 
     public static Builder builder(String name) {
         return new Builder(name);
@@ -45,6 +55,7 @@ public record DefaultToolDefinition(String name, String description, String inpu
         private String description;
         private String inputSchema;
         private String outputSchema;
+        private MetadataProvider metadata;
 
         private Builder(String name) {
             this.name = name;
@@ -75,14 +86,41 @@ public record DefaultToolDefinition(String name, String description, String inpu
             return this;
         }
 
+        public Builder metadata(MetadataProvider metadata) {
+            this.metadata = metadata;
+            return this;
+        }
+
+        public Builder isConcurrencySafe(boolean isConcurrencySafe) {
+            if (metadata == null) {
+                metadata = MetadataProvider.create();
+            }
+            metadata.setProperty(ToolDefinition.PROP_IS_CONCURRENCY_SAFE, isConcurrencySafe);
+            return this;
+        }
+
+        public Builder isReadOnly(boolean isReadOnly) {
+            if (metadata == null) {
+                metadata = MetadataProvider.create();
+            }
+            metadata.setProperty(ToolDefinition.PROP_IS_READ_ONLY, isReadOnly);
+            return this;
+        }
+
         public ToolDefinition build() {
-            return new DefaultToolDefinition(name, description, inputSchema, outputSchema);
+            if (StringUtils.isEmpty(name)) {
+                throw new IllegalArgumentException("Tool name is empty");
+            }
+            if (metadata == null) {
+                metadata = MetadataProvider.empty();
+            }
+            return new DefaultToolDefinition(this);
         }
     }
 
     @Override
     public String toString() {
-        return "Tool - " + name + ": " + description +
+        return "Tool - " + name + "\n" + description +
                 "\n\nInput Schema:\n" + inputSchema + "\n\nOutput Schema:\n" + outputSchema;
     }
 }

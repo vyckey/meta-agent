@@ -31,9 +31,11 @@ import org.apache.commons.lang3.StringUtils;
 import org.metaagent.framework.core.tool.Tool;
 import org.metaagent.framework.core.tool.ToolContext;
 import org.metaagent.framework.core.tool.ToolExecutionException;
+import org.metaagent.framework.core.tool.ToolParameterException;
 import org.metaagent.framework.core.tool.converter.ToolConverter;
 import org.metaagent.framework.core.tool.converter.ToolConverters;
 import org.metaagent.framework.core.tool.definition.ToolDefinition;
+import org.metaagent.framework.core.util.abort.AbortException;
 import org.metaagent.framework.tools.file.util.FilePathFilter;
 import org.metaagent.framework.tools.file.util.FileUtils;
 import org.metaagent.framework.tools.file.util.GitIgnoreLikeFileFilter;
@@ -66,6 +68,8 @@ public class GlobFileTool implements Tool<GlobFileInput, GlobFileOutput> {
                     "Ideal for quickly locating files based on their name or path structure, especially in large codebases.")
             .inputSchema(GlobFileInput.class)
             .outputSchema(GlobFileOutput.class)
+            .isConcurrencySafe(true)
+            .isReadOnly(true)
             .build();
     private static final ToolConverter<GlobFileInput, GlobFileOutput> TOOL_CONVERTER =
             ToolConverters.jsonConverter(GlobFileInput.class);
@@ -82,10 +86,10 @@ public class GlobFileTool implements Tool<GlobFileInput, GlobFileOutput> {
 
     protected void validateInput(GlobFileInput input) throws ToolExecutionException {
         if (input.getPattern() == null) {
-            throw new ToolExecutionException("Glob pattern must be specified.");
+            throw new ToolParameterException("Glob pattern must be specified.");
         }
         if (StringUtils.isBlank(input.getDirectory()) && System.getenv("CWD") == null) {
-            throw new ToolExecutionException("Current working directory is unknown. Please specify a path.");
+            throw new ToolParameterException("Current working directory is unknown. Please specify a path.");
         }
     }
 
@@ -93,17 +97,25 @@ public class GlobFileTool implements Tool<GlobFileInput, GlobFileOutput> {
     public GlobFileOutput run(ToolContext toolContext, GlobFileInput input) throws ToolExecutionException {
         validateInput(input);
 
-        String dir = StringUtils.isBlank(input.getDirectory()) ? System.getenv("CWD") : input.getDirectory();
-        Path directory = Path.of(dir).toAbsolutePath();
+        Path directory = toolContext.getWorkingDirectory();
+        if (StringUtils.isNotEmpty(input.getDirectory())) {
+            directory = FileUtils.resolvePath(toolContext.getWorkingDirectory(), Path.of(input.getDirectory()));
+        }
+        directory = directory.toAbsolutePath();
         if (!directory.toFile().exists()) {
-            throw new ToolExecutionException("Directory does not exist: " + directory);
+            throw new ToolParameterException("Directory does not exist: " + directory);
+        }
+
+        if (toolContext.getAbortSignal().isAborted()) {
+            throw new AbortException("Tool " + getName() + " is cancelled");
         }
 
         try {
             FilePathFilter filePathFilter = buildFilePathFilter(input, directory);
+            Path finalDirectory = directory;
             List<File> files = Files.walk(directory)
                     .filter(Files::isRegularFile)
-                    .filter(path -> filePathFilter.matchPath(directory, path) == FilePathFilter.MatchType.MATCHED)
+                    .filter(path -> filePathFilter.matchPath(finalDirectory, path) == FilePathFilter.MatchType.MATCHED)
                     .map(Path::toFile)
                     .sorted(new FileOrderComparator(TimeUnit.HOURS, 6))
                     .toList();

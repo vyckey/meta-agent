@@ -30,11 +30,14 @@ import org.jetbrains.annotations.NotNull;
 import org.metaagent.framework.core.tool.Tool;
 import org.metaagent.framework.core.tool.ToolContext;
 import org.metaagent.framework.core.tool.ToolExecutionException;
+import org.metaagent.framework.core.tool.ToolParameterException;
 import org.metaagent.framework.core.tool.converter.ToolConverter;
 import org.metaagent.framework.core.tool.converter.ToolConverters;
 import org.metaagent.framework.core.tool.definition.ToolDefinition;
 import org.metaagent.framework.core.tool.human.HumanApprover;
 import org.metaagent.framework.core.tool.human.SystemAutoApprover;
+import org.metaagent.framework.core.util.abort.AbortException;
+import org.metaagent.framework.tools.file.util.FileUtils;
 
 import java.io.File;
 import java.io.FileWriter;
@@ -53,7 +56,10 @@ public class WriteTextFileTool implements Tool<WriteTextFileInput, WriteTextFile
             .builder("write_text_file")
             .description("Write text content to a specified file")
             .inputSchema(WriteTextFileInput.class)
-            .outputSchema(WriteTextFileOutput.class).build();
+            .outputSchema(WriteTextFileOutput.class)
+            .isConcurrencySafe(false)
+            .isReadOnly(false)
+            .build();
     private static final ToolConverter<WriteTextFileInput, WriteTextFileOutput> TOOL_CONVERTER =
             ToolConverters.jsonConverter(WriteTextFileInput.class);
     private HumanApprover humanApprover = SystemAutoApprover.INSTANCE;
@@ -70,10 +76,18 @@ public class WriteTextFileTool implements Tool<WriteTextFileInput, WriteTextFile
 
     @Override
     public WriteTextFileOutput run(ToolContext toolContext, WriteTextFileInput input) throws ToolExecutionException {
+        if (toolContext.getAbortSignal().isAborted()) {
+            throw new AbortException("Tool " + getName() + " is cancelled");
+        }
+
         final String content = input.getContent() == null ? "" : input.getContent();
-        Path filePath = Path.of(input.getFilePath());
+        Path filePath = FileUtils.resolvePath(toolContext.getWorkingDirectory(), Path.of(input.getFilePath()));
 
         requestApprovalBeforeWriteFile(filePath, content);
+        if (toolContext.getAbortSignal().isAborted()) {
+            throw new AbortException("Tool " + getName() + " is cancelled");
+        }
+
         try {
             if (!filePath.isAbsolute()) {
                 throw new IOException("File path is not absolute: " + input.getFilePath());
@@ -105,7 +119,7 @@ public class WriteTextFileTool implements Tool<WriteTextFileInput, WriteTextFile
         File file = new File(filePath.toString());
         if (file.exists()) {
             if (!file.isFile()) {
-                throw new IOException("File is a directory");
+                throw new ToolParameterException("File is a directory");
             }
         } else {
             if (!file.getParentFile().mkdirs()) {

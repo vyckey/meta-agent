@@ -24,10 +24,9 @@
 
 package org.metaagent.framework.core.tool;
 
-import org.metaagent.framework.core.tool.executor.ToolExecutor;
-import org.metaagent.framework.core.tool.listener.ToolExecuteListenerRegistry;
-import org.metaagent.framework.core.tool.manager.ToolManager;
-import org.metaagent.framework.core.tool.tracker.ToolCallTracker;
+import org.metaagent.framework.core.util.abort.AbortSignal;
+
+import java.nio.file.Path;
 
 /**
  * ToolContext provides the context for tool execution,
@@ -41,7 +40,7 @@ public interface ToolContext {
      * @return the tool executor
      */
     static ToolContext create() {
-        return builder().build();
+        return DefaultToolContext.builder().build();
     }
 
     /**
@@ -49,35 +48,22 @@ public interface ToolContext {
      *
      * @return a new ToolContext builder
      */
-    static DefaultToolContext.Builder builder() {
+    static ToolContextBuilder builder() {
         return DefaultToolContext.builder();
     }
 
     /**
-     * Gets the tool executor for executing tools.
+     * Gets the working directory for executing tools.
      *
-     * @return the tool executor
+     * @return the working directory
      */
-    ToolManager getToolManager();
+    Path getWorkingDirectory();
 
     /**
-     * Gets the tool executor for executing tools.
+     * Gets the abort signal for managing tool execution aborts.
      *
-     * @return the tool executor
+     * @return the abort signal
      */
-    ToolExecutor getToolExecutor();
+    AbortSignal getAbortSignal();
 
-    /**
-     * Gets the tool listener registry for managing tool execution listeners.
-     *
-     * @return the tool listener registry
-     */
-    ToolExecuteListenerRegistry getToolListenerRegistry();
-
-    /**
-     * Gets the tool executor for executing tools.
-     *
-     * @return the tool executor
-     */
-    ToolCallTracker getToolCallTracker();
 }

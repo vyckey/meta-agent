@@ -40,7 +40,7 @@ import org.metaagent.framework.core.agent.profile.DefaultAgentProfile;
 import org.metaagent.framework.core.agent.state.AgentRunStatus;
 import org.metaagent.framework.core.agent.state.AgentState;
 import org.metaagent.framework.core.agent.state.DefaultAgentState;
-import org.metaagent.framework.core.tool.ToolContext;
+import org.metaagent.framework.core.tool.executor.ToolExecutorContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -187,11 +187,10 @@ public abstract class AbstractMetaAgent<
 
     protected abstract AgentOutput doStep(AgentInput input);
 
-    protected ToolContext buildToolContext(AgentInput input) {
+    protected ToolExecutorContext buildToolExecutorContext(AgentInput input) {
         AgentExecutionContext context = input.context();
-        return ToolContext.builder()
+        return ToolExecutorContext.builder()
                 .toolManager(context.getToolManager())
-                .toolCallTracker(agentState.getToolCallTracker())
                 .build();
     }
 

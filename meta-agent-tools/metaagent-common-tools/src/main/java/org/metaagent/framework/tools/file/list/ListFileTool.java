@@ -31,9 +31,11 @@ import org.apache.commons.lang3.StringUtils;
 import org.metaagent.framework.core.tool.Tool;
 import org.metaagent.framework.core.tool.ToolContext;
 import org.metaagent.framework.core.tool.ToolExecutionException;
+import org.metaagent.framework.core.tool.ToolParameterException;
 import org.metaagent.framework.core.tool.converter.ToolConverter;
 import org.metaagent.framework.core.tool.converter.ToolConverters;
 import org.metaagent.framework.core.tool.definition.ToolDefinition;
+import org.metaagent.framework.core.util.abort.AbortException;
 import org.metaagent.framework.tools.file.util.FilePathFilter;
 import org.metaagent.framework.tools.file.util.FileUtils;
 import org.metaagent.framework.tools.file.util.GitIgnoreLikeFileFilter;
@@ -59,6 +61,8 @@ public class ListFileTool implements Tool<ListFileInput, ListFileOutput> {
                     + "Can optionally include or ignore files by glob patterns.")
             .inputSchema(ListFileInput.class)
             .outputSchema(ListFileOutput.class)
+            .isConcurrencySafe(true)
+            .isReadOnly(true)
             .build();
     private static final ToolConverter<ListFileInput, ListFileOutput> TOOL_CONVERTER =
             ToolConverters.jsonConverter(ListFileInput.class);
@@ -75,15 +79,23 @@ public class ListFileTool implements Tool<ListFileInput, ListFileOutput> {
 
     @Override
     public ListFileOutput run(ToolContext toolContext, ListFileInput input) throws ToolExecutionException {
-        Path directory = Path.of(input.getDirectory());
+        Path directory = toolContext.getWorkingDirectory();
+        if (StringUtils.isNotEmpty(input.getDirectory())) {
+            directory = FileUtils.resolvePath(toolContext.getWorkingDirectory(), Path.of(input.getDirectory()));
+        }
         if (!Files.exists(directory)) {
-            throw new ToolExecutionException("Directory " + directory + " does not exist");
+            throw new ToolParameterException("Directory " + directory.toAbsolutePath() + " does not exist");
+        }
+
+        if (toolContext.getAbortSignal().isAborted()) {
+            throw new AbortException("Tool " + getName() + " is cancelled");
         }
 
         List<File> files;
         try {
             FilePathFilter filePathFilter = buildFilePathFilter(input, directory);
             int maxDepth = input.getMaxDepth() == null || input.getMaxDepth() < 0 ? Integer.MAX_VALUE : input.getMaxDepth();
+            Path finalDirectory = directory;
             files = Files.walk(directory, maxDepth)
                     .filter(path -> {
                         if (input.isDirectoryIncluded()) {
@@ -91,7 +103,7 @@ public class ListFileTool implements Tool<ListFileInput, ListFileOutput> {
                         }
                         return Files.isRegularFile(path);
                     })
-                    .filter(path -> filePathFilter.matchPath(directory, path) == FilePathFilter.MatchType.MATCHED)
+                    .filter(path -> filePathFilter.matchPath(finalDirectory, path) == FilePathFilter.MatchType.MATCHED)
                     .map(Path::toFile)
                     .toList();
         } catch (IOException e) {

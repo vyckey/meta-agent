@@ -44,6 +44,13 @@ public abstract class FileUtils {
         }
     }
 
+    public static Path resolvePath(Path workingDirectory, Path filePath) {
+        if (filePath.isAbsolute()) {
+            return filePath.normalize();
+        }
+        return workingDirectory.resolve(filePath).normalize();
+    }
+
     public static List<Path> resolvePaths(Path directory, List<String> paths, boolean allowNotFound)
             throws FileNotFoundException {
         if (CollectionUtils.isEmpty(paths)) {

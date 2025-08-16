@@ -39,6 +39,7 @@ import org.metaagent.framework.core.tool.converter.ToolConverters;
 import org.metaagent.framework.core.tool.definition.ToolDefinition;
 import org.metaagent.framework.core.tool.human.HumanApprover;
 import org.metaagent.framework.core.tool.human.SystemAutoApprover;
+import org.metaagent.framework.core.util.abort.AbortException;
 
 import java.io.IOException;
 import java.util.List;
@@ -57,6 +58,8 @@ public class HttpRequestTool implements Tool<HttpRequest, HttpResponse> {
             .description("Sends a HTTP request and returns the response.")
             .inputSchema(HttpRequest.class)
             .outputSchema(HttpResponse.class)
+            .isConcurrencySafe(true)
+            .isReadOnly(false)
             .build();
     private static final ToolConverter<HttpRequest, HttpResponse> TOOL_CONVERTER =
             ToolConverters.jsonConverter(HttpRequest.class);
@@ -120,7 +123,15 @@ public class HttpRequestTool implements Tool<HttpRequest, HttpResponse> {
     @Override
     public HttpResponse run(ToolContext toolContext, HttpRequest request) throws ToolExecutionException {
         Request realRequest = buildRequest(request);
+        if (toolContext.getAbortSignal().isAborted()) {
+            throw new AbortException("Tool " + getName() + " is cancelled");
+        }
+
         requestApprovalBeforeRequest(realRequest);
+        if (toolContext.getAbortSignal().isAborted()) {
+            throw new AbortException("Tool " + getName() + " is cancelled");
+        }
+
         try (Response response = httpClient.newCall(realRequest).execute()) {
             return buildResponse(request, response);
         } catch (IOException e) {
