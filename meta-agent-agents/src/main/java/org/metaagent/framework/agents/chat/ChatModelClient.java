@@ -30,6 +30,7 @@ import org.metaagent.framework.core.agent.chat.message.AssistantMessage;
 import org.metaagent.framework.core.agent.chat.message.Message;
 import org.metaagent.framework.core.agent.chat.message.SystemMessage;
 import org.metaagent.framework.core.model.chat.MessageConverter;
+import org.metaagent.framework.core.tool.executor.ToolExecutor;
 import org.metaagent.framework.core.tool.executor.ToolExecutorContext;
 import org.metaagent.framework.core.tool.spring.ToolCallbackUtils;
 import org.springframework.ai.chat.model.ChatModel;
@@ -53,6 +54,7 @@ public class ChatModelClient {
     protected SystemMessage systemMessage;
     protected List<Message> historyMessages = Lists.newArrayList();
     protected MessageConverter messageConverter = new MessageConverter(true);
+    protected ToolExecutor toolExecutor;
     protected ToolExecutorContext toolExecutorContext;
     protected int lastMessageCursor = 0;
     protected ChatResponse chatResponse;
@@ -86,6 +88,10 @@ public class ChatModelClient {
         return historyMessages.subList(lastMessageCursor, historyMessages.size());
     }
 
+    public void setToolExecutor(ToolExecutor toolExecutor) {
+        this.toolExecutor = toolExecutor;
+    }
+
     public void setToolExecutorContext(ToolExecutorContext toolExecutorContext) {
         this.toolExecutorContext = toolExecutorContext;
     }
@@ -116,8 +122,9 @@ public class ChatModelClient {
         }
 
         if (toolExecutorContext != null) {
-            chatOptions = ToolCallbackUtils.buildChatOptionsWithTools(chatOptions,
-                    toolExecutorContext.getToolManager(), toolExecutorContext.getToolContext(), false);
+            chatOptions = ToolCallbackUtils.buildChatOptionsWithTools(
+                    chatOptions, toolExecutor, toolExecutorContext, false
+            );
         }
         return new Prompt(messageList, chatOptions);
     }

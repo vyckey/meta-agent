@@ -50,7 +50,7 @@ public class ToolExecuteDisplayListener implements ToolExecuteListener {
     @Override
     public <I, O> void onToolOutput(Tool<I, O> tool, I input, O output) {
         if (input instanceof ToolDisplayable) {
-            String inputDisplay = ((ToolDisplayable) input).display();
+            String inputDisplay = ((ToolDisplayable) output).display();
             logger.info("Tool [{}] Output > {}", tool.getName(), inputDisplay);
         }
     }

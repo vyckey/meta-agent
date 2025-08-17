@@ -83,6 +83,7 @@ public class LlmChatAgent extends AbstractAgent<ChatAgentInput, ChatAgentOutput>
     protected ChatAgentOutput doRun(ChatAgentInput input) {
         setSystemPrompt(input);
 
+        chatModelClient.setToolExecutor(input.context().getToolExecutor());
         chatModelClient.setToolExecutorContext(buildToolExecutorContext(input));
         return super.doRun(input);
     }
