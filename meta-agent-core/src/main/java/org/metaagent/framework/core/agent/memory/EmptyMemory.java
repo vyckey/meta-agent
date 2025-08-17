@@ -24,75 +24,18 @@
 
 package org.metaagent.framework.core.agent.memory;
 
-import org.metaagent.framework.core.agent.memory.fragment.Fragment;
-
-import java.util.Map;
-import java.util.Set;
-
 /**
- * description is here
+ * Empty memory.
  *
  * @author vyckey
  */
-public class EmptyMemory implements ReadOnlyMemory {
-    public static final EmptyMemory EMPTY_MEMORY = new EmptyMemory(false);
-    public static final EmptyMemory INACCESSIBLE_MEMORY = new EmptyMemory(true);
+public class EmptyMemory implements Memory {
+    public static final EmptyMemory INSTANCE = new EmptyMemory();
 
-    private final boolean fastFail;
-
-    private EmptyMemory(boolean fastFail) {
-        this.fastFail = fastFail;
+    private EmptyMemory() {
     }
 
     @Override
-    public void store(String key, Fragment fragment) {
-        if (fastFail) {
-            ReadOnlyMemory.super.store(key, fragment);
-        }
-    }
-
-    @Override
-    public void store(Map<String, Fragment> fragments) {
-        if (fastFail) {
-            ReadOnlyMemory.super.store(fragments);
-        }
-    }
-
-    @Override
-    public Fragment retrieve(String key) {
-        if (fastFail) {
-            throw new IllegalStateException("Memory is empty");
-        }
-        return null;
-    }
-
-    @Override
-    public Map<String, Fragment> retrieve(Set<String> keys) {
-        if (fastFail) {
-            throw new IllegalStateException("Memory is empty");
-        }
-        return Map.of();
-    }
-
-    @Override
-    public Map<String, Fragment> retrieveAll() {
-        if (fastFail) {
-            throw new IllegalStateException("Memory is empty");
-        }
-        return Map.of();
-    }
-
-    @Override
-    public void clear(String key) {
-        if (fastFail) {
-            ReadOnlyMemory.super.clear(key);
-        }
-    }
-
-    @Override
-    public void clearAll() {
-        if (fastFail) {
-            ReadOnlyMemory.super.clearAll();
-        }
+    public void clear() {
     }
 }

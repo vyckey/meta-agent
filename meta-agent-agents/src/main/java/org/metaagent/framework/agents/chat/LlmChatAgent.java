@@ -95,7 +95,9 @@ public class LlmChatAgent extends AbstractAgent<ChatAgentInput, ChatAgentOutput>
 
         PromptTemplate promptTemplate = PromptRegistry.global().getPromptTemplate(systemPromptId);
         PromptValue systemPrompt = promptTemplate.format(Map.of(
+                "name", getName(),
                 "date", LocalDateTime.now().format(DateTimeFormatter.ISO_LOCAL_DATE),
+                "model_cutoff", "2025-08-15",
                 "search_enabled", searchEnabled,
                 "deep_thinking", deepThinkEnabled
         ));

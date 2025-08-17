@@ -24,28 +24,14 @@
 
 package org.metaagent.framework.core.agent.memory;
 
-import org.metaagent.framework.core.agent.memory.fragment.Fragment;
-
-import java.util.Map;
-import java.util.Set;
-
 /**
- * description is here
+ * Agent memory
  *
  * @author vyckey
  */
 public interface Memory {
-    void store(String key, Fragment fragment);
-
-    void store(Map<String, Fragment> fragments);
-
-    Fragment retrieve(String key);
-
-    Map<String, Fragment> retrieve(Set<String> keys);
-
-    Map<String, Fragment> retrieveAll();
-
-    void clear(String key);
-
-    void clearAll();
+    /**
+     * Clear all memory
+     */
+    void clear();
 }

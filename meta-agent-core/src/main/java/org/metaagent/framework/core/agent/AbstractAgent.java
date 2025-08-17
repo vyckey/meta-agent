@@ -26,6 +26,8 @@ package org.metaagent.framework.core.agent;
 
 import org.metaagent.framework.core.agent.loop.AgentLoopControlStrategy;
 import org.metaagent.framework.core.agent.loop.MaxLoopCountAgentLoopControl;
+import org.metaagent.framework.core.tool.ToolContext;
+import org.metaagent.framework.core.tool.executor.ToolExecutorContext;
 import org.metaagent.framework.core.tool.manager.ToolManager;
 
 /**
@@ -56,5 +58,16 @@ public abstract class AbstractAgent<
     @Override
     protected AgentOutput doRun(AgentInput input) {
         return Agent.super.run(input);
+    }
+
+    protected ToolExecutorContext buildToolExecutorContext(AgentInput input) {
+        AgentExecutionContext agentContext = input.context();
+        return ToolExecutorContext.builder()
+                .toolManager(getToolManager())
+                .toolCallTracker(agentState.getToolCallTracker())
+                .toolContext(ToolContext.builder()
+                        .abortSignal(agentContext.getAbortSignal())
+                        .build())
+                .build();
     }
 }

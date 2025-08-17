@@ -40,7 +40,6 @@ import org.metaagent.framework.core.agent.profile.DefaultAgentProfile;
 import org.metaagent.framework.core.agent.state.AgentRunStatus;
 import org.metaagent.framework.core.agent.state.AgentState;
 import org.metaagent.framework.core.agent.state.DefaultAgentState;
-import org.metaagent.framework.core.tool.executor.ToolExecutorContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -59,16 +58,20 @@ public abstract class AbstractMetaAgent<
 
     protected AgentProfile profile;
     protected AgentState agentState = DefaultAgentState.builder().build();
-    protected Memory memory = EmptyMemory.EMPTY_MEMORY;
+    protected Memory memory = EmptyMemory.INSTANCE;
     protected AgentAbilityManager abilityManager = new DefaultAgentAbilityManager();
     protected final List<AgentRunListener<AgentInput, AgentOutput>> runListeners = Lists.newArrayList();
     protected final List<AgentStepListener<AgentInput, AgentOutput>> stepListeners = Lists.newArrayList();
     protected AgentLogger agentLogger;
     protected Logger logger = LoggerFactory.getLogger(getClass());
 
+    protected AbstractMetaAgent(AgentProfile profile) {
+        this.profile = profile;
+        this.agentLogger = AgentLogger.getLogger(profile.getName());
+    }
+
     protected AbstractMetaAgent(String name) {
-        this.profile = new DefaultAgentProfile(name);
-        this.agentLogger = AgentLogger.getLogger(name);
+        this(new DefaultAgentProfile(name));
     }
 
     @Override
@@ -187,17 +190,10 @@ public abstract class AbstractMetaAgent<
 
     protected abstract AgentOutput doStep(AgentInput input);
 
-    protected ToolExecutorContext buildToolExecutorContext(AgentInput input) {
-        AgentExecutionContext context = input.context();
-        return ToolExecutorContext.builder()
-                .toolManager(context.getToolManager())
-                .build();
-    }
-
     @Override
     public void reset() {
         this.agentState.reset();
-        this.memory.clearAll();
+        this.memory.clear();
     }
 
     @Override

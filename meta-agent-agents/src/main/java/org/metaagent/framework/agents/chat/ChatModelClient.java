@@ -92,12 +92,15 @@ public class ChatModelClient {
 
     public AssistantMessage sendMessage(Message message) {
         this.lastMessageCursor = this.historyMessages.size();
+        this.historyMessages.add(message);
 
         Prompt prompt = buildPrompt(List.of(message), chatModel.getDefaultOptions());
         ChatResponse chatResponse = call(prompt, null);
         this.chatResponse = chatResponse;
         Generation generation = chatResponse.getResult();
-        return (AssistantMessage) messageConverter.reverse(generation.getOutput());
+        AssistantMessage outputMessage = (AssistantMessage) messageConverter.reverse(generation.getOutput());
+        this.historyMessages.add(outputMessage);
+        return outputMessage;
     }
 
     protected Prompt buildPrompt(List<Message> messages, ChatOptions chatOptions) {
