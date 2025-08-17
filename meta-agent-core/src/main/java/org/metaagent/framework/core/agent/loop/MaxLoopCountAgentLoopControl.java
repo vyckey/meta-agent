@@ -43,7 +43,7 @@ public class MaxLoopCountAgentLoopControl<I extends AgentInput, O extends AgentO
     }
 
     @Override
-    public boolean shouldContinueLoop(Agent<I, O> agent, I input) {
+    public boolean shouldContinueLoop(Agent<I, O> agent, I input, O output) {
         AgentState agentState = agent.getAgentState();
         return !agentState.getStatus().isFinished() && agentState.getLoopCount() < maxLoopCount;
     }

@@ -32,6 +32,7 @@ import org.metaagent.framework.core.agent.chat.message.history.MessageHistory;
 import org.metaagent.framework.core.agents.chat.ChatAgent;
 import org.metaagent.framework.core.agents.chat.ChatAgentInput;
 import org.metaagent.framework.core.agents.chat.ChatAgentOutput;
+import org.metaagent.framework.core.model.chat.ChatModelClient;
 import org.metaagent.framework.core.model.parser.OutputParsers;
 import org.metaagent.framework.core.model.prompt.PromptTemplate;
 import org.metaagent.framework.core.model.prompt.PromptValue;

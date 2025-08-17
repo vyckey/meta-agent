@@ -94,7 +94,7 @@ public interface Agent<
     default AgentOutput run(AgentInput input) {
         AgentState agentState = getAgentState();
         AgentOutput output = null;
-        while (getLoopControlStrategy().shouldContinueLoop(this, input)) {
+        while (getLoopControlStrategy().shouldContinueLoop(this, input, output)) {
             try {
                 agentState.setStatus(AgentRunStatus.RUNNING);
                 output = step(input);

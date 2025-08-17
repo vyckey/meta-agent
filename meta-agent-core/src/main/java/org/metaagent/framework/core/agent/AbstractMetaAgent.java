@@ -42,6 +42,7 @@ import org.metaagent.framework.core.agent.state.AgentState;
 import org.metaagent.framework.core.agent.state.DefaultAgentState;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import reactor.core.publisher.Flux;
 
 import java.util.List;
 import java.util.function.Consumer;
@@ -189,6 +190,59 @@ public abstract class AbstractMetaAgent<
     }
 
     protected abstract AgentOutput doStep(AgentInput input);
+
+    @Override
+    public Flux<AgentOutput> runFlux(AgentInput input) {
+        MetaAgent<AgentInput, AgentOutput> agent = this;
+        return doRunFlux(input)
+                .doOnSubscribe(sub -> {
+                    beforeRun(input);
+                    agentState.setStatus(AgentRunStatus.RUNNING);
+                    notifyListeners(runListeners, listener -> listener.onAgentStart(agent, input));
+                })
+                .doOnNext(output -> notifyListeners(runListeners, listener -> listener.onAgentOutput(agent, input, output)))
+                .onErrorResume(throwable -> {
+                    if (throwable instanceof Exception ex) {
+                        return Flux.just(getFallbackStrategy().fallback(agent, input, ex));
+                    }
+                    return Flux.error(throwable);
+                })
+                .doOnComplete(() -> agentState.setStatus(AgentRunStatus.COMPLETED))
+                .doOnError(throwable -> {
+                    Exception ex = wrapException(throwable);
+                    agentState.setLastException(ex);
+                    agentState.setStatus(AgentRunStatus.FAILED);
+                    notifyListeners(runListeners, listener -> listener.onAgentException(agent, input, ex));
+                });
+    }
+
+    protected Flux<AgentOutput> doRunFlux(AgentInput input) {
+        return stepFlux(input);
+    }
+
+    protected Flux<AgentOutput> stepFlux(AgentInput input) {
+        MetaAgent<AgentInput, AgentOutput> agent = this;
+        return doStepFlux(input)
+                .doOnSubscribe(sub -> notifyListeners(stepListeners, listener -> listener.onAgentStepStart(agent, input)))
+                .doOnNext(output -> notifyListeners(stepListeners, listener -> listener.onAgentStepFinish(agent, input, output)))
+                .doOnError(throwable -> {
+                    Exception ex = wrapException(throwable);
+                    agentState.setLastException(ex);
+                    notifyListeners(stepListeners, listener -> listener.onAgentStepError(agent, input, ex));
+                });
+    }
+
+    protected Flux<AgentOutput> doStepFlux(AgentInput input) {
+        throw new UnsupportedOperationException("Streaming step not supported");
+    }
+
+    protected Exception wrapException(Throwable throwable) {
+        if (throwable instanceof Exception e) {
+            return e;
+        } else {
+            return new AgentExecutionException(throwable);
+        }
+    }
 
     @Override
     public void reset() {
