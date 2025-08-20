@@ -38,14 +38,13 @@ import org.metaagent.framework.core.tool.ToolExecutionException;
  * @param <O> the output type
  * @author vyckey
  */
-public interface AgentAsTool<I extends AgentInput, O extends AgentOutput>
-        extends Tool<I, O> {
+public interface AgentAsTool<I, O, S> extends Tool<AgentInput<I>, AgentOutput<O>> {
     /**
      * Get the agent.
      *
      * @return the agent
      */
-    MetaAgent<I, O> getAgent();
+    MetaAgent<I, O, S> getAgent();
 
     /**
      * Get the tool's name.
@@ -58,7 +57,7 @@ public interface AgentAsTool<I extends AgentInput, O extends AgentOutput>
     }
 
     @Override
-    default O run(ToolContext context, I input) throws ToolExecutionException {
+    default AgentOutput<O> run(ToolContext context, AgentInput<I> input) throws ToolExecutionException {
         return getAgent().run(input);
     }
 }

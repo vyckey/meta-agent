@@ -31,9 +31,11 @@ import org.metaagent.framework.core.converter.Converter;
 /**
  * Agent Input/Output Converter.
  *
+ * @param <I> the type of agent input
+ * @param <O> the type of agent output
  * @author vyckey
  */
-public interface AgentIOConverter<I extends AgentInput, O extends AgentOutput> {
+public interface AgentIOConverter<I, O> {
     /**
      * Get the input schema of the agent.
      *
@@ -53,12 +55,12 @@ public interface AgentIOConverter<I extends AgentInput, O extends AgentOutput> {
      *
      * @return the input converter of the agent.
      */
-    Converter<String, I> getInputConverter();
+    Converter<String, AgentInput<I>> getInputConverter();
 
     /**
      * Get the output converter of the agent.
      *
      * @return the output converter of the agent.
      */
-    Converter<O, String> getOutputConverter();
+    Converter<AgentOutput<O>, String> getOutputConverter();
 }

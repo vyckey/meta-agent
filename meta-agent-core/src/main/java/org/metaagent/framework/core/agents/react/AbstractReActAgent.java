@@ -30,6 +30,8 @@ import org.metaagent.framework.core.agent.action.Action;
 import org.metaagent.framework.core.agent.action.DefaultActionExecutionContext;
 import org.metaagent.framework.core.agent.action.actions.AgentFinishAction;
 import org.metaagent.framework.core.agent.action.result.ActionResult;
+import org.metaagent.framework.core.agent.input.AgentInput;
+import org.metaagent.framework.core.agent.output.AgentOutput;
 import org.metaagent.framework.core.agent.output.observation.Observation;
 import org.metaagent.framework.core.agent.output.thought.Thought;
 
@@ -38,17 +40,15 @@ import org.metaagent.framework.core.agent.output.thought.Thought;
  *
  * @author vyckey
  */
-public abstract class AbstractReActAgent<
-        AgentInput extends org.metaagent.framework.core.agent.input.AgentInput,
-        AgentOutput extends org.metaagent.framework.core.agent.output.AgentOutput>
-        extends AbstractAgent<AgentInput, AgentOutput> implements ReActAgent<AgentInput, AgentOutput> {
+public abstract class AbstractReActAgent<I, O, S>
+        extends AbstractAgent<I, O, S> implements ReActAgent<I, O, S> {
 
     protected AbstractReActAgent(String name) {
         super(name);
     }
 
     @Override
-    public AgentOutput doStep(AgentInput input) {
+    public AgentOutput<O> doStep(AgentInput<I> input) {
         int turnNum = agentState.getLoopCount() + 1;
 
         Thought thought = think(input);
@@ -68,7 +68,7 @@ public abstract class AbstractReActAgent<
     }
 
     @Override
-    public ActionResult act(AgentInput input, Action action) {
+    public ActionResult act(AgentInput<I> input, Action action) {
         AgentExecutionContext context = input.context();
         DefaultActionExecutionContext executionContext = DefaultActionExecutionContext.builder()
                 .environment(context.getEnvironment())

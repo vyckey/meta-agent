@@ -25,16 +25,20 @@
 package org.metaagent.framework.core.agent;
 
 import com.google.common.collect.Lists;
+import org.apache.commons.lang3.tuple.Pair;
 import org.metaagent.framework.core.agent.ability.AgentAbilityManager;
 import org.metaagent.framework.core.agent.ability.DefaultAgentAbilityManager;
 import org.metaagent.framework.core.agent.fallback.AgentFallbackStrategy;
 import org.metaagent.framework.core.agent.fallback.FastFailAgentFallbackStrategy;
+import org.metaagent.framework.core.agent.input.AgentInput;
 import org.metaagent.framework.core.agent.memory.EmptyMemory;
 import org.metaagent.framework.core.agent.memory.Memory;
 import org.metaagent.framework.core.agent.observability.AgentLogListener;
 import org.metaagent.framework.core.agent.observability.AgentLogger;
 import org.metaagent.framework.core.agent.observability.AgentRunListener;
 import org.metaagent.framework.core.agent.observability.AgentStepListener;
+import org.metaagent.framework.core.agent.output.AgentOutput;
+import org.metaagent.framework.core.agent.output.AgentStreamOutputAggregator;
 import org.metaagent.framework.core.agent.profile.AgentProfile;
 import org.metaagent.framework.core.agent.profile.DefaultAgentProfile;
 import org.metaagent.framework.core.agent.state.AgentRunStatus;
@@ -45,24 +49,25 @@ import org.slf4j.LoggerFactory;
 import reactor.core.publisher.Flux;
 
 import java.util.List;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
 
 /**
  * Abstract {@link MetaAgent} implementation.
  *
+ * @param <I> the type of agent input
+ * @param <O> the type of agent output
+ * @param <S> the type of agent stream output
  * @author vyckey
  */
-public abstract class AbstractMetaAgent<
-        AgentInput extends org.metaagent.framework.core.agent.input.AgentInput,
-        AgentOutput extends org.metaagent.framework.core.agent.output.AgentOutput>
-        implements MetaAgent<AgentInput, AgentOutput> {
+public abstract class AbstractMetaAgent<I, O, S> implements MetaAgent<I, O, S> {
 
     protected AgentProfile profile;
     protected AgentState agentState = DefaultAgentState.builder().build();
     protected Memory memory = EmptyMemory.INSTANCE;
     protected AgentAbilityManager abilityManager = new DefaultAgentAbilityManager();
-    protected final List<AgentRunListener<AgentInput, AgentOutput>> runListeners = Lists.newArrayList();
-    protected final List<AgentStepListener<AgentInput, AgentOutput>> stepListeners = Lists.newArrayList();
+    protected final List<AgentRunListener<I, O, S>> runListeners = Lists.newArrayList();
+    protected final List<AgentStepListener<I, O, S>> stepListeners = Lists.newArrayList();
     protected AgentLogger agentLogger;
     protected Logger logger = LoggerFactory.getLogger(getClass());
 
@@ -102,24 +107,24 @@ public abstract class AbstractMetaAgent<
 
     public void initialize() {
         // Register log listener to capture agent logs
-        AgentLogListener<AgentInput, AgentOutput> logListener = new AgentLogListener<>(agentState, agentLogger);
+        AgentLogListener<I, O, S> logListener = new AgentLogListener<>(agentState, agentLogger);
         registerRunListener(logListener);
         registerStepListener(logListener);
     }
 
-    public void registerRunListener(AgentRunListener<AgentInput, AgentOutput> listener) {
+    public void registerRunListener(AgentRunListener<I, O, S> listener) {
         runListeners.add(listener);
     }
 
-    public void unregisterRunListener(AgentRunListener<AgentInput, AgentOutput> listener) {
+    public void unregisterRunListener(AgentRunListener<I, O, S> listener) {
         runListeners.remove(listener);
     }
 
-    public void registerStepListener(AgentStepListener<AgentInput, AgentOutput> listener) {
+    public void registerStepListener(AgentStepListener<I, O, S> listener) {
         stepListeners.add(listener);
     }
 
-    public void unregisterStepListener(AgentStepListener<AgentInput, AgentOutput> listener) {
+    public void unregisterStepListener(AgentStepListener<I, O, S> listener) {
         stepListeners.remove(listener);
     }
 
@@ -133,7 +138,7 @@ public abstract class AbstractMetaAgent<
         }
     }
 
-    public AgentFallbackStrategy<AgentInput, AgentOutput> getFallbackStrategy() {
+    public AgentFallbackStrategy<I, O, S> getFallbackStrategy() {
         return new FastFailAgentFallbackStrategy<>();
     }
 
@@ -142,20 +147,20 @@ public abstract class AbstractMetaAgent<
      *
      * @param input the agent input
      */
-    protected void beforeRun(AgentInput input) {
+    protected void beforeRun(AgentInput<I> input) {
         if (agentState.getStatus().isFinished()) {
             throw new AgentExecutionException("Agent " + getName() + " has run finished. Please reset it before running again.");
         }
     }
 
     @Override
-    public AgentOutput run(AgentInput input) {
+    public AgentOutput<O> run(AgentInput<I> input) {
         beforeRun(input);
 
         agentState.setStatus(AgentRunStatus.RUNNING);
         try {
             notifyListeners(runListeners, listener -> listener.onAgentStart(this, input));
-            AgentOutput output = doRun(input);
+            AgentOutput<O> output = doRun(input);
             notifyListeners(runListeners, listener -> listener.onAgentOutput(this, input, output));
 
             agentState.setStatus(AgentRunStatus.COMPLETED);
@@ -171,15 +176,19 @@ public abstract class AbstractMetaAgent<
         }
     }
 
-    protected AgentOutput doRun(AgentInput input) {
-        return MetaAgent.super.run(input);
+    protected AgentOutput<O> doRun(AgentInput<I> input) {
+        try {
+            return step(input);
+        } catch (Exception ex) {
+            return getFallbackStrategy().fallback(this, input, ex);
+        }
     }
 
     @Override
-    public AgentOutput step(AgentInput input) {
+    public AgentOutput<O> step(AgentInput<I> input) {
         try {
             notifyListeners(stepListeners, listener -> listener.onAgentStepStart(this, input));
-            AgentOutput output = doStep(input);
+            AgentOutput<O> output = doStep(input);
             notifyListeners(stepListeners, listener -> listener.onAgentStepFinish(this, input, output));
             return output;
         } catch (Exception ex) {
@@ -189,21 +198,21 @@ public abstract class AbstractMetaAgent<
         }
     }
 
-    protected abstract AgentOutput doStep(AgentInput input);
+    protected abstract AgentOutput<O> doStep(AgentInput<I> input);
 
     @Override
-    public Flux<AgentOutput> runFlux(AgentInput input) {
-        MetaAgent<AgentInput, AgentOutput> agent = this;
-        return doRunFlux(input)
+    public Flux<S> runStream(AgentInput<I> input) {
+        MetaAgent<I, O, S> agent = this;
+        return doRunStream(input)
                 .doOnSubscribe(sub -> {
                     beforeRun(input);
                     agentState.setStatus(AgentRunStatus.RUNNING);
                     notifyListeners(runListeners, listener -> listener.onAgentStart(agent, input));
                 })
-                .doOnNext(output -> notifyListeners(runListeners, listener -> listener.onAgentOutput(agent, input, output)))
+                .doOnNext(output -> notifyListeners(runListeners, listener -> listener.onAgentOutput(agent, input, null)))
                 .onErrorResume(throwable -> {
                     if (throwable instanceof Exception ex) {
-                        return Flux.just(getFallbackStrategy().fallback(agent, input, ex));
+                        return fallbackStream(input, ex);
                     }
                     return Flux.error(throwable);
                 })
@@ -216,24 +225,38 @@ public abstract class AbstractMetaAgent<
                 });
     }
 
-    protected Flux<AgentOutput> doRunFlux(AgentInput input) {
-        return stepFlux(input);
+    protected Flux<S> doRunStream(AgentInput<I> input) {
+        return stepStream(input);
     }
 
-    protected Flux<AgentOutput> stepFlux(AgentInput input) {
-        MetaAgent<AgentInput, AgentOutput> agent = this;
-        return doStepFlux(input)
+    @Override
+    public Flux<S> stepStream(AgentInput<I> input) {
+        return stepStreamWithOutput(input).getLeft();
+    }
+
+    protected Pair<Flux<S>, AtomicReference<AgentOutput<O>>> stepStreamWithOutput(AgentInput<I> input) {
+        MetaAgent<I, O, S> agent = this;
+
+        AgentStreamOutputAggregator<S, O> aggregator = getStreamOutputAggregator();
+        AtomicReference<AgentOutput<O>> fullOutputRef = new AtomicReference<>(aggregator.initialState());
+        Flux<S> stream = doStepStream(input)
                 .doOnSubscribe(sub -> notifyListeners(stepListeners, listener -> listener.onAgentStepStart(agent, input)))
-                .doOnNext(output -> notifyListeners(stepListeners, listener -> listener.onAgentStepFinish(agent, input, output)))
+                .doOnNext(output -> fullOutputRef.set(aggregator.aggregate(fullOutputRef.get(), output)))
+                .doOnComplete(() -> notifyListeners(stepListeners, listener -> listener.onAgentStepFinish(agent, input, fullOutputRef.get())))
                 .doOnError(throwable -> {
                     Exception ex = wrapException(throwable);
                     agentState.setLastException(ex);
                     notifyListeners(stepListeners, listener -> listener.onAgentStepError(agent, input, ex));
                 });
+        return Pair.of(stream, fullOutputRef);
     }
 
-    protected Flux<AgentOutput> doStepFlux(AgentInput input) {
+    protected Flux<S> doStepStream(AgentInput<I> input) {
         throw new UnsupportedOperationException("Streaming step not supported");
+    }
+
+    protected Flux<S> fallbackStream(AgentInput<I> input, Exception ex) {
+        return Flux.error(ex);
     }
 
     protected Exception wrapException(Throwable throwable) {

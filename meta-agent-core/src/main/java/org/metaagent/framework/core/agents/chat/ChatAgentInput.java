@@ -25,47 +25,23 @@
 package org.metaagent.framework.core.agents.chat;
 
 import org.metaagent.framework.core.agent.chat.message.Message;
-import org.metaagent.framework.core.agent.input.AgentInput;
 
 import java.util.List;
+import java.util.Objects;
 
 /**
- * {@link ChatAgent} input interface.
+ * Chat agent input
  *
  * @author vyckey
  */
-public interface ChatAgentInput extends AgentInput {
-    String OPTION_SEARCH_ENABLED = "searchEnabled";
-    String OPTION_DEEP_THINK_ENABLED = "deepThinkEnabled";
+public class ChatAgentInput {
+    protected List<Message> messages;
 
-    /**
-     * Builder for {@link ChatAgentInput}.
-     *
-     * @return builder
-     */
-    static Builder builder() {
-        return DefaultChatAgentInput.builder();
+    public ChatAgentInput(List<Message> messages) {
+        this.messages = Objects.requireNonNull(messages, "messages is required");
     }
 
-    /**
-     * Messages to be processed by the agent.
-     *
-     * @return messages
-     */
-    List<Message> messages();
-
-    /**
-     * Builder class for {@link ChatAgentInput}
-     */
-    interface Builder extends AgentInput.Builder<Builder> {
-
-        Builder messages(List<Message> messages);
-
-        Builder messages(Message... messages);
-
-        Builder withOption(String key, Object value);
-
-        @Override
-        ChatAgentInput build();
+    public ChatAgentInput(Message... messages) {
+        this(List.of(messages));
     }
 }

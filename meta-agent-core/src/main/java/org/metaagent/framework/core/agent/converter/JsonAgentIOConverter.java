@@ -24,11 +24,13 @@
 
 package org.metaagent.framework.core.agent.converter;
 
+import com.fasterxml.jackson.core.type.TypeReference;
 import lombok.Getter;
-import org.metaagent.framework.core.agent.input.AgentInput;
 import org.metaagent.framework.core.agent.output.AgentOutput;
 import org.metaagent.framework.core.converter.JsonBiConverter;
 import org.metaagent.framework.core.util.json.JsonSchemaGenerator;
+
+import java.lang.reflect.Type;
 
 /**
  * JSON format implementation of {@link AgentIOConverter}.
@@ -36,15 +38,24 @@ import org.metaagent.framework.core.util.json.JsonSchemaGenerator;
  * @author vyckey
  */
 @Getter
-public class JsonAgentIOConverter<I extends AgentInput, O extends AgentOutput>
-        extends DefaultAgentIOConverter<I, O> {
+public class JsonAgentIOConverter<I, O, S> extends DefaultAgentIOConverter<I, O> {
 
     public JsonAgentIOConverter(Class<I> inputType, Class<O> outputType) {
         super(
                 JsonSchemaGenerator.generateForType(inputType),
                 JsonSchemaGenerator.generateForType(outputType),
-                JsonBiConverter.create(inputType),
-                JsonBiConverter.create(outputType).reverse()
+                JsonBiConverter.create(new TypeReference<>() {
+                    @Override
+                    public Type getType() {
+                        return inputType;
+                    }
+                }),
+                JsonBiConverter.create(new TypeReference<AgentOutput<O>>() {
+                    @Override
+                    public Type getType() {
+                        return outputType;
+                    }
+                }).reverse()
         );
     }
 }

@@ -25,7 +25,6 @@
 package org.metaagent.framework.core.agents.chat;
 
 import org.metaagent.framework.core.agent.chat.message.Message;
-import org.metaagent.framework.core.agent.output.AgentOutput;
 
 import java.util.List;
 
@@ -34,37 +33,8 @@ import java.util.List;
  *
  * @author vyckey
  */
-public interface ChatAgentOutput extends AgentOutput {
-    /**
-     * Builder for {@link ChatAgentOutput}.
-     *
-     * @return a builder
-     */
-    static DefaultChatAgentOutput.Builder builder() {
-        return DefaultChatAgentOutput.builder();
-    }
-
-    /**
-     * Gets output messages.
-     *
-     * @return output messages
-     */
-    List<Message> messages();
-
-    /**
-     * Gets the first output message.
-     *
-     * @return the first output message
-     */
-    default Message message() {
-        return messages().isEmpty() ? null : messages().get(0);
-    }
-
-    /**
-     * Gets the thought process.
-     *
-     * @return the thought process
-     */
-    String thoughtProcess();
+public record ChatAgentOutput(
+        List<Message> messages,
+        String thoughtProcess) {
 
 }

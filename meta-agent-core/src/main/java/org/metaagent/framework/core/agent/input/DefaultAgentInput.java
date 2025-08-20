@@ -22,75 +22,69 @@
  * SOFTWARE.
  */
 
-package org.metaagent.framework.core.agents.chat;
+package org.metaagent.framework.core.agent.input;
 
-import org.apache.commons.collections.CollectionUtils;
 import org.metaagent.framework.core.agent.AgentExecutionContext;
-import org.metaagent.framework.core.agent.chat.message.Message;
-import org.metaagent.framework.core.agent.input.AbstractAgentInput;
-import org.metaagent.framework.core.common.metadata.MapMetadataProvider;
 import org.metaagent.framework.core.common.metadata.MetadataProvider;
 
-import java.util.List;
 import java.util.Objects;
 
 /**
- * Default implementation of {@link ChatAgentInput}.
+ * Default implementation of {@link AgentInput}.
  *
  * @author vyckey
  */
-public record DefaultChatAgentInput(
+public record DefaultAgentInput<I>(
+        I input,
         AgentExecutionContext context,
-        List<Message> messages,
-        MetadataProvider metadata) implements ChatAgentInput {
-
-    public static Builder builder() {
-        return new Builder();
+        MetadataProvider metadata
+) implements AgentInput<I> {
+    public DefaultAgentInput(I input, AgentExecutionContext context, MetadataProvider metadata) {
+        this.input = Objects.requireNonNull(input, "input is required");
+        this.context = Objects.requireNonNull(context, "context is required");
+        this.metadata = Objects.requireNonNull(metadata, "metadata is required");
     }
 
-    public static class Builder extends AbstractAgentInput.Builder<ChatAgentInput.Builder>
-            implements ChatAgentInput.Builder {
-        private List<Message> messages;
-        private MetadataProvider metadata = new MapMetadataProvider();
+    public static <I> Builder<I> builder(I input) {
+        return new Builder<>(input);
+    }
 
-        @Override
-        protected Builder self() {
-            return this;
-        }
+    public static class Builder<I> implements AgentInput.Builder<I> {
+        private I input;
+        private AgentExecutionContext context;
+        private MetadataProvider metadata;
 
-        public Builder messages(List<Message> messages) {
-            this.messages = Objects.requireNonNull(messages, "messages is required");
-            return this;
-        }
-
-        @Override
-        public Builder messages(Message... messages) {
-            this.messages = List.of(messages);
-            return this;
+        private Builder(I input) {
+            this.input = input;
         }
 
         @Override
-        public ChatAgentInput.Builder withOption(String key, Object value) {
-            if (metadata == null) {
-                metadata = MetadataProvider.create();
-            }
-            metadata.setProperty(key, value);
+        public AgentInput.Builder<I> input(I input) {
+            this.input = input;
             return this;
         }
 
         @Override
-        public DefaultChatAgentInput build() {
+        public AgentInput.Builder<I> context(AgentExecutionContext context) {
+            this.context = Objects.requireNonNull(context, "context is required");
+            return this;
+        }
+
+        @Override
+        public AgentInput.Builder<I> metadata(MetadataProvider metadata) {
+            this.metadata = Objects.requireNonNull(metadata, "metadata is required");
+            return this;
+        }
+
+        @Override
+        public AgentInput<I> build() {
             if (context == null) {
                 context = AgentExecutionContext.create();
             }
             if (metadata == null) {
                 metadata = MetadataProvider.empty();
             }
-            if (CollectionUtils.isEmpty(messages)) {
-                throw new IllegalArgumentException("At least one message needs to be provided");
-            }
-            return new DefaultChatAgentInput(context, messages, metadata);
+            return new DefaultAgentInput<>(input, context, metadata);
         }
     }
-
 }

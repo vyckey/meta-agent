@@ -24,14 +24,21 @@
 
 package org.metaagent.framework.core.agent.output;
 
+import org.metaagent.framework.core.common.metadata.MetadataProvider;
+
 /**
  * description is here
  *
  * @author vyckey
  */
-public final class NoneAgentOutput implements AgentOutput {
-    public static final NoneAgentOutput INSTANCE = new NoneAgentOutput();
+public final class NoneAgentOutput<O> implements AgentOutput<O> {
+    @Override
+    public O result() {
+        return null;
+    }
 
-    private NoneAgentOutput() {
+    @Override
+    public MetadataProvider metadata() {
+        return MetadataProvider.empty();
     }
 }

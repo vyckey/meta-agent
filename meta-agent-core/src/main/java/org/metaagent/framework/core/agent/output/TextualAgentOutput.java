@@ -31,7 +31,7 @@ import org.metaagent.framework.core.common.metadata.MetadataProvider;
  *
  * @author vyckey
  */
-public interface TextualAgentOutput extends AgentOutput {
+public interface TextualAgentOutput {
     MetadataProvider getMetadata();
 
     String getText();

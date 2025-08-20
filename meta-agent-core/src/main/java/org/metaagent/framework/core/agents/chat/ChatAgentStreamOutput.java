@@ -22,28 +22,7 @@
  * SOFTWARE.
  */
 
-package org.metaagent.framework.core.agent.fallback;
+package org.metaagent.framework.core.agents.chat;
 
-import org.metaagent.framework.core.agent.MetaAgent;
-import org.metaagent.framework.core.agent.input.AgentInput;
-import org.metaagent.framework.core.agent.output.AgentOutput;
-
-/**
- * Agent Fallback Strategy
- *
- * @param <I> the type of agent input
- * @param <O> the type of agent output
- * @param <S> the type of agent stream output
- * @author vyckey
- */
-public interface AgentFallbackStrategy<I, O, S> {
-    /**
-     * Fallback when agent execution failed.
-     *
-     * @param agent     agent
-     * @param input     the agent input
-     * @param exception exception
-     * @return the agent output
-     */
-    AgentOutput<O> fallback(MetaAgent<I, O, S> agent, AgentInput<I> input, Exception exception);
+public interface ChatAgentStreamOutput {
 }

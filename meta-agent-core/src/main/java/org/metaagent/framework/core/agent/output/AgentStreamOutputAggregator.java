@@ -22,44 +22,39 @@
  * SOFTWARE.
  */
 
-package org.metaagent.framework.core.agent.observability;
+package org.metaagent.framework.core.agent.output;
 
-import org.metaagent.framework.core.agent.MetaAgent;
-import org.metaagent.framework.core.agent.input.AgentInput;
-import org.metaagent.framework.core.agent.output.AgentOutput;
+import reactor.core.publisher.Flux;
 
 /**
- * AgentRunListener is an interface for listening to agent run events.
+ * AgentStreamOutputAggregator
  *
  * @author vyckey
  */
-public interface AgentRunListener<I, O, S> {
+public interface AgentStreamOutputAggregator<S, O> {
     /**
-     * Called when an agent starts running.
+     * Initial state of the stream output.
      *
-     * @param agent the agent that started running
-     * @param input the input provided to the agent
+     * @return initial state of the stream output
      */
-    default void onAgentStart(MetaAgent<I, O, S> agent, AgentInput<I> input) {
-    }
+    AgentOutput<O> initialState();
 
     /**
-     * Called when an agent produces an output.
+     * Aggregate the stream output into the agent output.
      *
-     * @param agent  the agent that produced the output
-     * @param input  the input provided to the agent
-     * @param output the output produced by the agent
+     * @param agentOutput  agent output
+     * @param streamOutput stream output
+     * @return aggregated agent output
      */
-    default void onAgentOutput(MetaAgent<I, O, S> agent, AgentInput<I> input, AgentOutput<O> output) {
-    }
+    AgentOutput<O> aggregate(AgentOutput<O> agentOutput, S streamOutput);
 
     /**
-     * Called when an agent encounters an exception.
+     * Aggregate the stream output into the agent output.
      *
-     * @param agent     the agent that encountered the exception
-     * @param input     the input provided to the agent
-     * @param exception the exception encountered by the agent
+     * @param stream stream output
+     * @return aggregated agent output
      */
-    default void onAgentException(MetaAgent<I, O, S> agent, AgentInput<I> input, Exception exception) {
+    default AgentOutput<O> aggregate(Flux<S> stream) {
+        return stream.reduce(initialState(), this::aggregate).block();
     }
 }
