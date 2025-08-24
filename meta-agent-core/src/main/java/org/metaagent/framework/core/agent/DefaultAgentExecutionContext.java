@@ -30,7 +30,7 @@ import org.metaagent.framework.core.agent.action.executor.SyncActionExecutor;
 import org.metaagent.framework.core.environment.Environment;
 import org.metaagent.framework.core.tool.executor.DefaultToolExecutor;
 import org.metaagent.framework.core.tool.executor.ToolExecutor;
-import org.metaagent.framework.core.tool.manager.ToolManager;
+import org.metaagent.framework.core.tool.listener.ToolExecuteListenerRegistry;
 import org.metaagent.framework.core.util.abort.AbortController;
 import org.metaagent.framework.core.util.abort.AbortSignal;
 
@@ -45,16 +45,16 @@ import java.util.concurrent.Executors;
 @Getter
 public class DefaultAgentExecutionContext implements AgentExecutionContext {
     private final Environment environment;
-    private final ToolManager toolManager;
     private final ToolExecutor toolExecutor;
+    private final ToolExecuteListenerRegistry toolListenerRegistry;
     private final ActionExecutor actionExecutor;
     private final AbortSignal abortSignal;
     private final Executor executor;
 
     protected DefaultAgentExecutionContext(Builder builder) {
         this.environment = builder.environment;
-        this.toolManager = builder.toolManager;
         this.toolExecutor = builder.toolExecutor;
+        this.toolListenerRegistry = builder.toolListenerRegistry;
         this.actionExecutor = builder.actionExecutor;
         this.abortSignal = builder.abortSignal;
         this.executor = builder.executor;
@@ -70,8 +70,8 @@ public class DefaultAgentExecutionContext implements AgentExecutionContext {
 
     public static final class Builder implements AgentExecutionContextBuilder {
         private Environment environment;
-        private ToolManager toolManager;
         private ToolExecutor toolExecutor;
+        private ToolExecuteListenerRegistry toolListenerRegistry;
         private ActionExecutor actionExecutor;
         private AbortSignal abortSignal;
         private Executor executor;
@@ -81,8 +81,10 @@ public class DefaultAgentExecutionContext implements AgentExecutionContext {
 
         private Builder(AgentExecutionContext context) {
             this.environment = context.getEnvironment();
-            this.toolManager = context.getToolManager();
             this.actionExecutor = context.getActionExecutor();
+            this.toolListenerRegistry = context.getToolListenerRegistry();
+            this.executor = context.getExecutor();
+            this.abortSignal = context.getAbortSignal();
             this.executor = context.getExecutor();
         }
 
@@ -93,14 +95,14 @@ public class DefaultAgentExecutionContext implements AgentExecutionContext {
         }
 
         @Override
-        public Builder toolManager(ToolManager toolManager) {
-            this.toolManager = toolManager;
+        public Builder toolExecutor(ToolExecutor toolExecutor) {
+            this.toolExecutor = toolExecutor;
             return this;
         }
 
         @Override
-        public Builder toolExecutor(ToolExecutor toolExecutor) {
-            this.toolExecutor = toolExecutor;
+        public Builder toolListenerRegistry(ToolExecuteListenerRegistry toolExecuteListenerRegistry) {
+            this.toolListenerRegistry = toolExecuteListenerRegistry;
             return this;
         }
 
@@ -123,11 +125,11 @@ public class DefaultAgentExecutionContext implements AgentExecutionContext {
         }
 
         private void setDefault() {
-            if (toolManager == null) {
-                this.toolManager = ToolManager.create();
-            }
             if (toolExecutor == null) {
                 this.toolExecutor = DefaultToolExecutor.INSTANCE;
+            }
+            if (toolListenerRegistry == null) {
+                this.toolListenerRegistry = ToolExecuteListenerRegistry.DEFAULT;
             }
             if (actionExecutor == null) {
                 actionExecutor = SyncActionExecutor.INSTANCE;

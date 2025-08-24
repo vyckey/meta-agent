@@ -72,7 +72,7 @@ public abstract class AbstractReActAgent<I, O, S>
         AgentExecutionContext context = input.context();
         DefaultActionExecutionContext executionContext = DefaultActionExecutionContext.builder()
                 .environment(context.getEnvironment())
-                .toolManager(context.getToolManager())
+                .toolManager(getToolManager())
                 .actionExecutor(context.getActionExecutor())
                 .actionHistory(agentState.getActionHistory())
                 .build();

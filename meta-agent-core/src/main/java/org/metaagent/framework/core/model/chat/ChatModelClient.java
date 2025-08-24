@@ -29,6 +29,7 @@ import io.micrometer.observation.ObservationRegistry;
 import org.metaagent.framework.core.agent.chat.message.AssistantMessage;
 import org.metaagent.framework.core.agent.chat.message.Message;
 import org.metaagent.framework.core.agent.chat.message.SystemMessage;
+import org.metaagent.framework.core.model.prompt.PromptValue;
 import org.metaagent.framework.core.tool.executor.ToolExecutor;
 import org.metaagent.framework.core.tool.executor.ToolExecutorContext;
 import org.metaagent.framework.core.tool.spring.ToolCallbackUtils;
@@ -47,25 +48,44 @@ import org.springframework.util.ReflectionUtils;
 import reactor.core.publisher.Flux;
 
 import java.lang.reflect.Field;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
 public class ChatModelClient {
     protected ChatModel chatModel;
-    protected SystemMessage systemMessage;
-    protected List<Message> historyMessages = Lists.newArrayList();
+    protected List<SystemMessage> systemMessages = new ArrayList<>(1);
+    protected List<Message> historyMessages = new ArrayList<>();
+    protected List<Message> newMessages = new ArrayList<>();
     protected MessageConverter messageConverter = new MessageConverter(true);
     protected ToolExecutor toolExecutor;
     protected ToolExecutorContext toolExecutorContext;
-    protected int lastMessageCursor = 0;
     protected ChatResponse chatResponse;
 
     public ChatModelClient(ChatModel chatModel) {
         this.chatModel = chatModel;
     }
 
+    public void setSystemMessages(List<SystemMessage> systemMessages) {
+        Objects.requireNonNull(systemMessages, "systemMessages is required");
+        this.systemMessages.clear();
+        this.systemMessages.addAll(systemMessages);
+    }
+
     public void setSystemMessage(SystemMessage systemMessage) {
-        this.systemMessage = Objects.requireNonNull(systemMessage, "systemMessage is required");
+        setSystemMessages(List.of(systemMessage));
+    }
+
+    public void addSystemMessage(SystemMessage systemMessage) {
+        this.systemMessages.add(systemMessage);
+    }
+
+    public void setSystemPrompt(PromptValue systemPrompt) {
+        setSystemMessage(new SystemMessage(systemPrompt.toString()));
+    }
+
+    public void addSystemPrompt(PromptValue systemPrompt) {
+        addSystemMessage(new SystemMessage(systemPrompt.toString()));
     }
 
     public List<Message> getHistoryMessages() {
@@ -77,8 +97,8 @@ public class ChatModelClient {
         this.historyMessages = historyMessages;
     }
 
-    public void addHistoryMessage(Message message) {
-        this.historyMessages.add(message);
+    public void addHistoryMessages(List<Message> messages) {
+        this.historyMessages.addAll(messages);
     }
 
     public void clearHistoryMessages() {
@@ -86,35 +106,30 @@ public class ChatModelClient {
     }
 
     public List<Message> getNewMessages() {
-        return historyMessages.subList(lastMessageCursor, historyMessages.size());
+        return newMessages;
     }
 
-    public void setToolExecutor(ToolExecutor toolExecutor) {
+    public void setToolContext(ToolExecutorContext toolExecutorContext, ToolExecutor toolExecutor) {
+        this.toolExecutorContext = toolExecutorContext;
         this.toolExecutor = toolExecutor;
     }
 
-    public void setToolExecutorContext(ToolExecutorContext toolExecutorContext) {
-        this.toolExecutorContext = toolExecutorContext;
-    }
+    public AssistantMessage sendMessage(List<Message> messages) {
+        this.newMessages.clear();
+        this.newMessages.addAll(messages);
 
-    public AssistantMessage sendMessage(Message message) {
-        this.lastMessageCursor = this.historyMessages.size();
-        this.historyMessages.add(message);
-
-        Prompt prompt = buildPrompt(List.of(message), chatModel.getDefaultOptions());
+        Prompt prompt = buildPrompt(messages, chatModel.getDefaultOptions());
         ChatResponse chatResponse = call(prompt, null);
         this.chatResponse = chatResponse;
         Generation generation = chatResponse.getResult();
-        AssistantMessage outputMessage = (AssistantMessage) messageConverter.reverse(generation.getOutput());
-        this.historyMessages.add(outputMessage);
-        return outputMessage;
+        return (AssistantMessage) messageConverter.reverse(generation.getOutput());
     }
 
-    public Flux<AssistantMessage> sendMessageStream(Message message) {
-        this.lastMessageCursor = this.historyMessages.size();
-        this.historyMessages.add(message);
+    public Flux<AssistantMessage> sendMessageStream(List<Message> messages) {
+        this.newMessages.clear();
+        this.newMessages.addAll(messages);
 
-        Prompt prompt = buildPrompt(List.of(message), chatModel.getDefaultOptions());
+        Prompt prompt = buildPrompt(messages, chatModel.getDefaultOptions());
         Flux<ChatResponse> stream = stream(prompt, null);
         return stream.map(response -> {
             Generation generation = response.getResult();
@@ -124,7 +139,7 @@ public class ChatModelClient {
 
     protected Prompt buildPrompt(List<Message> messages, ChatOptions chatOptions) {
         List<org.springframework.ai.chat.messages.Message> messageList = Lists.newArrayList();
-        if (systemMessage != null) {
+        for (SystemMessage systemMessage : systemMessages) {
             messageList.add(messageConverter.convert(systemMessage));
         }
         for (Message historyMessage : historyMessages) {
@@ -157,9 +172,12 @@ public class ChatModelClient {
             List<org.springframework.ai.chat.messages.Message> conversationHistory
                     = executionResult.conversationHistory();
             conversationHistory.subList(prompt.getInstructions().size(), conversationHistory.size())
-                    .forEach(message -> historyMessages.add(messageConverter.reverse(message)));
+                    .forEach(message -> newMessages.add(messageConverter.reverse(message)));
             Prompt newPrompt = new Prompt(conversationHistory, prompt.getOptions());
             return call(newPrompt, response);
+        } else {
+            Generation generation = response.getResult();
+            newMessages.add(messageConverter.reverse(generation.getOutput()));
         }
         return response;
     }
@@ -169,12 +187,17 @@ public class ChatModelClient {
             Flux<ChatResponse> chatResponseFlux = chatModel.stream(prompt);
             Flux<ChatResponse> flux = chatResponseFlux.flatMap(chatResponse -> {
                 if (!chatResponse.hasToolCalls()) {
+                    Generation generation = chatResponse.getResult();
+                    newMessages.add(messageConverter.reverse(generation.getOutput()));
                     return Flux.just(chatResponse);
                 }
 
                 ToolCallingManager toolCallingManager = getToolCallingManager();
                 ToolExecutionResult executionResult = toolCallingManager.executeToolCalls(prompt, chatResponse);
                 if (executionResult.returnDirect()) {
+                    Generation generation = chatResponse.getResult();
+                    newMessages.add(messageConverter.reverse(generation.getOutput()));
+
                     return Flux.just(ChatResponse.builder()
                             .from(chatResponse)
                             .generations(ToolExecutionResult.buildGenerations(executionResult))
@@ -184,7 +207,7 @@ public class ChatModelClient {
                 List<org.springframework.ai.chat.messages.Message> conversationHistory
                         = executionResult.conversationHistory();
                 conversationHistory.subList(prompt.getInstructions().size(), conversationHistory.size())
-                        .forEach(message -> historyMessages.add(messageConverter.reverse(message)));
+                        .forEach(message -> newMessages.add(messageConverter.reverse(message)));
                 Prompt newPrompt = new Prompt(conversationHistory, prompt.getOptions());
                 return stream(newPrompt, chatResponse);
             });
@@ -211,10 +234,9 @@ public class ChatModelClient {
     }
 
     public void reset() {
-        this.systemMessage = null;
-        this.clearHistoryMessages();
+        this.systemMessages.clear();
+        this.historyMessages.clear();
         this.toolExecutorContext = null;
-        this.lastMessageCursor = 0;
         this.chatResponse = null;
     }
 }
