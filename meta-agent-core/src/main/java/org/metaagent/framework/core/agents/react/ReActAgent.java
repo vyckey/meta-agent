@@ -28,6 +28,8 @@ import org.metaagent.framework.core.agent.Agent;
 import org.metaagent.framework.core.agent.action.Action;
 import org.metaagent.framework.core.agent.action.actions.AgentFinishAction;
 import org.metaagent.framework.core.agent.action.result.ActionResult;
+import org.metaagent.framework.core.agent.input.AgentInput;
+import org.metaagent.framework.core.agent.output.AgentOutput;
 import org.metaagent.framework.core.agent.output.observation.Observation;
 import org.metaagent.framework.core.agent.output.thought.Thought;
 
@@ -38,12 +40,9 @@ import org.metaagent.framework.core.agent.output.thought.Thought;
  *
  * @author vyckey
  */
-public interface ReActAgent<
-        AgentInput extends org.metaagent.framework.core.agent.input.AgentInput,
-        AgentOutput extends org.metaagent.framework.core.agent.output.AgentOutput>
-        extends Agent<AgentInput, AgentOutput> {
+public interface ReActAgent<I, O, S> extends Agent<I, O, S> {
 
-    default AgentOutput step(AgentInput input) {
+    default AgentOutput<O> step(AgentInput<I> input) {
         Thought thought = think(input);
         Action action = thought.getProposalAction();
         if (action instanceof AgentFinishAction) {
@@ -54,11 +53,11 @@ public interface ReActAgent<
         return generateOutput(input, thought, observation);
     }
 
-    Thought think(AgentInput input);
+    Thought think(AgentInput<I> input);
 
-    ActionResult act(AgentInput input, Action action);
+    ActionResult act(AgentInput<I> input, Action action);
 
-    Observation observe(AgentInput input, Thought thought, ActionResult actionResult);
+    Observation observe(AgentInput<I> input, Thought thought, ActionResult actionResult);
 
-    AgentOutput generateOutput(AgentInput input, Thought thought, Observation observation);
+    AgentOutput<O> generateOutput(AgentInput<I> input, Thought thought, Observation observation);
 }

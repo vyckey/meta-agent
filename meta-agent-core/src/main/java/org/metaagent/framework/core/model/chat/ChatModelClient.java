@@ -22,19 +22,20 @@
  * SOFTWARE.
  */
 
-package org.metaagent.framework.agents.chat;
+package org.metaagent.framework.core.model.chat;
 
 import com.google.common.collect.Lists;
 import io.micrometer.observation.ObservationRegistry;
 import org.metaagent.framework.core.agent.chat.message.AssistantMessage;
 import org.metaagent.framework.core.agent.chat.message.Message;
 import org.metaagent.framework.core.agent.chat.message.SystemMessage;
-import org.metaagent.framework.core.model.chat.MessageConverter;
+import org.metaagent.framework.core.tool.executor.ToolExecutor;
 import org.metaagent.framework.core.tool.executor.ToolExecutorContext;
 import org.metaagent.framework.core.tool.spring.ToolCallbackUtils;
 import org.springframework.ai.chat.model.ChatModel;
 import org.springframework.ai.chat.model.ChatResponse;
 import org.springframework.ai.chat.model.Generation;
+import org.springframework.ai.chat.model.MessageAggregator;
 import org.springframework.ai.chat.prompt.ChatOptions;
 import org.springframework.ai.chat.prompt.Prompt;
 import org.springframework.ai.model.tool.DefaultToolCallingManager;
@@ -43,6 +44,7 @@ import org.springframework.ai.model.tool.ToolExecutionResult;
 import org.springframework.ai.tool.execution.DefaultToolExecutionExceptionProcessor;
 import org.springframework.ai.tool.resolution.DelegatingToolCallbackResolver;
 import org.springframework.util.ReflectionUtils;
+import reactor.core.publisher.Flux;
 
 import java.lang.reflect.Field;
 import java.util.List;
@@ -53,6 +55,7 @@ public class ChatModelClient {
     protected SystemMessage systemMessage;
     protected List<Message> historyMessages = Lists.newArrayList();
     protected MessageConverter messageConverter = new MessageConverter(true);
+    protected ToolExecutor toolExecutor;
     protected ToolExecutorContext toolExecutorContext;
     protected int lastMessageCursor = 0;
     protected ChatResponse chatResponse;
@@ -86,18 +89,37 @@ public class ChatModelClient {
         return historyMessages.subList(lastMessageCursor, historyMessages.size());
     }
 
+    public void setToolExecutor(ToolExecutor toolExecutor) {
+        this.toolExecutor = toolExecutor;
+    }
+
     public void setToolExecutorContext(ToolExecutorContext toolExecutorContext) {
         this.toolExecutorContext = toolExecutorContext;
     }
 
     public AssistantMessage sendMessage(Message message) {
         this.lastMessageCursor = this.historyMessages.size();
+        this.historyMessages.add(message);
 
         Prompt prompt = buildPrompt(List.of(message), chatModel.getDefaultOptions());
         ChatResponse chatResponse = call(prompt, null);
         this.chatResponse = chatResponse;
         Generation generation = chatResponse.getResult();
-        return (AssistantMessage) messageConverter.reverse(generation.getOutput());
+        AssistantMessage outputMessage = (AssistantMessage) messageConverter.reverse(generation.getOutput());
+        this.historyMessages.add(outputMessage);
+        return outputMessage;
+    }
+
+    public Flux<AssistantMessage> sendMessageStream(Message message) {
+        this.lastMessageCursor = this.historyMessages.size();
+        this.historyMessages.add(message);
+
+        Prompt prompt = buildPrompt(List.of(message), chatModel.getDefaultOptions());
+        Flux<ChatResponse> stream = stream(prompt, null);
+        return stream.map(response -> {
+            Generation generation = response.getResult();
+            return (AssistantMessage) messageConverter.reverse(generation.getOutput());
+        });
     }
 
     protected Prompt buildPrompt(List<Message> messages, ChatOptions chatOptions) {
@@ -113,8 +135,9 @@ public class ChatModelClient {
         }
 
         if (toolExecutorContext != null) {
-            chatOptions = ToolCallbackUtils.buildChatOptionsWithTools(chatOptions,
-                    toolExecutorContext.getToolManager(), toolExecutorContext.getToolContext(), false);
+            chatOptions = ToolCallbackUtils.buildChatOptionsWithTools(
+                    chatOptions, toolExecutor, toolExecutorContext, false
+            );
         }
         return new Prompt(messageList, chatOptions);
     }
@@ -139,6 +162,35 @@ public class ChatModelClient {
             return call(newPrompt, response);
         }
         return response;
+    }
+
+    protected Flux<ChatResponse> stream(Prompt prompt, ChatResponse previousResponse) {
+        return Flux.deferContextual(contextView -> {
+            Flux<ChatResponse> chatResponseFlux = chatModel.stream(prompt);
+            Flux<ChatResponse> flux = chatResponseFlux.flatMap(chatResponse -> {
+                if (!chatResponse.hasToolCalls()) {
+                    return Flux.just(chatResponse);
+                }
+
+                ToolCallingManager toolCallingManager = getToolCallingManager();
+                ToolExecutionResult executionResult = toolCallingManager.executeToolCalls(prompt, chatResponse);
+                if (executionResult.returnDirect()) {
+                    return Flux.just(ChatResponse.builder()
+                            .from(chatResponse)
+                            .generations(ToolExecutionResult.buildGenerations(executionResult))
+                            .build());
+                }
+
+                List<org.springframework.ai.chat.messages.Message> conversationHistory
+                        = executionResult.conversationHistory();
+                conversationHistory.subList(prompt.getInstructions().size(), conversationHistory.size())
+                        .forEach(message -> historyMessages.add(messageConverter.reverse(message)));
+                Prompt newPrompt = new Prompt(conversationHistory, prompt.getOptions());
+                return stream(newPrompt, chatResponse);
+            });
+            return new MessageAggregator().aggregate(flux, response -> {
+            });
+        });
     }
 
     protected ToolCallingManager getToolCallingManager() {

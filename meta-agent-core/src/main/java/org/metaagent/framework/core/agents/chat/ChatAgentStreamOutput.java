@@ -22,35 +22,15 @@
  * SOFTWARE.
  */
 
-package org.metaagent.framework.core.agent.memory;
+package org.metaagent.framework.core.agents.chat;
 
-import org.metaagent.framework.core.agent.memory.fragment.Fragment;
-
-import java.util.Map;
+import org.metaagent.framework.core.agent.chat.message.Message;
 
 /**
- * description is here
+ * {@link ChatAgent} streaming output.
  *
  * @author vyckey
  */
-public interface ReadOnlyMemory extends Memory {
-    @Override
-    default void store(String key, Fragment fragment) {
-        throw new IllegalStateException("Memory is only readable.");
-    }
-
-    @Override
-    default void store(Map<String, Fragment> fragments) {
-        throw new IllegalStateException("Memory is only readable.");
-    }
-
-    @Override
-    default void clearAll() {
-        throw new IllegalStateException("Memory is only readable.");
-    }
-
-    @Override
-    default void clear(String key) {
-        throw new IllegalStateException("Memory is only readable.");
-    }
+public record ChatAgentStreamOutput(
+        Message message) {
 }

@@ -25,18 +25,25 @@
 package org.metaagent.framework.core.agent.output.thought;
 
 import org.metaagent.framework.core.agent.action.Action;
-import org.metaagent.framework.core.agent.output.AgentOutput;
-import org.metaagent.framework.core.agent.output.TextualAgentOutput;
 
 /**
- * description is here
+ * Agent thought definition.
  *
  * @author vyckey
  */
-public interface Thought extends TextualAgentOutput {
-    @Override
+public interface Thought {
+    /**
+     * Get the thought text.
+     *
+     * @return the thought text
+     */
     String getText();
 
+    /**
+     * Get the thought proposal action.
+     *
+     * @return the thought proposal action
+     */
     Action getProposalAction();
 
 }

@@ -29,10 +29,21 @@ import org.metaagent.framework.core.agent.input.AgentInput;
 import org.metaagent.framework.core.agent.output.AgentOutput;
 
 /**
- * description is here
+ * AgentLoopControlStrategy defines the interface for controlling the loop of an agent.
  *
+ * @param <I> the type of agent input
+ * @param <O> the type of agent output
+ * @param <S> the type of agent stream output
  * @author vyckey
  */
-public interface AgentLoopControlStrategy<I extends AgentInput, O extends AgentOutput> {
-    boolean shouldContinueLoop(Agent<I, O> agent, I input);
+public interface AgentLoopControlStrategy<I, O, S> {
+    /**
+     * Determines whether the agent should continue looping.
+     *
+     * @param agent  the agent
+     * @param input  the input
+     * @param output the output which can be null
+     * @return true if the agent should continue looping, false otherwise
+     */
+    boolean shouldContinueLoop(Agent<I, O, S> agent, AgentInput<I> input, AgentOutput<O> output);
 }

@@ -25,8 +25,6 @@
 package org.metaagent.framework.core.agent.group;
 
 import org.metaagent.framework.core.agent.MetaAgent;
-import org.metaagent.framework.core.agent.input.AgentInput;
-import org.metaagent.framework.core.agent.output.AgentOutput;
 
 import java.util.Collections;
 import java.util.HashMap;
@@ -39,9 +37,9 @@ import java.util.Objects;
  * @author vyckey
  */
 public class DefaultAgentGroup implements AgentGroup {
-    private final Map<String, MetaAgent<?, ?>> agents;
+    private final Map<String, MetaAgent<?, ?, ?>> agents;
 
-    public DefaultAgentGroup(Map<String, MetaAgent<?, ?>> agents) {
+    public DefaultAgentGroup(Map<String, MetaAgent<?, ?, ?>> agents) {
         this.agents = Objects.requireNonNull(agents);
     }
 
@@ -56,23 +54,23 @@ public class DefaultAgentGroup implements AgentGroup {
 
     @SuppressWarnings("unchecked")
     @Override
-    public <I extends AgentInput, O extends AgentOutput> MetaAgent<I, O> getAgent(String name) {
-        return (MetaAgent<I, O>) agents.get(name);
+    public <I, O, S> MetaAgent<I, O, S> getAgent(String name) {
+        return (MetaAgent<I, O, S>) agents.get(name);
     }
 
     @Override
-    public Map<String, MetaAgent<?, ?>> getAgents() {
+    public Map<String, MetaAgent<?, ?, ?>> getAgents() {
         return Collections.unmodifiableMap(agents);
     }
 
     @Override
-    public void addAgent(MetaAgent<?, ?> agent) {
+    public void addAgent(MetaAgent<?, ?, ?> agent) {
         Objects.requireNonNull(agent, "agent is required");
         agents.put(agent.getName(), agent);
     }
 
     @Override
-    public void removeAgent(MetaAgent<?, ?> agent) {
+    public void removeAgent(MetaAgent<?, ?, ?> agent) {
         Objects.requireNonNull(agent, "agent is required");
         if (!agents.containsKey(agent.getName())) {
             throw new IllegalArgumentException("Agent " + agent.getName() + " not found in the group");

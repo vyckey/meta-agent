@@ -25,25 +25,25 @@
 package org.metaagent.framework.core.agent.output.thought;
 
 import lombok.Getter;
+import org.apache.commons.lang3.StringUtils;
 import org.metaagent.framework.core.agent.action.Action;
-import org.metaagent.framework.core.common.metadata.MapMetadataProvider;
-import org.metaagent.framework.core.common.metadata.MetadataProvider;
 
 /**
- * description is here
+ * Textual Thought
  *
  * @author vyckey
  */
 @Getter
 public class TextThought implements Thought {
-    private final MetadataProvider metadata;
     private final String text;
     private final Action proposalAction;
 
     public TextThought(String text, Action proposalAction) {
+        if (StringUtils.isEmpty(text)) {
+            throw new IllegalArgumentException("Thought text cannot be empty");
+        }
         this.text = text;
         this.proposalAction = proposalAction;
-        this.metadata = new MapMetadataProvider();
     }
 
     @Override

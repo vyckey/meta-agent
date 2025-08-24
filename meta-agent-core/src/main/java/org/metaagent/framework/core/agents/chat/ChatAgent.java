@@ -25,16 +25,20 @@
 package org.metaagent.framework.core.agents.chat;
 
 import org.metaagent.framework.core.agent.Agent;
+import org.metaagent.framework.core.agent.AgentExecutionContext;
 import org.metaagent.framework.core.agent.chat.message.Message;
 import org.metaagent.framework.core.agent.chat.message.RoleMessage;
 import org.metaagent.framework.core.agent.chat.message.history.MessageHistory;
+import org.metaagent.framework.core.agent.input.AgentInput;
+import org.metaagent.framework.core.agent.output.AgentOutput;
+import reactor.core.publisher.Flux;
 
 /**
  * ChatAgent is an agent that has an ability to chat with message history.
  *
  * @author vyckey
  */
-public interface ChatAgent extends Agent<ChatAgentInput, ChatAgentOutput> {
+public interface ChatAgent extends Agent<ChatAgentInput, ChatAgentOutput, ChatAgentStreamOutput> {
     /**
      * Get the message history of this agent.
      *
@@ -42,16 +46,42 @@ public interface ChatAgent extends Agent<ChatAgentInput, ChatAgentOutput> {
      */
     MessageHistory getMessageHistory();
 
+    /**
+     * Run the agent with the given input.
+     *
+     * @param input the input to run the agent with
+     * @return the output of the agent
+     */
     @Override
-    default ChatAgentOutput run(String input) {
+    default AgentOutput<ChatAgentOutput> run(String input) {
         return run(RoleMessage.user(input));
     }
 
-    default ChatAgentOutput run(Message message) {
-        ChatAgentInput messageInput = ChatAgentInput.builder().messages(message).build();
-        return run(messageInput);
+    /**
+     * Run chat agent with a message.
+     *
+     * @param message the message to run this agent with
+     * @return the output of this agent
+     */
+    default AgentOutput<ChatAgentOutput> run(Message message) {
+        AgentInput<ChatAgentInput> agentInput = AgentInput
+                .builder(new ChatAgentInput(message))
+                .context(AgentExecutionContext.create())
+                .build();
+        return run(agentInput);
     }
 
-    ChatAgentOutput run(ChatAgentInput input);
-
+    /**
+     * Runs chat streaming agent with a message.
+     *
+     * @param message the message to run this agent with
+     * @return the output of this agent
+     */
+    default Flux<ChatAgentStreamOutput> runStream(Message message) {
+        AgentInput<ChatAgentInput> agentInput = AgentInput
+                .builder(new ChatAgentInput(message))
+                .context(AgentExecutionContext.create())
+                .build();
+        return runStream(agentInput);
+    }
 }

@@ -22,52 +22,60 @@
  * SOFTWARE.
  */
 
-package org.metaagent.framework.core.agent.observability;
+package org.metaagent.framework.core.agent.memory.fragment;
 
-import org.metaagent.framework.core.agent.MetaAgent;
-import org.metaagent.framework.core.agent.input.AgentInput;
-import org.metaagent.framework.core.agent.output.AgentOutput;
+import org.metaagent.framework.core.agent.memory.Memory;
+
+import java.util.Map;
+import java.util.Set;
 
 /**
- * AgentStepListener is a listener that is called before the agent next loop.
+ * Key-Value memory for storing fragments.
  *
  * @author vyckey
  */
-public interface AgentStepListener<I, O, S> {
+public interface FragmentMemory extends Memory {
     /**
-     * Called before the agent next loop.
+     * Store a fragment in the memory.
      *
-     * @param agent the agent
+     * @param key      the key to store the fragment under
+     * @param fragment the fragment to store
      */
-    default void onAgentNextLoop(MetaAgent<I, O, S> agent) {
-    }
+    void store(String key, Fragment fragment);
 
     /**
-     * Called before the agent step.
+     * Store multiple fragments in the memory.
      *
-     * @param agent the agent
-     * @param input the input
+     * @param fragments the fragments to store
      */
-    default void onAgentStepStart(MetaAgent<I, O, S> agent, AgentInput<I> input) {
-    }
+    void store(Map<String, Fragment> fragments);
 
     /**
-     * Called when an agent step is finished.
+     * Retrieve a fragment from the memory.
      *
-     * @param agent  the agent
-     * @param input  the input
-     * @param output the output
+     * @param key the key to retrieve the fragment under
+     * @return the fragment, or null if not found
      */
-    default void onAgentStepFinish(MetaAgent<I, O, S> agent, AgentInput<I> input, AgentOutput<O> output) {
-    }
+    Fragment retrieve(String key);
 
     /**
-     * Called when an agent step throws an exception.
+     * Retrieve multiple fragments from the memory.
      *
-     * @param agent     the agent
-     * @param input     the input
-     * @param exception the exception
+     * @param keys the keys to retrieve the fragments under
+     * @return the fragments, or null if not found
      */
-    default void onAgentStepError(MetaAgent<I, O, S> agent, AgentInput<I> input, Exception exception) {
-    }
+    Map<String, Fragment> retrieve(Set<String> keys);
+
+    /**
+     * Retrieve all fragments from the memory.
+     *
+     * @return the all fragments
+     */
+    Map<String, Fragment> retrieveAll();
+
+    /**
+     * Clear the specified fragment from the memory.
+     */
+    void clear(String key);
+
 }

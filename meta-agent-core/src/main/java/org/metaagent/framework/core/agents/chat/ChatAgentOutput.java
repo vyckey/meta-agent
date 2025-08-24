@@ -25,46 +25,43 @@
 package org.metaagent.framework.core.agents.chat;
 
 import org.metaagent.framework.core.agent.chat.message.Message;
-import org.metaagent.framework.core.agent.output.AgentOutput;
 
 import java.util.List;
+import java.util.Objects;
+import java.util.stream.Collectors;
 
 /**
- * {@link ChatAgent} output interface.
+ * {@link ChatAgent} output.
  *
  * @author vyckey
  */
-public interface ChatAgentOutput extends AgentOutput {
-    /**
-     * Builder for {@link ChatAgentOutput}.
-     *
-     * @return a builder
-     */
-    static DefaultChatAgentOutput.Builder builder() {
-        return DefaultChatAgentOutput.builder();
+public class ChatAgentOutput {
+    protected List<Message> messages;
+    protected String thoughtProcess;
+
+    public ChatAgentOutput(List<Message> messages, String thoughtProcess) {
+        this.messages = Objects.requireNonNull(messages, "messages is required");
+        this.thoughtProcess = thoughtProcess;
     }
 
-    /**
-     * Gets output messages.
-     *
-     * @return output messages
-     */
-    List<Message> messages();
-
-    /**
-     * Gets the first output message.
-     *
-     * @return the first output message
-     */
-    default Message message() {
-        return messages().isEmpty() ? null : messages().get(0);
+    public ChatAgentOutput(List<Message> messages) {
+        this(messages, null);
     }
 
-    /**
-     * Gets the thought process.
-     *
-     * @return the thought process
-     */
-    String thoughtProcess();
+    public ChatAgentOutput(Message... messages) {
+        this(List.of(messages));
+    }
 
+    public List<Message> messages() {
+        return messages;
+    }
+
+    public String thoughtProcess() {
+        return thoughtProcess;
+    }
+
+    @Override
+    public String toString() {
+        return messages().stream().map(Message::getContent).collect(Collectors.joining("\n"));
+    }
 }

@@ -25,6 +25,9 @@
 package org.metaagent.framework.core.agents.task.decompose;
 
 import org.metaagent.framework.core.agent.Agent;
+import org.metaagent.framework.core.agent.AgentExecutionContext;
+import org.metaagent.framework.core.agent.input.AgentInput;
+import org.metaagent.framework.core.agent.output.AgentOutput;
 import org.metaagent.framework.core.agent.task.Task;
 
 /**
@@ -32,14 +35,17 @@ import org.metaagent.framework.core.agent.task.Task;
  * for agents that decompose tasks into smaller, manageable parts.
  * It provides a method to run the agent with a Task object.
  */
-public interface TaskDecomposeAgent extends Agent<TaskDecomposeInput, TaskDecomposeOutput> {
+public interface TaskDecomposeAgent extends Agent<TaskDecomposeInput, TaskDecomposeOutput, Object> {
     /**
      * Runs the agent with the provided Task object.
      *
      * @param task The Task to be decomposed.
      * @return A TaskDecomposeOutput containing the results of the decomposition.
      */
-    default TaskDecomposeOutput run(Task task) {
-        return Agent.super.run(new TaskDecomposeInput(task));
+    default AgentOutput<TaskDecomposeOutput> run(Task task) {
+        AgentInput<TaskDecomposeInput> agentInput = AgentInput.builder(new TaskDecomposeInput(task))
+                .context(AgentExecutionContext.create())
+                .build();
+        return run(agentInput);
     }
 }

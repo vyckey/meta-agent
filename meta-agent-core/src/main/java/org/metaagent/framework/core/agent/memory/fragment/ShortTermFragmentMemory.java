@@ -22,61 +22,73 @@
  * SOFTWARE.
  */
 
-package org.metaagent.framework.core.agent.memory;
+package org.metaagent.framework.core.agent.memory.fragment;
 
-import com.google.common.collect.Maps;
-import org.metaagent.framework.core.agent.memory.fragment.Fragment;
+import com.google.common.cache.Cache;
+import com.google.common.cache.CacheBuilder;
+import lombok.Builder;
 
-import java.util.Collections;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.TimeUnit;
 
 /**
- * description is here
+ * Short-term fragment memory.
  *
  * @author vyckey
  */
-public class DefaultMemory implements Memory {
-    protected final Map<String, Fragment> memory = Maps.newHashMap();
+public class ShortTermFragmentMemory implements FragmentMemory {
+    protected final Cache<String, Fragment> fragmentCache;
+
+    @Builder
+    public ShortTermFragmentMemory(int capacity, int expireAfterWrite, int expireAfterAccess, TimeUnit timeUnit) {
+        this.fragmentCache = CacheBuilder.newBuilder()
+                .maximumSize(capacity)
+                .expireAfterWrite(expireAfterWrite, timeUnit)
+                .expireAfterAccess(expireAfterAccess, timeUnit)
+                .removalListener(notification -> onFragmentRemoved((Fragment) notification.getValue()))
+                .build();
+    }
+
+    public ShortTermFragmentMemory(int capacity) {
+        this(capacity, 30, 30, TimeUnit.MINUTES);
+    }
+
+    protected void onFragmentRemoved(Fragment fragment) {
+    }
 
     @Override
     public void store(String key, Fragment fragment) {
-        memory.put(key, fragment);
+        fragmentCache.put(key, fragment);
     }
 
     @Override
     public void store(Map<String, Fragment> fragments) {
-        memory.putAll(fragments);
+        fragmentCache.putAll(fragments);
     }
 
     @Override
     public Fragment retrieve(String key) {
-        return memory.get(key);
+        return fragmentCache.getIfPresent(key);
     }
 
     @Override
     public Map<String, Fragment> retrieve(Set<String> keys) {
-        Map<String, Fragment> result = Maps.newHashMap();
-        for (String key : keys) {
-            if (memory.containsKey(key)) {
-                result.put(key, memory.get(key));
-            }
-        }
-        return result;
+        return fragmentCache.getAllPresent(keys);
     }
 
     @Override
     public Map<String, Fragment> retrieveAll() {
-        return Collections.unmodifiableMap(memory);
+        return fragmentCache.asMap();
     }
 
     @Override
     public void clear(String key) {
-        memory.remove(key);
+        fragmentCache.invalidate(key);
     }
 
     @Override
-    public void clearAll() {
-        memory.clear();
+    public void clear() {
+        fragmentCache.invalidateAll();
     }
 }

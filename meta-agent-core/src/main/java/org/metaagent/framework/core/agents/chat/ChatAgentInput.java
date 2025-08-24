@@ -25,47 +25,36 @@
 package org.metaagent.framework.core.agents.chat;
 
 import org.metaagent.framework.core.agent.chat.message.Message;
-import org.metaagent.framework.core.agent.input.AgentInput;
 
 import java.util.List;
+import java.util.Objects;
+import java.util.stream.Collectors;
 
 /**
- * {@link ChatAgent} input interface.
+ * {@link ChatAgent} input
  *
  * @author vyckey
  */
-public interface ChatAgentInput extends AgentInput {
-    String OPTION_SEARCH_ENABLED = "searchEnabled";
-    String OPTION_DEEP_THINK_ENABLED = "deepThinkEnabled";
+public class ChatAgentInput {
+    public static final String OPTION_DEEP_THINK_ENABLED = "deepThinkEnabled";
+    public static final String OPTION_SEARCH_ENABLED = "searchEnabled";
 
-    /**
-     * Builder for {@link ChatAgentInput}.
-     *
-     * @return builder
-     */
-    static Builder builder() {
-        return DefaultChatAgentInput.builder();
+    protected List<Message> messages;
+
+    public ChatAgentInput(List<Message> messages) {
+        this.messages = Objects.requireNonNull(messages, "messages is required");
     }
 
-    /**
-     * Messages to be processed by the agent.
-     *
-     * @return messages
-     */
-    List<Message> messages();
+    public ChatAgentInput(Message... messages) {
+        this(List.of(messages));
+    }
 
-    /**
-     * Builder class for {@link ChatAgentInput}
-     */
-    interface Builder extends AgentInput.Builder<Builder> {
+    public List<Message> messages() {
+        return messages;
+    }
 
-        Builder messages(List<Message> messages);
-
-        Builder messages(Message... messages);
-
-        Builder withOption(String key, Object value);
-
-        @Override
-        ChatAgentInput build();
+    @Override
+    public String toString() {
+        return messages().stream().map(Message::getContent).collect(Collectors.joining("\n"));
     }
 }

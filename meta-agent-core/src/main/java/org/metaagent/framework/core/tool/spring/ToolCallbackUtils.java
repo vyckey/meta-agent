@@ -28,7 +28,6 @@ import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
 import org.apache.commons.collections.CollectionUtils;
 import org.metaagent.framework.core.tool.Tool;
-import org.metaagent.framework.core.tool.ToolContext;
 import org.metaagent.framework.core.tool.ToolExecutionException;
 import org.metaagent.framework.core.tool.executor.BatchToolInputs;
 import org.metaagent.framework.core.tool.executor.BatchToolOutputs;
@@ -51,11 +50,12 @@ import java.util.Map;
  * @author vyckey
  */
 public abstract class ToolCallbackUtils {
-    public static void addToolsToChatOptions(ToolCallingChatOptions chatOptions, ToolManager toolManager) {
+    public static void addToolsToChatOptions(ToolCallingChatOptions chatOptions,
+                                             ToolManager toolManager, ToolExecutor toolExecutor) {
         List<FunctionCallback> toolCallbacks = Lists.newArrayList();
         for (String toolName : toolManager.getToolNames()) {
             Tool<Object, Object> tool = toolManager.getTool(toolName);
-            toolCallbacks.add(new ToolCallbackDelegate(tool));
+            toolCallbacks.add(new ToolCallbackDelegate(tool, toolExecutor));
         }
         if (CollectionUtils.isEmpty(chatOptions.getToolNames())) {
             chatOptions.setToolNames(toolManager.getToolNames());
@@ -69,8 +69,8 @@ public abstract class ToolCallbackUtils {
     }
 
     public static ChatOptions buildChatOptionsWithTools(ChatOptions chatOptions,
-                                                        ToolManager toolManager,
-                                                        ToolContext toolContext,
+                                                        ToolExecutor toolExecutor,
+                                                        ToolExecutorContext executorContext,
                                                         Boolean internalToolExecutionEnabled) {
         ToolCallingChatOptions toolCallingChatOptions = null;
         if (chatOptions == null) {
@@ -79,9 +79,10 @@ public abstract class ToolCallbackUtils {
             toolCallingChatOptions = chatOptions.copy();
         }
         if (toolCallingChatOptions != null) {
-            ToolCallbackUtils.addToolsToChatOptions(toolCallingChatOptions, toolManager);
+            ToolManager toolManager = executorContext.getToolManager();
+            ToolCallbackUtils.addToolsToChatOptions(toolCallingChatOptions, toolManager, toolExecutor);
             toolCallingChatOptions.setToolContext(Map.of(
-                    ToolCallbackDelegate.CONTEXT_KEY, toolContext
+                    ToolCallbackDelegate.CONTEXT_KEY, executorContext
             ));
             toolCallingChatOptions.setInternalToolExecutionEnabled(internalToolExecutionEnabled);
             return toolCallingChatOptions;

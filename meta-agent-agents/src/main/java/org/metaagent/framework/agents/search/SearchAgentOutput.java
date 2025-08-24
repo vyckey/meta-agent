@@ -25,7 +25,6 @@
 package org.metaagent.framework.agents.search;
 
 import lombok.Builder;
-import org.metaagent.framework.core.agent.output.AgentOutput;
 
 import java.util.List;
 
@@ -46,7 +45,7 @@ public record SearchAgentOutput(
         List<String> queryTerms,
         List<SearchSource> sources,
         String explanation,
-        boolean valuable) implements AgentOutput {
+        boolean valuable) {
 
     public record SearchSource(String url, String title, String snippet, Float confidence) {
     }

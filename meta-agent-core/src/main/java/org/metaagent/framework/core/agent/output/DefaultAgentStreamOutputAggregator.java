@@ -22,28 +22,35 @@
  * SOFTWARE.
  */
 
-package org.metaagent.framework.core.agent.fallback;
+package org.metaagent.framework.core.agent.output;
 
-import org.metaagent.framework.core.agent.MetaAgent;
-import org.metaagent.framework.core.agent.input.AgentInput;
-import org.metaagent.framework.core.agent.output.AgentOutput;
+import java.util.Objects;
+import java.util.function.BiFunction;
 
 /**
- * Agent Fallback Strategy
+ * Default implementation of {@link AgentStreamOutputAggregator}.
  *
- * @param <I> the type of agent input
- * @param <O> the type of agent output
- * @param <S> the type of agent stream output
+ * @param <S> The type of stream output.
+ * @param <O> The type of agent output.
  * @author vyckey
  */
-public interface AgentFallbackStrategy<I, O, S> {
-    /**
-     * Fallback when agent execution failed.
-     *
-     * @param agent     agent
-     * @param input     the agent input
-     * @param exception exception
-     * @return the agent output
-     */
-    AgentOutput<O> fallback(MetaAgent<I, O, S> agent, AgentInput<I> input, Exception exception);
+public class DefaultAgentStreamOutputAggregator<S, O> implements AgentStreamOutputAggregator<S, O> {
+    private final AgentOutput<O> initialState;
+    private final BiFunction<AgentOutput<O>, S, AgentOutput<O>> reducer;
+
+    public DefaultAgentStreamOutputAggregator(AgentOutput<O> initialState,
+                                              BiFunction<AgentOutput<O>, S, AgentOutput<O>> reducer) {
+        this.initialState = initialState;
+        this.reducer = Objects.requireNonNull(reducer, "Reducer cannot be null");
+    }
+
+    @Override
+    public AgentOutput<O> initialState() {
+        return initialState;
+    }
+
+    @Override
+    public AgentOutput<O> aggregate(AgentOutput<O> agentOutput, S streamOutput) {
+        return reducer.apply(agentOutput, streamOutput);
+    }
 }

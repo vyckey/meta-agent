@@ -24,66 +24,19 @@
 
 package org.metaagent.framework.core.agents.task.decompose;
 
-import lombok.Getter;
-import org.metaagent.framework.core.agent.AgentExecutionContext;
-import org.metaagent.framework.core.agent.input.AbstractAgentInput;
-import org.metaagent.framework.core.agent.input.AgentInput;
 import org.metaagent.framework.core.agent.task.Task;
-import org.metaagent.framework.core.common.metadata.MetadataProvider;
-
-import java.util.Objects;
 
 /**
- * Input for the Task Decompose Agent.
+ * {@link TaskDecomposeAgent} input.
  *
  * @author vyckey
  */
-@Getter
-public class TaskDecomposeInput extends AbstractAgentInput implements AgentInput {
-    private final Task task;
-    private final String taskContext;
-
-    protected TaskDecomposeInput(Builder builder) {
-        super(builder);
-        this.task = Objects.requireNonNull(builder.task, "task is required");
-        this.taskContext = builder.taskContext;
-    }
+public record TaskDecomposeInput(
+        Task task,
+        String taskContext
+) {
 
     public TaskDecomposeInput(Task task) {
-        this(builder().task(task));
-    }
-
-    public static Builder builder() {
-        return new Builder();
-    }
-
-    public static class Builder extends AbstractAgentInput.Builder<Builder> {
-        private Task task;
-        private String taskContext;
-
-        @Override
-        protected Builder self() {
-            return this;
-        }
-
-        public Builder task(Task task) {
-            this.task = task;
-            return this;
-        }
-
-        public Builder taskContext(String taskContext) {
-            this.taskContext = taskContext;
-            return this;
-        }
-
-        public TaskDecomposeInput build() {
-            if (context == null) {
-                context = AgentExecutionContext.create();
-            }
-            if (metadata == null) {
-                metadata = MetadataProvider.empty();
-            }
-            return new TaskDecomposeInput(this);
-        }
+        this(task, "");
     }
 }

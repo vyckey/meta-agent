@@ -34,7 +34,21 @@ import org.metaagent.framework.core.agent.output.AgentOutput;
  *
  * @author vyckey
  */
-public interface CoordinateAgent<I extends AgentInput, O extends AgentOutput> extends Agent<I, O> {
-    AgentGroup getExecuteAgents();
+public interface CoordinateAgent<I, O, S> extends Agent<I, O, S> {
+    /**
+     * Gets the agent group managed by this coordinator.
+     *
+     * @return the agent group containing all managed agents
+     */
+    AgentGroup getAgentGroup();
 
+    /**
+     * Coordinates the execution by selecting an appropriate agent based on the input.
+     * The selection strategy depends on the specific implementation.
+     *
+     * @param input the input to process
+     * @return the output from the selected agent
+     */
+    @Override
+    AgentOutput<O> step(AgentInput<I> input);
 }

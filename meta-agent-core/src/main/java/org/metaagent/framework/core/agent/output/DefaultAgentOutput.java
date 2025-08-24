@@ -22,28 +22,21 @@
  * SOFTWARE.
  */
 
-package org.metaagent.framework.core.agent.fallback;
+package org.metaagent.framework.core.agent.output;
 
-import org.metaagent.framework.core.agent.MetaAgent;
-import org.metaagent.framework.core.agent.input.AgentInput;
-import org.metaagent.framework.core.agent.output.AgentOutput;
+import org.metaagent.framework.core.common.metadata.MetadataProvider;
 
-/**
- * Agent Fallback Strategy
- *
- * @param <I> the type of agent input
- * @param <O> the type of agent output
- * @param <S> the type of agent stream output
- * @author vyckey
- */
-public interface AgentFallbackStrategy<I, O, S> {
-    /**
-     * Fallback when agent execution failed.
-     *
-     * @param agent     agent
-     * @param input     the agent input
-     * @param exception exception
-     * @return the agent output
-     */
-    AgentOutput<O> fallback(MetaAgent<I, O, S> agent, AgentInput<I> input, Exception exception);
+import java.util.Objects;
+
+public record DefaultAgentOutput<O>(
+        O result,
+        MetadataProvider metadata) implements AgentOutput<O> {
+    public DefaultAgentOutput(O result, MetadataProvider metadata) {
+        this.result = result;
+        this.metadata = Objects.requireNonNull(metadata, "metadata is required");
+    }
+
+    public DefaultAgentOutput(O result) {
+        this(result, MetadataProvider.empty());
+    }
 }

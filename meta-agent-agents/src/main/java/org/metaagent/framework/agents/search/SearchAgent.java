@@ -29,6 +29,8 @@ import org.apache.commons.lang3.StringUtils;
 import org.metaagent.framework.core.agent.AbstractAgent;
 import org.metaagent.framework.core.agent.fallback.AgentFallbackStrategy;
 import org.metaagent.framework.core.agent.fallback.RetryAgentFallbackStrategy;
+import org.metaagent.framework.core.agent.input.AgentInput;
+import org.metaagent.framework.core.agent.output.AgentOutput;
 import org.metaagent.framework.core.model.chat.ChatModelUtils;
 import org.metaagent.framework.core.model.parser.OutputParsers;
 import org.metaagent.framework.core.model.prompt.PromptTemplate;
@@ -56,7 +58,7 @@ import java.util.Map;
  *
  * @author vyckey
  */
-public class SearchAgent extends AbstractAgent<SearchAgentInput, SearchAgentOutput> {
+public class SearchAgent extends AbstractAgent<SearchAgentInput, SearchAgentOutput, SearchAgentOutput> {
     protected final ChatModel chatModel;
     protected final ChatOptions chatOptions;
 
@@ -73,36 +75,39 @@ public class SearchAgent extends AbstractAgent<SearchAgentInput, SearchAgentOutp
     }
 
     @Override
-    public AgentFallbackStrategy<SearchAgentInput, SearchAgentOutput> getFallbackStrategy() {
+    public AgentFallbackStrategy<SearchAgentInput, SearchAgentOutput, SearchAgentOutput> getFallbackStrategy() {
         return new RetryAgentFallbackStrategy<>(2);
     }
 
     @Override
-    public SearchAgentOutput run(String input) {
-        return run(SearchAgentInput.from(input));
+    public AgentOutput<SearchAgentOutput> run(String input) {
+        AgentInput<SearchAgentInput> agentInput = AgentInput.builder(SearchAgentInput.from(input)).build();
+        return run(agentInput);
     }
 
     @Override
-    protected SearchAgentOutput doStep(SearchAgentInput agentInput) {
-        Prompt prompt = buildPrompt(agentInput);
+    protected AgentOutput<SearchAgentOutput> doStep(AgentInput<SearchAgentInput> input) {
+        Prompt prompt = buildPrompt(input);
         ChatResponse response = ChatModelUtils.callWithToolCall(chatModel, prompt);
         AssistantMessage assistantMessage = response.getResult().getOutput();
-        return parseOutput(assistantMessage);
+        SearchAgentOutput output = parseOutput(assistantMessage);
+        return AgentOutput.create(output);
     }
 
-    protected Prompt buildPrompt(SearchAgentInput agentInput) {
+    protected Prompt buildPrompt(AgentInput<SearchAgentInput> agentInput) {
         ToolExecutorContext toolExecutorContext = buildToolExecutorContext(agentInput);
         ChatOptions options = ToolCallbackUtils.buildChatOptionsWithTools(this.chatOptions,
-                toolExecutorContext.getToolManager(), toolExecutorContext.getToolContext(), true);
+                agentInput.context().getToolExecutor(), toolExecutorContext, true);
 
+        SearchAgentInput searchInput = agentInput.input();
         PromptTemplate promptTemplate = PromptRegistry.global().getPromptTemplate("framework:search_agent_system_prompt");
         PromptValue promptValue = promptTemplate.format(Map.of(
                 "date", LocalDateTime.now().format(DateTimeFormatter.ISO_LOCAL_DATE),
-                "force_search", agentInput.forceSearch()
+                "force_search", searchInput.forceSearch()
         ));
-        String message = agentInput.query();
-        if (StringUtils.isNotEmpty(agentInput.queryContext())) {
-            message = "## Context\n" + agentInput.queryContext() + "\n##Query\n" + message;
+        String message = searchInput.query();
+        if (StringUtils.isNotEmpty(searchInput.queryContext())) {
+            message = "## Context\n" + searchInput.queryContext() + "\n##Query\n" + message;
         }
         List<Message> messages = List.of(
                 new SystemMessage(promptValue.toString()),

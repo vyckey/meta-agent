@@ -36,17 +36,17 @@ import org.metaagent.framework.core.converter.Converter;
  * @author vyckey
  */
 @Getter
-public class DefaultAgentIOConverter<I extends AgentInput, O extends AgentOutput> implements AgentIOConverter<I, O> {
+public class DefaultAgentIOConverter<I, O> implements AgentIOConverter<I, O> {
     private final String inputSchema;
     private final String outputSchema;
-    private final Converter<String, I> inputConverter;
-    private final Converter<O, String> outputConverter;
+    private final Converter<String, AgentInput<I>> inputConverter;
+    private final Converter<AgentOutput<O>, String> outputConverter;
 
     @Builder
     public DefaultAgentIOConverter(String inputSchema,
                                    String outputSchema,
-                                   Converter<String, I> inputConverter,
-                                   Converter<O, String> outputConverter) {
+                                   Converter<String, AgentInput<I>> inputConverter,
+                                   Converter<AgentOutput<O>, String> outputConverter) {
         this.inputSchema = inputSchema;
         this.outputSchema = outputSchema;
         this.inputConverter = inputConverter;

@@ -32,7 +32,23 @@ import org.metaagent.framework.core.common.metadata.MetadataProvider;
  *
  * @author vyckey
  */
-public interface AgentInput {
+public interface AgentInput<I> {
+    /**
+     * Returns the agent input builder.
+     *
+     * @return the agent input builder
+     */
+    static <I> Builder<I> builder(I input) {
+        return DefaultAgentInput.builder(input);
+    }
+
+    /**
+     * Gets the input of the agent.
+     *
+     * @return the input
+     */
+    I input();
+
     /**
      * Gets the context of the agent execution.
      *
@@ -49,17 +65,26 @@ public interface AgentInput {
         return MetadataProvider.empty();
     }
 
+
     /**
      * Builder class for AgentInput.
      */
-    interface Builder<B extends Builder<B>> {
+    interface Builder<I> {
+        /**
+         * Sets the input of agent input.
+         *
+         * @param input the input.
+         * @return the builder
+         */
+        Builder<I> input(I input);
+
         /**
          * Sets the context of the agent execution.
          *
          * @param context the AgentExecutionContext associated with this input
          * @return the builder
          */
-        B context(AgentExecutionContext context);
+        Builder<I> context(AgentExecutionContext context);
 
         /**
          * Sets the metadata of agent input.
@@ -67,13 +92,13 @@ public interface AgentInput {
          * @param metadata the metadata.
          * @return the builder
          */
-        B metadata(MetadataProvider metadata);
+        Builder<I> metadata(MetadataProvider metadata);
 
         /**
          * Builds an AgentInput instance.
          *
          * @return the AgentInput instance
          */
-        AgentInput build();
+        AgentInput<I> build();
     }
 }

@@ -24,10 +24,10 @@
 
 package org.metaagent.framework.core.agent;
 
-import org.apache.commons.lang3.NotImplementedException;
-import org.metaagent.framework.core.agent.converter.AgentIOConverter;
 import org.metaagent.framework.core.agent.fallback.AgentFallbackStrategy;
+import org.metaagent.framework.core.agent.input.AgentInput;
 import org.metaagent.framework.core.agent.loop.AgentLoopControlStrategy;
+import org.metaagent.framework.core.agent.output.AgentOutput;
 import org.metaagent.framework.core.agent.state.AgentRunStatus;
 import org.metaagent.framework.core.agent.state.AgentState;
 import org.metaagent.framework.core.tool.manager.ToolManager;
@@ -35,21 +35,12 @@ import org.metaagent.framework.core.tool.manager.ToolManager;
 /**
  * The core agent abstraction.
  *
+ * @param <I> the type of agent input
+ * @param <O> the type of agent output
+ * @param <S> the type of agent stream output
  * @author vyckey
  */
-public interface Agent<
-        AgentInput extends org.metaagent.framework.core.agent.input.AgentInput,
-        AgentOutput extends org.metaagent.framework.core.agent.output.AgentOutput>
-        extends MetaAgent<AgentInput, AgentOutput> {
-
-    /**
-     * Gets Input/Output converter.
-     *
-     * @return the converter.
-     */
-    default AgentIOConverter<AgentInput, AgentOutput> getIOConverter() {
-        throw new NotImplementedException("not implement yet");
-    }
+public interface Agent<I, O, S> extends MetaAgent<I, O, S> {
 
     /**
      * Gets the agent tool manager.
@@ -63,15 +54,14 @@ public interface Agent<
      *
      * @return the loop control strategy.
      */
-    AgentLoopControlStrategy<AgentInput, AgentOutput> getLoopControlStrategy();
+    AgentLoopControlStrategy<I, O, S> getLoopControlStrategy();
 
     /**
      * Gets agent fallback strategy. It will be used to handle unexpected exceptions while running the agent.
      *
      * @return the fallback strategy.
      */
-    @Override
-    AgentFallbackStrategy<AgentInput, AgentOutput> getFallbackStrategy();
+    AgentFallbackStrategy<I, O, S> getFallbackStrategy();
 
     /**
      * Run with execution context and string input.
@@ -80,7 +70,7 @@ public interface Agent<
      * @param input the agent input.
      * @return the final agent output.
      */
-    default AgentOutput run(String input) {
+    default AgentOutput<O> run(String input) {
         throw new IllegalArgumentException("string agent input is unsupported");
     }
 
@@ -91,10 +81,10 @@ public interface Agent<
      * @return the final agent output.
      */
     @Override
-    default AgentOutput run(AgentInput input) {
+    default AgentOutput<O> run(AgentInput<I> input) {
         AgentState agentState = getAgentState();
-        AgentOutput output = null;
-        while (getLoopControlStrategy().shouldContinueLoop(this, input)) {
+        AgentOutput<O> output = null;
+        while (getLoopControlStrategy().shouldContinueLoop(this, input, output)) {
             try {
                 agentState.setStatus(AgentRunStatus.RUNNING);
                 output = step(input);
@@ -118,6 +108,6 @@ public interface Agent<
      * @return the agent output.
      */
     @Override
-    AgentOutput step(AgentInput input);
+    AgentOutput<O> step(AgentInput<I> input);
 
 }

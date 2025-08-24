@@ -24,10 +24,14 @@
 
 package org.metaagent.framework.core.agent;
 
+import org.apache.commons.lang3.NotImplementedException;
 import org.metaagent.framework.core.agent.ability.AgentAbility;
 import org.metaagent.framework.core.agent.ability.AgentAbilityManager;
-import org.metaagent.framework.core.agent.fallback.AgentFallbackStrategy;
+import org.metaagent.framework.core.agent.converter.AgentIOConverter;
+import org.metaagent.framework.core.agent.input.AgentInput;
 import org.metaagent.framework.core.agent.memory.Memory;
+import org.metaagent.framework.core.agent.output.AgentOutput;
+import org.metaagent.framework.core.agent.output.AgentStreamOutputAggregator;
 import org.metaagent.framework.core.agent.profile.AgentProfile;
 import org.metaagent.framework.core.agent.state.AgentState;
 import reactor.core.publisher.Flux;
@@ -37,11 +41,12 @@ import java.util.concurrent.CompletableFuture;
 /**
  * Meta Agent, the basic class of all agents.
  *
+ * @param <I> the type of agent input
+ * @param <O> the type of agent output
+ * @param <S> the type of agent stream output
  * @author vyckey
  */
-public interface MetaAgent<
-        AgentInput extends org.metaagent.framework.core.agent.input.AgentInput,
-        AgentOutput extends org.metaagent.framework.core.agent.output.AgentOutput> {
+public interface MetaAgent<I, O, S> {
 
     /**
      * Gets agent name.
@@ -92,27 +97,22 @@ public interface MetaAgent<
     }
 
     /**
+     * Gets Input/Output converter.
+     *
+     * @return the converter.
+     */
+    default AgentIOConverter<I, O> getIOConverter() {
+        throw new NotImplementedException("not implement yet");
+    }
+
+    /**
      * Runs agent logic.
      *
      * @param input the agent input.
      * @return the agent output.
      */
-    default AgentOutput run(AgentInput input) {
-        try {
-            return step(input);
-        } catch (Exception ex) {
-            return getFallbackStrategy().fallback(this, input, ex);
-        }
-    }
-
-    /**
-     * Runs agent logic in a streaming way.
-     *
-     * @param input the agent input.
-     * @return the streaming agent output.
-     */
-    default Flux<AgentOutput> runFlux(AgentInput input) {
-        throw new UnsupportedOperationException("Streaming run is not supported");
+    default AgentOutput<O> run(AgentInput<I> input) {
+        return step(input);
     }
 
     /**
@@ -121,7 +121,7 @@ public interface MetaAgent<
      * @param input the agent input
      * @return the agent out.
      */
-    default CompletableFuture<AgentOutput> runAsync(AgentInput input) {
+    default CompletableFuture<AgentOutput<O>> runAsync(AgentInput<I> input) {
         return CompletableFuture.supplyAsync(() -> run(input), input.context().getExecutor());
     }
 
@@ -131,14 +131,36 @@ public interface MetaAgent<
      * @param input the agent input.
      * @return the agent output.
      */
-    AgentOutput step(AgentInput input);
+    AgentOutput<O> step(AgentInput<I> input);
 
     /**
-     * Gets agent fallback strategy. It will be used to handle unexpected exceptions while running the agent.
+     * Runs agent logic in a streaming way.
      *
-     * @return the fallback strategy.
+     * @param input the agent input.
+     * @return the streaming agent output.
      */
-    AgentFallbackStrategy<AgentInput, AgentOutput> getFallbackStrategy();
+    default Flux<S> runStream(AgentInput<I> input) {
+        return stepStream(input);
+    }
+
+    /**
+     * Start an agent step.
+     *
+     * @param input the agent input.
+     * @return the agent output.
+     */
+    default Flux<S> stepStream(AgentInput<I> input) {
+        throw new UnsupportedOperationException("Streaming is not supported");
+    }
+
+    /**
+     * Get the agent stream output aggregator.
+     *
+     * @return the agent stream output aggregator.
+     */
+    default AgentStreamOutputAggregator<S, O> getStreamOutputAggregator() {
+        throw new UnsupportedOperationException("Streaming is not supported");
+    }
 
     /**
      * Reset the agent to initial state.
