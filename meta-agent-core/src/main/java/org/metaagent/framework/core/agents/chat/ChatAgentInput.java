@@ -30,7 +30,7 @@ import java.util.List;
 import java.util.Objects;
 
 /**
- * Chat agent input
+ * {@link ChatAgent} input
  *
  * @author vyckey
  */

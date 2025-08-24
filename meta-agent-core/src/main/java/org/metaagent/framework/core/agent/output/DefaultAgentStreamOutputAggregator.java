@@ -22,15 +22,35 @@
  * SOFTWARE.
  */
 
-package org.metaagent.framework.core.agents.chat;
+package org.metaagent.framework.core.agent.output;
 
-import org.metaagent.framework.core.agent.chat.message.Message;
+import java.util.Objects;
+import java.util.function.BiFunction;
 
 /**
- * {@link ChatAgent} streaming output.
+ * Default implementation of {@link AgentStreamOutputAggregator}.
  *
+ * @param <S> The type of stream output.
+ * @param <O> The type of agent output.
  * @author vyckey
  */
-public record ChatAgentStreamOutput(
-        Message message) {
+public class DefaultAgentStreamOutputAggregator<S, O> implements AgentStreamOutputAggregator<S, O> {
+    private final AgentOutput<O> initialState;
+    private final BiFunction<AgentOutput<O>, S, AgentOutput<O>> reducer;
+
+    public DefaultAgentStreamOutputAggregator(AgentOutput<O> initialState,
+                                              BiFunction<AgentOutput<O>, S, AgentOutput<O>> reducer) {
+        this.initialState = initialState;
+        this.reducer = Objects.requireNonNull(reducer, "Reducer cannot be null");
+    }
+
+    @Override
+    public AgentOutput<O> initialState() {
+        return initialState;
+    }
+
+    @Override
+    public AgentOutput<O> aggregate(AgentOutput<O> agentOutput, S streamOutput) {
+        return reducer.apply(agentOutput, streamOutput);
+    }
 }

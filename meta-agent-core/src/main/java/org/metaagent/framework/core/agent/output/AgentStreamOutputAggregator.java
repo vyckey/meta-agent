@@ -26,12 +26,28 @@ package org.metaagent.framework.core.agent.output;
 
 import reactor.core.publisher.Flux;
 
+import java.util.function.BiFunction;
+
 /**
  * AgentStreamOutputAggregator
  *
  * @author vyckey
  */
 public interface AgentStreamOutputAggregator<S, O> {
+    /**
+     * Create an agent stream output aggregator.
+     *
+     * @param initialState the initial state of the agent stream output aggregator
+     * @param reducer      the reducer function
+     * @param <S>          the type of the stream output
+     * @param <O>          the type of the agent output
+     * @return the agent stream output aggregator
+     */
+    static <S, O> AgentStreamOutputAggregator<S, O> reduce(AgentOutput<O> initialState,
+                                                           BiFunction<AgentOutput<O>, S, AgentOutput<O>> reducer) {
+        return new DefaultAgentStreamOutputAggregator<>(initialState, reducer);
+    }
+
     /**
      * Initial state of the stream output.
      *

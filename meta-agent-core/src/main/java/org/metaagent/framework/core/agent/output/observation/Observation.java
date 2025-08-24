@@ -24,14 +24,28 @@
 
 package org.metaagent.framework.core.agent.output.observation;
 
-import org.metaagent.framework.core.agent.output.TextualAgentOutput;
+import org.metaagent.framework.core.common.metadata.MetadataProvider;
 
 /**
- * description is here
+ * Agent observation definition.
  *
  * @author vyckey
  */
-public interface Observation extends TextualAgentOutput {
-    @Override
+public interface Observation {
+    /**
+     * Get the observation text.
+     *
+     * @return the observation text
+     */
     String getText();
+
+    /**
+     * Get the observation metadata.
+     *
+     * @return the observation metadata
+     */
+    default MetadataProvider getMetadata() {
+        return MetadataProvider.empty();
+    }
+
 }

@@ -45,11 +45,23 @@ public interface ChatAgent extends Agent<ChatAgentInput, ChatAgentOutput, ChatAg
      */
     MessageHistory getMessageHistory();
 
+    /**
+     * Run the agent with the given input.
+     *
+     * @param input the input to run the agent with
+     * @return the output of the agent
+     */
     @Override
     default AgentOutput<ChatAgentOutput> run(String input) {
         return run(RoleMessage.user(input));
     }
 
+    /**
+     * Run this agent with a message.
+     *
+     * @param message the message to run this agent with
+     * @return the output of this agent
+     */
     default AgentOutput<ChatAgentOutput> run(Message message) {
         AgentInput<ChatAgentInput> agentInput = AgentInput
                 .builder(new ChatAgentInput(message))

@@ -29,7 +29,7 @@ import org.metaagent.framework.core.agent.chat.message.Message;
 import java.util.List;
 
 /**
- * {@link ChatAgent} output interface.
+ * {@link ChatAgent} output.
  *
  * @author vyckey
  */
@@ -37,4 +37,11 @@ public record ChatAgentOutput(
         List<Message> messages,
         String thoughtProcess) {
 
+    public ChatAgentOutput(List<Message> messages) {
+        this(messages, null);
+    }
+
+    public ChatAgentOutput(Message... messages) {
+        this(List.of(messages));
+    }
 }

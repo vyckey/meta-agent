@@ -27,7 +27,7 @@ package org.metaagent.framework.core.agent.output;
 import org.metaagent.framework.core.common.metadata.MetadataProvider;
 
 /**
- * description is here
+ * None agent output
  *
  * @author vyckey
  */

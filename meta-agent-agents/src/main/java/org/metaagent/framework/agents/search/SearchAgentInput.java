@@ -24,82 +24,37 @@
 
 package org.metaagent.framework.agents.search;
 
-import org.metaagent.framework.core.agent.AgentExecutionContext;
-import org.metaagent.framework.core.agent.input.AbstractAgentInput;
-import org.metaagent.framework.core.agent.input.AgentInput;
-import org.metaagent.framework.core.common.metadata.MetadataProvider;
-
-import java.util.Objects;
+import lombok.Builder;
+import org.apache.commons.lang3.StringUtils;
 
 /**
- * Search agent input schema.
+ * {@link SearchAgent} input
  *
  * @param query          the search query
- * @param detailIncluded whether to include detailed results
+ * @param queryContext   the query context
+ * @param forceSearch    whether to force search
+ * @param detailIncluded whether to include detailed information in the search
+ * @author vyckey
  */
+@Builder
 public record SearchAgentInput(
-        AgentExecutionContext context,
         String query,
         String queryContext,
         boolean forceSearch,
-        boolean detailIncluded) implements AgentInput {
+        boolean detailIncluded) {
+
+    public SearchAgentInput(String query, String queryContext, boolean forceSearch, boolean detailIncluded) {
+        if (StringUtils.isEmpty(query)) {
+            throw new IllegalArgumentException("query cannot be empty");
+        }
+        this.query = query.trim();
+        this.queryContext = queryContext != null ? queryContext.trim() : "";
+        this.forceSearch = forceSearch;
+        this.detailIncluded = detailIncluded;
+    }
 
     public static SearchAgentInput from(String query) {
         return SearchAgentInput.builder().query(query).build();
     }
 
-    public static Builder builder() {
-        return new Builder();
-    }
-
-    public static class Builder extends AbstractAgentInput.Builder<Builder> {
-        private AgentExecutionContext context;
-        private String query;
-        private String queryContext;
-        private boolean forceSearch = false;
-        private boolean detailIncluded = true;
-
-        private Builder() {
-        }
-
-        @Override
-        protected Builder self() {
-            return this;
-        }
-
-        public Builder context(AgentExecutionContext context) {
-            this.context = context;
-            return this;
-        }
-
-        public Builder query(String query) {
-            this.query = Objects.requireNonNull(query, "query is required");
-            return this;
-        }
-
-        public Builder queryContext(String queryContext) {
-            this.queryContext = queryContext;
-            return this;
-        }
-
-        public Builder forceSearch(boolean forceSearch) {
-            this.forceSearch = forceSearch;
-            return this;
-        }
-
-        public Builder detailIncluded(boolean detailIncluded) {
-            this.detailIncluded = detailIncluded;
-            return this;
-        }
-
-        public SearchAgentInput build() {
-            if (context == null) {
-                context = AgentExecutionContext.create();
-            }
-            if (metadata == null) {
-                metadata = MetadataProvider.empty();
-            }
-            return new SearchAgentInput(context, query, queryContext, forceSearch, detailIncluded);
-        }
-    }
 }
