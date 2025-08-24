@@ -29,29 +29,33 @@ import org.metaagent.framework.core.agent.chat.message.AssistantMessage;
 import org.metaagent.framework.core.agent.chat.message.SystemMessage;
 import org.metaagent.framework.core.agent.chat.message.history.DefaultMessageHistory;
 import org.metaagent.framework.core.agent.chat.message.history.MessageHistory;
+import org.metaagent.framework.core.agent.input.AgentInput;
+import org.metaagent.framework.core.agent.output.AgentOutput;
 import org.metaagent.framework.core.agents.chat.ChatAgent;
 import org.metaagent.framework.core.agents.chat.ChatAgentInput;
 import org.metaagent.framework.core.agents.chat.ChatAgentOutput;
+import org.metaagent.framework.core.agents.chat.ChatAgentStreamOutput;
 import org.metaagent.framework.core.model.chat.ChatModelClient;
-import org.metaagent.framework.core.model.parser.OutputParsers;
 import org.metaagent.framework.core.model.prompt.PromptTemplate;
 import org.metaagent.framework.core.model.prompt.PromptValue;
 import org.metaagent.framework.core.model.prompt.StringPromptTemplate;
 import org.metaagent.framework.core.model.prompt.registry.PromptRegistry;
 import org.springframework.ai.chat.model.ChatModel;
+import reactor.core.publisher.Flux;
 
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 
 /**
- * LLM chat agent.
+ * {@link ChatAgent} implementation with Large Language Model (LLM).
  *
  * @author vyckey
  */
-public class LlmChatAgent extends AbstractAgent<ChatAgentInput, ChatAgentOutput> implements ChatAgent {
-    public static final String SYSTEM_PROMPT_ID = "framework:chat_agent_system_prompt";
+public class LlmChatAgent extends AbstractAgent<ChatAgentInput, ChatAgentOutput, ChatAgentStreamOutput> implements ChatAgent {
+    public static final String DEFAULT_SYSTEM_PROMPT_ID = "framework:chat_agent_system_prompt";
     private static final boolean DEFAULT_SEARCH_ENABLED = true;
     private static final boolean DEFAULT_DEEP_THINK_ENABLED = false;
     protected MessageHistory messageHistory = new DefaultMessageHistory();
@@ -67,11 +71,11 @@ public class LlmChatAgent extends AbstractAgent<ChatAgentInput, ChatAgentOutput>
     }
 
     public LlmChatAgent(String name, ChatModel chatModel) {
-        this(name, chatModel, SYSTEM_PROMPT_ID);
+        this(name, chatModel, DEFAULT_SYSTEM_PROMPT_ID);
     }
 
     static {
-        PromptRegistry.global().registerPromptTemplate(SYSTEM_PROMPT_ID,
+        PromptRegistry.global().registerPromptTemplate(DEFAULT_SYSTEM_PROMPT_ID,
                 StringPromptTemplate.fromFile("agents/prompts/chat_agent_system_prompt.md"));
     }
 
@@ -81,7 +85,7 @@ public class LlmChatAgent extends AbstractAgent<ChatAgentInput, ChatAgentOutput>
     }
 
     @Override
-    protected ChatAgentOutput doRun(ChatAgentInput input) {
+    protected AgentOutput<ChatAgentOutput> doRun(AgentInput<ChatAgentInput> input) {
         setSystemPrompt(input);
 
         chatModelClient.setToolExecutor(input.context().getToolExecutor());
@@ -89,39 +93,40 @@ public class LlmChatAgent extends AbstractAgent<ChatAgentInput, ChatAgentOutput>
         return super.doRun(input);
     }
 
-    protected void setSystemPrompt(ChatAgentInput input) {
-        boolean searchEnabled = input.metadata().getProperty(ChatAgentInput.OPTION_SEARCH_ENABLED,
-                Boolean.class, DEFAULT_SEARCH_ENABLED);
-        boolean deepThinkEnabled = input.metadata().getProperty(ChatAgentInput.OPTION_DEEP_THINK_ENABLED,
-                Boolean.class, DEFAULT_DEEP_THINK_ENABLED);
-
+    protected void setSystemPrompt(AgentInput<ChatAgentInput> input) {
         PromptTemplate promptTemplate = PromptRegistry.global().getPromptTemplate(systemPromptId);
         PromptValue systemPrompt = promptTemplate.format(Map.of(
                 "name", getName(),
                 "date", LocalDateTime.now().format(DateTimeFormatter.ISO_LOCAL_DATE),
-                "model_cutoff", "2025-08-15",
-                "search_enabled", searchEnabled,
-                "deep_thinking", deepThinkEnabled
+                "model_cutoff", "2025-08-15"
         ));
         chatModelClient.setSystemMessage(new SystemMessage(systemPrompt.toString()));
     }
 
     @Override
-    protected ChatAgentOutput doStep(ChatAgentInput input) {
+    protected AgentOutput<ChatAgentOutput> doStep(AgentInput<ChatAgentInput> agentInput) {
+        ChatAgentInput input = agentInput.input();
         AssistantMessage outputMessage = chatModelClient.sendMessage(input.messages().get(0));
-        String outputText = outputMessage.getContent();
-
-        String thoughtProcess = null;
-        boolean deepThinkEnabled = input.metadata().getProperty(ChatAgentInput.OPTION_DEEP_THINK_ENABLED,
-                Boolean.class, DEFAULT_DEEP_THINK_ENABLED);
-        if (deepThinkEnabled) {
-            thoughtProcess = OutputParsers.htmlTagParser("think", false).parse(outputText);
-        }
 
         chatModelClient.getNewMessages().forEach(messageHistory::appendMessage);
-        return ChatAgentOutput.builder().messages(outputMessage)
-                .thoughtProcess(thoughtProcess)
-                .build();
+        ChatAgentOutput chatOutput = new ChatAgentOutput(List.of(outputMessage));
+        return AgentOutput.create(chatOutput);
+    }
+
+    @Override
+    protected Flux<ChatAgentStreamOutput> doRunStream(AgentInput<ChatAgentInput> input) {
+        setSystemPrompt(input);
+
+        chatModelClient.setToolExecutor(input.context().getToolExecutor());
+        chatModelClient.setToolExecutorContext(buildToolExecutorContext(input));
+        return super.doRunStream(input);
+    }
+
+    @Override
+    protected Flux<ChatAgentStreamOutput> doStepStream(AgentInput<ChatAgentInput> agentInput) {
+        ChatAgentInput input = agentInput.input();
+        Flux<AssistantMessage> assistantMessageFlux = chatModelClient.sendMessageStream(input.messages().get(0));
+        return assistantMessageFlux.map(ChatAgentStreamOutput::new);
     }
 
     @Override

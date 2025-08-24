@@ -31,6 +31,7 @@ import org.metaagent.framework.core.agent.chat.message.RoleMessage;
 import org.metaagent.framework.core.agent.chat.message.history.MessageHistory;
 import org.metaagent.framework.core.agent.input.AgentInput;
 import org.metaagent.framework.core.agent.output.AgentOutput;
+import reactor.core.publisher.Flux;
 
 /**
  * ChatAgent is an agent that has an ability to chat with message history.
@@ -57,7 +58,7 @@ public interface ChatAgent extends Agent<ChatAgentInput, ChatAgentOutput, ChatAg
     }
 
     /**
-     * Run this agent with a message.
+     * Run chat agent with a message.
      *
      * @param message the message to run this agent with
      * @return the output of this agent
@@ -68,5 +69,19 @@ public interface ChatAgent extends Agent<ChatAgentInput, ChatAgentOutput, ChatAg
                 .context(AgentExecutionContext.create())
                 .build();
         return run(agentInput);
+    }
+
+    /**
+     * Runs chat streaming agent with a message.
+     *
+     * @param message the message to run this agent with
+     * @return the output of this agent
+     */
+    default Flux<ChatAgentStreamOutput> runStream(Message message) {
+        AgentInput<ChatAgentInput> agentInput = AgentInput
+                .builder(new ChatAgentInput(message))
+                .context(AgentExecutionContext.create())
+                .build();
+        return runStream(agentInput);
     }
 }

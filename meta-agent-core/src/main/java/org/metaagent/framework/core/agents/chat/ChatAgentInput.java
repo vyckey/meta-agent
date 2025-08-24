@@ -28,6 +28,7 @@ import org.metaagent.framework.core.agent.chat.message.Message;
 
 import java.util.List;
 import java.util.Objects;
+import java.util.stream.Collectors;
 
 /**
  * {@link ChatAgent} input
@@ -35,6 +36,9 @@ import java.util.Objects;
  * @author vyckey
  */
 public class ChatAgentInput {
+    public static final String OPTION_DEEP_THINK_ENABLED = "deepThinkEnabled";
+    public static final String OPTION_SEARCH_ENABLED = "searchEnabled";
+
     protected List<Message> messages;
 
     public ChatAgentInput(List<Message> messages) {
@@ -43,5 +47,14 @@ public class ChatAgentInput {
 
     public ChatAgentInput(Message... messages) {
         this(List.of(messages));
+    }
+
+    public List<Message> messages() {
+        return messages;
+    }
+
+    @Override
+    public String toString() {
+        return messages().stream().map(Message::getContent).collect(Collectors.joining("\n"));
     }
 }

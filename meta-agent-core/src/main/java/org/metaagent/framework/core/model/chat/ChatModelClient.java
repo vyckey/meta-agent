@@ -117,7 +117,7 @@ public class ChatModelClient {
         Prompt prompt = buildPrompt(List.of(message), chatModel.getDefaultOptions());
         Flux<ChatResponse> stream = stream(prompt, null);
         return stream.map(response -> {
-            Generation generation = chatResponse.getResult();
+            Generation generation = response.getResult();
             return (AssistantMessage) messageConverter.reverse(generation.getOutput());
         });
     }
