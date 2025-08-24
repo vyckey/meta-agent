@@ -24,22 +24,19 @@
 
 package org.metaagent.framework.core.agents.task.decompose;
 
-import lombok.Getter;
-import org.metaagent.framework.core.agent.output.AgentOutput;
 import org.metaagent.framework.core.agent.task.Task;
 
 import java.util.List;
 import java.util.Objects;
 
 /**
- * Represents the output of a task decomposition operation.
+ * {@link TaskDecomposeAgent} output.
  *
  * @author vyckey
  */
-@Getter
-public class TaskDecomposeOutput implements AgentOutput {
-    private final List<Task> subTasks;
-
+public record TaskDecomposeOutput(
+        List<Task> subTasks
+) {
     public TaskDecomposeOutput(List<Task> subTasks) {
         this.subTasks = Objects.requireNonNull(subTasks, "subTasks cannot be null");
     }
