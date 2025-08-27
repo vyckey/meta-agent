@@ -69,7 +69,7 @@ public abstract class AbstractAgent<I, O, S>
     }
 
     @Override
-    protected Flux<S> doRunStream(AgentInput<I> input) {
+    protected Flux<AgentOutput<S>> doRunStream(AgentInput<I> input) {
         Agent<I, O, S> agent = this;
 
         Sinks.Many<AgentOutput<O>> fullOutputSink = Sinks.many().replay().latest();
@@ -78,8 +78,8 @@ public abstract class AbstractAgent<I, O, S>
         );
 
         // perform first step
-        Pair<Flux<S>, AtomicReference<AgentOutput<O>>> firstStepPair = stepStreamWithOutput(input);
-        Flux<S> firstStepStream = firstStepPair.getLeft()
+        Pair<Flux<AgentOutput<S>>, AtomicReference<AgentOutput<O>>> firstStepPair = stepStreamWithOutput(input);
+        Flux<AgentOutput<S>> firstStepStream = firstStepPair.getLeft()
                 .doOnComplete(() -> fullOutputSink.tryEmitNext(firstStepPair.getRight().get()));
 
         // perform remaining steps util loop control strategy tells us to stop
@@ -94,7 +94,7 @@ public abstract class AbstractAgent<I, O, S>
                                 AgentInput<I> nextInput = buildNextStepInput(holderRef.get().input(), holderRef.get().fullOutput());
                                 holderRef.set(new AgentStateHolder<>(nextInput, null));
 
-                                Pair<Flux<S>, AtomicReference<AgentOutput<O>>> stepPair = stepStreamWithOutput(input);
+                                Pair<Flux<AgentOutput<S>>, AtomicReference<AgentOutput<O>>> stepPair = stepStreamWithOutput(input);
                                 return stepPair.getLeft()
                                         .doOnComplete(() -> fullOutputSink.tryEmitNext(firstStepPair.getRight().get()));
                             } else {

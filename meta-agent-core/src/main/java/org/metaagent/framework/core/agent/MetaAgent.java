@@ -139,7 +139,7 @@ public interface MetaAgent<I, O, S> {
      * @param input the agent input.
      * @return the streaming agent output.
      */
-    default Flux<S> runStream(AgentInput<I> input) {
+    default Flux<AgentOutput<S>> runStream(AgentInput<I> input) {
         return stepStream(input);
     }
 
@@ -149,7 +149,7 @@ public interface MetaAgent<I, O, S> {
      * @param input the agent input.
      * @return the agent output.
      */
-    default Flux<S> stepStream(AgentInput<I> input) {
+    default Flux<AgentOutput<S>> stepStream(AgentInput<I> input) {
         throw new UnsupportedOperationException("Streaming is not supported");
     }
 

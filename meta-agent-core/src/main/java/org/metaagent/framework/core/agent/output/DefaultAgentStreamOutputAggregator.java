@@ -36,10 +36,10 @@ import java.util.function.BiFunction;
  */
 public class DefaultAgentStreamOutputAggregator<S, O> implements AgentStreamOutputAggregator<S, O> {
     private final AgentOutput<O> initialState;
-    private final BiFunction<AgentOutput<O>, S, AgentOutput<O>> reducer;
+    private final BiFunction<AgentOutput<O>, AgentOutput<S>, AgentOutput<O>> reducer;
 
     public DefaultAgentStreamOutputAggregator(AgentOutput<O> initialState,
-                                              BiFunction<AgentOutput<O>, S, AgentOutput<O>> reducer) {
+                                              BiFunction<AgentOutput<O>, AgentOutput<S>, AgentOutput<O>> reducer) {
         this.initialState = initialState;
         this.reducer = Objects.requireNonNull(reducer, "Reducer cannot be null");
     }
@@ -50,7 +50,7 @@ public class DefaultAgentStreamOutputAggregator<S, O> implements AgentStreamOutp
     }
 
     @Override
-    public AgentOutput<O> aggregate(AgentOutput<O> agentOutput, S streamOutput) {
+    public AgentOutput<O> aggregate(AgentOutput<O> agentOutput, AgentOutput<S> streamOutput) {
         return reducer.apply(agentOutput, streamOutput);
     }
 }

@@ -30,6 +30,7 @@ import org.metaagent.framework.core.agent.chat.message.history.DefaultMessageHis
 import org.metaagent.framework.core.agent.chat.message.history.MessageHistory;
 import org.metaagent.framework.core.agent.input.AgentInput;
 import org.metaagent.framework.core.agent.output.AgentOutput;
+import org.metaagent.framework.core.agent.output.AgentStreamOutputAggregator;
 import org.metaagent.framework.core.agents.chat.ChatAgent;
 import org.metaagent.framework.core.agents.chat.ChatAgentInput;
 import org.metaagent.framework.core.agents.chat.ChatAgentOutput;
@@ -82,14 +83,8 @@ public class LlmChatAgent extends AbstractAgent<ChatAgentInput, ChatAgentOutput,
     }
 
     @Override
-    protected AgentOutput<ChatAgentOutput> doRun(AgentInput<ChatAgentInput> input) {
-        setSystemPrompt(input);
-
-        chatModelClient.setToolContext(buildToolExecutorContext(input), input.context().getToolExecutor());
-        return super.doRun(input);
-    }
-
-    protected void setSystemPrompt(AgentInput<ChatAgentInput> input) {
+    protected void beforeRun(AgentInput<ChatAgentInput> input) {
+        // set system prompt
         String modelCutoffDate = input.metadata().getProperty("model_cutoff_date", String.class);
         PromptValue systemPrompt = systemPromptTemplate.format(Map.of(
                 "name", getName(),
@@ -97,6 +92,8 @@ public class LlmChatAgent extends AbstractAgent<ChatAgentInput, ChatAgentOutput,
                 "model_cutoff_date", modelCutoffDate
         ));
         chatModelClient.setSystemPrompt(systemPrompt);
+
+        chatModelClient.setToolContext(buildToolExecutorContext(input), input.context().getToolExecutor());
     }
 
     @Override
@@ -110,18 +107,17 @@ public class LlmChatAgent extends AbstractAgent<ChatAgentInput, ChatAgentOutput,
     }
 
     @Override
-    protected Flux<ChatAgentStreamOutput> doRunStream(AgentInput<ChatAgentInput> input) {
-        setSystemPrompt(input);
-
-        chatModelClient.setToolContext(buildToolExecutorContext(input), input.context().getToolExecutor());
-        return super.doRunStream(input);
+    protected Flux<AgentOutput<ChatAgentStreamOutput>> doStepStream(AgentInput<ChatAgentInput> agentInput) {
+        ChatAgentInput input = agentInput.input();
+        Flux<AssistantMessage> assistantMessageFlux = chatModelClient.sendMessageStream(input.messages());
+        return assistantMessageFlux.map(output -> AgentOutput.create(new ChatAgentStreamOutput(output)));
     }
 
     @Override
-    protected Flux<ChatAgentStreamOutput> doStepStream(AgentInput<ChatAgentInput> agentInput) {
-        ChatAgentInput input = agentInput.input();
-        Flux<AssistantMessage> assistantMessageFlux = chatModelClient.sendMessageStream(input.messages());
-        return assistantMessageFlux.map(ChatAgentStreamOutput::new);
+    public AgentStreamOutputAggregator<ChatAgentStreamOutput, ChatAgentOutput> getStreamOutputAggregator() {
+        return AgentStreamOutputAggregator.reduce(AgentOutput.create(new ChatAgentOutput()), (output, streamOutput) -> {
+            return output;
+        });
     }
 
     @Override

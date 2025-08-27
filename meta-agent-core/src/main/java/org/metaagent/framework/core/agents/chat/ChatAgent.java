@@ -77,7 +77,7 @@ public interface ChatAgent extends Agent<ChatAgentInput, ChatAgentOutput, ChatAg
      * @param message the message to run this agent with
      * @return the output of this agent
      */
-    default Flux<ChatAgentStreamOutput> runStream(Message message) {
+    default Flux<AgentOutput<ChatAgentStreamOutput>> runStream(Message message) {
         AgentInput<ChatAgentInput> agentInput = AgentInput
                 .builder(new ChatAgentInput(message))
                 .context(AgentExecutionContext.create())

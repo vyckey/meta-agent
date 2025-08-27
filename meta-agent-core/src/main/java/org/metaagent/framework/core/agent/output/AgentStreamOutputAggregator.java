@@ -44,7 +44,7 @@ public interface AgentStreamOutputAggregator<S, O> {
      * @return the agent stream output aggregator
      */
     static <S, O> AgentStreamOutputAggregator<S, O> reduce(AgentOutput<O> initialState,
-                                                           BiFunction<AgentOutput<O>, S, AgentOutput<O>> reducer) {
+                                                           BiFunction<AgentOutput<O>, AgentOutput<S>, AgentOutput<O>> reducer) {
         return new DefaultAgentStreamOutputAggregator<>(initialState, reducer);
     }
 
@@ -62,7 +62,7 @@ public interface AgentStreamOutputAggregator<S, O> {
      * @param streamOutput stream output
      * @return aggregated agent output
      */
-    AgentOutput<O> aggregate(AgentOutput<O> agentOutput, S streamOutput);
+    AgentOutput<O> aggregate(AgentOutput<O> agentOutput, AgentOutput<S> streamOutput);
 
     /**
      * Aggregate the stream output into the agent output.
@@ -70,7 +70,7 @@ public interface AgentStreamOutputAggregator<S, O> {
      * @param stream stream output
      * @return aggregated agent output
      */
-    default AgentOutput<O> aggregate(Flux<S> stream) {
+    default AgentOutput<O> aggregate(Flux<AgentOutput<S>> stream) {
         return stream.reduce(initialState(), this::aggregate).block();
     }
 }

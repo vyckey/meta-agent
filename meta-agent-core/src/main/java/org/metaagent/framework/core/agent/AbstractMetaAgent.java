@@ -201,7 +201,7 @@ public abstract class AbstractMetaAgent<I, O, S> implements MetaAgent<I, O, S> {
     protected abstract AgentOutput<O> doStep(AgentInput<I> input);
 
     @Override
-    public Flux<S> runStream(AgentInput<I> input) {
+    public Flux<AgentOutput<S>> runStream(AgentInput<I> input) {
         MetaAgent<I, O, S> agent = this;
         return doRunStream(input)
                 .doOnSubscribe(sub -> {
@@ -225,21 +225,21 @@ public abstract class AbstractMetaAgent<I, O, S> implements MetaAgent<I, O, S> {
                 });
     }
 
-    protected Flux<S> doRunStream(AgentInput<I> input) {
+    protected Flux<AgentOutput<S>> doRunStream(AgentInput<I> input) {
         return stepStream(input);
     }
 
     @Override
-    public Flux<S> stepStream(AgentInput<I> input) {
+    public Flux<AgentOutput<S>> stepStream(AgentInput<I> input) {
         return stepStreamWithOutput(input).getLeft();
     }
 
-    protected Pair<Flux<S>, AtomicReference<AgentOutput<O>>> stepStreamWithOutput(AgentInput<I> input) {
+    protected Pair<Flux<AgentOutput<S>>, AtomicReference<AgentOutput<O>>> stepStreamWithOutput(AgentInput<I> input) {
         MetaAgent<I, O, S> agent = this;
 
         AgentStreamOutputAggregator<S, O> aggregator = getStreamOutputAggregator();
         AtomicReference<AgentOutput<O>> fullOutputRef = new AtomicReference<>(aggregator.initialState());
-        Flux<S> stream = doStepStream(input)
+        Flux<AgentOutput<S>> stream = doStepStream(input)
                 .doOnSubscribe(sub -> notifyListeners(stepListeners, listener -> listener.onAgentStepStart(agent, input)))
                 .doOnNext(output -> fullOutputRef.set(aggregator.aggregate(fullOutputRef.get(), output)))
                 .doOnComplete(() -> notifyListeners(stepListeners, listener -> listener.onAgentStepFinish(agent, input, fullOutputRef.get())))
@@ -251,11 +251,11 @@ public abstract class AbstractMetaAgent<I, O, S> implements MetaAgent<I, O, S> {
         return Pair.of(stream, fullOutputRef);
     }
 
-    protected Flux<S> doStepStream(AgentInput<I> input) {
+    protected Flux<AgentOutput<S>> doStepStream(AgentInput<I> input) {
         throw new UnsupportedOperationException("Streaming step not supported");
     }
 
-    protected Flux<S> fallbackStream(AgentInput<I> input, Exception ex) {
+    protected Flux<AgentOutput<S>> fallbackStream(AgentInput<I> input, Exception ex) {
         return Flux.error(ex);
     }
 
