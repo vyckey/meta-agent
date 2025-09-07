@@ -22,7 +22,7 @@
  * SOFTWARE.
  */
 
-package org.metaagent.framework.tools.search.fetch;
+package org.metaagent.framework.tools.web.fetch;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;

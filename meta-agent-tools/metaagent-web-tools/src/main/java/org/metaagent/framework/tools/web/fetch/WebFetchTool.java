@@ -22,7 +22,7 @@
  * SOFTWARE.
  */
 
-package org.metaagent.framework.tools.search.fetch;
+package org.metaagent.framework.tools.web.fetch;
 
 import com.google.common.collect.Lists;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
@@ -50,7 +50,7 @@ import org.metaagent.framework.core.tool.converter.ToolConverters;
 import org.metaagent.framework.core.tool.definition.ToolDefinition;
 import org.metaagent.framework.core.util.abort.AbortException;
 import org.metaagent.framework.core.util.abort.AbortSignal;
-import org.metaagent.framework.tools.search.utils.WebPageUtils;
+import org.metaagent.framework.tools.web.utils.WebPageUtils;
 
 import java.io.IOException;
 import java.time.Duration;

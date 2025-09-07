@@ -22,15 +22,15 @@
  * SOFTWARE.
  */
 
-package org.metaagent.framework.tools.search;
+package org.metaagent.framework.tools.web;
 
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.metaagent.framework.core.tool.ToolContext;
-import org.metaagent.framework.tools.search.fetch.WebFetchInput;
-import org.metaagent.framework.tools.search.fetch.WebFetchOutput;
-import org.metaagent.framework.tools.search.fetch.WebFetchTool;
+import org.metaagent.framework.tools.web.fetch.WebFetchInput;
+import org.metaagent.framework.tools.web.fetch.WebFetchOutput;
+import org.metaagent.framework.tools.web.fetch.WebFetchTool;
 
 import java.util.List;
 

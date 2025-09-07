@@ -22,7 +22,7 @@
  * SOFTWARE.
  */
 
-package org.metaagent.framework.tools.search.fetch;
+package org.metaagent.framework.tools.web.fetch;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
@@ -32,6 +32,8 @@ import java.util.List;
 
 /**
  * Input of the {@link WebFetchTool}.
+ *
+ * @author vyckey
  */
 public record WebFetchInput(
         @JsonProperty(required = true)
