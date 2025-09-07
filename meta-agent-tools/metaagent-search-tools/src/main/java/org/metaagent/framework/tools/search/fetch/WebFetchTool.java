@@ -26,6 +26,12 @@ package org.metaagent.framework.tools.search.fetch;
 
 import com.google.common.collect.Lists;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
+import com.microsoft.playwright.Browser;
+import com.microsoft.playwright.BrowserContext;
+import com.microsoft.playwright.BrowserType;
+import com.microsoft.playwright.Page;
+import com.microsoft.playwright.Playwright;
+import com.microsoft.playwright.options.LoadState;
 import io.github.furstenheim.CopyDown;
 import io.github.furstenheim.OptionsBuilder;
 import okhttp3.Interceptor;
@@ -34,6 +40,7 @@ import okhttp3.Request;
 import okhttp3.Response;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang3.BooleanUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.metaagent.framework.core.tool.Tool;
 import org.metaagent.framework.core.tool.ToolContext;
 import org.metaagent.framework.core.tool.ToolExecutionException;
@@ -41,6 +48,7 @@ import org.metaagent.framework.core.tool.ToolParameterException;
 import org.metaagent.framework.core.tool.converter.ToolConverter;
 import org.metaagent.framework.core.tool.converter.ToolConverters;
 import org.metaagent.framework.core.tool.definition.ToolDefinition;
+import org.metaagent.framework.core.util.abort.AbortException;
 import org.metaagent.framework.core.util.abort.AbortSignal;
 import org.metaagent.framework.tools.search.utils.WebPageUtils;
 
@@ -48,6 +56,8 @@ import java.io.IOException;
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.CompletableFuture;
@@ -55,6 +65,7 @@ import java.util.concurrent.Executor;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 /**
@@ -75,12 +86,7 @@ public class WebFetchTool implements Tool<WebFetchInput, WebFetchOutput> {
     private static final ToolConverter<WebFetchInput, WebFetchOutput> TOOL_CONVERTER =
             ToolConverters.jsonConverter(WebFetchInput.class);
 
-    protected static final OkHttpClient DEFAULT_HTTP_CLIENT = new OkHttpClient.Builder()
-            .connectTimeout(Duration.ofSeconds(3))
-            .readTimeout(Duration.ofSeconds(5))
-            .followRedirects(true)
-            .addInterceptor(new RetryInterceptor(3))
-            .build();
+    protected static final ThreadLocal<Playwright> PLAYWRIGHT_LOCAL = ThreadLocal.withInitial(Playwright::create);
     protected static final ExecutorService DEFAULT_THREAD_POOL = new ThreadPoolExecutor(
             8, 8,
             1, TimeUnit.SECONDS,
@@ -90,15 +96,26 @@ public class WebFetchTool implements Tool<WebFetchInput, WebFetchOutput> {
     protected static final CopyDown COPY_DOWN = new CopyDown(OptionsBuilder.anOptions().build());
 
     private final OkHttpClient httpClient;
+    private final BrowserType.LaunchOptions browserLaunchOptions;
     private final Executor threadPool;
 
-    public WebFetchTool(OkHttpClient httpClient, Executor threadPool) {
-        this.httpClient = httpClient;
-        this.threadPool = threadPool;
+    public WebFetchTool(OkHttpClient httpClient, BrowserType.LaunchOptions browserLaunchOptions, Executor threadPool) {
+        this.httpClient = Objects.requireNonNull(httpClient, "httpClient is required");
+        this.browserLaunchOptions = browserLaunchOptions != null ? browserLaunchOptions : new BrowserType.LaunchOptions();
+        this.threadPool = Objects.requireNonNull(threadPool, "threadPool is required");
     }
 
     public WebFetchTool() {
-        this(DEFAULT_HTTP_CLIENT, DEFAULT_THREAD_POOL);
+        this(
+                new OkHttpClient.Builder()
+                        .connectTimeout(Duration.ofSeconds(3))
+                        .readTimeout(Duration.ofSeconds(5))
+                        .followRedirects(true)
+                        .addInterceptor(new RetryInterceptor(3))
+                        .build(),
+                new BrowserType.LaunchOptions().setHeadless(true),
+                DEFAULT_THREAD_POOL
+        );
     }
 
     @Override
@@ -117,8 +134,34 @@ public class WebFetchTool implements Tool<WebFetchInput, WebFetchOutput> {
             throw new ToolParameterException("urls must be not empty");
         }
 
-        List<WebFetchOutput.URLContent> fetchedContents = fetchWebUrls(fetchInput.urls(), threadPool, toolContext.getAbortSignal());
+        List<WebFetchOutput.URLContent> fetchedContents = fetchUrls(fetchInput.urls(), threadPool, toolContext.getAbortSignal());
         return normalizeWebContents(fetchedContents, BooleanUtils.isTrue(fetchInput.raw()), toolContext.getAbortSignal());
+    }
+
+    protected List<WebFetchOutput.URLContent> fetchUrls(List<String> urls, Executor executor, AbortSignal abortSignal) {
+        // 1. Fetch urls by http first
+        List<WebFetchOutput.URLContent> urlContents = fetchUrlsByHttp(urls, executor, abortSignal);
+
+        // 2. Check if aborted
+        if (abortSignal.isAborted()) {
+            return urlContents;
+        }
+
+        // 3. Fetch failed urls again by browser
+        List<String> failedUrls = urlContents.stream()
+                .filter(urlContent -> StringUtils.isNotEmpty(urlContent.error()))
+                .map(WebFetchOutput.URLContent::url).toList();
+        if (!failedUrls.isEmpty()) {
+            Map<String, WebFetchOutput.URLContent> urlContentMap = fetchUrlsByBrowser(failedUrls, executor, abortSignal)
+                    .stream().collect(Collectors.toMap(WebFetchOutput.URLContent::url, Function.identity()));
+            // 4. Merge the url contents back to the original list
+            for (int i = 0; i < urlContents.size(); i++) {
+                if (StringUtils.isNotEmpty(urlContents.get(i).error())) {
+                    urlContents.set(i, urlContentMap.get(urlContents.get(i).url()));
+                }
+            }
+        }
+        return urlContents;
     }
 
     protected WebFetchOutput normalizeWebContents(List<WebFetchOutput.URLContent> fetchedContents, boolean returnRaw, AbortSignal abortSignal) {
@@ -155,7 +198,42 @@ public class WebFetchTool implements Tool<WebFetchInput, WebFetchOutput> {
         return new WebFetchOutput(normalizedContents, error);
     }
 
-    protected List<WebFetchOutput.URLContent> fetchWebUrls(List<String> urls, Executor executor, AbortSignal abortSignal) {
+    protected List<WebFetchOutput.URLContent> fetchUrlsByBrowser(List<String> urls, Executor executor, AbortSignal abortSignal) {
+        try (Browser browser = PLAYWRIGHT_LOCAL.get().chromium().launch(browserLaunchOptions);
+             BrowserContext context = browser.newContext()) {
+
+            List<CompletableFuture<WebFetchOutput.URLContent>> futures = urls.stream()
+                    .map(url -> CompletableFuture.supplyAsync(() -> {
+                        try (Page page = context.newPage()) {
+                            if (abortSignal.isAborted()) {
+                                throw new AbortException("Fetch URL aborted");
+                            }
+
+                            page.navigate(url);
+                            page.waitForLoadState(LoadState.DOMCONTENTLOADED, new Page.WaitForLoadStateOptions()
+                                    .setTimeout(httpClient.readTimeoutMillis())
+                            );
+
+                            return WebFetchOutput.URLContent.builder()
+                                    .url(url)
+                                    .title(page.title())
+                                    .contentType("text/html")
+                                    .content(page.content())
+                                    .build();
+                        } catch (Exception e) {
+                            return WebFetchOutput.URLContent.builder()
+                                    .url(url)
+                                    .error(e.getMessage())
+                                    .build();
+                        }
+                    }, executor)).toList();
+
+            CompletableFuture.allOf(futures.toArray(new CompletableFuture[0])).join();
+            return futures.stream().map(future -> future.getNow(null)).toList();
+        }
+    }
+
+    protected List<WebFetchOutput.URLContent> fetchUrlsByHttp(List<String> urls, Executor executor, AbortSignal abortSignal) {
         List<CompletableFuture<WebFetchOutput.URLContent>> futures = Lists.newArrayList();
         for (String url : urls) {
             CompletableFuture<WebFetchOutput.URLContent> future = CompletableFuture.supplyAsync(() -> {
@@ -167,7 +245,7 @@ public class WebFetchTool implements Tool<WebFetchInput, WebFetchOutput> {
                 }
 
                 try {
-                    return fetchWebUrl(url);
+                    return fetchUrlByHttp(url);
                 } catch (IOException e) {
                     return WebFetchOutput.URLContent.builder()
                             .url(url)
@@ -184,7 +262,7 @@ public class WebFetchTool implements Tool<WebFetchInput, WebFetchOutput> {
                 .join();
     }
 
-    protected WebFetchOutput.URLContent fetchWebUrl(String url) throws IOException {
+    protected WebFetchOutput.URLContent fetchUrlByHttp(String url) throws IOException {
         Request request = new Request.Builder()
                 .url(url)
                 .header("User-Agent", WebPageUtils.randomUserAgent())

@@ -52,12 +52,16 @@ public record WebFetchOutput(
 
         final int maxDisplayUrls = 5;
         StringBuilder sb = new StringBuilder("Fetched ").append(urlContents.size()).append(" URL contents")
-                .append(" (").append(errorCount).append(" failed)");
+                .append(" (").append(errorCount).append(" failed)\n");
         for (int i = 0; i < urlContents.size(); i++) {
             URLContent urlContent = urlContents.get(i);
-            sb.append("- ").append(urlContent.url()).append(" : ")
-                    .append(urlContent.error() != null ? urlContent.error() : "SUCCESS")
-                    .append("\n");
+
+            String status = "SUCCESS";
+            if (urlContent.error() != null) {
+                status = urlContent.error().replace("\n", " ");
+                status = status.length() > 30 ? status.substring(0, 30) + "..." : status;
+            }
+            sb.append("- ").append(urlContent.url()).append(" : ").append(status).append("\n");
             if (i > maxDisplayUrls) {
                 sb.append("- ...(").append(urlContents.size() - i).append(" more)");
                 break;
