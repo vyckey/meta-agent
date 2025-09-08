@@ -26,6 +26,8 @@ package org.metaagent.framework.core.model.parser;
 
 import com.google.common.collect.Maps;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.regex.Matcher;
@@ -57,12 +59,7 @@ public final class RegexGroupOutputParser implements StringOutputParser<RegexGro
         return groupNames;
     }
 
-    @Override
-    public GroupResult parse(String output) throws OutputParsingException {
-        Matcher matcher = pattern.matcher(output);
-        if (!matcher.find()) {
-            throw new OutputParsingException("No match found for the given regex pattern: " + pattern);
-        }
+    private GroupResult buildGroupResult(Matcher matcher) {
         Map<String, String> groups = Maps.newHashMap();
         if (groupNames.length == 0) {
             for (int i = 0; i < matcher.groupCount(); i++) {
@@ -74,6 +71,27 @@ public final class RegexGroupOutputParser implements StringOutputParser<RegexGro
             }
         }
         return new GroupResult(matcher.group(), groups);
+    }
+
+    @Override
+    public GroupResult parse(String output) throws OutputParsingException {
+        Matcher matcher = pattern.matcher(output);
+        if (!matcher.find()) {
+            throw new OutputParsingException("No match found for the given regex pattern: " + pattern);
+        }
+        return buildGroupResult(matcher);
+    }
+
+    public List<GroupResult> parseAll(String output) throws OutputParsingException {
+        Matcher matcher = pattern.matcher(output);
+        List<GroupResult> results = new ArrayList<>();
+        while (matcher.find()) {
+            results.add(buildGroupResult(matcher));
+        }
+        if (results.isEmpty()) {
+            throw new OutputParsingException("No match found for the given regex pattern: " + pattern);
+        }
+        return results;
     }
 
     public record GroupResult(String value, Map<String, String> groups) {

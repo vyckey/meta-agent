@@ -70,6 +70,11 @@ public record WebFetchOutput(
         return sb.toString();
     }
 
+    @Override
+    public String toString() {
+        return display();
+    }
+
     @Builder(builderClassName = "Builder", toBuilder = true)
     public record URLContent(
             @JsonProperty(required = true)
@@ -88,5 +93,8 @@ public record WebFetchOutput(
             @JsonPropertyDescription("The error message if the URL cannot be fetched")
             String error) {
 
+        public boolean hasError() {
+            return error != null && !error.isEmpty();
+        }
     }
 }

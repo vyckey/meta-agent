@@ -40,12 +40,15 @@ public record WebFetchInput(
         @JsonPropertyDescription("The URLs to fetch")
         List<String> urls,
 
+        @JsonPropertyDescription("The prompt will be used to extract URL content")
+        String prompt,
+
         @JsonPropertyDescription("Whether to return the raw content or simplified content which is usually a Markdown format text"
                 + " with useless text removed. Optional, default is false.")
-        Boolean raw
+        Boolean returnRaw
 ) implements ToolDisplayable {
     public WebFetchInput(List<String> urls) {
-        this(urls, false);
+        this(urls, null, false);
     }
 
     @Override
@@ -59,5 +62,10 @@ public record WebFetchInput(
             sb.append("- ...(").append(urls.size() - displaySize).append(" more)");
         }
         return sb.toString();
+    }
+
+    @Override
+    public String toString() {
+        return display();
     }
 }

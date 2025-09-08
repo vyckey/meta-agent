@@ -27,6 +27,8 @@ package org.metaagent.framework.core.model.parser;
 import org.apache.commons.lang3.StringUtils;
 import org.metaagent.framework.core.converter.Converter;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Objects;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -81,5 +83,18 @@ public final class RegexOutputParser<T> implements StringOutputParser<T> {
         }
         String value = StringUtils.isEmpty(groupName) ? matcher.group() : matcher.group(groupName);
         return converter.convert(value);
+    }
+
+    public List<T> parseAll(String output) throws OutputParsingException {
+        Matcher matcher = pattern.matcher(output);
+        List<T> results = new ArrayList<>();
+        while (matcher.find()) {
+            String value = StringUtils.isEmpty(groupName) ? matcher.group() : matcher.group(groupName);
+            results.add(converter.convert(value));
+        }
+        if (results.isEmpty() && !optional) {
+            throw new OutputParsingException("No match found for the given regex pattern: " + pattern);
+        }
+        return results;
     }
 }
