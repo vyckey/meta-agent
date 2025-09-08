@@ -53,4 +53,7 @@ public class UserMessage extends DefaultRoleMessage {
         this(content, List.of(), metadata);
     }
 
+    public UserMessage(String content) {
+        this(content, List.of());
+    }
 }

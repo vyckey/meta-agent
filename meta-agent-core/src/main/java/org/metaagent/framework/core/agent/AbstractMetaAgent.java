@@ -237,11 +237,14 @@ public abstract class AbstractMetaAgent<I, O, S> implements MetaAgent<I, O, S> {
     protected Pair<Flux<AgentOutput<S>>, AtomicReference<AgentOutput<O>>> stepStreamWithOutput(AgentInput<I> input) {
         MetaAgent<I, O, S> agent = this;
 
+        AtomicReference<List<AgentOutput<S>>> streamOutputsRef = new AtomicReference<>(Lists.newArrayList());
+        AtomicReference<AgentOutput<O>> fullOutputRef = new AtomicReference<>();
+
         AgentStreamOutputAggregator<S, O> aggregator = getStreamOutputAggregator();
-        AtomicReference<AgentOutput<O>> fullOutputRef = new AtomicReference<>(aggregator.initialState());
         Flux<AgentOutput<S>> stream = doStepStream(input)
                 .doOnSubscribe(sub -> notifyListeners(stepListeners, listener -> listener.onAgentStepStart(agent, input)))
-                .doOnNext(output -> fullOutputRef.set(aggregator.aggregate(fullOutputRef.get(), output)))
+                .doOnNext(output -> streamOutputsRef.get().add(output))
+                .doOnComplete(() -> fullOutputRef.set(aggregator.aggregate(streamOutputsRef.get())))
                 .doOnComplete(() -> notifyListeners(stepListeners, listener -> listener.onAgentStepFinish(agent, input, fullOutputRef.get())))
                 .doOnError(throwable -> {
                     Exception ex = wrapException(throwable);

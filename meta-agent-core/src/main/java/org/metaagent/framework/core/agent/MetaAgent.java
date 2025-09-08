@@ -116,6 +116,17 @@ public interface MetaAgent<I, O, S> {
     }
 
     /**
+     * Runs agent with input.
+     *
+     * @param input the agent input
+     * @return the agent output
+     */
+    default O run(I input) {
+        AgentOutput<O> agentOutput = run(AgentInput.builder(input).build());
+        return agentOutput.result();
+    }
+
+    /**
      * Runs agent synchronously.
      *
      * @param input the agent input
@@ -123,6 +134,17 @@ public interface MetaAgent<I, O, S> {
      */
     default CompletableFuture<AgentOutput<O>> runAsync(AgentInput<I> input) {
         return CompletableFuture.supplyAsync(() -> run(input), input.context().getExecutor());
+    }
+
+    /**
+     * Runs agent synchronously.
+     *
+     * @param input the agent input
+     * @return the agent out
+     */
+    default CompletableFuture<O> runAsync(I input) {
+        CompletableFuture<AgentOutput<O>> future = runAsync(AgentInput.builder(input).build());
+        return future.thenApply(AgentOutput::result);
     }
 
     /**
@@ -141,6 +163,17 @@ public interface MetaAgent<I, O, S> {
      */
     default Flux<AgentOutput<S>> runStream(AgentInput<I> input) {
         return stepStream(input);
+    }
+
+    /**
+     * Runs agent logic in a streaming way.
+     *
+     * @param input the agent input
+     * @return the streaming agent output
+     */
+    default Flux<S> runStream(I input) {
+        Flux<AgentOutput<S>> stream = runStream(AgentInput.builder(input).build());
+        return stream.map(AgentOutput::result);
     }
 
     /**

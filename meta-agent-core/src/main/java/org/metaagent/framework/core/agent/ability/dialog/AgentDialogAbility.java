@@ -22,35 +22,22 @@
  * SOFTWARE.
  */
 
-package org.metaagent.framework.core.agent.output;
+package org.metaagent.framework.core.agent.ability.dialog;
 
-import java.util.Objects;
-import java.util.function.BiFunction;
+import org.metaagent.framework.core.agent.ability.AgentAbility;
+import org.metaagent.framework.core.agent.chat.message.Message;
+import org.metaagent.framework.core.agent.chat.message.history.MessageHistory;
+import org.metaagent.framework.core.agents.chat.ChatAgentOutput;
 
 /**
- * Default implementation of {@link AgentStreamOutputAggregator}.
+ * description is here
  *
- * @param <S> The type of stream output.
- * @param <O> The type of agent output.
  * @author vyckey
  */
-public class DefaultAgentStreamOutputAggregator<S, O> implements AgentStreamOutputAggregator<S, O> {
-    private final AgentOutput<O> initialState;
-    private final BiFunction<AgentOutput<O>, AgentOutput<S>, AgentOutput<O>> reducer;
+public interface AgentDialogAbility extends AgentAbility {
+    ChatAgentOutput handleMessage(Message message);
 
-    public DefaultAgentStreamOutputAggregator(AgentOutput<O> initialState,
-                                              BiFunction<AgentOutput<O>, AgentOutput<S>, AgentOutput<O>> reducer) {
-        this.initialState = initialState;
-        this.reducer = Objects.requireNonNull(reducer, "Reducer cannot be null");
-    }
+    MessageHistory messageHistory();
 
-    @Override
-    public AgentOutput<O> initialState() {
-        return initialState;
-    }
-
-    @Override
-    public AgentOutput<O> aggregate(AgentOutput<O> agentOutput, AgentOutput<S> streamOutput) {
-        return reducer.apply(agentOutput, streamOutput);
-    }
+    void reset();
 }

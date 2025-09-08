@@ -29,6 +29,7 @@ import org.metaagent.framework.core.agent.input.AgentInput;
 import org.metaagent.framework.core.agent.loop.AgentLoopControlStrategy;
 import org.metaagent.framework.core.agent.loop.MaxLoopCountAgentLoopControl;
 import org.metaagent.framework.core.agent.output.AgentOutput;
+import org.metaagent.framework.core.agent.profile.AgentProfile;
 import org.metaagent.framework.core.tool.ToolContext;
 import org.metaagent.framework.core.tool.executor.ToolExecutorContext;
 import org.metaagent.framework.core.tool.manager.ToolManager;
@@ -51,6 +52,10 @@ public abstract class AbstractAgent<I, O, S>
 
     protected AbstractAgent(String name) {
         super(name);
+    }
+
+    protected AbstractAgent(AgentProfile profile) {
+        super(profile);
     }
 
     @Override
