@@ -26,6 +26,7 @@ package org.metaagent.framework.tools.script.engine;
 
 import lombok.Setter;
 import org.metaagent.framework.core.common.metadata.MetadataProvider;
+import org.metaagent.framework.core.common.security.SecurityLevel;
 import org.metaagent.framework.core.common.security.approver.HumanApprovalInput;
 import org.metaagent.framework.core.common.security.approver.HumanApprovalOutput;
 import org.metaagent.framework.core.common.security.approver.HumanApprover;
@@ -84,6 +85,9 @@ public class ScriptEngineTool implements Tool<ScriptInput, ScriptOutput> {
         if (toolContext.getAbortSignal().isAborted()) {
             throw new AbortException("Tool " + getName() + " is cancelled");
         }
+        if (toolContext.getSecurityLevel().compareTo(SecurityLevel.UNRESTRICTED_DANGEROUSLY) < 0) {
+            requestApprovalBeforeExecute(scriptInput.getLanguage(), scriptInput.getScript());
+        }
         return executeScript(scriptEngine, scriptInput);
     }
 
@@ -93,7 +97,6 @@ public class ScriptEngineTool implements Tool<ScriptInput, ScriptOutput> {
 
     protected ScriptOutput executeScript(ScriptEngine scriptEngine, ScriptInput scriptInput) {
         String script = scriptInput.getScript();
-        requestApprovalBeforeExecute(scriptInput.getLanguage(), script);
 
         CompiledScript compiledScript = null;
         if (scriptEngine instanceof Compilable) {

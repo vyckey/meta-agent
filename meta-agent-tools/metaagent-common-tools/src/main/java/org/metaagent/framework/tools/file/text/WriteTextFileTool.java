@@ -28,6 +28,7 @@ import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import org.jetbrains.annotations.NotNull;
 import org.metaagent.framework.core.common.metadata.MetadataProvider;
+import org.metaagent.framework.core.common.security.SecurityLevel;
 import org.metaagent.framework.core.common.security.approver.HumanApprovalInput;
 import org.metaagent.framework.core.common.security.approver.HumanApprovalOutput;
 import org.metaagent.framework.core.common.security.approver.HumanApprover;
@@ -85,7 +86,9 @@ public class WriteTextFileTool implements Tool<WriteTextFileInput, WriteTextFile
         final String content = input.getContent() == null ? "" : input.getContent();
         Path filePath = FileUtils.resolvePath(toolContext.getToolConfig().workingDirectory(), Path.of(input.getFilePath()));
 
-        requestApprovalBeforeWriteFile(filePath, content);
+        if (toolContext.getSecurityLevel().compareTo(SecurityLevel.UNRESTRICTED_DANGEROUSLY) < 0) {
+            requestApprovalBeforeWriteFile(filePath, content);
+        }
         if (toolContext.getAbortSignal().isAborted()) {
             throw new AbortException("Tool " + getName() + " is cancelled");
         }
