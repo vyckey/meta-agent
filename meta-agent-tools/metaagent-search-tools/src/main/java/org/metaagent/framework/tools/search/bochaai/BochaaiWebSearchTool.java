@@ -26,18 +26,20 @@ package org.metaagent.framework.tools.search.bochaai;
 
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.metaagent.framework.core.tool.ToolContext;
-import org.metaagent.framework.core.tool.ToolExecutionException;
 import org.metaagent.framework.core.tool.converter.ToolConverter;
 import org.metaagent.framework.core.tool.converter.ToolConverters;
 import org.metaagent.framework.core.tool.definition.ToolDefinition;
+import org.metaagent.framework.core.tool.exception.ToolExecutionException;
 import org.metaagent.framework.core.util.abort.AbortException;
 import org.metaagent.framework.tools.search.SearchTool;
 import org.metaagent.framework.tools.search.common.WebSearchInformation;
 import org.metaagent.framework.tools.search.common.WebSearchRequest;
 import org.metaagent.framework.tools.search.common.WebSearchResponse;
 import org.metaagent.framework.tools.search.common.WebSearchResult;
+import org.metaagent.thirdparty.bochaai.api.BochaaiApiException;
 import org.metaagent.thirdparty.bochaai.api.BochaaiClient;
 import org.metaagent.thirdparty.bochaai.api.BochaaiResponse;
 import org.metaagent.thirdparty.bochaai.api.websearch.WebPageValue;
@@ -55,6 +57,7 @@ import java.util.Objects;
  *
  * @author vyckey
  */
+@Slf4j
 public class BochaaiWebSearchTool implements SearchTool {
     private static final ToolDefinition TOOL_DEFINITION = ToolDefinition.builder("bochaai_web_search")
             .description("Web search tool by Bochaai")
@@ -101,7 +104,14 @@ public class BochaaiWebSearchTool implements SearchTool {
                         .count(webSearchRequest.maxResults())
                         .build();
 
-        BochaaiResponse<WebSearchData> searchResponse = this.client.search(searchRequest);
+        BochaaiResponse<WebSearchData> searchResponse;
+        try {
+            searchResponse = this.client.search(searchRequest);
+        } catch (BochaaiApiException e) {
+            log.error("Failed to perform search, query: {}", webSearchRequest.searchTerms(), e);
+            throw new ToolExecutionException("Failed to perform search: " + e.getMessage(), e);
+        }
+
         WebSearchData searchData = searchResponse.data();
         WebSearchInformation searchInfo = WebSearchInformation.builder()
                 .totalResults((long) searchData.webPages().value().size())
