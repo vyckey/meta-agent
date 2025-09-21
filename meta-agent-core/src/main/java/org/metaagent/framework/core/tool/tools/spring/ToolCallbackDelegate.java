@@ -22,7 +22,7 @@
  * SOFTWARE.
  */
 
-package org.metaagent.framework.core.tool.spring;
+package org.metaagent.framework.core.tool.tools.spring;
 
 import org.metaagent.framework.core.tool.Tool;
 import org.metaagent.framework.core.tool.executor.ToolExecutor;

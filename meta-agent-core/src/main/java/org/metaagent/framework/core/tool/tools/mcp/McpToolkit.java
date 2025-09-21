@@ -22,7 +22,7 @@
  * SOFTWARE.
  */
 
-package org.metaagent.framework.core.tool.mcp;
+package org.metaagent.framework.core.tool.tools.mcp;
 
 import com.google.common.collect.Maps;
 import io.modelcontextprotocol.client.McpAsyncClient;

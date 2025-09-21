@@ -25,11 +25,12 @@
 package org.metaagent.framework.core.tool;
 
 import lombok.Getter;
-import org.apache.commons.lang3.StringUtils;
+import org.metaagent.framework.core.common.security.SecurityLevel;
+import org.metaagent.framework.core.tool.config.ToolConfig;
 import org.metaagent.framework.core.util.abort.AbortController;
 import org.metaagent.framework.core.util.abort.AbortSignal;
 
-import java.nio.file.Path;
+import java.util.Objects;
 
 /**
  * Default implementation of {@link ToolContext} interface.
@@ -38,12 +39,14 @@ import java.nio.file.Path;
  */
 @Getter
 public class DefaultToolContext implements ToolContext {
-    private final Path workingDirectory;
+    private final ToolConfig toolConfig;
+    private final SecurityLevel securityLevel;
     private final AbortSignal abortSignal;
 
     protected DefaultToolContext(Builder builder) {
-        this.workingDirectory = builder.workingDirectory;
-        this.abortSignal = builder.abortSignal;
+        this.toolConfig = Objects.requireNonNull(builder.toolConfig, "ToolConfig must not be null");
+        this.securityLevel = Objects.requireNonNull(builder.securityLevel, "SecurityLevel must not be null");
+        this.abortSignal = Objects.requireNonNull(builder.abortSignal, "AbortSignal must not be null");
     }
 
     public static Builder builder() {
@@ -51,12 +54,19 @@ public class DefaultToolContext implements ToolContext {
     }
 
     public static class Builder implements ToolContextBuilder {
-        private Path workingDirectory;
+        private ToolConfig toolConfig;
+        private SecurityLevel securityLevel;
         private AbortSignal abortSignal;
 
         @Override
-        public ToolContextBuilder workingDirectory(Path workingDirectory) {
-            this.workingDirectory = workingDirectory;
+        public ToolContextBuilder toolConfig(ToolConfig toolConfig) {
+            this.toolConfig = toolConfig;
+            return this;
+        }
+
+        @Override
+        public ToolContextBuilder securityLevel(SecurityLevel securityLevel) {
+            this.securityLevel = securityLevel;
             return this;
         }
 
@@ -68,12 +78,8 @@ public class DefaultToolContext implements ToolContext {
 
         @Override
         public DefaultToolContext build() {
-            if (workingDirectory == null) {
-                if (StringUtils.isNotEmpty(System.getenv("CWD"))) {
-                    workingDirectory = Path.of(System.getenv("CWD"));
-                } else {
-                    workingDirectory = Path.of(".");
-                }
+            if (securityLevel == null) {
+                this.securityLevel = SecurityLevel.RESTRICTED_DEFAULT_SALE;
             }
             if (abortSignal == null) {
                 this.abortSignal = AbortController.global().signal();

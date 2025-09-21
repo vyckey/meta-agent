@@ -32,7 +32,7 @@ import org.metaagent.framework.core.agent.chat.message.SystemMessage;
 import org.metaagent.framework.core.model.prompt.PromptValue;
 import org.metaagent.framework.core.tool.executor.ToolExecutor;
 import org.metaagent.framework.core.tool.executor.ToolExecutorContext;
-import org.metaagent.framework.core.tool.spring.ToolCallbackUtils;
+import org.metaagent.framework.core.tool.tools.spring.ToolCallbackUtils;
 import org.springframework.ai.chat.model.ChatModel;
 import org.springframework.ai.chat.model.ChatResponse;
 import org.springframework.ai.chat.model.Generation;

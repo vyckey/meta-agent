@@ -22,42 +22,24 @@
  * SOFTWARE.
  */
 
-package org.metaagent.framework.core.tool.tools;
-
-import org.metaagent.framework.core.agent.MetaAgent;
-import org.metaagent.framework.core.agent.input.AgentInput;
-import org.metaagent.framework.core.agent.output.AgentOutput;
-import org.metaagent.framework.core.tool.Tool;
-import org.metaagent.framework.core.tool.ToolContext;
-import org.metaagent.framework.core.tool.exception.ToolExecutionException;
+package org.metaagent.framework.core.common.security;
 
 /**
- * AgentAsTool is a tool that can be used to execute an Agent. The agent is treated as a tool.
+ * Security levels of agent.
  *
- * @param <I> the input type
- * @param <O> the output type
  * @author vyckey
  */
-public interface AgentAsTool<I, O, S> extends Tool<AgentInput<I>, AgentOutput<O>> {
+public enum SecurityLevel {
     /**
-     * Get the agent.
-     *
-     * @return the agent
+     * Most restrictive level, only allows execution of a minimal set of safe commands.
      */
-    MetaAgent<I, O, S> getAgent();
-
+    RESTRICTED_HIGHLY_SAFE,
     /**
-     * Get the tool's name.
-     *
-     * @return the tool name
+     * Default level, allows execution of a broader set of commands while still maintaining safety.
      */
-    @Override
-    default String getName() {
-        return getAgent().getName();
-    }
-
-    @Override
-    default AgentOutput<O> run(ToolContext context, AgentInput<I> input) throws ToolExecutionException {
-        return getAgent().run(input);
-    }
+    RESTRICTED_DEFAULT_SALE,
+    /**
+     * Use with caution, this level allows execution of potentially dangerous commands. Recommended only for trusted sandbox environments.
+     */
+    UNRESTRICTED_DANGEROUSLY,
 }

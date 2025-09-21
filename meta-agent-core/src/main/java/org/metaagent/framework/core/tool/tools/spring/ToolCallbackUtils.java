@@ -22,13 +22,13 @@
  * SOFTWARE.
  */
 
-package org.metaagent.framework.core.tool.spring;
+package org.metaagent.framework.core.tool.tools.spring;
 
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
 import org.apache.commons.collections.CollectionUtils;
 import org.metaagent.framework.core.tool.Tool;
-import org.metaagent.framework.core.tool.ToolExecutionException;
+import org.metaagent.framework.core.tool.exception.ToolExecutionException;
 import org.metaagent.framework.core.tool.executor.BatchToolInputs;
 import org.metaagent.framework.core.tool.executor.BatchToolOutputs;
 import org.metaagent.framework.core.tool.executor.ToolExecutor;

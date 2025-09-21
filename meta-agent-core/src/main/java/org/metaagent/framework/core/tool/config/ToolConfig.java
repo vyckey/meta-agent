@@ -22,55 +22,55 @@
  * SOFTWARE.
  */
 
-package org.metaagent.framework.core.tool;
+package org.metaagent.framework.core.tool.config;
 
-import org.metaagent.framework.core.common.security.SecurityLevel;
-import org.metaagent.framework.core.tool.config.ToolConfig;
-import org.metaagent.framework.core.util.abort.AbortSignal;
+import java.nio.file.Path;
+import java.util.Set;
 
 /**
- * ToolContext provides the context for tool execution,
+ * Configuration interface for tools.
  *
  * @author vyckey
  */
-public interface ToolContext {
+public interface ToolConfig {
     /**
-     * Gets the tool executor for executing tools.
+     * Gets the working directory for executing tools.
      *
-     * @return the tool executor
+     * @return the working directory
      */
-    static ToolContext create() {
-        return DefaultToolContext.builder().build();
+    default Path workingDirectory() {
+        if (System.getProperty("CWD") != null) {
+            return Path.of(System.getProperty("CWD")).toAbsolutePath();
+        } else {
+            return Path.of(".").toAbsolutePath().normalize();
+        }
     }
 
     /**
-     * Creates a new builder for constructing a ToolContext.
+     * Get the set of allowed commands prefixes, for example, {"ls", "cat", "echo", "git status"}.
      *
-     * @return a new ToolContext builder
+     * @return a set of allowed command strings
      */
-    static ToolContextBuilder builder() {
-        return DefaultToolContext.builder();
-    }
+    Set<String> allowedCommands();
 
     /**
-     * Gets the tool configuration.
+     * Get the set of disallowed commands, for example, {"rm", "shutdown", "reboot"}.
      *
-     * @return the tool configuration
+     * @return a set of disallowed command strings
      */
-    ToolConfig getToolConfig();
+    Set<String> disallowedCommands();
 
     /**
-     * Gets the security level for the tool execution.
+     * Get the set of allowed commands in a session, for example, {"cd", "export"}.
      *
-     * @return the security level
+     * @return a set of allowed command strings
      */
-    SecurityLevel getSecurityLevel();
+    Set<String> sessionAllowedCommands();
 
     /**
-     * Gets the abort signal for managing tool execution aborts.
+     * Get the set of disallowed commands in a session, for example, {"rm", "shutdown", "reboot"}.
      *
-     * @return the abort signal
+     * @return a set of disallowed command strings
      */
-    AbortSignal getAbortSignal();
-
+    Set<String> sessionDisallowedCommands();
 }

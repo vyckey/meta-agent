@@ -22,23 +22,24 @@
  * SOFTWARE.
  */
 
-package org.metaagent.framework.core.tool;
+package org.metaagent.framework.core.tool.exception;
 
 /**
- * description is here
+ * Represents a critical error that occurs during the execution of a tool.
+ * This exception indicates the tool cannot recover from the error and must abort execution.
  *
  * @author vyckey
  */
-public class ToolExecutionException extends RuntimeException {
-    public ToolExecutionException(String message) {
+public class ToolExecutionError extends ToolExecutionException {
+    public ToolExecutionError(String message) {
         super(message);
     }
 
-    public ToolExecutionException(String message, Throwable cause) {
+    public ToolExecutionError(String message, Throwable cause) {
         super(message, cause);
     }
 
-    public ToolExecutionException(Throwable cause) {
+    public ToolExecutionError(Throwable cause) {
         super(cause);
     }
 }

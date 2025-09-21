@@ -24,7 +24,7 @@
 
 package org.metaagent.framework.core.tool.converter;
 
-import org.metaagent.framework.core.tool.ToolExecutionException;
+import org.metaagent.framework.core.tool.exception.ToolExecutionException;
 
 public class ToolConvertException extends ToolExecutionException {
     public ToolConvertException(String message) {

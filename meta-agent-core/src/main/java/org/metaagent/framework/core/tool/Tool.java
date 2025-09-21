@@ -26,6 +26,7 @@ package org.metaagent.framework.core.tool;
 
 import org.metaagent.framework.core.tool.converter.ToolConverter;
 import org.metaagent.framework.core.tool.definition.ToolDefinition;
+import org.metaagent.framework.core.tool.exception.ToolExecutionException;
 
 /**
  * Tool represents a generic tool that can be managed by ToolManager.

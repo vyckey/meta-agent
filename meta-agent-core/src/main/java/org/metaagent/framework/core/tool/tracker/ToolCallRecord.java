@@ -24,7 +24,7 @@
 
 package org.metaagent.framework.core.tool.tracker;
 
-import org.metaagent.framework.core.tool.ToolExecutionException;
+import org.metaagent.framework.core.tool.exception.ToolExecutionException;
 
 import java.time.Instant;
 

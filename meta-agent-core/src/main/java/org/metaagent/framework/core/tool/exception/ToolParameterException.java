@@ -22,7 +22,7 @@
  * SOFTWARE.
  */
 
-package org.metaagent.framework.core.tool;
+package org.metaagent.framework.core.tool.exception;
 
 /**
  * ToolParameterException is thrown when a tool parameter is invalid.

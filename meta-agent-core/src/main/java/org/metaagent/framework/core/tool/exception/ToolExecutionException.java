@@ -22,42 +22,23 @@
  * SOFTWARE.
  */
 
-package org.metaagent.framework.core.tool.tools;
-
-import org.metaagent.framework.core.agent.MetaAgent;
-import org.metaagent.framework.core.agent.input.AgentInput;
-import org.metaagent.framework.core.agent.output.AgentOutput;
-import org.metaagent.framework.core.tool.Tool;
-import org.metaagent.framework.core.tool.ToolContext;
-import org.metaagent.framework.core.tool.exception.ToolExecutionException;
+package org.metaagent.framework.core.tool.exception;
 
 /**
- * AgentAsTool is a tool that can be used to execute an Agent. The agent is treated as a tool.
+ * Exception thrown when a tool execution fails.
  *
- * @param <I> the input type
- * @param <O> the output type
  * @author vyckey
  */
-public interface AgentAsTool<I, O, S> extends Tool<AgentInput<I>, AgentOutput<O>> {
-    /**
-     * Get the agent.
-     *
-     * @return the agent
-     */
-    MetaAgent<I, O, S> getAgent();
-
-    /**
-     * Get the tool's name.
-     *
-     * @return the tool name
-     */
-    @Override
-    default String getName() {
-        return getAgent().getName();
+public class ToolExecutionException extends RuntimeException {
+    public ToolExecutionException(String message) {
+        super(message);
     }
 
-    @Override
-    default AgentOutput<O> run(ToolContext context, AgentInput<I> input) throws ToolExecutionException {
-        return getAgent().run(input);
+    public ToolExecutionException(String message, Throwable cause) {
+        super(message, cause);
+    }
+
+    public ToolExecutionException(Throwable cause) {
+        super(cause);
     }
 }
