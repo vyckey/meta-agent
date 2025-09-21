@@ -26,11 +26,12 @@ package org.metaagent.framework.core.tool.mcp;
 
 import io.modelcontextprotocol.client.McpSyncClient;
 import io.modelcontextprotocol.client.transport.HttpClientSseClientTransport;
-import org.junit.Ignore;
 import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.metaagent.framework.core.mcp.client.factory.McpClientFactory;
 import org.metaagent.framework.core.mcp.client.factory.McpTransportFactory;
+import org.metaagent.framework.core.tool.tools.mcp.McpToolkit;
 
 /**
  * description is here
@@ -39,7 +40,7 @@ import org.metaagent.framework.core.mcp.client.factory.McpTransportFactory;
  */
 class McpToolkitTest {
 
-    @Ignore
+    @Disabled
     @Test
     void listToolsTest() {
         HttpClientSseClientTransport transport = McpTransportFactory.httpClientSseClient("http://localhost:8931/sse");

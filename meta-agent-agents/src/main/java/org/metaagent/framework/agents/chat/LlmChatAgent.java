@@ -26,11 +26,11 @@ package org.metaagent.framework.agents.chat;
 
 import org.metaagent.framework.core.agent.AbstractAgent;
 import org.metaagent.framework.core.agent.chat.message.AssistantMessage;
-import org.metaagent.framework.core.agent.chat.message.SystemMessage;
 import org.metaagent.framework.core.agent.chat.message.history.DefaultMessageHistory;
 import org.metaagent.framework.core.agent.chat.message.history.MessageHistory;
 import org.metaagent.framework.core.agent.input.AgentInput;
 import org.metaagent.framework.core.agent.output.AgentOutput;
+import org.metaagent.framework.core.agent.output.AgentStreamOutputAggregator;
 import org.metaagent.framework.core.agents.chat.ChatAgent;
 import org.metaagent.framework.core.agents.chat.ChatAgentInput;
 import org.metaagent.framework.core.agents.chat.ChatAgentOutput;
@@ -56,22 +56,20 @@ import java.util.Objects;
  */
 public class LlmChatAgent extends AbstractAgent<ChatAgentInput, ChatAgentOutput, ChatAgentStreamOutput> implements ChatAgent {
     public static final String DEFAULT_SYSTEM_PROMPT_ID = "framework:chat_agent_system_prompt";
-    private static final boolean DEFAULT_SEARCH_ENABLED = true;
-    private static final boolean DEFAULT_DEEP_THINK_ENABLED = false;
     protected MessageHistory messageHistory = new DefaultMessageHistory();
     protected final ChatModel chatModel;
     protected ChatModelClient chatModelClient;
-    protected String systemPromptId;
+    protected PromptTemplate systemPromptTemplate;
 
-    public LlmChatAgent(String name, ChatModel chatModel, String systemPromptId) {
+    public LlmChatAgent(String name, ChatModel chatModel, PromptTemplate systemPromptTemplate) {
         super(name);
         this.chatModel = Objects.requireNonNull(chatModel, "chatModel is required");
         this.chatModelClient = new ChatModelClient(chatModel);
-        this.systemPromptId = Objects.requireNonNull(systemPromptId, "systemPromptId is required");
+        this.systemPromptTemplate = Objects.requireNonNull(systemPromptTemplate, "systemPrompt is required");
     }
 
     public LlmChatAgent(String name, ChatModel chatModel) {
-        this(name, chatModel, DEFAULT_SYSTEM_PROMPT_ID);
+        this(name, chatModel, PromptRegistry.global().getPromptTemplate(DEFAULT_SYSTEM_PROMPT_ID));
     }
 
     static {
@@ -85,28 +83,23 @@ public class LlmChatAgent extends AbstractAgent<ChatAgentInput, ChatAgentOutput,
     }
 
     @Override
-    protected AgentOutput<ChatAgentOutput> doRun(AgentInput<ChatAgentInput> input) {
-        setSystemPrompt(input);
-
-        chatModelClient.setToolExecutor(input.context().getToolExecutor());
-        chatModelClient.setToolExecutorContext(buildToolExecutorContext(input));
-        return super.doRun(input);
-    }
-
-    protected void setSystemPrompt(AgentInput<ChatAgentInput> input) {
-        PromptTemplate promptTemplate = PromptRegistry.global().getPromptTemplate(systemPromptId);
-        PromptValue systemPrompt = promptTemplate.format(Map.of(
+    protected void beforeRun(AgentInput<ChatAgentInput> input) {
+        // set system prompt
+        String modelCutoffDate = input.metadata().getProperty("model_cutoff_date", String.class);
+        PromptValue systemPrompt = systemPromptTemplate.format(Map.of(
                 "name", getName(),
-                "date", LocalDateTime.now().format(DateTimeFormatter.ISO_LOCAL_DATE),
-                "model_cutoff", "2025-08-15"
+                "current_date", LocalDateTime.now().format(DateTimeFormatter.ISO_LOCAL_DATE),
+                "model_cutoff_date", modelCutoffDate
         ));
-        chatModelClient.setSystemMessage(new SystemMessage(systemPrompt.toString()));
+        chatModelClient.setSystemPrompt(systemPrompt);
+
+        chatModelClient.setToolContext(buildToolExecutorContext(input), input.context().getToolExecutor());
     }
 
     @Override
     protected AgentOutput<ChatAgentOutput> doStep(AgentInput<ChatAgentInput> agentInput) {
         ChatAgentInput input = agentInput.input();
-        AssistantMessage outputMessage = chatModelClient.sendMessage(input.messages().get(0));
+        AssistantMessage outputMessage = chatModelClient.sendMessage(input.messages());
 
         chatModelClient.getNewMessages().forEach(messageHistory::appendMessage);
         ChatAgentOutput chatOutput = new ChatAgentOutput(List.of(outputMessage));
@@ -114,19 +107,17 @@ public class LlmChatAgent extends AbstractAgent<ChatAgentInput, ChatAgentOutput,
     }
 
     @Override
-    protected Flux<ChatAgentStreamOutput> doRunStream(AgentInput<ChatAgentInput> input) {
-        setSystemPrompt(input);
-
-        chatModelClient.setToolExecutor(input.context().getToolExecutor());
-        chatModelClient.setToolExecutorContext(buildToolExecutorContext(input));
-        return super.doRunStream(input);
+    protected Flux<AgentOutput<ChatAgentStreamOutput>> doStepStream(AgentInput<ChatAgentInput> agentInput) {
+        ChatAgentInput input = agentInput.input();
+        Flux<AssistantMessage> assistantMessageFlux = chatModelClient.sendMessageStream(input.messages());
+        return assistantMessageFlux.map(output -> AgentOutput.create(new ChatAgentStreamOutput(output)));
     }
 
     @Override
-    protected Flux<ChatAgentStreamOutput> doStepStream(AgentInput<ChatAgentInput> agentInput) {
-        ChatAgentInput input = agentInput.input();
-        Flux<AssistantMessage> assistantMessageFlux = chatModelClient.sendMessageStream(input.messages().get(0));
-        return assistantMessageFlux.map(ChatAgentStreamOutput::new);
+    public AgentStreamOutputAggregator<ChatAgentStreamOutput, ChatAgentOutput> getStreamOutputAggregator() {
+        return AgentStreamOutputAggregator.reduce(AgentOutput.create(new ChatAgentOutput()), (output, streamOutput) -> {
+            return output;
+        });
     }
 
     @Override

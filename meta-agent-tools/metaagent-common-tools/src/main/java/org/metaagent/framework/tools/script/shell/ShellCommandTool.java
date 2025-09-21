@@ -28,14 +28,16 @@ import com.google.common.io.CharStreams;
 import lombok.Setter;
 import org.apache.commons.lang3.BooleanUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.metaagent.framework.core.common.metadata.MetadataProvider;
+import org.metaagent.framework.core.common.security.approver.HumanApprovalInput;
+import org.metaagent.framework.core.common.security.approver.HumanApprovalOutput;
+import org.metaagent.framework.core.common.security.approver.HumanApprover;
 import org.metaagent.framework.core.tool.Tool;
 import org.metaagent.framework.core.tool.ToolContext;
-import org.metaagent.framework.core.tool.ToolExecutionException;
 import org.metaagent.framework.core.tool.converter.ToolConverter;
 import org.metaagent.framework.core.tool.converter.ToolConverters;
 import org.metaagent.framework.core.tool.definition.ToolDefinition;
-import org.metaagent.framework.core.tool.human.HumanApprover;
-import org.metaagent.framework.core.tool.human.SystemAutoApprover;
+import org.metaagent.framework.core.tool.exception.ToolExecutionException;
 import org.metaagent.framework.core.util.abort.AbortException;
 
 import java.io.IOException;
@@ -60,7 +62,7 @@ public class ShellCommandTool implements Tool<ShellCommandInput, ShellCommandOut
             .build();
     private static final ToolConverter<ShellCommandInput, ShellCommandOutput> TOOL_CONVERTER =
             ToolConverters.jsonConverter(ShellCommandInput.class);
-    private HumanApprover humanApprover = SystemAutoApprover.INSTANCE;
+    private HumanApprover humanApprover = HumanApprover.skipApprover();
 
     @Override
     public ToolDefinition getDefinition() {
@@ -80,7 +82,7 @@ public class ShellCommandTool implements Tool<ShellCommandInput, ShellCommandOut
         }
 
         String approval = "Whether execute the command [\"" + commandInput.command() + "\"] ?";
-        HumanApprover.ApprovalOutput approvalOutput = humanApprover.request(new HumanApprover.ApprovalInput(approval, null));
+        HumanApprovalOutput approvalOutput = humanApprover.request(HumanApprovalInput.ofTool(getName(), approval, MetadataProvider.create()));
         return approvalOutput.isApproved();
     }
 
@@ -88,7 +90,7 @@ public class ShellCommandTool implements Tool<ShellCommandInput, ShellCommandOut
     public ShellCommandOutput run(ToolContext toolContext, ShellCommandInput commandInput) throws ToolExecutionException {
         ShellCommandOutput.ShellCommandOutputBuilder<?, ?> outputBuilder = ShellCommandOutput.builder();
         if (!confirmBeforeExecution(commandInput)) {
-            outputBuilder.exitCode(-1).error("User cancelled the command execution.");
+            outputBuilder.exitCode(-1).error("User rejects the command execution.");
             return outputBuilder.build();
         }
         if (toolContext.getAbortSignal().isAborted()) {

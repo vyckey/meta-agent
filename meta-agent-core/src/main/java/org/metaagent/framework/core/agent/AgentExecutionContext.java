@@ -27,7 +27,7 @@ package org.metaagent.framework.core.agent;
 import org.metaagent.framework.core.agent.action.executor.ActionExecutor;
 import org.metaagent.framework.core.environment.Environment;
 import org.metaagent.framework.core.tool.executor.ToolExecutor;
-import org.metaagent.framework.core.tool.manager.ToolManager;
+import org.metaagent.framework.core.tool.listener.ToolExecuteListenerRegistry;
 import org.metaagent.framework.core.util.abort.AbortSignal;
 
 import java.util.concurrent.Executor;
@@ -64,18 +64,18 @@ public interface AgentExecutionContext {
     Environment getEnvironment();
 
     /**
-     * Get the tool manager associated with this agent execution context.
-     *
-     * @return the tool manager
-     */
-    ToolManager getToolManager();
-
-    /**
      * Get the tool executor associated with this agent execution context.
      *
      * @return the tool executor
      */
     ToolExecutor getToolExecutor();
+
+    /**
+     * Gets the tool listener registry for managing tool execution listeners.
+     *
+     * @return the tool listener registry
+     */
+    ToolExecuteListenerRegistry getToolListenerRegistry();
 
     /**
      * Get the action executor associated with this agent execution context.

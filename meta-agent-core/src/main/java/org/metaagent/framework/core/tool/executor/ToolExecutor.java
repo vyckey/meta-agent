@@ -25,7 +25,7 @@
 package org.metaagent.framework.core.tool.executor;
 
 import org.metaagent.framework.core.tool.Tool;
-import org.metaagent.framework.core.tool.ToolExecutionException;
+import org.metaagent.framework.core.tool.exception.ToolExecutionException;
 
 /**
  * ToolExecutor is responsible for executing tools within a given context.

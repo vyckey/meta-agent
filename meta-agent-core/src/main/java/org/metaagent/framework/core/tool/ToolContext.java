@@ -24,9 +24,9 @@
 
 package org.metaagent.framework.core.tool;
 
+import org.metaagent.framework.core.common.security.SecurityLevel;
+import org.metaagent.framework.core.tool.config.ToolConfig;
 import org.metaagent.framework.core.util.abort.AbortSignal;
-
-import java.nio.file.Path;
 
 /**
  * ToolContext provides the context for tool execution,
@@ -53,11 +53,18 @@ public interface ToolContext {
     }
 
     /**
-     * Gets the working directory for executing tools.
+     * Gets the tool configuration.
      *
-     * @return the working directory
+     * @return the tool configuration
      */
-    Path getWorkingDirectory();
+    ToolConfig getToolConfig();
+
+    /**
+     * Gets the security level for the tool execution.
+     *
+     * @return the security level
+     */
+    SecurityLevel getSecurityLevel();
 
     /**
      * Gets the abort signal for managing tool execution aborts.

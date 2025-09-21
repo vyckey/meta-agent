@@ -25,12 +25,13 @@
 package org.metaagent.framework.tools.search.searchapi;
 
 import com.google.common.collect.Maps;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.metaagent.framework.core.tool.ToolContext;
-import org.metaagent.framework.core.tool.ToolExecutionException;
 import org.metaagent.framework.core.tool.converter.ToolConverter;
 import org.metaagent.framework.core.tool.converter.ToolConverters;
 import org.metaagent.framework.core.tool.definition.ToolDefinition;
+import org.metaagent.framework.core.tool.exception.ToolExecutionException;
 import org.metaagent.framework.core.util.abort.AbortException;
 import org.metaagent.framework.tools.search.SearchTool;
 import org.metaagent.framework.tools.search.common.WebSearchInformation;
@@ -39,6 +40,7 @@ import org.metaagent.framework.tools.search.common.WebSearchResponse;
 import org.metaagent.framework.tools.search.common.WebSearchResult;
 import org.metaagent.thirdparty.google.api.searchapi.OrganicResult;
 import org.metaagent.thirdparty.google.api.searchapi.SearchApiClient;
+import org.metaagent.thirdparty.google.api.searchapi.SearchApiException;
 import org.metaagent.thirdparty.google.api.searchapi.SearchApiWebSearchRequest;
 import org.metaagent.thirdparty.google.api.searchapi.SearchApiWebSearchResponse;
 
@@ -54,6 +56,7 @@ import java.util.Optional;
  *
  * @author vyckey
  */
+@Slf4j
 public class SearchApiTool implements SearchTool {
     private static final ToolDefinition TOOL_DEFINITION = ToolDefinition.builder("google_search_api")
             .description("Web search tool by SearchAPI")
@@ -115,7 +118,13 @@ public class SearchApiTool implements SearchTool {
                 .query(webSearchRequest.searchTerms())
                 .build();
 
-        SearchApiWebSearchResponse searchResponse = this.client.search(searchRequest);
+        SearchApiWebSearchResponse searchResponse;
+        try {
+            searchResponse = this.client.search(searchRequest);
+        } catch (SearchApiException e) {
+            log.error("SearchAPI perform search error, query:{}, error:{}", webSearchRequest.searchTerms(), e.getMessage(), e);
+            throw new ToolExecutionException("Failed to perform search error: " + e.getMessage(), e);
+        }
         WebSearchInformation searchInfo = WebSearchInformation.builder()
                 .totalResults(getTotalResults(searchResponse.getSearchInformation()))
                 .pageIndex(getCurrentPage(searchResponse.getSearchInformation()))

@@ -26,7 +26,7 @@ package org.metaagent.framework.core.tool.listener;
 
 import lombok.extern.slf4j.Slf4j;
 import org.metaagent.framework.core.tool.Tool;
-import org.metaagent.framework.core.tool.ToolExecutionException;
+import org.metaagent.framework.core.tool.exception.ToolExecutionException;
 import org.metaagent.framework.core.tool.schema.ToolDisplayable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

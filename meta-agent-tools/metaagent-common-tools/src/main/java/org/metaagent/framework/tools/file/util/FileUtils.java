@@ -46,9 +46,9 @@ public abstract class FileUtils {
 
     public static Path resolvePath(Path workingDirectory, Path filePath) {
         if (filePath.isAbsolute()) {
-            return filePath.normalize();
+            return filePath.normalize().toAbsolutePath();
         }
-        return workingDirectory.resolve(filePath).normalize();
+        return workingDirectory.resolve(filePath).normalize().toAbsolutePath();
     }
 
     public static List<Path> resolvePaths(Path directory, List<String> paths, boolean allowNotFound)

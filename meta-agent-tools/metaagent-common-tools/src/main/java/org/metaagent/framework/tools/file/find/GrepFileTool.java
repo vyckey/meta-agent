@@ -30,11 +30,12 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.metaagent.framework.core.tool.Tool;
 import org.metaagent.framework.core.tool.ToolContext;
-import org.metaagent.framework.core.tool.ToolExecutionException;
-import org.metaagent.framework.core.tool.ToolParameterException;
 import org.metaagent.framework.core.tool.converter.ToolConverter;
 import org.metaagent.framework.core.tool.converter.ToolConverters;
 import org.metaagent.framework.core.tool.definition.ToolDefinition;
+import org.metaagent.framework.core.tool.exception.ToolExecutionError;
+import org.metaagent.framework.core.tool.exception.ToolExecutionException;
+import org.metaagent.framework.core.tool.exception.ToolParameterException;
 import org.metaagent.framework.core.util.abort.AbortException;
 import org.metaagent.framework.tools.file.util.FileUtils;
 
@@ -76,28 +77,27 @@ public class GrepFileTool implements Tool<GrepFileInput, GrepFileOutput> {
         return TOOL_CONVERTER;
     }
 
-    protected void validateInput(GrepFileInput input) throws ToolExecutionException {
+    protected Path validateInput(ToolContext toolContext, GrepFileInput input) throws ToolExecutionException {
         if (input.getPattern() == null) {
             throw new ToolParameterException("Grep pattern must be specified.");
         }
         if (StringUtils.isBlank(input.getDirectory()) && System.getenv("CWD") == null) {
             throw new ToolParameterException("Current working directory is unknown. Please specify a path.");
         }
+
+        Path directory = toolContext.getToolConfig().workingDirectory();
+        if (StringUtils.isNotEmpty(input.getDirectory())) {
+            directory = FileUtils.resolvePath(toolContext.getToolConfig().workingDirectory(), Path.of(input.getDirectory()));
+        }
+        if (!directory.toFile().exists()) {
+            throw new ToolParameterException("Directory does not exist: " + directory);
+        }
+        return directory;
     }
 
     @Override
     public GrepFileOutput run(ToolContext toolContext, GrepFileInput input) throws ToolExecutionException {
-        validateInput(input);
-
-        Path directory = toolContext.getWorkingDirectory();
-        if (StringUtils.isNotEmpty(input.getDirectory())) {
-            directory = FileUtils.resolvePath(toolContext.getWorkingDirectory(), Path.of(input.getDirectory()));
-        }
-        directory = directory.toAbsolutePath();
-        if (!directory.toFile().exists()) {
-            throw new ToolParameterException("Directory does not exist: " + directory);
-        }
-
+        Path directory = validateInput(toolContext, input);
         if (toolContext.getAbortSignal().isAborted()) {
             throw new AbortException("Tool " + getName() + " is cancelled");
         }
@@ -111,9 +111,12 @@ public class GrepFileTool implements Tool<GrepFileInput, GrepFileOutput> {
             } else {
                 matchLines = searchByRead(directory, input.getPattern(), input.getInclude());
             }
-        } catch (Exception e) {
+        } catch (IOException e) {
             log.warn("Failed to execute grep command", e);
             throw new ToolExecutionException(e.getMessage(), e);
+        } catch (Exception e) {
+            log.warn("Failed to execute grep command", e);
+            throw new ToolExecutionError(e.getMessage(), e);
         }
         return buildGrepFileOutput(input, matchLines);
     }

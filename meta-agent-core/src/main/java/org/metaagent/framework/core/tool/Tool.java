@@ -26,6 +26,8 @@ package org.metaagent.framework.core.tool;
 
 import org.metaagent.framework.core.tool.converter.ToolConverter;
 import org.metaagent.framework.core.tool.definition.ToolDefinition;
+import org.metaagent.framework.core.tool.exception.ToolExecutionError;
+import org.metaagent.framework.core.tool.exception.ToolExecutionException;
 
 /**
  * Tool represents a generic tool that can be managed by ToolManager.
@@ -85,7 +87,7 @@ public interface Tool<I, O> {
         } catch (ToolExecutionException e) {
             throw e;
         } catch (Exception e) {
-            throw new ToolExecutionException("Call tool " + getDefinition().name() + " fail", e);
+            throw new ToolExecutionError("Call tool " + getDefinition().name() + " error", e);
         }
     }
 }

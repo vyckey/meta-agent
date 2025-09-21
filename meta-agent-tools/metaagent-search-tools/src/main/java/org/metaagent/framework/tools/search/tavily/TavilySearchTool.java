@@ -25,13 +25,14 @@
 package org.metaagent.framework.tools.search.tavily;
 
 import com.google.common.collect.Lists;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.configuration2.Configuration;
 import org.apache.commons.lang3.StringUtils;
 import org.metaagent.framework.core.tool.ToolContext;
-import org.metaagent.framework.core.tool.ToolExecutionException;
 import org.metaagent.framework.core.tool.converter.ToolConverter;
 import org.metaagent.framework.core.tool.converter.ToolConverters;
 import org.metaagent.framework.core.tool.definition.ToolDefinition;
+import org.metaagent.framework.core.tool.exception.ToolExecutionException;
 import org.metaagent.framework.core.util.abort.AbortException;
 import org.metaagent.framework.tools.search.SearchTool;
 import org.metaagent.framework.tools.search.common.WebSearchInformation;
@@ -57,6 +58,7 @@ import java.util.Map;
  *
  * @author vyckey
  */
+@Slf4j
 public class TavilySearchTool implements SearchTool {
     private static final ToolDefinition TOOL_DEFINITION = ToolDefinition.builder("tavily_search")
             .description("Web search tool by Tavily API")
@@ -124,7 +126,8 @@ public class TavilySearchTool implements SearchTool {
         try {
             searchResponse = tavilyClient.search(searchRequest);
         } catch (TavilyApiException e) {
-            throw new ToolExecutionException(e.getMessage(), e);
+            log.error("Tavily performs search error, query:{}, error:{}", input.searchTerms(), e.getMessage(), e);
+            throw new ToolExecutionException("Failed to perform search: " + e.getMessage(), e);
         }
         WebSearchInformation searchInfo = WebSearchInformation.builder()
                 .totalResults((long) searchResponse.getResults().size())

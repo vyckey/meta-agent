@@ -25,7 +25,7 @@
 package org.metaagent.framework.core.tool.listener;
 
 import org.metaagent.framework.core.tool.Tool;
-import org.metaagent.framework.core.tool.ToolExecutionException;
+import org.metaagent.framework.core.tool.exception.ToolExecutionException;
 
 /**
  * Listener interface for tool execution events.

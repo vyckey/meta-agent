@@ -31,14 +31,16 @@ import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.RequestBody;
 import okhttp3.Response;
+import org.metaagent.framework.core.common.metadata.MetadataProvider;
+import org.metaagent.framework.core.common.security.approver.HumanApprovalInput;
+import org.metaagent.framework.core.common.security.approver.HumanApprovalOutput;
+import org.metaagent.framework.core.common.security.approver.HumanApprover;
 import org.metaagent.framework.core.tool.Tool;
 import org.metaagent.framework.core.tool.ToolContext;
-import org.metaagent.framework.core.tool.ToolExecutionException;
 import org.metaagent.framework.core.tool.converter.ToolConverter;
 import org.metaagent.framework.core.tool.converter.ToolConverters;
 import org.metaagent.framework.core.tool.definition.ToolDefinition;
-import org.metaagent.framework.core.tool.human.HumanApprover;
-import org.metaagent.framework.core.tool.human.SystemAutoApprover;
+import org.metaagent.framework.core.tool.exception.ToolExecutionException;
 import org.metaagent.framework.core.util.abort.AbortException;
 
 import java.io.IOException;
@@ -66,7 +68,7 @@ public class HttpRequestTool implements Tool<HttpRequest, HttpResponse> {
     private static final List<String> SKIP_APPROVAL_METHODS = List.of("get", "head", "options");
 
     private final OkHttpClient httpClient;
-    private HumanApprover humanApprover = SystemAutoApprover.INSTANCE;
+    private HumanApprover humanApprover = HumanApprover.skipApprover();
 
     public HttpRequestTool(OkHttpClient httpClient) {
         this.httpClient = Objects.requireNonNull(httpClient, "httpClient must not be null");
@@ -145,8 +147,8 @@ public class HttpRequestTool implements Tool<HttpRequest, HttpResponse> {
             return;
         }
         String approval = request.method() + " " + request.url() + " " + request.body();
-        HumanApprover.ApprovalInput approvalInput = new HumanApprover.ApprovalInput(approval, null);
-        HumanApprover.ApprovalOutput approvalOutput = humanApprover.request(approvalInput);
+        HumanApprovalInput approvalInput = HumanApprovalInput.ofTool(getName(), approval, MetadataProvider.create());
+        HumanApprovalOutput approvalOutput = humanApprover.request(approvalInput);
         if (!approvalOutput.isApproved()) {
             throw new ToolExecutionException("User reject to request HTTP URL " + request.url());
         }

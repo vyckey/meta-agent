@@ -29,7 +29,7 @@ import org.metaagent.framework.core.agent.input.AgentInput;
 import org.metaagent.framework.core.agent.output.AgentOutput;
 import org.metaagent.framework.core.tool.Tool;
 import org.metaagent.framework.core.tool.ToolContext;
-import org.metaagent.framework.core.tool.ToolExecutionException;
+import org.metaagent.framework.core.tool.exception.ToolExecutionException;
 
 /**
  * AgentAsTool is a tool that can be used to execute an Agent. The agent is treated as a tool.

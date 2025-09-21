@@ -24,9 +24,9 @@
 
 package org.metaagent.framework.core.tool;
 
+import org.metaagent.framework.core.common.security.SecurityLevel;
+import org.metaagent.framework.core.tool.config.ToolConfig;
 import org.metaagent.framework.core.util.abort.AbortSignal;
-
-import java.nio.file.Path;
 
 /**
  * Builder for creating instances of {@link ToolContext}.
@@ -35,12 +35,20 @@ import java.nio.file.Path;
  */
 public interface ToolContextBuilder {
     /**
-     * Sets the working directory for the tool context.
+     * Sets the tool configuration for the tool context.
      *
-     * @param workingDirectory the working directory
+     * @param toolConfig the tool configuration
      * @return the builder instance
      */
-    ToolContextBuilder workingDirectory(Path workingDirectory);
+    ToolContextBuilder toolConfig(ToolConfig toolConfig);
+
+    /**
+     * Sets the security level for the tool context.
+     *
+     * @param securityLevel the security level
+     * @return the builder instance
+     */
+    ToolContextBuilder securityLevel(SecurityLevel securityLevel);
 
     /**
      * Sets the abort signal for the tool context.

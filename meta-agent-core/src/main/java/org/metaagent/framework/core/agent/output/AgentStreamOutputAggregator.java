@@ -24,45 +24,63 @@
 
 package org.metaagent.framework.core.agent.output;
 
+import com.google.common.collect.Lists;
 import reactor.core.publisher.Flux;
 
 import java.util.function.BiFunction;
+import java.util.function.BinaryOperator;
 
 /**
  * AgentStreamOutputAggregator
  *
  * @author vyckey
  */
+@FunctionalInterface
 public interface AgentStreamOutputAggregator<S, O> {
     /**
-     * Create an agent stream output aggregator.
+     * Create an AgentStreamOutputAggregator that reduces the stream of agent outputs into a single agent output.
      *
-     * @param initialState the initial state of the agent stream output aggregator
-     * @param reducer      the reducer function
-     * @param <S>          the type of the stream output
-     * @param <O>          the type of the agent output
-     * @return the agent stream output aggregator
+     * @param initialOutput the initial agent output to start with.
+     * @param accumulator   the operator to accumulate output and stream output.
+     * @param <S>           the type of the stream output.
+     * @param <O>           the type of the agent output.
+     * @return An AgentStreamOutputAggregator that reduces the stream of agent outputs into a single agent output.
      */
-    static <S, O> AgentStreamOutputAggregator<S, O> reduce(AgentOutput<O> initialState,
-                                                           BiFunction<AgentOutput<O>, S, AgentOutput<O>> reducer) {
-        return new DefaultAgentStreamOutputAggregator<>(initialState, reducer);
+    static <S, O> AgentStreamOutputAggregator<S, O> reduce(AgentOutput<O> initialOutput,
+                                                           BiFunction<AgentOutput<O>, AgentOutput<S>, AgentOutput<O>> accumulator) {
+        return streamOutputs -> {
+            AgentOutput<O> fullOutput = initialOutput;
+            for (AgentOutput<S> streamOutput : streamOutputs) {
+                fullOutput = accumulator.apply(fullOutput, streamOutput);
+            }
+            return fullOutput;
+        };
     }
 
     /**
-     * Initial state of the stream output.
+     * Create an AgentStreamOutputAggregator that reduces the stream of agent outputs into a single agent output.
      *
-     * @return initial state of the stream output
+     * @param initialOutput the initial agent output to start with.
+     * @param accumulator   the operator to accumulate output and stream output.
+     * @param combiner      the binary operator to combine two agent outputs into a single agent output.
+     * @param <S>           the type of the stream output.
+     * @param <O>           the type of the agent output.
+     * @return An AgentStreamOutputAggregator that reduces the stream of agent outputs into a single agent output.
      */
-    AgentOutput<O> initialState();
+    static <S, O> AgentStreamOutputAggregator<S, O> reduce(AgentOutput<O> initialOutput,
+                                                           BiFunction<AgentOutput<O>, AgentOutput<S>, AgentOutput<O>> accumulator,
+                                                           BinaryOperator<AgentOutput<O>> combiner) {
+        return streamOutputs ->
+                Lists.newArrayList(streamOutputs).stream().reduce(initialOutput, accumulator, combiner);
+    }
 
     /**
-     * Aggregate the stream output into the agent output.
+     * Aggregate the stream outputs into the agent output.
      *
-     * @param agentOutput  agent output
-     * @param streamOutput stream output
+     * @param streamOutputs stream outputs
      * @return aggregated agent output
      */
-    AgentOutput<O> aggregate(AgentOutput<O> agentOutput, S streamOutput);
+    AgentOutput<O> aggregate(Iterable<AgentOutput<S>> streamOutputs);
 
     /**
      * Aggregate the stream output into the agent output.
@@ -70,7 +88,7 @@ public interface AgentStreamOutputAggregator<S, O> {
      * @param stream stream output
      * @return aggregated agent output
      */
-    default AgentOutput<O> aggregate(Flux<S> stream) {
-        return stream.reduce(initialState(), this::aggregate).block();
+    default AgentOutput<O> aggregate(Flux<AgentOutput<S>> stream) {
+        return aggregate(stream.collectList().block());
     }
 }

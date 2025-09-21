@@ -37,7 +37,8 @@ dependencies {
     implementation "org.metaagent.thirdparty:metaagent-searchapi-api:1.0.0"
     implementation "org.metaagent.thirdparty:metaagent-bochaai-api:1.0.0"
     implementation "com.google.apis:google-api-services-customsearch:v1-rev86-1.25.0"
-
+    implementation "io.github.furstenheim:copy_down:1.1"
+    implementation "com.microsoft.playwright:playwright:1.55.0"
 
 }
 
