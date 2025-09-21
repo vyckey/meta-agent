@@ -22,9 +22,7 @@
  * SOFTWARE.
  */
 
-package org.metaagent.framework.core.tool.human;
-
-import org.metaagent.framework.core.common.metadata.MetadataProvider;
+package org.metaagent.framework.core.common.security.approver;
 
 /**
  * HumanApprover is an interface that defines the contract for human approvers.
@@ -33,25 +31,19 @@ import org.metaagent.framework.core.common.metadata.MetadataProvider;
  */
 public interface HumanApprover {
     /**
+     * A HumanApprover implementation that automatically approves all requests.
+     *
+     * @return A HumanApprover that always approves.
+     */
+    static HumanApprover skipApprover() {
+        return input -> new HumanApprovalOutput(HumanApprovalStatus.APPROVED, "Skip human approval");
+    }
+
+    /**
      * Requests human approval for a given input.
      *
      * @param input The input to be approved.
      * @return The approval output.
      */
-    ApprovalOutput request(ApprovalInput input);
-
-
-    record ApprovalInput(String content, MetadataProvider metadata) {
-    }
-
-    record ApprovalOutput(ApprovalStatus approvalStatus, String reason) {
-        public boolean isApproved() {
-            return this.approvalStatus == ApprovalStatus.APPROVED;
-        }
-    }
-
-    enum ApprovalStatus {
-        APPROVED,
-        REJECTED,
-    }
+    HumanApprovalOutput request(HumanApprovalInput input);
 }

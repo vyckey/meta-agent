@@ -28,6 +28,7 @@ import com.google.common.collect.Lists;
 import lombok.extern.slf4j.Slf4j;
 import org.metaagent.framework.core.tool.Tool;
 import org.metaagent.framework.core.tool.ToolContext;
+import org.metaagent.framework.core.tool.exception.ToolExecutionError;
 import org.metaagent.framework.core.tool.exception.ToolExecutionException;
 import org.metaagent.framework.core.tool.listener.ToolExecuteListener;
 import org.metaagent.framework.core.tool.listener.ToolExecuteListenerRegistry;
@@ -72,7 +73,7 @@ public class DefaultToolExecutor implements ToolExecutor {
             notifyListeners(listenerRegistry, listener -> listener.onToolException(tool, input, e));
             throw e;
         } catch (Exception e) {
-            ToolExecutionException ex = new ToolExecutionException("Call tool " + tool.getName() + " fail", e);
+            ToolExecutionError ex = new ToolExecutionError("Call tool " + tool.getName() + " error", e);
             notifyListeners(listenerRegistry, listener -> listener.onToolException(tool, input, ex));
             throw ex;
         }

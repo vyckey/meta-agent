@@ -22,7 +22,7 @@
  * SOFTWARE.
  */
 
-package org.metaagent.framework.core.tool.human;
+package org.metaagent.framework.core.common.security.approver;
 
 import java.util.Scanner;
 
@@ -38,16 +38,20 @@ public class TerminalHumanApprover implements HumanApprover {
     }
 
     @Override
-    public ApprovalOutput request(ApprovalInput input) {
-        System.out.println(input.content() + "Please approve the above request, enter Y/n:");
+    public HumanApprovalOutput request(HumanApprovalInput input) {
+        String toolName = input.metadata().getProperty(HumanApprovalInput.METADATA_TOOL_NAME, String.class);
+        if (toolName != null) {
+            System.out.println("Tool " + toolName + " is requesting approval.");
+        }
+        System.out.println(input.content() + "\nPlease approve the above request, enter Y/n:");
         Scanner scanner = new Scanner(System.in);
         do {
             String confirmation = scanner.nextLine().trim();
             if ("y".equalsIgnoreCase(confirmation) || "n".equalsIgnoreCase(confirmation)) {
                 if ("y".equalsIgnoreCase(confirmation)) {
-                    return new ApprovalOutput(ApprovalStatus.APPROVED, null);
+                    return new HumanApprovalOutput(HumanApprovalStatus.APPROVED, null);
                 } else {
-                    return new ApprovalOutput(ApprovalStatus.REJECTED, "User reject approval");
+                    return new HumanApprovalOutput(HumanApprovalStatus.REJECTED, "User reject approval");
                 }
             }
             System.out.println("Please enter Y or n:");
