@@ -16,10 +16,12 @@ apacheCommonIO = '2.19.0'
 apacheCommonText = '1.13.1'
 commonConfig = '2.11.0'
 collections = '3.2.2'
+mockito = '5.16.0'
 mcp = '0.10.0'
 reactorCore = '3.7.4'
 springAI = '1.0.0-M6'
 jinjava = '2.8.0'
+okhttp = '4.12.0'
 
 [libraries]
 junit = { module = 'junit:junit', version.ref = 'junit' }
@@ -41,16 +43,19 @@ log4j-core = { module = 'org.apache.logging.log4j:log4j-core', version.ref = 'ap
 log4j-api = { module = 'org.apache.logging.log4j:log4j-api', version.ref = 'apacheLog4j' }
 slf4j-impl = { module = 'org.apache.logging.log4j:log4j-slf4j2-impl', version.ref = 'apacheLog4j' }
 log4j = { module = 'log4j:log4j', version.ref = 'log4j' }
+jupiter = { module = 'org.junit.jupiter:junit-jupiter' }
+mockito = { module = 'org.mockito:mockito-core', version.ref = 'mockito' }
 mcp-sdk = { module = 'io.modelcontextprotocol.sdk:mcp', version.ref = 'mcp' }
 mcp-spring-webflux = { module = 'io.modelcontextprotocol.sdk:mcp-spring-webflux', version.ref = 'mcp' }
 mcp-spring-webmvc = { module = 'io.modelcontextprotocol.sdk:mcp-spring-webmvc', version.ref = 'mcp' }
 reactor-core = { module = 'io.projectreactor:reactor-core', version.ref = 'reactorCore' }
 spring-ai-core = { module = 'org.springframework.ai:spring-ai-core', version.ref = 'springAI' }
 jinjava = { module = 'com.hubspot.jinjava:jinjava', version.ref = 'jinjava' }
+okhttp = { module = 'com.squareup.okhttp3:okhttp', version.ref = 'okhttp' }
 picocli = { module = 'info.picocli:picocli', version = '4.7.6' }
 
 [bundles]
-unittest = ['junit', 'jmockit']
+unittest = ['jupiter', 'mockito']
 jackson = ['jackson-annotations', 'jackson-core', 'jackson-databind']
 jsonschema = ['jsonschema']
 jacksonYaml = ['jackson-yaml']
@@ -62,3 +67,4 @@ reactor = ['reactor-core']
 springai = ['spring-ai-core']
 jinjava = ['jinjava']
 picocli = ['picocli']
+http = ['okhttp']

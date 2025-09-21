@@ -25,15 +25,16 @@
 package org.metaagent.framework.tools.script.engine;
 
 import lombok.Setter;
-import org.metaagent.framework.core.common.metadata.MapMetadataProvider;
+import org.metaagent.framework.core.common.metadata.MetadataProvider;
+import org.metaagent.framework.core.common.security.approver.HumanApprovalInput;
+import org.metaagent.framework.core.common.security.approver.HumanApprovalOutput;
+import org.metaagent.framework.core.common.security.approver.HumanApprover;
 import org.metaagent.framework.core.tool.Tool;
 import org.metaagent.framework.core.tool.ToolContext;
-import org.metaagent.framework.core.tool.ToolExecutionException;
 import org.metaagent.framework.core.tool.converter.ToolConverter;
 import org.metaagent.framework.core.tool.converter.ToolConverters;
 import org.metaagent.framework.core.tool.definition.ToolDefinition;
-import org.metaagent.framework.core.tool.human.HumanApprover;
-import org.metaagent.framework.core.tool.human.SystemAutoApprover;
+import org.metaagent.framework.core.tool.exception.ToolExecutionException;
 import org.metaagent.framework.core.util.abort.AbortException;
 
 import javax.script.Bindings;
@@ -60,7 +61,7 @@ public class ScriptEngineTool implements Tool<ScriptInput, ScriptOutput> {
     private static final ToolConverter<ScriptInput, ScriptOutput> TOOL_CONVERTER =
             ToolConverters.jsonConverter(ScriptInput.class);
     protected final ScriptEngineManager scriptEngineManager;
-    protected HumanApprover humanApprover = SystemAutoApprover.INSTANCE;
+    protected HumanApprover humanApprover = HumanApprover.skipApprover();
 
     public ScriptEngineTool(ScriptEngineManager scriptEngineManager) {
         this.scriptEngineManager = scriptEngineManager;
@@ -122,8 +123,8 @@ public class ScriptEngineTool implements Tool<ScriptInput, ScriptOutput> {
 
     protected void requestApprovalBeforeExecute(String language, String script) {
         String approval = "Whether execute the " + language + " script:\n" + getShortScript(script);
-        HumanApprover.ApprovalInput approvalInput = new HumanApprover.ApprovalInput(approval, new MapMetadataProvider());
-        HumanApprover.ApprovalOutput approvalOutput = humanApprover.request(approvalInput);
+        HumanApprovalInput approvalInput = HumanApprovalInput.ofTool(getName(), approval, MetadataProvider.create());
+        HumanApprovalOutput approvalOutput = humanApprover.request(approvalInput);
         if (!approvalOutput.isApproved()) {
             throw new ToolExecutionException("User reject to execute script");
         }

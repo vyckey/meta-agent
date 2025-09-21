@@ -27,11 +27,11 @@ package org.metaagent.framework.tools.file.image;
 import lombok.extern.slf4j.Slf4j;
 import org.metaagent.framework.core.tool.Tool;
 import org.metaagent.framework.core.tool.ToolContext;
-import org.metaagent.framework.core.tool.ToolExecutionException;
-import org.metaagent.framework.core.tool.ToolParameterException;
 import org.metaagent.framework.core.tool.converter.ToolConverter;
 import org.metaagent.framework.core.tool.converter.ToolConverters;
 import org.metaagent.framework.core.tool.definition.ToolDefinition;
+import org.metaagent.framework.core.tool.exception.ToolExecutionException;
+import org.metaagent.framework.core.tool.exception.ToolParameterException;
 import org.metaagent.framework.core.util.abort.AbortException;
 import org.metaagent.framework.tools.file.util.FileUtils;
 
@@ -69,22 +69,8 @@ public class ReadImageFileTool implements Tool<ReadImageFileInput, ReadImageFile
         return TOOL_CONVERTER;
     }
 
-    @Override
-    public ReadImageFileOutput run(ToolContext toolContext, ReadImageFileInput input) throws ToolExecutionException {
-        if (toolContext.getAbortSignal().isAborted()) {
-            throw new AbortException("Tool " + getName() + " is cancelled");
-        }
-
-        try {
-            Path filePath = FileUtils.resolvePath(toolContext.getWorkingDirectory(), Path.of(input.filePath()));
-            return readFile(filePath);
-        } catch (IOException e) {
-            log.warn("Error reading image file {}. err: {}", input.filePath(), e.getMessage());
-            return ReadImageFileOutput.builder().exception(e).build();
-        }
-    }
-
-    private ReadImageFileOutput readFile(Path filePath) throws IOException {
+    protected File resolveFile(Path workingDirectory, ReadImageFileInput input) {
+        Path filePath = FileUtils.resolvePath(workingDirectory, Path.of(input.filePath()));
         File file = filePath.toFile();
         if (!file.exists()) {
             throw new ToolParameterException("File not found: " + filePath);
@@ -92,7 +78,25 @@ public class ReadImageFileTool implements Tool<ReadImageFileInput, ReadImageFile
         if (!file.isFile()) {
             throw new ToolParameterException("File is a directory: " + file);
         }
+        return file;
+    }
 
+    @Override
+    public ReadImageFileOutput run(ToolContext toolContext, ReadImageFileInput input) throws ToolExecutionException {
+        if (toolContext.getAbortSignal().isAborted()) {
+            throw new AbortException("Tool " + getName() + " is cancelled");
+        }
+
+        File file = resolveFile(toolContext.getToolConfig().workingDirectory(), input);
+        try {
+            return readFile(file);
+        } catch (IOException e) {
+            log.warn("Error reading image file {}. err: {}", input.filePath(), e.getMessage());
+            return ReadImageFileOutput.builder().exception(e).build();
+        }
+    }
+
+    private ReadImageFileOutput readFile(File file) throws IOException {
         String base64 = Base64.getEncoder().encodeToString(Files.readAllBytes(file.toPath()));
         return ReadImageFileOutput.builder().fileSize(file.length()).base64(base64).build();
     }

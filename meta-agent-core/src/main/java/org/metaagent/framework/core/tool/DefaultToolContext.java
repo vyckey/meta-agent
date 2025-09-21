@@ -26,6 +26,7 @@ package org.metaagent.framework.core.tool;
 
 import lombok.Getter;
 import org.metaagent.framework.core.common.security.SecurityLevel;
+import org.metaagent.framework.core.tool.config.DefaultToolConfig;
 import org.metaagent.framework.core.tool.config.ToolConfig;
 import org.metaagent.framework.core.util.abort.AbortController;
 import org.metaagent.framework.core.util.abort.AbortSignal;
@@ -78,6 +79,9 @@ public class DefaultToolContext implements ToolContext {
 
         @Override
         public DefaultToolContext build() {
+            if (toolConfig == null) {
+                toolConfig = new DefaultToolConfig();
+            }
             if (securityLevel == null) {
                 this.securityLevel = SecurityLevel.RESTRICTED_DEFAULT_SALE;
             }

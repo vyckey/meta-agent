@@ -24,22 +24,20 @@
 
 package org.metaagent.framework.tools.file.find;
 
-import com.google.common.collect.Lists;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.BooleanUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.metaagent.framework.core.tool.Tool;
 import org.metaagent.framework.core.tool.ToolContext;
-import org.metaagent.framework.core.tool.ToolExecutionException;
-import org.metaagent.framework.core.tool.ToolParameterException;
 import org.metaagent.framework.core.tool.converter.ToolConverter;
 import org.metaagent.framework.core.tool.converter.ToolConverters;
 import org.metaagent.framework.core.tool.definition.ToolDefinition;
+import org.metaagent.framework.core.tool.exception.ToolExecutionException;
+import org.metaagent.framework.core.tool.exception.ToolParameterException;
 import org.metaagent.framework.core.util.abort.AbortException;
+import org.metaagent.framework.core.util.ignorefile.GitIgnoreLikeFileFilter;
 import org.metaagent.framework.tools.file.util.FilePathFilter;
 import org.metaagent.framework.tools.file.util.FileUtils;
-import org.metaagent.framework.tools.file.util.GitIgnoreLikeFileFilter;
-import org.metaagent.framework.tools.file.util.GitUtils;
 
 import java.io.File;
 import java.io.IOException;
@@ -47,7 +45,6 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Comparator;
 import java.util.List;
-import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 import java.util.regex.Pattern;
 
@@ -84,28 +81,28 @@ public class GlobFileTool implements Tool<GlobFileInput, GlobFileOutput> {
         return TOOL_CONVERTER;
     }
 
-    protected void validateInput(GlobFileInput input) throws ToolExecutionException {
+    protected Path validateInput(ToolContext toolContext, GlobFileInput input) throws ToolParameterException {
         if (input.getPattern() == null) {
             throw new ToolParameterException("Glob pattern must be specified.");
         }
         if (StringUtils.isBlank(input.getDirectory()) && System.getenv("CWD") == null) {
             throw new ToolParameterException("Current working directory is unknown. Please specify a path.");
         }
+
+        Path workingDirectory = toolContext.getToolConfig().workingDirectory();
+        Path directory = workingDirectory;
+        if (StringUtils.isNotEmpty(input.getDirectory())) {
+            directory = FileUtils.resolvePath(workingDirectory, Path.of(input.getDirectory()));
+        }
+        if (!directory.toFile().exists()) {
+            throw new ToolParameterException("Directory does not exist: " + directory);
+        }
+        return directory;
     }
 
     @Override
     public GlobFileOutput run(ToolContext toolContext, GlobFileInput input) throws ToolExecutionException {
-        validateInput(input);
-
-        Path directory = toolContext.getWorkingDirectory();
-        if (StringUtils.isNotEmpty(input.getDirectory())) {
-            directory = FileUtils.resolvePath(toolContext.getWorkingDirectory(), Path.of(input.getDirectory()));
-        }
-        directory = directory.toAbsolutePath();
-        if (!directory.toFile().exists()) {
-            throw new ToolParameterException("Directory does not exist: " + directory);
-        }
-
+        Path directory = validateInput(toolContext, input);
         if (toolContext.getAbortSignal().isAborted()) {
             throw new AbortException("Tool " + getName() + " is cancelled");
         }
@@ -132,17 +129,8 @@ public class GlobFileTool implements Tool<GlobFileInput, GlobFileOutput> {
         if (BooleanUtils.isTrue(input.getCaseSensitive())) {
             pattern = Pattern.compile(pattern.toString(), Pattern.CASE_INSENSITIVE);
         }
-
-        List<GitIgnoreLikeFileFilter> ignoreLikeFileFilters = Lists.newArrayList();
-        Optional<Path> gitIgnorePath = GitUtils.findGitIgnorePath(directory);
-        if (gitIgnorePath.isPresent()) {
-            ignoreLikeFileFilters.add(new GitIgnoreLikeFileFilter(gitIgnorePath.get()));
-        }
-        for (Path path : FileUtils.resolvePaths(directory, input.getIgnoreLikeFiles(), true)) {
-            ignoreLikeFileFilters.add(new GitIgnoreLikeFileFilter(path));
-        }
-        return FilePathFilter.builder().patterns(List.of(pattern))
-                .ignoreLikeFileFilters(ignoreLikeFileFilters).build();
+        return FilePathFilter.builder(directory).patterns(List.of(pattern))
+                .ignoreFileFilters(input.getIgnoreLikeFiles()).build();
     }
 
     record FileOrderComparator(TimeUnit timeUnit, long timeThreshold) implements Comparator<File> {

@@ -27,15 +27,17 @@ package org.metaagent.framework.tools.file.text;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import org.jetbrains.annotations.NotNull;
+import org.metaagent.framework.core.common.metadata.MetadataProvider;
+import org.metaagent.framework.core.common.security.approver.HumanApprovalInput;
+import org.metaagent.framework.core.common.security.approver.HumanApprovalOutput;
+import org.metaagent.framework.core.common.security.approver.HumanApprover;
 import org.metaagent.framework.core.tool.Tool;
 import org.metaagent.framework.core.tool.ToolContext;
-import org.metaagent.framework.core.tool.ToolExecutionException;
-import org.metaagent.framework.core.tool.ToolParameterException;
 import org.metaagent.framework.core.tool.converter.ToolConverter;
 import org.metaagent.framework.core.tool.converter.ToolConverters;
 import org.metaagent.framework.core.tool.definition.ToolDefinition;
-import org.metaagent.framework.core.tool.human.HumanApprover;
-import org.metaagent.framework.core.tool.human.SystemAutoApprover;
+import org.metaagent.framework.core.tool.exception.ToolExecutionException;
+import org.metaagent.framework.core.tool.exception.ToolParameterException;
 import org.metaagent.framework.core.util.abort.AbortException;
 import org.metaagent.framework.tools.file.util.FileUtils;
 
@@ -62,7 +64,7 @@ public class WriteTextFileTool implements Tool<WriteTextFileInput, WriteTextFile
             .build();
     private static final ToolConverter<WriteTextFileInput, WriteTextFileOutput> TOOL_CONVERTER =
             ToolConverters.jsonConverter(WriteTextFileInput.class);
-    private HumanApprover humanApprover = SystemAutoApprover.INSTANCE;
+    private HumanApprover humanApprover = HumanApprover.skipApprover();
 
     @Override
     public ToolDefinition getDefinition() {
@@ -81,7 +83,7 @@ public class WriteTextFileTool implements Tool<WriteTextFileInput, WriteTextFile
         }
 
         final String content = input.getContent() == null ? "" : input.getContent();
-        Path filePath = FileUtils.resolvePath(toolContext.getWorkingDirectory(), Path.of(input.getFilePath()));
+        Path filePath = FileUtils.resolvePath(toolContext.getToolConfig().workingDirectory(), Path.of(input.getFilePath()));
 
         requestApprovalBeforeWriteFile(filePath, content);
         if (toolContext.getAbortSignal().isAborted()) {
@@ -107,8 +109,8 @@ public class WriteTextFileTool implements Tool<WriteTextFileInput, WriteTextFile
     private void requestApprovalBeforeWriteFile(Path filePath, String content) {
         String truncatedContent = content.length() > 100 ? content.substring(0, 100) + "..." : content;
         String approval = "Request to write file " + filePath + " with content:\n" + truncatedContent;
-        HumanApprover.ApprovalInput approvalInput = new HumanApprover.ApprovalInput(approval, null);
-        HumanApprover.ApprovalOutput approvalOutput = humanApprover.request(approvalInput);
+        HumanApprovalInput approvalInput = HumanApprovalInput.ofTool(getName(), approval, MetadataProvider.create());
+        HumanApprovalOutput approvalOutput = humanApprover.request(approvalInput);
         if (!approvalOutput.isApproved()) {
             throw new ToolExecutionException("User reject to write file: " + filePath);
         }

@@ -22,13 +22,14 @@
  * SOFTWARE.
  */
 
-package org.metaagent.framework.tools.file.util;
+package org.metaagent.framework.core.util.ignorefile;
 
 import java.io.File;
 import java.nio.file.Path;
 import java.util.Optional;
 
 public class GitUtils {
+    public static final String GIT_DIR_NAME = ".git";
     public static final String GIT_IGNORE_FILE_NAME = ".gitignore";
 
     private GitUtils() {
@@ -37,7 +38,7 @@ public class GitUtils {
     public static Optional<Path> findGitRootPath(Path directory) {
         directory = directory.toAbsolutePath().normalize();
         while (directory != null) {
-            File gitDir = directory.resolve(".git").toFile();
+            File gitDir = directory.resolve(GIT_DIR_NAME).toFile();
             if (gitDir.exists()) {
                 return Optional.of(directory);
             }
@@ -46,19 +47,8 @@ public class GitUtils {
         return Optional.empty();
     }
 
-    public static Optional<Path> findGitIgnorePath(Path directory) {
-        directory = directory.toAbsolutePath().normalize();
-        while (directory != null) {
-            File ignoreFile = directory.resolve(".gitignore").toFile();
-            if (ignoreFile.exists()) {
-                return Optional.of(ignoreFile.toPath());
-            }
-            directory = directory.getParent();
-        }
-        return Optional.empty();
+    public static boolean isGitRepository(Path directory) {
+        return findGitRootPath(directory).isPresent();
     }
 
-    public static boolean isGitIgnoreFile(Path filePath) {
-        return filePath.getFileName().toString().equals(GIT_IGNORE_FILE_NAME);
-    }
 }

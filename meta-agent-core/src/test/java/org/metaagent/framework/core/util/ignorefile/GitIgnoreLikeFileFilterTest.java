@@ -22,7 +22,7 @@
  * SOFTWARE.
  */
 
-package org.metaagent.framework.tools.file.util;
+package org.metaagent.framework.core.util.ignorefile;
 
 import org.junit.jupiter.api.Test;
 import org.mockito.MockedStatic;
@@ -41,8 +41,10 @@ class GitIgnoreLikeFileFilterTest {
     void ignoreFileTest() throws IOException {
         Path mockPath = Path.of(".gitignore");
         try (MockedStatic<Files> mockedFiles = mockStatic(Files.class)) {
+            mockedFiles.when(() -> Files.exists(mockPath)).thenReturn(true);
             mockedFiles.when(() -> Files.readAllLines(mockPath)).thenReturn(List.of(
                     "# example patterns",
+                    ".git/",
                     "!*.java",
                     "*.log",
                     "build/",
@@ -55,7 +57,7 @@ class GitIgnoreLikeFileFilterTest {
                     "$*.<*> \\*+ (?).docx"
             ));
 
-            GitIgnoreLikeFileFilter filter = new GitIgnoreLikeFileFilter(mockPath);
+            GitIgnoreLikeFileFilter filter = new GitIgnoreLikeFileFilter(mockPath, false);
 
             assertTrue(filter.ignoreFile(".git/HEAD"));
             assertTrue(filter.ignoreFile(".git/logs/HEAD"));

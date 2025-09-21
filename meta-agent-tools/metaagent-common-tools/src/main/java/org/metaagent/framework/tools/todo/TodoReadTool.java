@@ -29,10 +29,10 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.commons.lang3.StringUtils;
 import org.metaagent.framework.core.tool.Tool;
 import org.metaagent.framework.core.tool.ToolContext;
-import org.metaagent.framework.core.tool.ToolExecutionException;
 import org.metaagent.framework.core.tool.converter.ToolConverter;
 import org.metaagent.framework.core.tool.converter.ToolConverters;
 import org.metaagent.framework.core.tool.definition.ToolDefinition;
+import org.metaagent.framework.core.tool.exception.ToolExecutionException;
 import org.metaagent.framework.core.util.abort.AbortException;
 
 import java.io.File;
@@ -78,7 +78,7 @@ public class TodoReadTool implements Tool<TodoReadInput, TodoReadOutput> {
             throw new AbortException("Tool " + getName() + " is cancelled");
         }
 
-        Path todoFilePath = getTodoFilePath(toolContext.getWorkingDirectory(), todoReadInput.todoId().trim());
+        Path todoFilePath = getTodoFilePath(toolContext.getToolConfig().workingDirectory(), todoReadInput.todoId().trim());
         try {
             List<TodoItem> todoItems = readTodoFile(todoFilePath);
             return new TodoReadOutput(todoReadInput.todoId(), todoItems);

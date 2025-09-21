@@ -33,7 +33,8 @@ import okhttp3.Response;
 import okhttp3.ResponseBody;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.metaagent.framework.core.tool.ToolExecutionException;
+import org.metaagent.framework.core.tool.ToolContext;
+import org.metaagent.framework.core.tool.exception.ToolExecutionException;
 
 import java.io.IOException;
 import java.util.HashMap;
@@ -78,7 +79,7 @@ class HttpRequestToolTest {
                 .url("https://example.com")
                 .method("GET").headers(headers).build();
 
-        HttpResponse response = httpRequestTool.run(null, request);
+        HttpResponse response = httpRequestTool.run(ToolContext.create(), request);
 
         assertEquals(200, response.getStatusCode());
         assertEquals("OK", response.getBody());
@@ -95,7 +96,7 @@ class HttpRequestToolTest {
                 .url("https://example.com")
                 .method("GET").build();
 
-        Exception exception = assertThrows(ToolExecutionException.class, () -> httpRequestTool.run(null, request));
+        Exception exception = assertThrows(ToolExecutionException.class, () -> httpRequestTool.run(ToolContext.create(), request));
         assertTrue(exception.getMessage().contains("Error to send HTTP request"));
     }
 

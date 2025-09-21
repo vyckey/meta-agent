@@ -39,7 +39,7 @@ public class WebFetchToolTest {
     @Disabled
     @Test
     void fetchTest() {
-        WebFetchTool webFetchTool = new WebFetchTool();
+        WebFetchTool webFetchTool = new WebFetchTool(null);
         WebFetchInput input = new WebFetchInput(List.of(
                 "https://github.com/vyckey/meta-agent/blob/main/README.md",
                 "http://politics.people.com.cn/n1/2025/0907/c1001-40558371.html",

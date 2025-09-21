@@ -25,13 +25,13 @@
 package org.metaagent.framework.agents.mcp.client;
 
 import io.modelcontextprotocol.spec.McpSchema;
-import org.junit.Ignore;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.metaagent.framework.core.mcp.client.McpClientManager;
 import org.metaagent.framework.core.mcp.client.UnifiedMcpClient;
 import org.metaagent.framework.core.tool.Tool;
-import org.metaagent.framework.core.tool.mcp.McpToolkit;
+import org.metaagent.framework.core.tool.tools.mcp.McpToolkit;
 
 import java.util.List;
 
@@ -46,7 +46,7 @@ class McpClientTest {
         mcpClientManager = McpClientManager.getInstance();
     }
 
-    @Ignore
+    @Disabled
     @Test
     void testAmapMcpClient() {
         UnifiedMcpClient mcpClient = mcpClientManager.getClient("amap-amap-sse");

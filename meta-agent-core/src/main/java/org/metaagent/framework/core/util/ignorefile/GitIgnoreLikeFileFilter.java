@@ -22,7 +22,7 @@
  * SOFTWARE.
  */
 
-package org.metaagent.framework.tools.file.util;
+package org.metaagent.framework.core.util.ignorefile;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -39,18 +39,35 @@ import java.util.regex.Pattern;
 public class GitIgnoreLikeFileFilter {
     // exclude characters *,?,[,],!,/,**
     private static final String[] ESCAPE_CHARS = {"\\", "^", "$", "{", "}", "(", ")", ".", "+", "|", "<", ">"};
+    private final Path ignoreFilePath;
+    private final Path ignoreFileDirectory;
     private final List<IgnorePattern> ignorePatterns = new ArrayList<>();
 
-    public GitIgnoreLikeFileFilter(Path ignoreFilePath) throws IOException {
-        Files.readAllLines(ignoreFilePath).stream()
-                .filter(line -> !line.startsWith("#"))
-                .map(String::trim)
-                .filter(line -> !line.isEmpty())
-                .forEach(this::parseRule);
-        this.parseRule(ignoreFilePath.getFileName().toString());
-        if (GitUtils.isGitIgnoreFile(ignoreFilePath)) {
-            addGitIgnoreRules();
+    public GitIgnoreLikeFileFilter(Path ignoreFilePath, boolean ignoreFileIncluded) throws IOException {
+        this.ignoreFilePath = ignoreFilePath.toAbsolutePath().normalize();
+        this.ignoreFileDirectory = this.ignoreFilePath.getParent();
+        if (Files.exists(ignoreFilePath)) {
+            Files.readAllLines(ignoreFilePath).stream()
+                    .filter(line -> !line.startsWith("#"))
+                    .map(String::trim)
+                    .filter(line -> !line.isEmpty())
+                    .forEach(this::parseRule);
+            if (ignoreFileIncluded) {
+                this.parseRule(this.ignoreFilePath.getFileName().toString());
+            }
         }
+    }
+
+    public Path getIgnoreFilePath() {
+        return ignoreFilePath;
+    }
+
+    public Path getIgnoreFileDirectory() {
+        return ignoreFileDirectory;
+    }
+
+    public String getIgnoreFileName() {
+        return ignoreFilePath.getFileName().toString();
     }
 
     private void parseRule(String rule) {
@@ -64,15 +81,25 @@ public class GitIgnoreLikeFileFilter {
         ignorePatterns.add(new IgnorePattern(pattern, whitelist));
     }
 
-    protected void addGitIgnoreRules() {
-        this.parseRule("/.git/");
-        this.parseRule(".gitignore");
+    public boolean ignoreFile(String filePath) {
+        return ignoreFile(getIgnoreFileDirectory().resolve(filePath));
     }
 
-    public boolean ignoreFile(String filePath) {
+    public boolean ignoreFile(Path filePath) {
+        String filePathStr;
+        if (filePath.isAbsolute()) {
+            filePathStr = ignoreFileDirectory.relativize(filePath).normalize().toString();
+        } else {
+            filePathStr = filePath.normalize().toString();
+        }
+        // Do not ignore files outside the ignore file directory
+        if (filePathStr.startsWith("..")) {
+            return false;
+        }
+
         boolean ignored = false;
         for (IgnorePattern ignorePattern : ignorePatterns) {
-            boolean matches = ignorePattern.pattern.matcher(filePath).matches();
+            boolean matches = ignorePattern.pattern.matcher(filePathStr).matches();
             if (matches) {
                 ignored = !ignorePattern.whitelist;
             }
@@ -113,5 +140,20 @@ public class GitIgnoreLikeFileFilter {
     }
 
     record IgnorePattern(Pattern pattern, boolean whitelist) {
+    }
+
+    @Override
+    public String toString() {
+        return "GitIgnoreLikeFileFilter{" + ignoreFilePath + "}";
+    }
+
+    public static void main(String[] args) throws IOException {
+        GitIgnoreLikeFileFilter filter = new GitIgnoreLikeFileFilter(Path.of(".gitignore"), false);
+        List<String> filePaths = List.of(
+                "app.log"
+        );
+        for (String filePath : filePaths) {
+            System.out.println(filePath + " -> ignored:" + filter.ignoreFile(Path.of(filePath)));
+        }
     }
 }

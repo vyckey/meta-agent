@@ -24,8 +24,12 @@
 
 package org.metaagent.framework.tools.file.util;
 
-import lombok.Builder;
+import com.google.common.collect.Lists;
+import org.apache.commons.collections.CollectionUtils;
+import org.metaagent.framework.core.util.ignorefile.GitUtils;
+import org.metaagent.framework.core.util.ignorefile.IgnoreFileFilter;
 
+import java.io.IOException;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.Optional;
@@ -34,41 +38,38 @@ import java.util.regex.Pattern;
 /**
  * FilePathFilter is a utility class that provides methods to filter file paths based on specified patterns.
  *
- * @param patterns              patterns to match file paths against.
- * @param excludePatterns       patterns to exclude from the file paths.
- * @param includePatterns       patterns to include in the file paths after exclusion.
- * @param ignoreLikeFileFilters list of filters that behave like .gitignore files, allowing for more complex ignore rules.
+ * @param patterns          patterns to match file paths against.
+ * @param excludePatterns   patterns to exclude from the file paths.
+ * @param includePatterns   patterns to include in the file paths after exclusion.
+ * @param ignoreFileFilters list of filters that behave like .gitignore files, allowing for more complex ignore rules.
  * @author vyckey
  */
 public record FilePathFilter(List<Pattern> patterns,
                              List<Pattern> excludePatterns,
                              List<Pattern> includePatterns,
-                             List<GitIgnoreLikeFileFilter> ignoreLikeFileFilters) {
-    @Builder
+                             List<IgnoreFileFilter> ignoreFileFilters) {
     public FilePathFilter(List<Pattern> patterns,
                           List<Pattern> excludePatterns,
                           List<Pattern> includePatterns,
-                          List<GitIgnoreLikeFileFilter> ignoreLikeFileFilters) {
+                          List<IgnoreFileFilter> ignoreFileFilters) {
         this.patterns = patterns != null ? patterns : List.of();
         this.excludePatterns = excludePatterns != null ? excludePatterns : List.of();
         this.includePatterns = includePatterns != null ? includePatterns : List.of();
-        this.ignoreLikeFileFilters = ignoreLikeFileFilters != null ? ignoreLikeFileFilters : List.of();
+        this.ignoreFileFilters = ignoreFileFilters != null ? ignoreFileFilters : List.of();
     }
 
-    String relativizePath(Path directory, Path filePath) {
-        directory = directory.toAbsolutePath();
-        filePath = filePath.normalize().toAbsolutePath();
-        if (GitUtils.isGitIgnoreFile(filePath)) {
-            Optional<Path> gitRootPath = GitUtils.findGitRootPath(filePath.getParent());
-            if (gitRootPath.isPresent()) {
-                directory = gitRootPath.get();
-            }
-        }
-        return directory.relativize(filePath).toString();
+    public static FilePathFilter.Builder builder(Path directory) throws IOException {
+        return new Builder(directory);
     }
 
     public MatchType matchPath(Path directory, Path filePath) {
-        String path = relativizePath(directory, filePath);
+        directory = directory.toAbsolutePath().normalize();
+        filePath = filePath.toAbsolutePath().normalize();
+        if (!filePath.startsWith(directory)) {
+            return MatchType.UNMATCHED;
+        }
+
+        String path = directory.relativize(filePath).toString();
         boolean matched = patterns.isEmpty();
         for (Pattern pattern : patterns) {
             if (pattern.matcher(path).matches()) {
@@ -94,8 +95,8 @@ public record FilePathFilter(List<Pattern> patterns,
                 return MatchType.EXCLUDED;
             }
         }
-        for (GitIgnoreLikeFileFilter ignoreLikeFileFilter : ignoreLikeFileFilters) {
-            if (ignoreLikeFileFilter.ignoreFile(path)) {
+        for (IgnoreFileFilter ignoreFileFilter : ignoreFileFilters) {
+            if (ignoreFileFilter.ignoreFile(filePath)) {
                 return MatchType.IGNORED;
             }
         }
@@ -104,5 +105,58 @@ public record FilePathFilter(List<Pattern> patterns,
 
     public enum MatchType {
         MATCHED, UNMATCHED, EXCLUDED, IGNORED
+    }
+
+    public static class Builder {
+        private final Path directory;
+        private List<Pattern> patterns;
+        private List<Pattern> excludePatterns;
+        private List<Pattern> includePatterns;
+        private final List<IgnoreFileFilter> ignoreFileFilters = Lists.newArrayList();
+
+        private Builder(Path directory) throws IOException {
+            this.directory = directory;
+            Optional<Path> gitRootPath = GitUtils.findGitRootPath(directory);
+            if (gitRootPath.isPresent()) {
+                Path rootPath = gitRootPath.get();
+                this.ignoreFileFilters.add(IgnoreFileFilter.gitignoreFilter(rootPath));
+                this.ignoreFileFilters.add(IgnoreFileFilter.agentignoreFilter(rootPath));
+            } else {
+                this.ignoreFileFilters.add(IgnoreFileFilter.agentignoreFilter(directory));
+            }
+        }
+
+        public Builder patterns(List<Pattern> patterns) {
+            this.patterns = patterns;
+            return this;
+        }
+
+        public Builder excludePatterns(List<Pattern> excludePatterns) {
+            this.excludePatterns = excludePatterns;
+            return this;
+        }
+
+        public Builder includePatterns(List<Pattern> includePatterns) {
+            this.includePatterns = includePatterns;
+            return this;
+        }
+
+        public Builder ignoreFileFilters(List<String> ignoreLikeFiles) throws IOException {
+            if (CollectionUtils.isNotEmpty(ignoreLikeFiles)) {
+                Path rootPath = directory;
+                Optional<Path> gitRootPath = GitUtils.findGitRootPath(directory);
+                if (gitRootPath.isPresent()) {
+                    rootPath = gitRootPath.get();
+                }
+                for (String ignoreLikeFile : ignoreLikeFiles) {
+                    this.ignoreFileFilters.add(new IgnoreFileFilter(rootPath, ignoreLikeFile));
+                }
+            }
+            return this;
+        }
+
+        public FilePathFilter build() {
+            return new FilePathFilter(patterns, excludePatterns, includePatterns, ignoreFileFilters);
+        }
     }
 }

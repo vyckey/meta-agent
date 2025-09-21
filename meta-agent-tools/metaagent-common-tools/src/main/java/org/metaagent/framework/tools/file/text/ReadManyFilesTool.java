@@ -31,23 +31,21 @@ import org.apache.commons.lang3.BooleanUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.metaagent.framework.core.tool.Tool;
 import org.metaagent.framework.core.tool.ToolContext;
-import org.metaagent.framework.core.tool.ToolExecutionException;
-import org.metaagent.framework.core.tool.ToolParameterException;
 import org.metaagent.framework.core.tool.converter.ToolConverter;
 import org.metaagent.framework.core.tool.converter.ToolConverters;
 import org.metaagent.framework.core.tool.definition.ToolDefinition;
+import org.metaagent.framework.core.tool.exception.ToolExecutionException;
+import org.metaagent.framework.core.tool.exception.ToolParameterException;
 import org.metaagent.framework.core.util.abort.AbortException;
+import org.metaagent.framework.core.util.ignorefile.GitIgnoreLikeFileFilter;
 import org.metaagent.framework.tools.file.util.FilePathFilter;
 import org.metaagent.framework.tools.file.util.FileUtils;
-import org.metaagent.framework.tools.file.util.GitIgnoreLikeFileFilter;
-import org.metaagent.framework.tools.file.util.GitUtils;
 
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
-import java.util.Optional;
 import java.util.regex.Pattern;
 
 @Slf4j
@@ -89,7 +87,7 @@ public class ReadManyFilesTool implements Tool<ReadManyFilesInput, ReadManyFiles
 
     @Override
     public ReadManyFilesOutput run(ToolContext toolContext, ReadManyFilesInput input) throws ToolExecutionException {
-        Path directory = validateDirectory(toolContext.getWorkingDirectory(), input.getDirectory());
+        Path directory = validateDirectory(toolContext.getToolConfig().workingDirectory(), input.getDirectory());
         FilteredFiles filteredFiles = filterFiles(input, directory);
 
         if (toolContext.getAbortSignal().isAborted()) {
@@ -132,18 +130,10 @@ public class ReadManyFilesTool implements Tool<ReadManyFilesInput, ReadManyFiles
             excludePatterns = input.getExcludePatterns().stream().map(GitIgnoreLikeFileFilter::compileAsPattern).toList();
         }
 
-        List<GitIgnoreLikeFileFilter> ignoreLikeFileFilters = Lists.newArrayList();
-        Optional<Path> gitIgnorePath = GitUtils.findGitIgnorePath(directory);
-        if (gitIgnorePath.isPresent()) {
-            ignoreLikeFileFilters.add(new GitIgnoreLikeFileFilter(gitIgnorePath.get()));
-        }
-        for (Path path : FileUtils.resolvePaths(directory, input.getIgnoreLikeFiles(), true)) {
-            ignoreLikeFileFilters.add(new GitIgnoreLikeFileFilter(path));
-        }
-        return FilePathFilter.builder()
+        return FilePathFilter.builder(directory)
                 .patterns(patterns)
                 .excludePatterns(excludePatterns)
-                .ignoreLikeFileFilters(ignoreLikeFileFilters)
+                .ignoreFileFilters(input.getIgnoreLikeFiles())
                 .build();
     }
 
