@@ -24,9 +24,25 @@
 
 package org.metaagent.framework.tools.file.text;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 import org.metaagent.framework.core.tool.schema.ToolDisplayable;
 
+import java.nio.file.Path;
+
+/**
+ * The output of {@link EditTextFileTool}.
+ *
+ * @author vyckey
+ */
 public record EditTextFileOutput(
+        @JsonPropertyDescription("The absolute path to the file that was modified.")
+        Path filePath,
+
+        @JsonIgnore
+        TextFileEditDiff editDiff,
+
+        @JsonPropertyDescription("A human-readable description of the changes made.")
         String description) implements ToolDisplayable {
 
     @Override
