@@ -24,16 +24,18 @@
 
 package org.metaagent.framework.tools.script.shell;
 
+import com.google.common.collect.Sets;
 import com.google.common.io.CharStreams;
 import lombok.Setter;
-import org.apache.commons.lang3.BooleanUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.metaagent.framework.core.common.metadata.MetadataProvider;
+import org.metaagent.framework.core.common.security.SecurityLevel;
 import org.metaagent.framework.core.common.security.approver.HumanApprovalInput;
 import org.metaagent.framework.core.common.security.approver.HumanApprovalOutput;
 import org.metaagent.framework.core.common.security.approver.HumanApprover;
 import org.metaagent.framework.core.tool.Tool;
 import org.metaagent.framework.core.tool.ToolContext;
+import org.metaagent.framework.core.tool.config.ToolConfig;
 import org.metaagent.framework.core.tool.converter.ToolConverter;
 import org.metaagent.framework.core.tool.converter.ToolConverters;
 import org.metaagent.framework.core.tool.definition.ToolDefinition;
@@ -43,6 +45,8 @@ import org.metaagent.framework.core.util.abort.AbortException;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
+import java.util.List;
+import java.util.Set;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
@@ -74,29 +78,60 @@ public class ShellCommandTool implements Tool<ShellCommandInput, ShellCommandOut
         return TOOL_CONVERTER;
     }
 
-    private boolean confirmBeforeExecution(ShellCommandInput commandInput) {
-        String value = System.getenv("SHELL_CONFIRM_BEFORE_EXECUTION");
-        boolean confirmRequired = StringUtils.isNotEmpty(value) && BooleanUtils.toBoolean(value);
-        if (!confirmRequired) {
-            return true;
+    protected void validateInput(ToolContext toolContext, ShellCommandInput commandInput) throws ToolExecutionException {
+        String command = commandInput.command();
+        if (StringUtils.isBlank(command)) {
+            throw new ToolExecutionException("Command is required.");
         }
 
+        if (toolContext.getSecurityLevel().compareTo(SecurityLevel.UNRESTRICTED_DANGEROUSLY) >= 0) {
+            return;
+        }
+
+        ToolConfig toolConfig = toolContext.getToolConfig();
+        List<String> subCommands = ShellCommandUtils.splitCommands(command);
+        CommandApproval approval = CommandApproval.TO_CONFIRM;
+        for (String subCommand : subCommands) {
+            if (toolContext.getSecurityLevel().compareTo(SecurityLevel.RESTRICTED_HIGHLY_SAFE) <= 0
+                    && ShellCommandUtils.hasCommandSubstitution(subCommand)) {
+                throw new ToolExecutionException("Substitution command is not allowed in restricted highly safe environment.");
+            }
+
+            CommandApproval subApproval = CommandApproval.request(toolConfig, subCommand.trim());
+            if (subApproval.ordinal() < approval.ordinal()) {
+                approval = subApproval;
+            }
+        }
+
+        if (CommandApproval.DISALLOW == approval) {
+            throw new ToolExecutionException("The command has been disallowed by the user.");
+        }
+        if (CommandApproval.TO_CONFIRM == approval) {
+            if (!confirmBeforeExecution(toolContext, commandInput)) {
+                throw new ToolExecutionException("The command execution is rejected by the user.");
+            }
+        }
+    }
+
+    private boolean confirmBeforeExecution(ToolContext toolContext, ShellCommandInput commandInput) {
         String approval = "Whether execute the command [\"" + commandInput.command() + "\"] ?";
-        HumanApprovalOutput approvalOutput = humanApprover.request(HumanApprovalInput.ofTool(getName(), approval, MetadataProvider.create()));
+        HumanApprovalInput approvalInput = HumanApprovalInput.ofTool(getName(), approval, MetadataProvider.create());
+        HumanApprovalOutput approvalOutput = humanApprover.request(approvalInput);
         return approvalOutput.isApproved();
     }
 
     @Override
     public ShellCommandOutput run(ToolContext toolContext, ShellCommandInput commandInput) throws ToolExecutionException {
-        ShellCommandOutput.ShellCommandOutputBuilder<?, ?> outputBuilder = ShellCommandOutput.builder();
-        if (!confirmBeforeExecution(commandInput)) {
-            outputBuilder.exitCode(-1).error("User rejects the command execution.");
-            return outputBuilder.build();
-        }
+        validateInput(toolContext, commandInput);
+
         if (toolContext.getAbortSignal().isAborted()) {
             throw new AbortException("Tool " + getName() + " is cancelled");
         }
+        return execute(toolContext, commandInput);
+    }
 
+    protected ShellCommandOutput execute(ToolContext toolContext, ShellCommandInput commandInput) throws ToolExecutionException {
+        ShellCommandOutput.ShellCommandOutputBuilder<?, ?> outputBuilder = ShellCommandOutput.builder();
         try {
             Process process = Runtime.getRuntime().exec(commandInput.command(), commandInput.getEnvArray());
             outputBuilder.pid(process.pid());
@@ -135,5 +170,29 @@ public class ShellCommandTool implements Tool<ShellCommandInput, ShellCommandOut
             outputBuilder.exitCode(-1).error("InterruptedException: " + e.getMessage());
         }
         return outputBuilder.build();
+    }
+
+    enum CommandApproval {
+        DISALLOW,
+        ALLOW,
+        TO_CONFIRM,
+        ;
+
+        static CommandApproval request(ToolConfig toolConfig, String command) {
+            Set<String> allowedCommands = Sets.union(toolConfig.allowedCommands(), toolConfig.sessionAllowedCommands());
+            for (String allowedCommand : allowedCommands) {
+                if (command.startsWith(allowedCommand)) {
+                    return ALLOW;
+                }
+            }
+
+            Set<String> disallowedCommands = Sets.union(toolConfig.disallowedCommands(), toolConfig.sessionDisallowedCommands());
+            for (String disallowedCommand : disallowedCommands) {
+                if (command.startsWith(disallowedCommand)) {
+                    return DISALLOW;
+                }
+            }
+            return TO_CONFIRM;
+        }
     }
 }
