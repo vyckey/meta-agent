@@ -22,46 +22,37 @@
  * SOFTWARE.
  */
 
-package org.metaagent.framework.core.tool;
+package org.metaagent.framework.core.tool.tools.reflect;
 
-import org.metaagent.framework.core.common.security.SecurityLevel;
-import org.metaagent.framework.core.tool.config.ToolConfig;
-import org.metaagent.framework.core.util.abort.AbortSignal;
+import java.lang.annotation.Documented;
+import java.lang.annotation.ElementType;
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
+import java.lang.annotation.Target;
 
 /**
- * Builder for creating instances of {@link ToolContext}.
+ * Annotation to mark a class as a function toolkit.
  *
  * @author vyckey
  */
-public interface ToolContextBuilder {
+@Retention(RetentionPolicy.RUNTIME)
+@Target(ElementType.TYPE)
+@Documented
+public @interface FunctionToolkit {
     /**
-     * Sets the tool configuration for the tool context.
-     *
-     * @param toolConfig the tool configuration
-     * @return the builder instance
+     * The name of the toolkit. If not provided, the class name will be used.
      */
-    ToolContextBuilder toolConfig(ToolConfig toolConfig);
+    String value() default "";
 
     /**
-     * Sets the security level for the tool context.
-     *
-     * @param securityLevel the security level
-     * @return the builder instance
+     * The description of the toolkit.
      */
-    ToolContextBuilder securityLevel(SecurityLevel securityLevel);
+    String description() default "";
 
     /**
-     * Sets the abort signal for the tool context.
-     *
-     * @param abortSignal the abort signal
-     * @return the builder instance
+     * Whether to include only methods annotated with @FunctionTool.
+     * If false, all public methods will be included.
+     * Default is true.
      */
-    ToolContextBuilder abortSignal(AbortSignal abortSignal);
-
-    /**
-     * Builds the tool context.
-     *
-     * @return the tool context
-     */
-    ToolContext build();
+    boolean onlyAnnotatedMethods() default true;
 }

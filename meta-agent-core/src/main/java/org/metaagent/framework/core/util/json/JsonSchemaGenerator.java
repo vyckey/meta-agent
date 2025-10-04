@@ -25,6 +25,7 @@
 package org.metaagent.framework.core.util.json;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
@@ -91,9 +92,17 @@ public final class JsonSchemaGenerator {
         List<String> requiredParameters = new ArrayList<>();
 
         for (int i = 0; i < method.getParameterCount(); i++) {
-            String parameterName = method.getParameters()[i].getName();
+            Parameter parameter = method.getParameters()[i];
+            String parameterName = parameter.getName();
             Type parameterType = method.getGenericParameterTypes()[i];
-            properties.set(parameterName, SUBTYPE_SCHEMA_GENERATOR.generateSchema(parameterType));
+
+            ObjectNode parameterSchema = SUBTYPE_SCHEMA_GENERATOR.generateSchema(parameterType);
+            if (parameter.isAnnotationPresent(JsonPropertyDescription.class)) {
+                String description = parameter.getAnnotation(JsonPropertyDescription.class).value();
+                parameterSchema.put("description", description);
+            }
+
+            properties.set(parameterName, parameterSchema);
             if (isParameterRequired(method, i)) {
                 requiredParameters.add(parameterName);
             }
