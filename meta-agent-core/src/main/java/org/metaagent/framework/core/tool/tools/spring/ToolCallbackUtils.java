@@ -37,9 +37,9 @@ import org.metaagent.framework.core.tool.manager.ToolManager;
 import org.springframework.ai.chat.messages.AssistantMessage;
 import org.springframework.ai.chat.messages.ToolResponseMessage;
 import org.springframework.ai.chat.prompt.ChatOptions;
-import org.springframework.ai.model.function.FunctionCallback;
 import org.springframework.ai.model.tool.DefaultToolCallingChatOptions;
 import org.springframework.ai.model.tool.ToolCallingChatOptions;
+import org.springframework.ai.tool.ToolCallback;
 
 import java.util.List;
 import java.util.Map;
@@ -52,7 +52,7 @@ import java.util.Map;
 public abstract class ToolCallbackUtils {
     public static void addToolsToChatOptions(ToolCallingChatOptions chatOptions,
                                              ToolManager toolManager, ToolExecutor toolExecutor) {
-        List<FunctionCallback> toolCallbacks = Lists.newArrayList();
+        List<ToolCallback> toolCallbacks = Lists.newArrayList();
         for (String toolName : toolManager.getToolNames()) {
             Tool<Object, Object> tool = toolManager.getTool(toolName);
             toolCallbacks.add(new ToolCallbackDelegate(tool, toolExecutor));

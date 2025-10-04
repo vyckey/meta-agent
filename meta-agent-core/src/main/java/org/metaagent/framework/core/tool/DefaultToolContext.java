@@ -54,25 +54,25 @@ public class DefaultToolContext implements ToolContext {
         return new Builder();
     }
 
-    public static class Builder implements ToolContextBuilder {
+    public static class Builder implements ToolContext.Builder {
         private ToolConfig toolConfig;
         private SecurityLevel securityLevel;
         private AbortSignal abortSignal;
 
         @Override
-        public ToolContextBuilder toolConfig(ToolConfig toolConfig) {
+        public ToolContext.Builder toolConfig(ToolConfig toolConfig) {
             this.toolConfig = toolConfig;
             return this;
         }
 
         @Override
-        public ToolContextBuilder securityLevel(SecurityLevel securityLevel) {
+        public ToolContext.Builder securityLevel(SecurityLevel securityLevel) {
             this.securityLevel = securityLevel;
             return this;
         }
 
         @Override
-        public ToolContextBuilder abortSignal(AbortSignal abortSignal) {
+        public ToolContext.Builder abortSignal(AbortSignal abortSignal) {
             this.abortSignal = abortSignal;
             return this;
         }

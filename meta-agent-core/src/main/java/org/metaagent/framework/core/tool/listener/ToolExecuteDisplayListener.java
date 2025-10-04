@@ -29,11 +29,10 @@ import org.metaagent.framework.core.tool.Tool;
 import org.metaagent.framework.core.tool.exception.ToolExecutionException;
 import org.metaagent.framework.core.tool.schema.ToolDisplayable;
 import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 @Slf4j
 public class ToolExecuteDisplayListener implements ToolExecuteListener {
-    private static final Logger logger = LoggerFactory.getLogger("Tool");
+    private static final Logger logger = Tool.logger;
     public static final ToolExecuteDisplayListener INSTANCE = new ToolExecuteDisplayListener();
 
     private ToolExecuteDisplayListener() {

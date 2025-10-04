@@ -35,7 +35,7 @@ import org.metaagent.framework.core.agent.chat.message.UserMessage;
 import org.metaagent.framework.core.common.media.MediaResource;
 import org.metaagent.framework.core.common.metadata.MapMetadataProvider;
 import org.metaagent.framework.core.converter.BiConverter;
-import org.springframework.ai.model.Media;
+import org.springframework.ai.content.Media;
 
 import java.net.URI;
 import java.util.List;
@@ -88,8 +88,11 @@ public class MessageConverter implements BiConverter<Message, org.springframewor
                         media
                 );
             }
-            return new org.springframework.ai.chat.messages.UserMessage(
-                    message.getContent(), media, message.getMetadata().getProperties());
+            return org.springframework.ai.chat.messages.UserMessage.builder()
+                    .text(message.getContent())
+                    .metadata(message.getMetadata().getProperties())
+                    .media(media)
+                    .build();
         } else if (message instanceof SystemMessage systemMessage) {
             return new org.springframework.ai.chat.messages.SystemMessage(
                     systemMessage.getContent()
