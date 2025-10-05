@@ -25,15 +25,14 @@
 package org.metaagent.framework.core.agents.chat;
 
 import com.google.common.collect.Lists;
-import org.metaagent.framework.core.agent.chat.message.AssistantMessage;
-import org.metaagent.framework.core.agent.chat.message.Message;
-import org.metaagent.framework.core.agent.chat.message.RoleMessage;
-import org.metaagent.framework.core.agent.chat.message.ToolResponseMessage;
-import org.metaagent.framework.core.agent.chat.message.UserMessage;
-import org.metaagent.framework.core.agent.output.AgentOutput;
-import org.metaagent.framework.core.agent.output.AgentStreamOutputAggregator;
 import org.metaagent.framework.common.content.MediaResource;
 import org.metaagent.framework.common.metadata.MetadataProvider;
+import org.metaagent.framework.core.agent.chat.message.Message;
+import org.metaagent.framework.core.agent.chat.message.RoleMessage;
+import org.metaagent.framework.core.agent.output.AgentOutput;
+import org.metaagent.framework.core.agent.output.AgentStreamOutputAggregator;
+import org.metaagent.framework.core.model.chat.message.ToolCallMessage;
+import org.metaagent.framework.core.model.chat.message.ToolResponseMessage;
 
 import java.util.List;
 
@@ -46,20 +45,21 @@ public class ChatAgentStreamOutputAggregator implements AgentStreamOutputAggrega
 
         Class<? extends Message> lastMessageClass = null;
         StringBuilder sb = new StringBuilder();
+        String lastRole = null;
         List<MediaResource> media = Lists.newArrayList();
         MetadataProvider metadata = MetadataProvider.create();
-        List<AssistantMessage.ToolCall> toolCalls = Lists.newArrayList();
         for (AgentOutput<ChatAgentStreamOutput> streamOutput : streamOutputs) {
             ChatAgentStreamOutput result = streamOutput.result();
             Message streamMessage = result.message();
 
             // If the message type changes, or it's a ToolResponseMessage, finalize the previous message
             boolean reset = false;
-            if (streamMessage instanceof ToolResponseMessage) {
+            if (streamMessage instanceof ToolCallMessage || streamMessage instanceof ToolResponseMessage) {
                 messages.add(streamMessage);
                 reset = true;
-            } else if (lastMessageClass != null && !lastMessageClass.equals(streamMessage.getClass())) {
-                Message newMessage = buildMessage(lastMessageClass, sb.toString(), media, toolCalls, metadata);
+            } else if (lastRole != null && !streamMessage.getRole().equals(lastRole) ||
+                    lastMessageClass != null && !lastMessageClass.equals(streamMessage.getClass())) {
+                Message newMessage = buildMessage(lastMessageClass, lastRole, sb.toString(), media, metadata);
                 messages.add(newMessage);
                 reset = true;
             }
@@ -67,7 +67,6 @@ public class ChatAgentStreamOutputAggregator implements AgentStreamOutputAggrega
                 sb = new StringBuilder();
                 media.clear();
                 metadata = MetadataProvider.create();
-                toolCalls.clear();
             }
 
             // Accumulate content, media, metadata, and tool calls
@@ -75,23 +74,20 @@ public class ChatAgentStreamOutputAggregator implements AgentStreamOutputAggrega
                 sb.append(roleMessage.getContent());
                 media.addAll(roleMessage.getMedia());
                 metadata.merge(roleMessage.getMetadata());
-                if (streamMessage instanceof AssistantMessage assistantMessage) {
-                    toolCalls.addAll(assistantMessage.getToolCalls());
-                }
             }
+            lastRole = streamMessage.getRole();
             lastMessageClass = streamMessage.getClass();
         }
         return AgentOutput.create(new ChatAgentOutput(messages));
     }
 
-    protected Message buildMessage(Class<? extends Message> messageClass, String content,
+    protected Message buildMessage(Class<? extends Message> messageClass,
+                                   String role,
+                                   String content,
                                    List<MediaResource> media,
-                                   List<AssistantMessage.ToolCall> toolCalls,
                                    MetadataProvider metadata) {
-        if (messageClass.equals(AssistantMessage.class)) {
-            return new AssistantMessage(content, media, toolCalls, metadata);
-        } else if (messageClass.equals(UserMessage.class)) {
-            return new UserMessage(content, media, metadata);
+        if (messageClass.equals(RoleMessage.class)) {
+            return new RoleMessage(role, content, media, metadata);
         }
         throw new IllegalArgumentException("Unsupported message class: " + messageClass);
     }

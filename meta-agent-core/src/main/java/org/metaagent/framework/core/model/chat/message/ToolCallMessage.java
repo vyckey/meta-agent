@@ -22,38 +22,52 @@
  * SOFTWARE.
  */
 
-package org.metaagent.framework.core.agent.chat.message;
+package org.metaagent.framework.core.model.chat.message;
 
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
-import org.metaagent.framework.core.common.media.MediaResource;
-import org.metaagent.framework.core.common.metadata.MetadataProvider;
+import org.metaagent.framework.common.content.MediaResource;
+import org.metaagent.framework.common.metadata.MetadataProvider;
+import org.metaagent.framework.core.agent.chat.message.AbstractMessage;
 
 import java.util.List;
 import java.util.Objects;
 
 /**
- * A message from the assistant role.
+ * Represents a tool call message in a chat model.
  *
  * @author vyckey
  */
 @Getter
 @EqualsAndHashCode(callSuper = true)
-public class AssistantMessage extends DefaultRoleMessage {
+public class ToolCallMessage extends AbstractMessage {
+    public static final String ROLE_TOOL_CALL = "tool_call";
+    private final String content;
+    private final List<MediaResource> media;
     private final List<ToolCall> toolCalls;
 
-    public AssistantMessage(String content, List<MediaResource> media, List<ToolCall> toolCalls, MetadataProvider metadata) {
-        super(RoleMessage.ROLE_ASSISTANT, content, media);
+    public ToolCallMessage(String content, List<MediaResource> media, List<ToolCall> toolCalls, MetadataProvider metadata) {
+        this.content = Objects.requireNonNull(content, "content is required");
+        this.media = Objects.requireNonNull(media, "media is required");
         this.toolCalls = Objects.requireNonNull(toolCalls, "toolCalls is required");
-        this.metadata = metadata;
+        this.metadata = Objects.requireNonNull(metadata, "metadata is required");
     }
 
-    public AssistantMessage(String content, List<MediaResource> media, List<ToolCall> toolCalls) {
+    public ToolCallMessage(String content, List<MediaResource> media, List<ToolCall> toolCalls) {
         this(content, media, toolCalls, MetadataProvider.create());
     }
 
-    public AssistantMessage(String content, List<MediaResource> media) {
-        this(content, media, List.of());
+    public ToolCallMessage(String content, List<ToolCall> toolCalls) {
+        this(content, List.of(), toolCalls, MetadataProvider.create());
+    }
+
+    @Override
+    public String getRole() {
+        return ROLE_TOOL_CALL;
+    }
+
+    public boolean hasToolCalls() {
+        return toolCalls != null && !toolCalls.isEmpty();
     }
 
     public record ToolCall(String id, String type, String name, String arguments) {

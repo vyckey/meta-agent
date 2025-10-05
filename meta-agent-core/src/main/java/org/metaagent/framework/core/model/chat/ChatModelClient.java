@@ -26,9 +26,9 @@ package org.metaagent.framework.core.model.chat;
 
 import com.google.common.collect.Lists;
 import io.micrometer.observation.ObservationRegistry;
-import org.metaagent.framework.core.agent.chat.message.AssistantMessage;
 import org.metaagent.framework.core.agent.chat.message.Message;
-import org.metaagent.framework.core.agent.chat.message.SystemMessage;
+import org.metaagent.framework.core.model.chat.message.MessageConverter;
+import org.metaagent.framework.core.model.chat.message.SystemMessage;
 import org.metaagent.framework.core.model.prompt.PromptValue;
 import org.metaagent.framework.core.tool.executor.ToolExecutor;
 import org.metaagent.framework.core.tool.executor.ToolExecutorContext;
@@ -114,7 +114,7 @@ public class ChatModelClient {
         this.toolExecutor = toolExecutor;
     }
 
-    public AssistantMessage sendMessage(List<Message> messages) {
+    public Message sendMessage(List<Message> messages) {
         this.newMessages.clear();
         this.newMessages.addAll(messages);
 
@@ -122,10 +122,10 @@ public class ChatModelClient {
         ChatResponse chatResponse = call(prompt, null);
         this.chatResponse = chatResponse;
         Generation generation = chatResponse.getResult();
-        return (AssistantMessage) messageConverter.reverse(generation.getOutput());
+        return messageConverter.reverse(generation.getOutput());
     }
 
-    public Flux<AssistantMessage> sendMessageStream(List<Message> messages) {
+    public Flux<Message> sendMessageStream(List<Message> messages) {
         this.newMessages.clear();
         this.newMessages.addAll(messages);
 
@@ -133,7 +133,7 @@ public class ChatModelClient {
         Flux<ChatResponse> stream = stream(prompt, null);
         return stream.map(response -> {
             Generation generation = response.getResult();
-            return (AssistantMessage) messageConverter.reverse(generation.getOutput());
+            return messageConverter.reverse(generation.getOutput());
         });
     }
 

@@ -26,7 +26,6 @@ package org.metaagent.framework.core.agent.state;
 
 import org.metaagent.framework.core.agent.action.history.ActionHistory;
 import org.metaagent.framework.core.agent.action.history.DefaultActionHistory;
-import org.metaagent.framework.core.agent.output.AgentOutput;
 import org.metaagent.framework.core.tool.tracker.DefaultToolCallTracker;
 import org.metaagent.framework.core.tool.tracker.ToolCallTracker;
 

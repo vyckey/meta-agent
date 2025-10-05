@@ -27,7 +27,6 @@ package org.metaagent.framework.core.agent.ability.chat;
 import org.metaagent.framework.core.agent.chat.channel.ChannelManager;
 import org.metaagent.framework.core.agent.chat.message.Message;
 import org.metaagent.framework.core.agent.chat.message.MessageListener;
-import org.metaagent.framework.core.agent.chat.message.RoleMessage;
 
 import java.util.concurrent.CompletableFuture;
 
@@ -39,9 +38,9 @@ import java.util.concurrent.CompletableFuture;
 public interface AgentGroupChatAbility {
     ChannelManager getChannelManager();
 
-    void sendMessage(String channelName, RoleMessage message);
+    void sendMessage(String channelName, Message message);
 
-    CompletableFuture<Void> sendMessageAsync(String channelName, RoleMessage message);
+    CompletableFuture<Void> sendMessageAsync(String channelName, Message message);
 
     void subscribeMessage(String channelName, MessageListener messageListener);
 }

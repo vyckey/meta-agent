@@ -25,7 +25,7 @@
 package org.metaagent.framework.core.agent.chat.channel;
 
 import com.google.common.collect.Sets;
-import org.metaagent.framework.core.agent.chat.message.RoleMessage;
+import org.metaagent.framework.core.agent.chat.message.Message;
 
 import java.util.Collection;
 import java.util.Collections;
@@ -78,7 +78,7 @@ public class DefaultGroupChanel extends DefaultChannel implements GroupChannel {
     }
 
     @Override
-    public void send(RoleMessage message) {
+    public void send(Message message) {
         if (!members.contains(message.getRole())) {
             throw new IllegalArgumentException("sender " + message.getRole() + " is not in channel " + name);
         }

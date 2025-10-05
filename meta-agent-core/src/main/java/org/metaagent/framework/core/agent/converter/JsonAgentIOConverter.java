@@ -26,9 +26,9 @@ package org.metaagent.framework.core.agent.converter;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import lombok.Getter;
-import org.metaagent.framework.core.agent.output.AgentOutput;
 import org.metaagent.framework.common.converter.JsonBiConverter;
 import org.metaagent.framework.common.json.JsonSchemaGenerator;
+import org.metaagent.framework.core.agent.output.AgentOutput;
 
 import java.lang.reflect.Type;
 

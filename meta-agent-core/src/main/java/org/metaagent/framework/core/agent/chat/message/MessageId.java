@@ -24,25 +24,31 @@
 
 package org.metaagent.framework.core.agent.chat.message;
 
-import lombok.EqualsAndHashCode;
-import lombok.Getter;
-import org.metaagent.framework.core.common.metadata.MapMetadataProvider;
+import com.fasterxml.jackson.annotation.JsonValue;
 
-import java.util.Map;
+import java.util.UUID;
 
 /**
- * Represents a system message in a chat application.
- * This message type is typically used to convey system-level information or instructions.
+ * Represents a unique identifier for a message.
  *
  * @author vyckey
  */
-@Getter
-@EqualsAndHashCode(callSuper = true)
-public class SystemMessage extends AbstractMessage {
-    private final String content;
-
-    public SystemMessage(String content) {
-        this.metadata = new MapMetadataProvider(Map.of());
-        this.content = content;
+@FunctionalInterface
+public interface MessageId {
+    /**
+     * Generate a random MessageId.
+     *
+     * @return a random MessageId
+     */
+    static MessageId random() {
+        return () -> UUID.randomUUID().toString();
     }
+
+    /**
+     * Get the string value of the message ID.
+     *
+     * @return the string value of the message ID
+     */
+    @JsonValue
+    String value();
 }

@@ -22,19 +22,16 @@
  * SOFTWARE.
  */
 
-package org.metaagent.framework.core.model.chat;
+package org.metaagent.framework.core.model.chat.message;
 
 import com.google.common.collect.BiMap;
 import com.google.common.collect.HashBiMap;
-import org.metaagent.framework.core.agent.chat.message.AssistantMessage;
+import org.metaagent.framework.common.content.MediaResource;
+import org.metaagent.framework.common.converter.BiConverter;
+import org.metaagent.framework.common.metadata.MapMetadataProvider;
 import org.metaagent.framework.core.agent.chat.message.Message;
 import org.metaagent.framework.core.agent.chat.message.RoleMessage;
-import org.metaagent.framework.core.agent.chat.message.SystemMessage;
-import org.metaagent.framework.core.agent.chat.message.ToolResponseMessage;
-import org.metaagent.framework.core.agent.chat.message.UserMessage;
-import org.metaagent.framework.core.common.media.MediaResource;
-import org.metaagent.framework.core.common.metadata.MapMetadataProvider;
-import org.metaagent.framework.core.converter.BiConverter;
+import org.springframework.ai.chat.messages.AssistantMessage;
 import org.springframework.ai.content.Media;
 
 import java.net.URI;
@@ -75,17 +72,12 @@ public class MessageConverter implements BiConverter<Message, org.springframewor
         }
     }
 
-    protected org.springframework.ai.chat.messages.Message convertTo(Message message) {
+    public org.springframework.ai.chat.messages.Message convertTo(Message message) {
         if (message instanceof RoleMessage roleMessage) {
             List<Media> media = roleMessage.getMedia().stream().map(this::convertMedia).toList();
-            if (message instanceof AssistantMessage assistantMessage) {
+            if (roleMessage.getRole().equals(RoleMessage.ROLE_ASSISTANT)) {
                 return new org.springframework.ai.chat.messages.AssistantMessage(
-                        message.getContent(), message.getMetadata().getProperties(),
-                        assistantMessage.getToolCalls().stream().map(call ->
-                                new org.springframework.ai.chat.messages.AssistantMessage.ToolCall(
-                                        call.id(), call.type(), call.name(), call.arguments())
-                        ).toList(),
-                        media
+                        message.getContent(), message.getMetadata().getProperties(), List.of(), media
                 );
             }
             return org.springframework.ai.chat.messages.UserMessage.builder()
@@ -96,6 +88,14 @@ public class MessageConverter implements BiConverter<Message, org.springframewor
         } else if (message instanceof SystemMessage systemMessage) {
             return new org.springframework.ai.chat.messages.SystemMessage(
                     systemMessage.getContent()
+            );
+        } else if (message instanceof ToolCallMessage toolCallMessage) {
+            List<Media> media = toolCallMessage.getMedia().stream().map(this::convertMedia).toList();
+            List<AssistantMessage.ToolCall> toolCalls = toolCallMessage.getToolCalls().stream()
+                    .map(call -> new AssistantMessage.ToolCall(call.id(), call.type(), call.name(), call.arguments()))
+                    .toList();
+            return new org.springframework.ai.chat.messages.AssistantMessage(
+                    message.getContent(), message.getMetadata().getProperties(), toolCalls, media
             );
         } else if (message instanceof ToolResponseMessage responseMessage) {
             return new org.springframework.ai.chat.messages.ToolResponseMessage(
@@ -123,14 +123,14 @@ public class MessageConverter implements BiConverter<Message, org.springframewor
         }
     }
 
-    protected Message convertTo(org.springframework.ai.chat.messages.Message message) {
+    public Message convertTo(org.springframework.ai.chat.messages.Message message) {
         switch (message.getMessageType()) {
             case USER -> {
                 org.springframework.ai.chat.messages.UserMessage userMessage =
                         (org.springframework.ai.chat.messages.UserMessage) message;
                 List<MediaResource> media = userMessage.getMedia().stream().map(this::toMedia).toList();
                 MapMetadataProvider metadata = new MapMetadataProvider(userMessage.getMetadata());
-                return new UserMessage(message.getText(), media, metadata);
+                return RoleMessage.user(message.getText(), media, metadata);
             }
             case ASSISTANT -> {
                 org.springframework.ai.chat.messages.AssistantMessage assistantMessage =
@@ -138,13 +138,15 @@ public class MessageConverter implements BiConverter<Message, org.springframewor
                 List<MediaResource> media = assistantMessage.getMedia().stream().map(this::toMedia).toList();
                 MapMetadataProvider metadata = new MapMetadataProvider(assistantMessage.getMetadata());
                 String content = Optional.ofNullable(message.getText()).orElse("");
-                return new AssistantMessage(content, media,
-                        assistantMessage.getToolCalls().stream().map(toolCall ->
-                                new AssistantMessage.ToolCall(
-                                        toolCall.id(), toolCall.type(), toolCall.name(), toolCall.arguments())
-                        ).toList(),
-                        metadata
-                );
+                if (assistantMessage.hasToolCalls()) {
+                    List<ToolCallMessage.ToolCall> toolCalls = assistantMessage.getToolCalls().stream().map(toolCall ->
+                            new ToolCallMessage.ToolCall(
+                                    toolCall.id(), toolCall.type(), toolCall.name(), toolCall.arguments())
+                    ).toList();
+                    return new ToolCallMessage(content, media, toolCalls, metadata);
+                } else {
+                    return RoleMessage.assistant(content, media, metadata);
+                }
             }
             case SYSTEM -> {
                 return new SystemMessage(message.getText());

@@ -22,10 +22,11 @@
  * SOFTWARE.
  */
 
-package org.metaagent.framework.core.agent.chat.message;
+package org.metaagent.framework.core.model.chat.message;
 
 import lombok.EqualsAndHashCode;
-import org.metaagent.framework.core.common.metadata.MetadataProvider;
+import org.metaagent.framework.common.metadata.MetadataProvider;
+import org.metaagent.framework.core.agent.chat.message.AbstractMessage;
 
 import java.util.List;
 import java.util.Objects;
@@ -38,6 +39,7 @@ import java.util.Objects;
  */
 @EqualsAndHashCode(callSuper = true)
 public class ToolResponseMessage extends AbstractMessage {
+    public static final String ROLE_TOOL_RESPONSE = "tool_response";
     private final List<ToolResponse> toolResponses;
 
     public ToolResponseMessage(List<ToolResponse> toolResponses, MetadataProvider metadata) {
@@ -51,6 +53,11 @@ public class ToolResponseMessage extends AbstractMessage {
 
     public ToolResponseMessage(ToolResponse... toolResponses) {
         this.toolResponses = List.of(toolResponses);
+    }
+
+    @Override
+    public String getRole() {
+        return ROLE_TOOL_RESPONSE;
     }
 
     public List<ToolResponse> getToolResponses() {

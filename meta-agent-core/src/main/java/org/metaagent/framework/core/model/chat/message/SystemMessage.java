@@ -22,41 +22,34 @@
  * SOFTWARE.
  */
 
-package org.metaagent.framework.core.agent.chat.message;
+package org.metaagent.framework.core.model.chat.message;
 
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
-import org.metaagent.framework.core.common.media.MediaResource;
-import org.metaagent.framework.core.common.metadata.MetadataProvider;
+import org.metaagent.framework.common.metadata.MapMetadataProvider;
+import org.metaagent.framework.core.agent.chat.message.AbstractMessage;
 
-import java.util.List;
-import java.util.Objects;
+import java.util.Map;
 
 /**
- * RoleMessage is a message that contains role, content and media resources.
+ * Represents a system message in a chat model.
+ * This message type is typically used to convey system-level information or instructions.
  *
  * @author vyckey
  */
 @Getter
 @EqualsAndHashCode(callSuper = true)
-public class DefaultRoleMessage extends AbstractMessage implements RoleMessage {
-    private final String role;
+public class SystemMessage extends AbstractMessage {
+    public static String ROLE_SYSTEM = "system";
     private final String content;
-    private final List<MediaResource> media;
 
-    public DefaultRoleMessage(String role, String content, List<MediaResource> media, MetadataProvider metadata) {
-        this.role = Objects.requireNonNull(role, "role is required");
-        this.content = Objects.requireNonNull(content, "content is required");
-        this.media = Objects.requireNonNull(media, "media is required");
-        this.metadata = metadata;
-    }
-
-    public DefaultRoleMessage(String role, String content, List<MediaResource> media) {
-        this(role, content, media, MetadataProvider.create());
+    public SystemMessage(String content) {
+        this.metadata = new MapMetadataProvider(Map.of());
+        this.content = content;
     }
 
     @Override
-    public String toString() {
-        return getRole() + ": " + getContent();
+    public String getRole() {
+        return ROLE_SYSTEM;
     }
 }

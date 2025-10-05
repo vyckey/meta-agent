@@ -30,6 +30,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.common.collect.Lists;
 import org.apache.commons.lang3.StringUtils;
+import org.metaagent.framework.common.json.JsonSchemaGenerator;
 import org.metaagent.framework.core.tool.Tool;
 import org.metaagent.framework.core.tool.ToolContext;
 import org.metaagent.framework.core.tool.converter.ToolConvertException;
@@ -37,7 +38,6 @@ import org.metaagent.framework.core.tool.definition.DefaultToolDefinition;
 import org.metaagent.framework.core.tool.definition.ToolDefinition;
 import org.metaagent.framework.core.tool.toolkit.DefaultToolkit;
 import org.metaagent.framework.core.tool.toolkit.Toolkit;
-import org.metaagent.framework.common.json.JsonSchemaGenerator;
 import org.springframework.core.annotation.AnnotationUtils;
 import org.springframework.util.ReflectionUtils;
 
