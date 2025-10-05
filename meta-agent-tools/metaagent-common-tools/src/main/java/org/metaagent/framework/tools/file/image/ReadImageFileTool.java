@@ -25,6 +25,7 @@
 package org.metaagent.framework.tools.file.image;
 
 import lombok.extern.slf4j.Slf4j;
+import org.metaagent.framework.common.abort.AbortException;
 import org.metaagent.framework.core.tool.Tool;
 import org.metaagent.framework.core.tool.ToolContext;
 import org.metaagent.framework.core.tool.converter.ToolConverter;
@@ -32,7 +33,6 @@ import org.metaagent.framework.core.tool.converter.ToolConverters;
 import org.metaagent.framework.core.tool.definition.ToolDefinition;
 import org.metaagent.framework.core.tool.exception.ToolExecutionException;
 import org.metaagent.framework.core.tool.exception.ToolParameterException;
-import org.metaagent.framework.core.util.abort.AbortException;
 import org.metaagent.framework.tools.file.util.FileUtils;
 
 import java.io.File;

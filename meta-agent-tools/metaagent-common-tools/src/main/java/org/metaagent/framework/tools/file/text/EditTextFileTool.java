@@ -25,10 +25,12 @@
 package org.metaagent.framework.tools.file.text;
 
 import org.apache.commons.lang3.StringUtils;
-import org.metaagent.framework.core.common.metadata.MetadataProvider;
-import org.metaagent.framework.core.common.security.approver.HumanApprovalInput;
-import org.metaagent.framework.core.common.security.approver.HumanApprover;
-import org.metaagent.framework.core.common.security.approver.TerminalHumanApprover;
+import org.metaagent.framework.common.abort.AbortException;
+import org.metaagent.framework.common.metadata.MetadataProvider;
+import org.metaagent.framework.core.security.SecurityLevel;
+import org.metaagent.framework.core.security.approver.HumanApprovalInput;
+import org.metaagent.framework.core.security.approver.HumanApprover;
+import org.metaagent.framework.core.security.approver.TerminalHumanApprover;
 import org.metaagent.framework.core.tool.Tool;
 import org.metaagent.framework.core.tool.ToolContext;
 import org.metaagent.framework.core.tool.converter.ToolConverter;
@@ -36,7 +38,6 @@ import org.metaagent.framework.core.tool.converter.ToolConverters;
 import org.metaagent.framework.core.tool.definition.ToolDefinition;
 import org.metaagent.framework.core.tool.exception.ToolExecutionException;
 import org.metaagent.framework.core.tool.exception.ToolParameterException;
-import org.metaagent.framework.core.util.abort.AbortException;
 import org.metaagent.framework.tools.file.util.FileUtils;
 
 import java.io.File;
@@ -79,32 +80,44 @@ public class EditTextFileTool implements Tool<EditTextFileInput, EditTextFileOut
         this.humanApprover = humanApprover;
     }
 
-    private File validateFile(Path workingDirectory, String filePath) {
-        Path path = FileUtils.resolvePath(workingDirectory, Path.of(filePath));
+    private File validateInput(ToolContext toolContext, EditTextFileInput input) {
+        if (StringUtils.isBlank(input.filePath())) {
+            throw new ToolParameterException("filePath is required");
+        }
+
+        Path workingDirectory = toolContext.getToolConfig().workingDirectory();
+        Path path = FileUtils.resolvePath(workingDirectory, Path.of(input.filePath()));
+        if (toolContext.getSecurityLevel().compareTo(SecurityLevel.UNRESTRICTED_DANGEROUSLY) < 0
+                && !path.startsWith(workingDirectory)) {
+            throw new ToolParameterException("filePath must be within the working directory: " + workingDirectory);
+        }
         if (!path.isAbsolute()) {
-            throw new ToolParameterException("File path must be absolute");
+            throw new ToolParameterException("filePath must be absolute");
         }
         File file = path.toFile();
         if (file.isDirectory()) {
-            throw new ToolParameterException("File path cannot be a directory");
+            throw new ToolParameterException("filePath cannot be a directory");
         }
         return file;
     }
 
     @Override
     public EditTextFileOutput run(ToolContext toolContext, EditTextFileInput input) throws ToolExecutionException {
-        File file = validateFile(toolContext.getToolConfig().workingDirectory(), input.filePath());
+        File file = validateInput(toolContext, input);
         if (toolContext.getAbortSignal().isAborted()) {
             throw new AbortException("Tool " + getName() + " is cancelled");
         }
 
         FileContentReplacement contentReplacement = buildReplacement(file, input);
-        confirmReplacement(contentReplacement);
+        if (toolContext.getSecurityLevel().compareTo(SecurityLevel.UNRESTRICTED_DANGEROUSLY) < 0) {
+            EditTextFileOutput editOutput = applyReplacement(contentReplacement, false);
+            confirmReplacement(contentReplacement, editOutput.editDiff());
+        }
 
         if (toolContext.getAbortSignal().isAborted()) {
             throw new AbortException("Tool " + getName() + " is cancelled");
         }
-        return applyReplacement(contentReplacement);
+        return applyReplacement(contentReplacement, true);
     }
 
     protected FileContentReplacement buildReplacement(File file, EditTextFileInput input) {
@@ -118,13 +131,14 @@ public class EditTextFileTool implements Tool<EditTextFileInput, EditTextFileOut
         String currentContent;
         try {
             currentContent = Files.readString(file.toPath());
+            currentContent = currentContent.replaceAll("\r\n", "\n");
         } catch (IOException e) {
-            throw new ToolExecutionException("Error reading file " + file.getAbsolutePath(), e);
+            throw new ToolExecutionException("Error reading file '" + file.getAbsolutePath() + "' caused by " + e, e);
         }
         return new FileContentReplacement(file.toPath(), currentContent, input.newString(), input.oldString(), expectedReplacements, false);
     }
 
-    protected void confirmReplacement(FileContentReplacement replacement) throws ToolExecutionException {
+    protected void confirmReplacement(FileContentReplacement replacement, TextFileEditDiff editDiff) throws ToolExecutionException {
         StringBuilder sb = new StringBuilder("Are you sure you want to replace below content for file '")
                 .append(replacement.filePath).append("'?");
         sb.append("\nOld String: ").append(replacement.oldString());
@@ -132,30 +146,35 @@ public class EditTextFileTool implements Tool<EditTextFileInput, EditTextFileOut
 
         MetadataProvider metadata = MetadataProvider.create();
         metadata.setProperty("replacement", replacement);
+        metadata.setProperty("editDiff", editDiff);
         HumanApprovalInput approvalInput = HumanApprovalInput.ofTool(getName(), sb.toString(), metadata);
         if (!humanApprover.request(approvalInput).isApproved()) {
             throw new ToolExecutionException("Replacement not approved by user");
         }
     }
 
-    protected EditTextFileOutput applyReplacement(FileContentReplacement replacement) throws ToolExecutionException {
+    protected EditTextFileOutput applyReplacement(FileContentReplacement replacement, boolean editEnabled) throws ToolExecutionException {
         if (replacement.oldString().equals(replacement.newString())) {
             throw new ToolExecutionException("No change to apply because old string is same as the new string");
         }
 
         Path filePath = replacement.filePath.toAbsolutePath();
+        TextFileEditDiff editDiff;
         String description;
         if (replacement.isNewFile()) {
             if (replacement.expectedReplacements > 1) {
                 throw new ToolExecutionException("Expected replacements must be 1 for a new file");
             }
 
-            try {
-                Files.writeString(replacement.filePath, replacement.newString());
-            } catch (IOException e) {
-                throw new ToolExecutionException("Error writing to new file " + filePath, e);
+            if (editEnabled) {
+                try {
+                    Files.writeString(replacement.filePath, replacement.newString());
+                } catch (IOException e) {
+                    throw new ToolExecutionException("Error writing to new file '" + filePath + "' caused by " + e, e);
+                }
             }
-            description = "Created new file " + filePath + " with given content";
+            editDiff = TextFileEditDiff.from(replacement.filePath, "", replacement.newString());
+            description = "Created new file '" + filePath + "' with given content. " + editDiff;
         } else {
             int occurrences = replacement.fileContent().split(replacement.oldString(), -1).length - 1;
             if (occurrences != replacement.expectedReplacements) {
@@ -164,15 +183,18 @@ public class EditTextFileTool implements Tool<EditTextFileInput, EditTextFileOut
             }
 
             String updatedContent = replacement.fileContent().replace(replacement.oldString(), replacement.newString());
-            try {
-                Files.writeString(replacement.filePath, updatedContent);
-            } catch (IOException e) {
-                throw new ToolExecutionException("Error writing to existing file " + filePath, e);
+            if (editEnabled) {
+                try {
+                    Files.writeString(replacement.filePath, updatedContent);
+                } catch (IOException e) {
+                    throw new ToolExecutionException("Error writing to existing file '" + filePath + "' caused by " + e, e);
+                }
             }
-            description = "Updated file " + filePath + " with given content (" +
-                    replacement.expectedReplacements + " replacements)";
+            editDiff = TextFileEditDiff.from(replacement.filePath, replacement.fileContent, updatedContent);
+            description = "Updated file '" + filePath + "' with given content (" +
+                    replacement.expectedReplacements + " replacements). " + editDiff;
         }
-        return new EditTextFileOutput(description);
+        return new EditTextFileOutput(filePath, editDiff, description);
     }
 
     protected record FileContentReplacement(

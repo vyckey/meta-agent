@@ -26,9 +26,9 @@ package org.metaagent.framework.core.agent.converter;
 
 import lombok.Builder;
 import lombok.Getter;
+import org.metaagent.framework.common.converter.Converter;
 import org.metaagent.framework.core.agent.input.AgentInput;
 import org.metaagent.framework.core.agent.output.AgentOutput;
-import org.metaagent.framework.core.converter.Converter;
 
 /**
  * Default implementation of {@link AgentIOConverter}.

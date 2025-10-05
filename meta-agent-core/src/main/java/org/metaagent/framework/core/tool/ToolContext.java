@@ -24,9 +24,9 @@
 
 package org.metaagent.framework.core.tool;
 
-import org.metaagent.framework.core.common.security.SecurityLevel;
+import org.metaagent.framework.common.abort.AbortSignal;
+import org.metaagent.framework.core.security.SecurityLevel;
 import org.metaagent.framework.core.tool.config.ToolConfig;
-import org.metaagent.framework.core.util.abort.AbortSignal;
 
 /**
  * ToolContext provides the context for tool execution,
@@ -48,7 +48,7 @@ public interface ToolContext {
      *
      * @return a new ToolContext builder
      */
-    static ToolContextBuilder builder() {
+    static Builder builder() {
         return DefaultToolContext.builder();
     }
 
@@ -72,5 +72,42 @@ public interface ToolContext {
      * @return the abort signal
      */
     AbortSignal getAbortSignal();
+
+
+    /**
+     * Builder interface for constructing ToolContext instances.
+     */
+    interface Builder {
+        /**
+         * Sets the tool configuration for the tool context.
+         *
+         * @param toolConfig the tool configuration
+         * @return the builder instance
+         */
+        Builder toolConfig(ToolConfig toolConfig);
+
+        /**
+         * Sets the security level for the tool context.
+         *
+         * @param securityLevel the security level
+         * @return the builder instance
+         */
+        Builder securityLevel(SecurityLevel securityLevel);
+
+        /**
+         * Sets the abort signal for the tool context.
+         *
+         * @param abortSignal the abort signal
+         * @return the builder instance
+         */
+        Builder abortSignal(AbortSignal abortSignal);
+
+        /**
+         * Builds the tool context.
+         *
+         * @return the tool context
+         */
+        ToolContext build();
+    }
 
 }

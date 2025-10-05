@@ -24,7 +24,7 @@
 
 package org.metaagent.framework.tools.web.fetch;
 
-import org.metaagent.framework.core.util.abort.AbortSignal;
+import org.metaagent.framework.common.abort.AbortSignal;
 
 import java.util.List;
 import java.util.concurrent.Executor;

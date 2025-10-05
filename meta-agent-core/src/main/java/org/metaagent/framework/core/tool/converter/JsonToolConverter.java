@@ -25,8 +25,8 @@
 package org.metaagent.framework.core.tool.converter;
 
 import com.fasterxml.jackson.core.type.TypeReference;
-import org.metaagent.framework.core.converter.JsonBiConverter;
-import org.metaagent.framework.core.converter.JsonStringConverter;
+import org.metaagent.framework.common.converter.JsonBiConverter;
+import org.metaagent.framework.common.converter.JsonStringConverter;
 
 /**
  * A converter that handles JSON serialization and deserialization for tool inputs and outputs.

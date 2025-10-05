@@ -24,7 +24,7 @@
 
 package org.metaagent.framework.core.tool.tools;
 
-import org.metaagent.framework.core.converter.Converter;
+import org.metaagent.framework.common.converter.Converter;
 import org.metaagent.framework.core.tool.Tool;
 import org.metaagent.framework.core.tool.ToolContext;
 import org.metaagent.framework.core.tool.converter.DefaultToolConverter;

@@ -28,7 +28,6 @@ import com.google.common.collect.Lists;
 import lombok.extern.slf4j.Slf4j;
 import org.metaagent.framework.core.agent.chat.message.Message;
 import org.metaagent.framework.core.agent.chat.message.MessageListener;
-import org.metaagent.framework.core.agent.chat.message.RoleMessage;
 import org.metaagent.framework.core.agent.chat.message.history.DefaultMessageHistory;
 import org.metaagent.framework.core.agent.chat.message.history.MessageHistory;
 
@@ -74,14 +73,14 @@ public class DefaultChannel implements Channel {
     }
 
     @Override
-    public void send(RoleMessage message) {
+    public void send(Message message) {
         checkChannelOpen();
         messageHistory.appendMessage(message);
         notifyReceiver(message);
     }
 
     @Override
-    public CompletableFuture<Void> sendAsync(RoleMessage message) {
+    public CompletableFuture<Void> sendAsync(Message message) {
         return CompletableFuture.runAsync(() -> send(message));
     }
 

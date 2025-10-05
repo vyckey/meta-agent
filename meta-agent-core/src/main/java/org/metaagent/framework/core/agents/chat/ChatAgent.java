@@ -60,12 +60,12 @@ public interface ChatAgent extends Agent<ChatAgentInput, ChatAgentOutput, ChatAg
     /**
      * Run chat agent with a message.
      *
-     * @param message the message to run this agent with
+     * @param messages the messages to run this agent with
      * @return the output of this agent
      */
-    default AgentOutput<ChatAgentOutput> run(Message message) {
+    default AgentOutput<ChatAgentOutput> run(Message... messages) {
         AgentInput<ChatAgentInput> agentInput = AgentInput
-                .builder(new ChatAgentInput(message))
+                .builder(new ChatAgentInput(messages))
                 .context(AgentExecutionContext.create())
                 .build();
         return run(agentInput);
@@ -74,12 +74,12 @@ public interface ChatAgent extends Agent<ChatAgentInput, ChatAgentOutput, ChatAg
     /**
      * Runs chat streaming agent with a message.
      *
-     * @param message the message to run this agent with
+     * @param messages the message to run this agent with
      * @return the output of this agent
      */
-    default Flux<AgentOutput<ChatAgentStreamOutput>> runStream(Message message) {
+    default Flux<AgentOutput<ChatAgentStreamOutput>> runStream(Message... messages) {
         AgentInput<ChatAgentInput> agentInput = AgentInput
-                .builder(new ChatAgentInput(message))
+                .builder(new ChatAgentInput(messages))
                 .context(AgentExecutionContext.create())
                 .build();
         return runStream(agentInput);

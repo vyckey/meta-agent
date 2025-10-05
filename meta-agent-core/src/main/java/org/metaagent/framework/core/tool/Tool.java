@@ -28,6 +28,8 @@ import org.metaagent.framework.core.tool.converter.ToolConverter;
 import org.metaagent.framework.core.tool.definition.ToolDefinition;
 import org.metaagent.framework.core.tool.exception.ToolExecutionError;
 import org.metaagent.framework.core.tool.exception.ToolExecutionException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Tool represents a generic tool that can be managed by ToolManager.
@@ -38,6 +40,8 @@ import org.metaagent.framework.core.tool.exception.ToolExecutionException;
  * @author vyckey
  */
 public interface Tool<I, O> {
+    Logger logger = LoggerFactory.getLogger("Tool");
+
     /**
      * Gets the tool name.
      *

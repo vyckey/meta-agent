@@ -29,6 +29,7 @@ import io.modelcontextprotocol.spec.McpSchema;
 import lombok.Getter;
 import org.apache.commons.lang3.NotImplementedException;
 import org.apache.commons.lang3.StringUtils;
+import org.metaagent.framework.common.metadata.MetadataProvider;
 import org.metaagent.framework.core.agent.chat.message.Message;
 import org.metaagent.framework.core.agent.chat.message.RoleMessage;
 import org.metaagent.framework.core.mcp.client.UnifiedMcpClient;
@@ -90,7 +91,7 @@ public class McpPrompt implements PromptTemplate {
         switch (contentType) {
             case "text" -> {
                 McpSchema.TextContent textContent = (McpSchema.TextContent) promptMessage.content();
-                message = RoleMessage.create(promptMessage.role().name(), textContent.text());
+                message = new RoleMessage(promptMessage.role().name(), textContent.text(), MetadataProvider.empty());
             }
             case "image" -> {
                 McpSchema.ImageContent imageContent = (McpSchema.ImageContent) promptMessage.content();

@@ -27,7 +27,7 @@ package org.metaagent.framework.tools.web.fetch;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import org.apache.commons.lang3.StringUtils;
-import org.metaagent.framework.core.util.abort.AbortSignal;
+import org.metaagent.framework.common.abort.AbortSignal;
 
 import java.util.List;
 import java.util.Map;

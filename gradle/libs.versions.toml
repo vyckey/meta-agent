@@ -5,7 +5,7 @@ junit = '4.13.2'
 jmockit = '1.49'
 jackson = '2.13.3'
 jacksonYaml = '2.19.2'
-jsonschema = '4.37.0'
+jsonschema = '4.38.0'
 lombok = '1.18.30'
 slf4j = '2.0.13'
 log4j = '1.2.17'
@@ -19,7 +19,7 @@ collections = '3.2.2'
 mockito = '5.16.0'
 mcp = '0.10.0'
 reactorCore = '3.7.4'
-springAI = '1.0.0-M6'
+springAI = '1.1.0-M2'
 jinjava = '2.8.0'
 okhttp = '4.12.0'
 
@@ -30,7 +30,9 @@ jackson-core = { module = 'com.fasterxml.jackson.core:jackson-core', version.ref
 jackson-databind = { module = 'com.fasterxml.jackson.core:jackson-databind', version.ref = 'jackson' }
 jackson-annotations = { module = 'com.fasterxml.jackson.core:jackson-annotations', version.ref = 'jackson' }
 jackson-yaml = { module = 'com.fasterxml.jackson.dataformat:jackson-dataformat-yaml', version.ref = 'jacksonYaml' }
-jsonschema = { module = 'com.github.victools:jsonschema-generator', version = 'jsonschema' }
+jsonschema-generator = { module = 'com.github.victools:jsonschema-generator', version.ref = 'jsonschema' }
+jsonschema-jackson = { module = 'com.github.victools:jsonschema-module-jackson', version.ref = 'jsonschema' }
+jsonschema-swagger = { module = 'com.github.victools:jsonschema-module-swagger-2', version.ref = 'jsonschema' }
 lombok = { module = 'org.projectlombok:lombok', version.ref = 'lombok' }
 commons-lang3 = { module = 'org.apache.commons:commons-lang3', version.ref = 'apacheCommon' }
 commons-text = { module = 'org.apache.commons:commons-text', version.ref = 'apacheCommonText' }
@@ -49,7 +51,7 @@ mcp-sdk = { module = 'io.modelcontextprotocol.sdk:mcp', version.ref = 'mcp' }
 mcp-spring-webflux = { module = 'io.modelcontextprotocol.sdk:mcp-spring-webflux', version.ref = 'mcp' }
 mcp-spring-webmvc = { module = 'io.modelcontextprotocol.sdk:mcp-spring-webmvc', version.ref = 'mcp' }
 reactor-core = { module = 'io.projectreactor:reactor-core', version.ref = 'reactorCore' }
-spring-ai-core = { module = 'org.springframework.ai:spring-ai-core', version.ref = 'springAI' }
+spring-ai-core = { module = 'org.springframework.ai:spring-ai-client-chat', version.ref = 'springAI' }
 jinjava = { module = 'com.hubspot.jinjava:jinjava', version.ref = 'jinjava' }
 okhttp = { module = 'com.squareup.okhttp3:okhttp', version.ref = 'okhttp' }
 picocli = { module = 'info.picocli:picocli', version = '4.7.6' }
@@ -57,7 +59,7 @@ picocli = { module = 'info.picocli:picocli', version = '4.7.6' }
 [bundles]
 unittest = ['jupiter', 'mockito']
 jackson = ['jackson-annotations', 'jackson-core', 'jackson-databind']
-jsonschema = ['jsonschema']
+jsonschema = ['jsonschema-generator', 'jsonschema-jackson', 'jsonschema-swagger']
 jacksonYaml = ['jackson-yaml']
 lombok = ['lombok']
 utilies = ['commons-lang3', 'commons-config', 'commons-io', 'commons-text', 'collections4', 'guava']

@@ -26,8 +26,8 @@ package org.metaagent.framework.tools.file.util;
 
 import com.google.common.collect.Lists;
 import org.apache.commons.collections.CollectionUtils;
-import org.metaagent.framework.core.util.ignorefile.GitUtils;
-import org.metaagent.framework.core.util.ignorefile.IgnoreFileFilter;
+import org.metaagent.framework.common.ignorefile.GitUtils;
+import org.metaagent.framework.common.ignorefile.IgnoreFileFilter;
 
 import java.io.IOException;
 import java.nio.file.Path;

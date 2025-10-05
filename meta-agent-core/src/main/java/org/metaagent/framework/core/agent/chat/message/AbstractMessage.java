@@ -25,7 +25,7 @@
 package org.metaagent.framework.core.agent.chat.message;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import org.metaagent.framework.core.common.metadata.MetadataProvider;
+import org.metaagent.framework.common.metadata.MetadataProvider;
 
 import java.time.Instant;
 
@@ -35,14 +35,14 @@ import java.time.Instant;
  * @author vyckey
  */
 public abstract class AbstractMessage implements Message {
-    protected String id;
+    protected MessageId id;
     protected MetadataProvider metadata;
     protected Instant createdAt = Instant.now();
 
     @Override
-    public String getId() {
+    public MessageId getId() {
         if (id == null) {
-            id = Message.generateId();
+            id = MessageId.random();
         }
         return id;
     }
@@ -63,6 +63,6 @@ public abstract class AbstractMessage implements Message {
 
     @Override
     public String toString() {
-        return getContent();
+        return getRole() + ": " + getContent();
     }
 }

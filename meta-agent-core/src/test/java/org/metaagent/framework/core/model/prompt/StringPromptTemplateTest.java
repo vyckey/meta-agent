@@ -1,7 +1,7 @@
 package org.metaagent.framework.core.model.prompt;
 
 import org.junit.jupiter.api.Test;
-import org.metaagent.framework.core.model.prompt.formatter.DefaultStringFormatter;
+import org.metaagent.framework.common.template.impl.DefaultTemplateRenderer;
 
 import java.time.LocalDate;
 import java.util.List;
@@ -42,6 +42,6 @@ class StringPromptTemplateTest {
         StringPromptTemplate promptTemplate = StringPromptTemplate.fromFile("classpath:prompts/default_prompt_template_test.md");
         assertEquals(List.of("search_results", "question"), promptTemplate.getVariables().orElse(null));
         PromptValue promptValue = promptTemplate.format("search_results", "1. Apple ...\n2. Banana ...", "question", "What is the best fruit?");
-        assertTrue(DefaultStringFormatter.INSTANCE.extractVariables(promptValue.toString()).isEmpty());
+        assertTrue(DefaultTemplateRenderer.INSTANCE.extractVariables(promptValue.toString()).isEmpty());
     }
 }

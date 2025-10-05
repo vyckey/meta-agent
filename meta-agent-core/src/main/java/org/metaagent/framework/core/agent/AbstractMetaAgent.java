@@ -202,11 +202,12 @@ public abstract class AbstractMetaAgent<I, O, S> implements MetaAgent<I, O, S> {
 
     @Override
     public Flux<AgentOutput<S>> runStream(AgentInput<I> input) {
+        beforeRun(input);
+        agentState.setStatus(AgentRunStatus.RUNNING);
+
         MetaAgent<I, O, S> agent = this;
         return doRunStream(input)
                 .doOnSubscribe(sub -> {
-                    beforeRun(input);
-                    agentState.setStatus(AgentRunStatus.RUNNING);
                     notifyListeners(runListeners, listener -> listener.onAgentStart(agent, input));
                 })
                 .doOnNext(output -> notifyListeners(runListeners, listener -> listener.onAgentOutput(agent, input, null)))

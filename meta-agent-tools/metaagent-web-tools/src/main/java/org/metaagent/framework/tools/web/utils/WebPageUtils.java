@@ -26,7 +26,7 @@ package org.metaagent.framework.tools.web.utils;
 
 import com.google.common.collect.Lists;
 import lombok.extern.slf4j.Slf4j;
-import org.metaagent.framework.core.util.IOUtils;
+import org.metaagent.framework.common.io.IOUtils;
 
 import java.io.IOException;
 import java.util.Arrays;

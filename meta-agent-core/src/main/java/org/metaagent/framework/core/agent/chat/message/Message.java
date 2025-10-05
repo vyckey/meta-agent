@@ -24,45 +24,58 @@
 
 package org.metaagent.framework.core.agent.chat.message;
 
-import org.metaagent.framework.core.common.metadata.MetadataProvider;
+import org.metaagent.framework.common.content.MediaContent;
+import org.metaagent.framework.common.content.MediaResource;
+import org.metaagent.framework.common.content.TextContent;
+import org.metaagent.framework.common.metadata.MetadataProvider;
 
 import java.time.Instant;
-import java.util.UUID;
+import java.util.List;
 
 /**
  * The message interface represents a message in a chat.
  *
  * @author vyckey
  */
-public interface Message {
-    /**
-     * Generate a unique identifier for the message.
-     *
-     * @return a unique identifier for the message
-     */
-    static String generateId() {
-        return UUID.randomUUID().toString().replace("-", "");
-    }
-
+public interface Message extends TextContent, MediaContent {
     /**
      * Get the unique identifier of the message.
      *
      * @return the unique identifier of the message
      */
-    String getId();
+    MessageId getId();
+
+    /**
+     * Get the role of the message.
+     *
+     * @return the role of the message
+     */
+    String getRole();
 
     /**
      * Get the text content of the message.
      *
      * @return the content of the message
      */
+    @Override
     String getContent();
+
+    /**
+     * Get the media resources associated with the message.
+     *
+     * @return a list of media resources
+     */
+    @Override
+    default List<MediaResource> getMedia() {
+        return  List.of();
+    }
 
     /**
      * Get the metadata of the message.
      *
      * @return the metadata of the message
      */
+    @Override
     MetadataProvider getMetadata();
 
     /**

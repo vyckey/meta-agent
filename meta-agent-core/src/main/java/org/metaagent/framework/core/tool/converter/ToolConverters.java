@@ -25,7 +25,7 @@
 package org.metaagent.framework.core.tool.converter;
 
 import com.fasterxml.jackson.core.type.TypeReference;
-import org.metaagent.framework.core.converter.Converter;
+import org.metaagent.framework.common.converter.Converter;
 
 /**
  * {@link ToolConverters} factory for creating {@link ToolConverter} instances.

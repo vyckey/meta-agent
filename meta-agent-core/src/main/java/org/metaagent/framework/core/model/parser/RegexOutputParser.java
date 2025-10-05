@@ -25,7 +25,7 @@
 package org.metaagent.framework.core.model.parser;
 
 import org.apache.commons.lang3.StringUtils;
-import org.metaagent.framework.core.converter.Converter;
+import org.metaagent.framework.common.converter.Converter;
 
 import java.util.ArrayList;
 import java.util.List;

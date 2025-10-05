@@ -26,7 +26,6 @@ package org.metaagent.framework.core.agent.chat.message.history;
 
 import com.google.common.collect.Lists;
 import org.metaagent.framework.core.agent.chat.message.Message;
-import org.metaagent.framework.core.agent.chat.message.RoleMessage;
 
 import java.util.Iterator;
 import java.util.List;
@@ -123,7 +122,7 @@ public class DefaultMessageHistory implements MessageHistory {
         return Lists.reverse(messages).iterator();
     }
 
-    public String asText(int maxMessageSize, int maxMessageLength, boolean roleMessageOnly) {
+    public String asText(int maxMessageSize, int maxMessageLength) {
         StringBuilder sb = new StringBuilder()
                 .append("Message history (").append(historyId).append("):\n");
         boolean hasMoreMessages = false;
@@ -133,9 +132,7 @@ public class DefaultMessageHistory implements MessageHistory {
                 hasMoreMessages = true;
                 break;
             }
-            if (!roleMessageOnly || message instanceof RoleMessage) {
-                lastMessages.add(message);
-            }
+            lastMessages.add(message);
         }
         if (hasMoreMessages) {
             sb.append("... (hidden messages)\n");
@@ -155,14 +152,7 @@ public class DefaultMessageHistory implements MessageHistory {
             if (content.length() > maxMessageLength) {
                 content = content.substring(0, maxMessageLength) + "...(truncated)";
             }
-            if (message instanceof RoleMessage roleMessage) {
-                sb.append(roleMessage.getRole()).append(": ").append(content);
-            } else {
-                sb.append(message.getClass().getCanonicalName());
-                if (!content.isEmpty()) {
-                    sb.append(": ").append(content);
-                }
-            }
+            sb.append(message.getRole()).append(": ").append(content);
             sb.append("\n");
         }
     }
@@ -173,6 +163,6 @@ public class DefaultMessageHistory implements MessageHistory {
 
     @Override
     public String toString() {
-        return asText(10, 1000, true);
+        return asText(10, 1000);
     }
 }
