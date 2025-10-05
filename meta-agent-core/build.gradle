@@ -65,7 +65,6 @@ dependencies {
     api libs.bundles.mcp
     api libs.bundles.reactor
     api libs.bundles.springai
-    api libs.bundles.jinjava
 
     testImplementation libs.bundles.unittest
 

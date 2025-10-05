@@ -22,10 +22,13 @@
  * SOFTWARE.
  */
 
-package org.metaagent.framework.core.model.prompt.formatter;
+package org.metaagent.framework.common.template.impl;
 
 import org.apache.commons.text.StringSubstitutor;
 import org.apache.commons.text.TextStringBuilder;
+import org.metaagent.framework.common.template.TemplateRenderException;
+import org.metaagent.framework.common.template.TemplateRenderer;
+import org.metaagent.framework.common.template.TemplateVariableExtractor;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -48,15 +51,15 @@ import java.util.Map;
  * </pre>
  *
  * @author vyckey
- * @see StringFormatter
+ * @see TemplateRenderer
  */
-public class DefaultStringFormatter implements StringFormatter {
+public class DefaultTemplateRenderer implements TemplateRenderer, TemplateVariableExtractor {
     public static final String NAME = "default";
-    public static final DefaultStringFormatter INSTANCE = new DefaultStringFormatter();
+    public static final DefaultTemplateRenderer INSTANCE = new DefaultTemplateRenderer();
 
     @Override
     public String name() {
-        return DefaultStringFormatter.NAME;
+        return DefaultTemplateRenderer.NAME;
     }
 
     static Map<String, Object> toMapVariables(Object... args) {
@@ -66,22 +69,25 @@ public class DefaultStringFormatter implements StringFormatter {
                 variables.put(args[i].toString(), args[i + 1]);
             }
         } else {
-            throw new IllegalArgumentException("Arguments must be key-value pairs.");
+            throw new TemplateRenderException("Arguments must be key-value pairs.");
         }
         return variables;
     }
 
     @Override
-    public String format(String template, Object... args) {
+    public String render(String template, Object... args) {
         Map<String, Object> variables = toMapVariables(args);
-        VariableSubstitutor substitutor = new VariableSubstitutor(variables);
-        return substitutor.replace(template);
+        return render(template, variables);
     }
 
     @Override
-    public String format(String template, Map<String, Object> args) {
-        VariableSubstitutor substitutor = new VariableSubstitutor(args);
-        return substitutor.replace(template);
+    public String render(String template, Map<String, Object> variables) {
+        VariableSubstitutor substitutor = new VariableSubstitutor(variables);
+        try {
+            return substitutor.replace(template);
+        } catch (Exception e) {
+            throw new TemplateRenderException("Failed to render template: " + e.getMessage(), e);
+        }
     }
 
     @Override

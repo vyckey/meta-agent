@@ -22,22 +22,24 @@
  * SOFTWARE.
  */
 
-package org.metaagent.framework.core.model.prompt.formatter;
+package org.metaagent.framework.common.template.impl;
 
 import com.hubspot.jinjava.Jinjava;
 import com.hubspot.jinjava.interpret.InterpretException;
-import org.metaagent.framework.core.model.prompt.PromptFormatException;
+import org.metaagent.framework.common.template.TemplateRenderException;
+import org.metaagent.framework.common.template.TemplateRenderer;
 
-import java.util.List;
 import java.util.Map;
 
 /**
- * Jinjia2StringFormatter is an implementation of StringFormatter that uses Jinjava for template rendering.
+ * Jinja2TemplateRenderer is an implementation of TemplateRenderer that uses Jinjava for template rendering.
  * It provides methods to format strings using Jinja2 syntax and extract variables from templates.
  *
  * @author vyckey
+ * @see TemplateRenderer
  */
-public class Jinja2StringFormatter implements StringFormatter {
+public class Jinja2TemplateRenderer implements TemplateRenderer {
+    public static final Jinja2TemplateRenderer INSTANCE = new Jinja2TemplateRenderer();
     public static final String NAME = "jinja2";
     private static final Jinjava JINJAVA = new Jinjava();
 
@@ -47,23 +49,18 @@ public class Jinja2StringFormatter implements StringFormatter {
     }
 
     @Override
-    public String format(String template, Object... args) {
-        Map<String, Object> variables = DefaultStringFormatter.toMapVariables(args);
-        return format(template, variables);
+    public String render(String template, Object... args) {
+        Map<String, Object> variables = DefaultTemplateRenderer.toMapVariables(args);
+        return render(template, variables);
     }
 
     @Override
-    public String format(String template, Map<String, Object> args) {
+    public String render(String template, Map<String, Object> args) {
         try {
             return JINJAVA.render(template, args);
         } catch (InterpretException e) {
-            throw new PromptFormatException(e.getMessage(), e);
+            throw new TemplateRenderException(e.getMessage(), e);
         }
     }
 
-
-    @Override
-    public List<String> extractVariables(String template) {
-        throw new UnsupportedOperationException("Variable extraction is not supported in Jinja2StringFormatter");
-    }
 }

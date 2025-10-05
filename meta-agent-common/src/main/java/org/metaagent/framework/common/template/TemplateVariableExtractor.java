@@ -22,49 +22,21 @@
  * SOFTWARE.
  */
 
-plugins {
-    id 'java-library'
-    id 'application'
-    id 'maven-publish'
-    id 'buildlogic.java-common-conventions'
-}
+package org.metaagent.framework.common.template;
 
-group = 'org.metaagent.framework'
-version = '1.0.0'
+import java.util.List;
 
-publishing {
-    publications {
-        create("mavenJava", MavenPublication) {
-            from components.java
-        }
-    }
-}
-
-sourceSets {
-    main {
-        resources {
-            srcDirs = ['src/main/resources']
-        }
-    }
-    test {
-        resources {
-            srcDirs = ['src/test/resources']
-        }
-    }
-}
-
-dependencies {
-    compileOnly libs.bundles.lombok
-    annotationProcessor libs.bundles.lombok
-
-    api libs.bundles.utilies
-    api libs.bundles.jackson
-    api libs.bundles.jacksonYaml
-    api libs.bundles.jsonschema
-    api libs.bundles.log
-    api libs.bundles.jinjava
-    api libs.bundles.springai
-
-    testImplementation libs.bundles.unittest
-
+/**
+ * TemplateVariableExtractor is responsible for extracting variable names from a template string.
+ *
+ * @author vyckey
+ */
+public interface TemplateVariableExtractor {
+    /**
+     * Extracts variables from the given template string.
+     *
+     * @param template the template string
+     * @return an list of variable names found in the template
+     */
+    List<String> extractVariables(String template);
 }

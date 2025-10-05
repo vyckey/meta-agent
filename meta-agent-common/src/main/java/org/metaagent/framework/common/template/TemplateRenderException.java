@@ -22,49 +22,23 @@
  * SOFTWARE.
  */
 
-plugins {
-    id 'java-library'
-    id 'application'
-    id 'maven-publish'
-    id 'buildlogic.java-common-conventions'
-}
+package org.metaagent.framework.common.template;
 
-group = 'org.metaagent.framework'
-version = '1.0.0'
-
-publishing {
-    publications {
-        create("mavenJava", MavenPublication) {
-            from components.java
-        }
+/**
+ * Exception thrown when there is an error rendering a template.
+ *
+ * @author vyckey
+ */
+public class TemplateRenderException extends RuntimeException {
+    public TemplateRenderException(String message) {
+        super(message);
     }
-}
 
-sourceSets {
-    main {
-        resources {
-            srcDirs = ['src/main/resources']
-        }
+    public TemplateRenderException(String message, Throwable cause) {
+        super(message, cause);
     }
-    test {
-        resources {
-            srcDirs = ['src/test/resources']
-        }
+
+    public TemplateRenderException(Throwable cause) {
+        super(cause);
     }
-}
-
-dependencies {
-    compileOnly libs.bundles.lombok
-    annotationProcessor libs.bundles.lombok
-
-    api libs.bundles.utilies
-    api libs.bundles.jackson
-    api libs.bundles.jacksonYaml
-    api libs.bundles.jsonschema
-    api libs.bundles.log
-    api libs.bundles.jinjava
-    api libs.bundles.springai
-
-    testImplementation libs.bundles.unittest
-
 }

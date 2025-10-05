@@ -22,49 +22,34 @@
  * SOFTWARE.
  */
 
-plugins {
-    id 'java-library'
-    id 'application'
-    id 'maven-publish'
-    id 'buildlogic.java-common-conventions'
-}
+package org.metaagent.framework.common.template.impl;
 
-group = 'org.metaagent.framework'
-version = '1.0.0'
+import org.metaagent.framework.common.template.TemplateRenderException;
+import org.metaagent.framework.common.template.TemplateRenderer;
 
-publishing {
-    publications {
-        create("mavenJava", MavenPublication) {
-            from components.java
-        }
+import java.util.Map;
+
+/**
+ * JavaStringTemplateRenderer is a TemplateRenderer implementation that uses Java's built-in String formatting.
+ *
+ * @author vyckey
+ * @see TemplateRenderer
+ */
+public final class JavaStringTemplateRenderer implements TemplateRenderer {
+    public static final JavaStringTemplateRenderer INSTANCE = new JavaStringTemplateRenderer();
+
+    @Override
+    public String name() {
+        return "java";
     }
-}
 
-sourceSets {
-    main {
-        resources {
-            srcDirs = ['src/main/resources']
-        }
+    @Override
+    public String render(String template, Object... args) {
+        return template.formatted(args);
     }
-    test {
-        resources {
-            srcDirs = ['src/test/resources']
-        }
+
+    @Override
+    public String render(String template, Map<String, Object> variables) {
+        throw new TemplateRenderException("Not supported Key-Value formatting in " + getClass().getSimpleName());
     }
-}
-
-dependencies {
-    compileOnly libs.bundles.lombok
-    annotationProcessor libs.bundles.lombok
-
-    api libs.bundles.utilies
-    api libs.bundles.jackson
-    api libs.bundles.jacksonYaml
-    api libs.bundles.jsonschema
-    api libs.bundles.log
-    api libs.bundles.jinjava
-    api libs.bundles.springai
-
-    testImplementation libs.bundles.unittest
-
 }

@@ -22,49 +22,38 @@
  * SOFTWARE.
  */
 
-plugins {
-    id 'java-library'
-    id 'application'
-    id 'maven-publish'
-    id 'buildlogic.java-common-conventions'
-}
+package org.metaagent.framework.common.template;
 
-group = 'org.metaagent.framework'
-version = '1.0.0'
+import java.util.Map;
 
-publishing {
-    publications {
-        create("mavenJava", MavenPublication) {
-            from components.java
-        }
-    }
-}
+/**
+ * Interface for rendering templates with variables.
+ *
+ * @author vyckey
+ */
+public interface TemplateRenderer {
+    /**
+     * Get the name of the template renderer.
+     *
+     * @return the name of the template renderer
+     */
+    String name();
 
-sourceSets {
-    main {
-        resources {
-            srcDirs = ['src/main/resources']
-        }
-    }
-    test {
-        resources {
-            srcDirs = ['src/test/resources']
-        }
-    }
-}
+    /**
+     * Render a template with the given variables.
+     *
+     * @param template  the template to render
+     * @param variables the variables to use in the template
+     * @return the rendered template
+     */
+    String render(String template, Map<String, Object> variables);
 
-dependencies {
-    compileOnly libs.bundles.lombok
-    annotationProcessor libs.bundles.lombok
-
-    api libs.bundles.utilies
-    api libs.bundles.jackson
-    api libs.bundles.jacksonYaml
-    api libs.bundles.jsonschema
-    api libs.bundles.log
-    api libs.bundles.jinjava
-    api libs.bundles.springai
-
-    testImplementation libs.bundles.unittest
-
+    /**
+     * Render a template with the given arguments.
+     *
+     * @param template the template to render
+     * @param args     the arguments to use in the template
+     * @return the rendered template
+     */
+    String render(String template, Object... args);
 }

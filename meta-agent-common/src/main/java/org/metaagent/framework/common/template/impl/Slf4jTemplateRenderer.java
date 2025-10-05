@@ -22,49 +22,33 @@
  * SOFTWARE.
  */
 
-plugins {
-    id 'java-library'
-    id 'application'
-    id 'maven-publish'
-    id 'buildlogic.java-common-conventions'
-}
+package org.metaagent.framework.common.template.impl;
 
-group = 'org.metaagent.framework'
-version = '1.0.0'
+import org.metaagent.framework.common.template.TemplateRenderer;
+import org.slf4j.helpers.MessageFormatter;
 
-publishing {
-    publications {
-        create("mavenJava", MavenPublication) {
-            from components.java
-        }
+import java.util.Map;
+
+/**
+ * Template renderer using SLF4J formatting.
+ *
+ * @author vyckey
+ * @see TemplateRenderer
+ */
+public class Slf4jTemplateRenderer implements TemplateRenderer {
+    @Override
+    public String name() {
+        return "slf4j";
     }
-}
 
-sourceSets {
-    main {
-        resources {
-            srcDirs = ['src/main/resources']
-        }
+    @Override
+    public String render(String template, Map<String, Object> variables) {
+        throw new UnsupportedOperationException("Not supported Key-Value formatting in Slf4jStringFormatter");
     }
-    test {
-        resources {
-            srcDirs = ['src/test/resources']
-        }
+
+    @Override
+    public String render(String template, Object... args) {
+        return MessageFormatter.arrayFormat(template, args).getMessage();
     }
-}
-
-dependencies {
-    compileOnly libs.bundles.lombok
-    annotationProcessor libs.bundles.lombok
-
-    api libs.bundles.utilies
-    api libs.bundles.jackson
-    api libs.bundles.jacksonYaml
-    api libs.bundles.jsonschema
-    api libs.bundles.log
-    api libs.bundles.jinjava
-    api libs.bundles.springai
-
-    testImplementation libs.bundles.unittest
 
 }
