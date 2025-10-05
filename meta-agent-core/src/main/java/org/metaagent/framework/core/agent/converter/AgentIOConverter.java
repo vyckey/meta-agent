@@ -26,7 +26,7 @@ package org.metaagent.framework.core.agent.converter;
 
 import org.metaagent.framework.core.agent.input.AgentInput;
 import org.metaagent.framework.core.agent.output.AgentOutput;
-import org.metaagent.framework.core.converter.Converter;
+import org.metaagent.framework.common.converter.Converter;
 
 /**
  * Agent Input/Output Converter.

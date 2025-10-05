@@ -31,8 +31,8 @@ import org.metaagent.framework.core.environment.Environment;
 import org.metaagent.framework.core.tool.executor.DefaultToolExecutor;
 import org.metaagent.framework.core.tool.executor.ToolExecutor;
 import org.metaagent.framework.core.tool.listener.ToolExecuteListenerRegistry;
-import org.metaagent.framework.core.util.abort.AbortController;
-import org.metaagent.framework.core.util.abort.AbortSignal;
+import org.metaagent.framework.common.abort.AbortController;
+import org.metaagent.framework.common.abort.AbortSignal;
 
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;

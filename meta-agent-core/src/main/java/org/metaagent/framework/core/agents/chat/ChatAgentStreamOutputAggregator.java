@@ -32,8 +32,8 @@ import org.metaagent.framework.core.agent.chat.message.ToolResponseMessage;
 import org.metaagent.framework.core.agent.chat.message.UserMessage;
 import org.metaagent.framework.core.agent.output.AgentOutput;
 import org.metaagent.framework.core.agent.output.AgentStreamOutputAggregator;
-import org.metaagent.framework.core.common.media.MediaResource;
-import org.metaagent.framework.core.common.metadata.MetadataProvider;
+import org.metaagent.framework.common.content.MediaResource;
+import org.metaagent.framework.common.metadata.MetadataProvider;
 
 import java.util.List;
 

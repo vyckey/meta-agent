@@ -37,7 +37,7 @@ import org.metaagent.framework.core.tool.definition.DefaultToolDefinition;
 import org.metaagent.framework.core.tool.definition.ToolDefinition;
 import org.metaagent.framework.core.tool.toolkit.DefaultToolkit;
 import org.metaagent.framework.core.tool.toolkit.Toolkit;
-import org.metaagent.framework.core.util.json.JsonSchemaGenerator;
+import org.metaagent.framework.common.json.JsonSchemaGenerator;
 import org.springframework.core.annotation.AnnotationUtils;
 import org.springframework.util.ReflectionUtils;
 

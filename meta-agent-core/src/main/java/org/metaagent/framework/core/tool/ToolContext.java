@@ -24,9 +24,9 @@
 
 package org.metaagent.framework.core.tool;
 
-import org.metaagent.framework.core.common.security.SecurityLevel;
+import org.metaagent.framework.core.security.SecurityLevel;
 import org.metaagent.framework.core.tool.config.ToolConfig;
-import org.metaagent.framework.core.util.abort.AbortSignal;
+import org.metaagent.framework.common.abort.AbortSignal;
 
 /**
  * ToolContext provides the context for tool execution,

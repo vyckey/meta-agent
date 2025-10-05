@@ -24,7 +24,7 @@
 
 package org.metaagent.framework.core.tool.converter;
 
-import org.metaagent.framework.core.converter.Converter;
+import org.metaagent.framework.common.converter.Converter;
 
 import java.util.Objects;
 

@@ -24,7 +24,7 @@
 
 package org.metaagent.framework.core.model.parser;
 
-import org.metaagent.framework.core.converter.Converter;
+import org.metaagent.framework.common.converter.Converter;
 
 /**
  * Interface for parsing the output of an agent into a specific type.

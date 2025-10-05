@@ -25,8 +25,8 @@
 package org.metaagent.framework.core.tool.definition;
 
 import org.apache.commons.lang3.StringUtils;
-import org.metaagent.framework.core.common.metadata.MetadataProvider;
-import org.metaagent.framework.core.util.json.JsonSchemaGenerator;
+import org.metaagent.framework.common.metadata.MetadataProvider;
+import org.metaagent.framework.common.json.JsonSchemaGenerator;
 
 import java.lang.reflect.Type;
 

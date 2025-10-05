@@ -2,7 +2,7 @@ package org.metaagent.framework.core.model.prompt;
 
 import lombok.EqualsAndHashCode;
 import org.apache.commons.lang3.StringUtils;
-import org.metaagent.framework.core.util.IOUtils;
+import org.metaagent.framework.common.io.IOUtils;
 
 import java.io.IOException;
 

@@ -25,7 +25,7 @@
 package org.metaagent.framework.core.model.parser;
 
 import com.fasterxml.jackson.core.type.TypeReference;
-import org.metaagent.framework.core.converter.Converter;
+import org.metaagent.framework.common.converter.Converter;
 
 import java.util.List;
 import java.util.Map;

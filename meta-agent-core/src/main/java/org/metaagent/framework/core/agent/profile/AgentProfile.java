@@ -24,7 +24,7 @@
 
 package org.metaagent.framework.core.agent.profile;
 
-import org.metaagent.framework.core.common.metadata.MetadataProvider;
+import org.metaagent.framework.common.metadata.MetadataProvider;
 
 /**
  * Agent profile.

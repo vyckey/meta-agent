@@ -35,7 +35,7 @@ import org.metaagent.framework.core.tool.converter.ToolConverter;
 import org.metaagent.framework.core.tool.converter.ToolConverters;
 import org.metaagent.framework.core.tool.definition.ToolDefinition;
 import org.metaagent.framework.core.tool.exception.ToolExecutionException;
-import org.metaagent.framework.core.util.json.JsonObjectMapper;
+import org.metaagent.framework.common.json.JsonObjectMapper;
 
 import java.util.Map;
 import java.util.Objects;

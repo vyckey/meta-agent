@@ -53,14 +53,15 @@ sourceSets {
     }
 }
 
+tasks.withType(JavaCompile).configureEach {
+    options.compilerArgs += '-parameters'
+}
+
 dependencies {
     compileOnly libs.bundles.lombok
     annotationProcessor libs.bundles.lombok
 
-    api libs.bundles.utilies
-    api libs.bundles.jackson
-    api libs.bundles.jacksonYaml
-    api libs.bundles.log
+    api project(':meta-agent-common')
     api libs.bundles.mcp
     api libs.bundles.reactor
     api libs.bundles.springai

@@ -25,8 +25,8 @@
 package org.metaagent.framework.core.agent.output.observation;
 
 import lombok.Getter;
-import org.metaagent.framework.core.common.metadata.MapMetadataProvider;
-import org.metaagent.framework.core.common.metadata.MetadataProvider;
+import org.metaagent.framework.common.metadata.MapMetadataProvider;
+import org.metaagent.framework.common.metadata.MetadataProvider;
 
 /**
  * description is here

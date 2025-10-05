@@ -25,7 +25,7 @@
 package org.metaagent.framework.core.agent.input;
 
 import org.metaagent.framework.core.agent.AgentExecutionContext;
-import org.metaagent.framework.core.common.metadata.MetadataProvider;
+import org.metaagent.framework.common.metadata.MetadataProvider;
 
 import java.util.Objects;
 

@@ -4,8 +4,8 @@ import lombok.Getter;
 import org.apache.commons.collections.MapUtils;
 import org.metaagent.framework.core.model.prompt.formatter.StringFormatter;
 import org.metaagent.framework.core.model.prompt.formatter.StringFormatterManager;
-import org.metaagent.framework.core.util.IOUtils;
-import org.metaagent.framework.core.util.MarkdownUtils;
+import org.metaagent.framework.common.io.IOUtils;
+import org.metaagent.framework.common.io.MarkdownUtils;
 
 import java.io.IOException;
 import java.util.List;

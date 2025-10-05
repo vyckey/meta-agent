@@ -24,7 +24,7 @@
 
 package org.metaagent.framework.core.tool.converter;
 
-import org.metaagent.framework.core.converter.Converter;
+import org.metaagent.framework.common.converter.Converter;
 
 /**
  * ToolConverter is an interface that defines the contract for converting

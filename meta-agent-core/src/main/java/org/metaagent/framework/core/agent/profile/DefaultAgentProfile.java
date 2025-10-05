@@ -28,7 +28,7 @@ import lombok.Getter;
 import org.apache.commons.configuration2.BaseConfiguration;
 import org.apache.commons.configuration2.Configuration;
 import org.apache.commons.lang3.StringUtils;
-import org.metaagent.framework.core.common.metadata.ConfigurationMetadataProvider;
+import org.metaagent.framework.common.metadata.ConfigurationMetadataProvider;
 
 import java.util.Objects;
 

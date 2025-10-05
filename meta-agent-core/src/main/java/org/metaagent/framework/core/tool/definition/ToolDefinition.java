@@ -24,7 +24,7 @@
 
 package org.metaagent.framework.core.tool.definition;
 
-import org.metaagent.framework.core.common.metadata.MetadataProvider;
+import org.metaagent.framework.common.metadata.MetadataProvider;
 
 /**
  * ToolDefinition is the interface for tool definition.

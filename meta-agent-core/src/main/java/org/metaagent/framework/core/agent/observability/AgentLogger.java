@@ -24,7 +24,7 @@
 
 package org.metaagent.framework.core.agent.observability;
 
-import org.metaagent.framework.core.util.logger.DelegateLogger;
+import org.metaagent.framework.common.logger.DelegateLogger;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
