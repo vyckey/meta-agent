@@ -25,7 +25,7 @@
 package org.metaagent.framework.agents.chat;
 
 import org.metaagent.framework.core.agent.AbstractAgent;
-import org.metaagent.framework.core.agent.chat.message.AssistantMessage;
+import org.metaagent.framework.core.agent.chat.message.Message;
 import org.metaagent.framework.core.agent.chat.message.history.DefaultMessageHistory;
 import org.metaagent.framework.core.agent.chat.message.history.MessageHistory;
 import org.metaagent.framework.core.agent.input.AgentInput;
@@ -35,6 +35,7 @@ import org.metaagent.framework.core.agents.chat.ChatAgent;
 import org.metaagent.framework.core.agents.chat.ChatAgentInput;
 import org.metaagent.framework.core.agents.chat.ChatAgentOutput;
 import org.metaagent.framework.core.agents.chat.ChatAgentStreamOutput;
+import org.metaagent.framework.core.agents.chat.ChatAgentStreamOutputAggregator;
 import org.metaagent.framework.core.model.chat.ChatModelClient;
 import org.metaagent.framework.core.model.prompt.PromptTemplate;
 import org.metaagent.framework.core.model.prompt.PromptValue;
@@ -85,7 +86,7 @@ public class LlmChatAgent extends AbstractAgent<ChatAgentInput, ChatAgentOutput,
     @Override
     protected void beforeRun(AgentInput<ChatAgentInput> input) {
         // set system prompt
-        String modelCutoffDate = input.metadata().getProperty("model_cutoff_date", String.class);
+        String modelCutoffDate = input.metadata().getProperty("model_cutoff_date", String.class, "Unknown");
         PromptValue systemPrompt = systemPromptTemplate.format(Map.of(
                 "name", getName(),
                 "current_date", LocalDateTime.now().format(DateTimeFormatter.ISO_LOCAL_DATE),
@@ -99,7 +100,7 @@ public class LlmChatAgent extends AbstractAgent<ChatAgentInput, ChatAgentOutput,
     @Override
     protected AgentOutput<ChatAgentOutput> doStep(AgentInput<ChatAgentInput> agentInput) {
         ChatAgentInput input = agentInput.input();
-        AssistantMessage outputMessage = chatModelClient.sendMessage(input.messages());
+        Message outputMessage = chatModelClient.sendMessage(input.messages());
 
         chatModelClient.getNewMessages().forEach(messageHistory::appendMessage);
         ChatAgentOutput chatOutput = new ChatAgentOutput(List.of(outputMessage));
@@ -109,20 +110,19 @@ public class LlmChatAgent extends AbstractAgent<ChatAgentInput, ChatAgentOutput,
     @Override
     protected Flux<AgentOutput<ChatAgentStreamOutput>> doStepStream(AgentInput<ChatAgentInput> agentInput) {
         ChatAgentInput input = agentInput.input();
-        Flux<AssistantMessage> assistantMessageFlux = chatModelClient.sendMessageStream(input.messages());
-        return assistantMessageFlux.map(output -> AgentOutput.create(new ChatAgentStreamOutput(output)));
+        Flux<Message> messageFlux = chatModelClient.sendMessageStream(input.messages());
+        return messageFlux.map(output -> AgentOutput.create(new ChatAgentStreamOutput(output)));
     }
 
     @Override
     public AgentStreamOutputAggregator<ChatAgentStreamOutput, ChatAgentOutput> getStreamOutputAggregator() {
-        return AgentStreamOutputAggregator.reduce(AgentOutput.create(new ChatAgentOutput()), (output, streamOutput) -> {
-            return output;
-        });
+        return ChatAgentStreamOutputAggregator.INSTANCE;
     }
 
     @Override
     public void reset() {
         super.reset();
+        chatModelClient.reset();
         getMessageHistory().clear();
     }
 }
