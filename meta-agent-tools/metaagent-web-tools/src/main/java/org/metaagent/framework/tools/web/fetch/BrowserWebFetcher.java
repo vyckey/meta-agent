@@ -30,8 +30,8 @@ import com.microsoft.playwright.BrowserType;
 import com.microsoft.playwright.Page;
 import com.microsoft.playwright.Playwright;
 import com.microsoft.playwright.options.LoadState;
-import org.metaagent.framework.core.util.abort.AbortException;
-import org.metaagent.framework.core.util.abort.AbortSignal;
+import org.metaagent.framework.common.abort.AbortException;
+import org.metaagent.framework.common.abort.AbortSignal;
 
 import java.util.List;
 import java.util.Objects;

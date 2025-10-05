@@ -22,26 +22,48 @@
  * SOFTWARE.
  */
 
-package org.metaagent.framework.tools.web.fetch;
+plugins {
+    id 'java-library'
+    id 'application'
+    id 'maven-publish'
+    id 'buildlogic.java-common-conventions'
+}
 
-import org.metaagent.framework.common.abort.AbortSignal;
+group = 'org.metaagent.framework'
+version = '1.0.0'
 
-import java.util.List;
-import java.util.concurrent.Executor;
+publishing {
+    publications {
+        create("mavenJava", MavenPublication) {
+            from components.java
+        }
+    }
+}
 
-/**
- * WebFetcher
- *
- * @author vyckey
- */
-public interface WebFetcher {
-    /**
-     * Fetches the given URLs.
-     *
-     * @param urls        the URLs to fetch
-     * @param executor    the executor to use
-     * @param abortSignal the abort signal
-     * @return the fetched URL contents
-     */
-    List<WebFetchOutput.URLContent> fetchUrls(List<String> urls, Executor executor, AbortSignal abortSignal);
+sourceSets {
+    main {
+        resources {
+            srcDirs = ['src/main/resources']
+        }
+    }
+    test {
+        resources {
+            srcDirs = ['src/test/resources']
+        }
+    }
+}
+
+dependencies {
+    compileOnly libs.bundles.lombok
+    annotationProcessor libs.bundles.lombok
+
+    api libs.bundles.utilies
+    api libs.bundles.jackson
+    api libs.bundles.jacksonYaml
+    api libs.bundles.jsonschema
+    api libs.bundles.log
+    api libs.bundles.springai
+
+    testImplementation libs.bundles.unittest
+
 }

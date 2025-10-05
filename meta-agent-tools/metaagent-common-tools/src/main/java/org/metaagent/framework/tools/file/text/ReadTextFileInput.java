@@ -27,6 +27,7 @@ package org.metaagent.framework.tools.file.text;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
+import lombok.Builder;
 import lombok.Getter;
 import lombok.experimental.SuperBuilder;
 import org.metaagent.framework.core.tool.schema.ToolDisplayable;
@@ -49,9 +50,11 @@ public class ReadTextFileInput implements ToolDisplayable {
     @JsonPropertyDescription("The line number to start reading from for text file. Optional, default 0")
     private long offset;
 
+    @Builder.Default
     @JsonPropertyDescription("The maximum number of lines to read for text file. If omitted, reads the entire file. Optional, default -1")
     private int limit = -1;
 
+    @Builder.Default
     @JsonPropertyDescription("Whether to truncate file content if needed. Optional, default true")
     private boolean truncate = true;
 

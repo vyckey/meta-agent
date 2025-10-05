@@ -29,7 +29,7 @@ import okhttp3.Interceptor;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.Response;
-import org.metaagent.framework.core.util.abort.AbortSignal;
+import org.metaagent.framework.common.abort.AbortSignal;
 import org.metaagent.framework.tools.web.utils.WebPageUtils;
 
 import java.io.IOException;
