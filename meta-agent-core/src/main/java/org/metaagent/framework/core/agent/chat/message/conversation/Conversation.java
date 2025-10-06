@@ -22,7 +22,7 @@
  * SOFTWARE.
  */
 
-package org.metaagent.framework.core.agent.chat.message.history;
+package org.metaagent.framework.core.agent.chat.message.conversation;
 
 import org.metaagent.framework.core.agent.chat.message.Message;
 
@@ -31,29 +31,29 @@ import java.util.Optional;
 import java.util.function.Predicate;
 
 /**
- * Interface representing a history of messages in a chat session.
- * The last message in the history is considered the most recent one.
+ * Interface representing a conversation of messages in a chat session.
+ * The last message in the conversation is considered the most recent one.
  *
  * @author vyckey
  */
-public interface MessageHistory extends Iterable<Message> {
+public interface Conversation extends Iterable<Message> {
 
     /**
-     * Returns the unique identifier for this message history.
+     * Returns the unique identifier for this message conversation.
      *
-     * @return the history ID
+     * @return the conversation ID
      */
-    String historyId();
+    String id();
 
     /**
-     * Returns whether this message history is empty.
+     * Returns whether this message conversation is empty.
      *
-     * @return true if there are no messages in the history, false otherwise
+     * @return true if there are no messages in the conversation, false otherwise
      */
     boolean isEmpty();
 
     /**
-     * Appends a message to the history.
+     * Appends a message to the conversation.
      *
      * @param message the message to append
      */
@@ -78,14 +78,14 @@ public interface MessageHistory extends Iterable<Message> {
     Optional<Message> findMessage(Predicate<Message> predicate, boolean reverse);
 
     /**
-     * Returns the most recent message in the history.
+     * Returns the most recent message in the conversation.
      *
-     * @return an Optional containing the most recent message, or empty if the history is empty
+     * @return an Optional containing the most recent message, or empty if the conversation is empty
      */
     Optional<Message> lastMessage();
 
     /**
-     * Returns the last 'count' messages from the history.
+     * Returns the last 'count' messages from the conversation.
      *
      * @param count the number of messages to retrieve
      * @return a list of the last 'count' messages
@@ -93,7 +93,7 @@ public interface MessageHistory extends Iterable<Message> {
     List<Message> lastMessages(int count);
 
     /**
-     * Clears all messages from the history.
+     * Clears all messages from the conversation.
      * This operation is irreversible and will remove all messages.
      */
     void clear();

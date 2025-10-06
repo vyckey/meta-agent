@@ -28,8 +28,8 @@ import com.google.common.collect.Lists;
 import lombok.extern.slf4j.Slf4j;
 import org.metaagent.framework.core.agent.chat.message.Message;
 import org.metaagent.framework.core.agent.chat.message.MessageListener;
-import org.metaagent.framework.core.agent.chat.message.history.DefaultMessageHistory;
-import org.metaagent.framework.core.agent.chat.message.history.MessageHistory;
+import org.metaagent.framework.core.agent.chat.message.conversation.DefaultConversation;
+import org.metaagent.framework.core.agent.chat.message.conversation.Conversation;
 
 import java.io.IOException;
 import java.util.List;
@@ -44,7 +44,7 @@ import java.util.concurrent.CompletableFuture;
 public class DefaultChannel implements Channel {
     protected final String name;
     protected final List<MessageListener> messageListeners = Lists.newArrayList();
-    protected MessageHistory messageHistory = new DefaultMessageHistory();
+    protected Conversation conversation = new DefaultConversation();
     protected boolean open = true;
 
     public DefaultChannel(String name) {
@@ -75,7 +75,7 @@ public class DefaultChannel implements Channel {
     @Override
     public void send(Message message) {
         checkChannelOpen();
-        messageHistory.appendMessage(message);
+        conversation.appendMessage(message);
         notifyReceiver(message);
     }
 
@@ -105,8 +105,8 @@ public class DefaultChannel implements Channel {
     }
 
     @Override
-    public MessageHistory messageHistory() {
-        return messageHistory;
+    public Conversation conversation() {
+        return conversation;
     }
 
     @Override

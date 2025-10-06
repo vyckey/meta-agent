@@ -22,14 +22,13 @@
  * SOFTWARE.
  */
 
-package org.metaagent.framework.core.agent.chat.message.storage;
+package org.metaagent.framework.core.agent.chat.message.conversation;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.collect.Lists;
 import org.metaagent.framework.core.agent.chat.message.Message;
-import org.metaagent.framework.core.agent.chat.message.history.MessageHistory;
 
 import java.io.File;
 import java.io.IOException;
@@ -41,13 +40,13 @@ import java.util.Objects;
  *
  * @author vyckey
  */
-public class FileMessageStorage implements MessageStorage {
+public class ConversationFileStorage implements ConversationStorage {
     private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper()
             .disable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES)
             .enable(DeserializationFeature.ACCEPT_EMPTY_STRING_AS_NULL_OBJECT);
     private final String filePathFormat;
 
-    public FileMessageStorage(String filePathFormat) {
+    public ConversationFileStorage(String filePathFormat) {
         this.filePathFormat = Objects.requireNonNull(filePathFormat);
     }
 
@@ -56,28 +55,28 @@ public class FileMessageStorage implements MessageStorage {
     }
 
     @Override
-    public void save(MessageHistory messageHistory) {
-        String filePath = getFilePath(messageHistory.historyId());
+    public void save(Conversation conversation) {
+        String filePath = getFilePath(conversation.id());
         File file = new File(filePath);
         if (!file.exists()) {
             file.getParentFile().mkdirs();
         }
         try {
-            OBJECT_MAPPER.writeValue(file, Lists.newArrayList(messageHistory.reverse()));
+            OBJECT_MAPPER.writeValue(file, Lists.newArrayList(conversation.reverse()));
         } catch (IOException e) {
             throw new IllegalStateException(e.getMessage(), e);
         }
     }
 
     @Override
-    public void load(MessageHistory messageHistory) {
-        String filePath = getFilePath(messageHistory.historyId());
+    public void load(Conversation conversation) {
+        String filePath = getFilePath(conversation.id());
         File file = new File(filePath);
         if (file.exists()) {
             try {
                 List<Message> messages = OBJECT_MAPPER.readValue(file, new TypeReference<>() {
                 });
-                messages.forEach(messageHistory::appendMessage);
+                messages.forEach(conversation::appendMessage);
             } catch (IOException e) {
                 throw new IllegalStateException(e.getMessage(), e);
             }
@@ -85,8 +84,8 @@ public class FileMessageStorage implements MessageStorage {
     }
 
     @Override
-    public void clear(String historyId) {
-        String filePath = getFilePath(historyId);
+    public void clear(String conversationId) {
+        String filePath = getFilePath(conversationId);
         File file = new File(filePath);
         if (file.exists()) {
             file.delete();

@@ -28,7 +28,7 @@ import org.metaagent.framework.core.agent.Agent;
 import org.metaagent.framework.core.agent.AgentExecutionContext;
 import org.metaagent.framework.core.agent.chat.message.Message;
 import org.metaagent.framework.core.agent.chat.message.RoleMessage;
-import org.metaagent.framework.core.agent.chat.message.history.MessageHistory;
+import org.metaagent.framework.core.agent.chat.message.conversation.Conversation;
 import org.metaagent.framework.core.agent.input.AgentInput;
 import org.metaagent.framework.core.agent.output.AgentOutput;
 import reactor.core.publisher.Flux;
@@ -40,11 +40,11 @@ import reactor.core.publisher.Flux;
  */
 public interface ChatAgent extends Agent<ChatAgentInput, ChatAgentOutput, ChatAgentStreamOutput> {
     /**
-     * Get the message history of this agent.
+     * Get the conversation of this agent.
      *
-     * @return the message history of this agent
+     * @return the conversation of this agent
      */
-    MessageHistory getMessageHistory();
+    Conversation getConversation();
 
     /**
      * Run the agent with the given input.

@@ -26,25 +26,27 @@ package org.metaagent.framework.core.agent.chat.message.storage;
 
 import org.junit.jupiter.api.Test;
 import org.metaagent.framework.core.agent.chat.message.RoleMessage;
-import org.metaagent.framework.core.agent.chat.message.history.DefaultMessageHistory;
-import org.metaagent.framework.core.agent.chat.message.history.MessageHistory;
+import org.metaagent.framework.core.agent.chat.message.conversation.DefaultConversation;
+import org.metaagent.framework.core.agent.chat.message.conversation.Conversation;
+import org.metaagent.framework.core.agent.chat.message.conversation.ConversationFileStorage;
+import org.metaagent.framework.core.agent.chat.message.conversation.ConversationStorage;
 
 /**
  * description is here
  *
  * @author vyckey
  */
-class MessageStorageTest {
+class ConversationStorageTest {
     @Test
     void test() {
-        MessageHistory messageHistory = new DefaultMessageHistory();
-        messageHistory.appendMessage(RoleMessage.user("Who are you?"));
-        messageHistory.appendMessage(RoleMessage.assistant("I am your assistant."));
+        Conversation conversation = new DefaultConversation();
+        conversation.appendMessage(RoleMessage.user("Who are you?"));
+        conversation.appendMessage(RoleMessage.assistant("I am your assistant."));
 
-        MessageStorage messageStorage = new FileMessageStorage("data/chat/session_%s.json");
-        messageStorage.save(messageHistory);
+        ConversationStorage conversationStorage = new ConversationFileStorage("data/chat/session_%s.json");
+        conversationStorage.save(conversation);
 
-        messageStorage.clear(messageHistory.historyId());
+        conversationStorage.clear(conversation.id());
     }
 }
 

@@ -22,7 +22,7 @@
  * SOFTWARE.
  */
 
-package org.metaagent.framework.core.agent.chat.message.history;
+package org.metaagent.framework.core.agent.chat.message.conversation;
 
 import com.google.common.collect.Lists;
 import org.metaagent.framework.core.agent.chat.message.Message;
@@ -35,24 +35,24 @@ import java.util.UUID;
 import java.util.function.Predicate;
 
 /**
- * Default implementation of the {@link MessageHistory} interface.
+ * Default implementation of the {@link Conversation} interface.
  *
  * @author vyckey
  */
-public class DefaultMessageHistory implements MessageHistory {
-    protected final String historyId;
+public class DefaultConversation implements Conversation {
+    protected final String conversationId;
     protected final List<Message> messages;
 
-    public DefaultMessageHistory(String historyId, List<Message> messages) {
-        this.historyId = Objects.requireNonNull(historyId, "historyId is required");
+    public DefaultConversation(String conversationId, List<Message> messages) {
+        this.conversationId = Objects.requireNonNull(conversationId, "historyId is required");
         this.messages = Objects.requireNonNull(messages, "messages is required");
     }
 
-    public DefaultMessageHistory(String historyId) {
-        this(historyId, Lists.newArrayList());
+    public DefaultConversation(String conversationId) {
+        this(conversationId, Lists.newArrayList());
     }
 
-    public DefaultMessageHistory() {
+    public DefaultConversation() {
         this(generateHistoryId());
     }
 
@@ -61,8 +61,8 @@ public class DefaultMessageHistory implements MessageHistory {
     }
 
     @Override
-    public String historyId() {
-        return historyId;
+    public String id() {
+        return conversationId;
     }
 
     @Override
@@ -124,7 +124,7 @@ public class DefaultMessageHistory implements MessageHistory {
 
     public String asText(int maxMessageSize, int maxMessageLength) {
         StringBuilder sb = new StringBuilder()
-                .append("Message history (").append(historyId).append("):\n");
+                .append("Message history (").append(conversationId).append("):\n");
         boolean hasMoreMessages = false;
         List<Message> lastMessages = Lists.newArrayList();
         for (Message message : reverse()) {

@@ -22,19 +22,17 @@
  * SOFTWARE.
  */
 
-package org.metaagent.framework.core.agent.chat.message.storage;
-
-import org.metaagent.framework.core.agent.chat.message.history.MessageHistory;
+package org.metaagent.framework.core.agent.chat.message.conversation;
 
 /**
- * Message storage interface for storing and retrieving messages.
+ * Conversation storage interface for storing and retrieving messages.
  *
  * @author vyckey
  */
-public interface MessageStorage {
-    void save(MessageHistory messageHistory);
+public interface ConversationStorage {
+    void save(Conversation conversation);
 
-    void load(MessageHistory messageHistory);
+    void load(Conversation conversation);
 
-    void clear(String historyId);
+    void clear(String conversationId);
 }

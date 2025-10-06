@@ -24,10 +24,12 @@
 
 package org.metaagent.framework.agents.chat;
 
+import com.google.common.collect.Lists;
 import org.metaagent.framework.core.agent.AbstractAgent;
 import org.metaagent.framework.core.agent.chat.message.Message;
-import org.metaagent.framework.core.agent.chat.message.history.DefaultMessageHistory;
-import org.metaagent.framework.core.agent.chat.message.history.MessageHistory;
+import org.metaagent.framework.core.agent.chat.message.StreamMessageAggregator;
+import org.metaagent.framework.core.agent.chat.message.conversation.DefaultConversation;
+import org.metaagent.framework.core.agent.chat.message.conversation.Conversation;
 import org.metaagent.framework.core.agent.input.AgentInput;
 import org.metaagent.framework.core.agent.output.AgentOutput;
 import org.metaagent.framework.core.agent.output.AgentStreamOutputAggregator;
@@ -35,7 +37,6 @@ import org.metaagent.framework.core.agents.chat.ChatAgent;
 import org.metaagent.framework.core.agents.chat.ChatAgentInput;
 import org.metaagent.framework.core.agents.chat.ChatAgentOutput;
 import org.metaagent.framework.core.agents.chat.ChatAgentStreamOutput;
-import org.metaagent.framework.core.agents.chat.ChatAgentStreamOutputAggregator;
 import org.metaagent.framework.core.model.chat.ChatModelClient;
 import org.metaagent.framework.core.model.prompt.PromptTemplate;
 import org.metaagent.framework.core.model.prompt.PromptValue;
@@ -57,7 +58,7 @@ import java.util.Objects;
  */
 public class LlmChatAgent extends AbstractAgent<ChatAgentInput, ChatAgentOutput, ChatAgentStreamOutput> implements ChatAgent {
     public static final String DEFAULT_SYSTEM_PROMPT_ID = "framework:chat_agent_system_prompt";
-    protected MessageHistory messageHistory = new DefaultMessageHistory();
+    protected Conversation conversation = new DefaultConversation();
     protected final ChatModel chatModel;
     protected ChatModelClient chatModelClient;
     protected PromptTemplate systemPromptTemplate;
@@ -79,8 +80,8 @@ public class LlmChatAgent extends AbstractAgent<ChatAgentInput, ChatAgentOutput,
     }
 
     @Override
-    public MessageHistory getMessageHistory() {
-        return messageHistory;
+    public Conversation getConversation() {
+        return conversation;
     }
 
     @Override
@@ -102,7 +103,7 @@ public class LlmChatAgent extends AbstractAgent<ChatAgentInput, ChatAgentOutput,
         ChatAgentInput input = agentInput.input();
         Message outputMessage = chatModelClient.sendMessage(input.messages());
 
-        chatModelClient.getNewMessages().forEach(messageHistory::appendMessage);
+        chatModelClient.getNewMessages().forEach(conversation::appendMessage);
         ChatAgentOutput chatOutput = new ChatAgentOutput(List.of(outputMessage));
         return AgentOutput.create(chatOutput);
     }
@@ -116,13 +117,21 @@ public class LlmChatAgent extends AbstractAgent<ChatAgentInput, ChatAgentOutput,
 
     @Override
     public AgentStreamOutputAggregator<ChatAgentStreamOutput, ChatAgentOutput> getStreamOutputAggregator() {
-        return ChatAgentStreamOutputAggregator.INSTANCE;
+        return streamOutputs -> {
+            List<Message> streamMessages = Lists.newArrayList();
+            for (AgentOutput<ChatAgentStreamOutput> streamOutput : streamOutputs) {
+                streamMessages.add(streamOutput.result().message());
+            }
+
+            List<Message> outputMessages = StreamMessageAggregator.INSTANCE.aggregate(streamMessages);
+            return AgentOutput.create(new ChatAgentOutput(outputMessages));
+        };
     }
 
     @Override
     public void reset() {
         super.reset();
         chatModelClient.reset();
-        getMessageHistory().clear();
+        getConversation().clear();
     }
 }

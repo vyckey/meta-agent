@@ -26,7 +26,7 @@ package org.metaagent.framework.core.agent.ability.dialog;
 
 import org.metaagent.framework.core.agent.ability.AgentAbility;
 import org.metaagent.framework.core.agent.chat.message.Message;
-import org.metaagent.framework.core.agent.chat.message.history.MessageHistory;
+import org.metaagent.framework.core.agent.chat.message.conversation.Conversation;
 import org.metaagent.framework.core.agents.chat.ChatAgentOutput;
 
 /**
@@ -37,7 +37,7 @@ import org.metaagent.framework.core.agents.chat.ChatAgentOutput;
 public interface AgentDialogAbility extends AgentAbility {
     ChatAgentOutput handleMessage(Message message);
 
-    MessageHistory messageHistory();
+    Conversation messageHistory();
 
     void reset();
 }

@@ -22,38 +22,38 @@
  * SOFTWARE.
  */
 
-package org.metaagent.framework.core.agent.chat.message;
+package org.metaagent.framework.core.agent.chat.message.conversation;
 
-import lombok.EqualsAndHashCode;
-import lombok.Getter;
-import org.metaagent.framework.core.common.media.MediaResource;
-import org.metaagent.framework.core.common.metadata.MetadataProvider;
-
-import java.util.List;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
- * A message from the user role.
+ * description is here
  *
  * @author vyckey
  */
-@Getter
-@EqualsAndHashCode(callSuper = true)
-public class UserMessage extends DefaultRoleMessage {
+public class ConversationInMemoryStorage implements ConversationStorage {
+    public static final ConversationInMemoryStorage INSTANCE = new ConversationInMemoryStorage();
+    private final Map<String, Conversation> conversations = new ConcurrentHashMap<>();
 
-    public UserMessage(String content, List<MediaResource> media, MetadataProvider metadata) {
-        super(RoleMessage.ROLE_USER, content, media);
-        this.metadata = metadata;
+    private ConversationInMemoryStorage() {
     }
 
-    public UserMessage(String content, List<MediaResource> media) {
-        this(content, media, MetadataProvider.create());
+    @Override
+    public void save(Conversation conversation) {
+        conversations.put(conversation.id(), conversation);
     }
 
-    public UserMessage(String content, MetadataProvider metadata) {
-        this(content, List.of(), metadata);
+    @Override
+    public void load(Conversation conversation) {
+        Conversation stored = conversations.get(conversation.id());
+        if (stored == null) {
+            throw new IllegalStateException("Conversation with id '" + conversation.id() + "' does not exist");
+        }
     }
 
-    public UserMessage(String content) {
-        this(content, List.of());
+    @Override
+    public void clear(String conversationId) {
+        conversations.remove(conversationId);
     }
 }
