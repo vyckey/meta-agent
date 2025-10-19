@@ -1,6 +1,5 @@
-rootProject.name = 'meta-agent'
+rootProject.name = 'meta-agent-project'
 
-include 'meta-agent-common'
-include 'meta-agent-core'
-include 'meta-agent-agents'
-include 'meta-agent-examples'
+includeBuild 'meta-agent'
+includeBuild 'meta-agent-tools'
+includeBuild 'thirdparty'
