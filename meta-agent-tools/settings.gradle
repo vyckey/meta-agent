@@ -1,0 +1,5 @@
+rootProject.name = 'meta-agent-tools'
+
+include 'metaagent-common-tools'
+include 'metaagent-search-tools'
+include 'metaagent-web-tools'

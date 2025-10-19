@@ -28,8 +28,8 @@ import com.google.common.collect.Lists;
 import lombok.extern.slf4j.Slf4j;
 import org.metaagent.framework.core.agent.chat.message.Message;
 import org.metaagent.framework.core.agent.chat.message.MessageListener;
-import org.metaagent.framework.core.agent.chat.message.conversation.DefaultConversation;
 import org.metaagent.framework.core.agent.chat.message.conversation.Conversation;
+import org.metaagent.framework.core.agent.chat.message.conversation.DefaultConversation;
 
 import java.io.IOException;
 import java.util.List;

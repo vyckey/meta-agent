@@ -38,7 +38,7 @@ import org.metaagent.framework.core.model.prompt.PromptValue;
 import org.metaagent.framework.core.model.prompt.StringPromptTemplate;
 import org.metaagent.framework.core.model.prompt.registry.PromptRegistry;
 import org.metaagent.framework.core.tool.executor.ToolExecutorContext;
-import org.metaagent.framework.core.tool.spring.ToolCallbackUtils;
+import org.metaagent.framework.core.tool.tools.spring.ToolCallbackUtils;
 import org.springframework.ai.chat.messages.AssistantMessage;
 import org.springframework.ai.chat.messages.Message;
 import org.springframework.ai.chat.messages.SystemMessage;

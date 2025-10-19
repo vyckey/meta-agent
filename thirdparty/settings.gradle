@@ -1,0 +1,5 @@
+rootProject.name = 'thirdparty'
+
+include 'metaagent-bochaai-api'
+include 'metaagent-searchapi-api'
+include 'metaagent-tavily-api'
