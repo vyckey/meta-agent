@@ -1,0 +1,45 @@
+plugins {
+    id 'java-library'
+    id 'application'
+    id 'maven-publish'
+}
+
+group = 'org.metaagent.server'
+version = '1.0.0'
+
+repositories {
+    mavenLocal()
+    mavenCentral()
+}
+
+sourceSets {
+    main {
+        resources {
+            srcDirs = ['src/main/resources']
+        }
+    }
+    test {
+        resources {
+            srcDirs = ['src/test/resources']
+        }
+    }
+}
+
+configurations.all {
+    exclude group: 'org.springframework.boot', module: 'spring-boot-starter-logging'
+}
+
+dependencies {
+    compileOnly libs.bundles.lombok
+    annotationProcessor libs.bundles.lombok
+
+    implementation libs.bundles.springboot
+    implementation libs.bundles.metaagent
+
+    testImplementation libs.bundles.unittest
+
+}
+
+test {
+    useJUnitPlatform()
+}
