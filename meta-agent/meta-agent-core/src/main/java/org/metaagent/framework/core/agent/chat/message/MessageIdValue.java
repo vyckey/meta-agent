@@ -22,32 +22,29 @@
  * SOFTWARE.
  */
 
-package org.metaagent.framework.core.agent.chat.message.conversation;
+package org.metaagent.framework.core.agent.chat.message;
 
-/**
- * Conversation storage interface for storing and retrieving messages.
- *
- * @author vyckey
- */
-public interface ConversationStorage {
-    /**
-     * Store the conversation.
-     *
-     * @param conversation the conversation to save
-     */
-    void store(Conversation conversation);
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonValue;
+import lombok.EqualsAndHashCode;
 
-    /**
-     * Load the conversation.
-     *
-     * @param conversation the conversation to load
-     */
-    void load(Conversation conversation);
+@EqualsAndHashCode
+public class MessageIdValue implements MessageId {
+    private final String value;
 
-    /**
-     * Clear the conversation.
-     *
-     * @param conversationId the conversation ID to clear
-     */
-    void clear(String conversationId);
+    @JsonCreator
+    public MessageIdValue(String value) {
+        this.value = value;
+    }
+
+    @JsonValue
+    @Override
+    public String value() {
+        return value;
+    }
+
+    @Override
+    public String toString() {
+        return value;
+    }
 }

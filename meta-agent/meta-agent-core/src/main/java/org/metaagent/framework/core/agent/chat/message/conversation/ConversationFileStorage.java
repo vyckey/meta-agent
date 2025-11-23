@@ -24,11 +24,9 @@
 
 package org.metaagent.framework.core.agent.chat.message.conversation;
 
-import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.DeserializationFeature;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.collect.Lists;
 import org.metaagent.framework.core.agent.chat.message.Message;
+import org.metaagent.framework.core.agent.chat.message.MessageSerializer;
 
 import java.io.File;
 import java.io.IOException;
@@ -36,35 +34,35 @@ import java.util.List;
 import java.util.Objects;
 
 /**
- * description is here
+ * File-based implementation of ConversationStorage.
  *
  * @author vyckey
  */
 public class ConversationFileStorage implements ConversationStorage {
-    private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper()
-            .disable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES)
-            .enable(DeserializationFeature.ACCEPT_EMPTY_STRING_AS_NULL_OBJECT);
-    private final String filePathFormat;
+    private final String filePathPattern;
 
-    public ConversationFileStorage(String filePathFormat) {
-        this.filePathFormat = Objects.requireNonNull(filePathFormat);
+    public ConversationFileStorage(String filePathPattern) {
+        this.filePathPattern = Objects.requireNonNull(filePathPattern).trim();
     }
 
     public String getFilePath(String historyId) {
-        return String.format(filePathFormat, historyId);
+        return String.format(filePathPattern, historyId);
     }
 
     @Override
-    public void save(Conversation conversation) {
+    public void store(Conversation conversation) {
         String filePath = getFilePath(conversation.id());
         File file = new File(filePath);
-        if (!file.exists()) {
-            file.getParentFile().mkdirs();
+        if (!file.getParentFile().exists()) {
+            if (!file.getParentFile().mkdirs()) {
+                throw new IllegalStateException("Unable to create directory: " + file.getParentFile().getAbsolutePath());
+            }
         }
         try {
-            OBJECT_MAPPER.writeValue(file, Lists.newArrayList(conversation.reverse()));
+            ConversationDO convDo = new ConversationDO(conversation.id(), Lists.newArrayList(conversation.reverse()));
+            MessageSerializer.getObjectMapper().writeValue(file, convDo);
         } catch (IOException e) {
-            throw new IllegalStateException(e.getMessage(), e);
+            throw new IllegalStateException("Failed to store conversation " + conversation.id() + ": " + e.getMessage(), e);
         }
     }
 
@@ -74,11 +72,12 @@ public class ConversationFileStorage implements ConversationStorage {
         File file = new File(filePath);
         if (file.exists()) {
             try {
-                List<Message> messages = OBJECT_MAPPER.readValue(file, new TypeReference<>() {
-                });
+                ConversationDO convDo = MessageSerializer.getObjectMapper().readValue(file, ConversationDO.class);
+                List<Message> messages = convDo.messages;
+                conversation.clear();
                 messages.forEach(conversation::appendMessage);
             } catch (IOException e) {
-                throw new IllegalStateException(e.getMessage(), e);
+                throw new IllegalStateException("Failed to load conversation file " + file.getAbsolutePath() + ": " + e.getMessage(), e);
             }
         }
     }
@@ -90,5 +89,8 @@ public class ConversationFileStorage implements ConversationStorage {
         if (file.exists()) {
             file.delete();
         }
+    }
+
+    private record ConversationDO(String convId, List<Message> messages) {
     }
 }

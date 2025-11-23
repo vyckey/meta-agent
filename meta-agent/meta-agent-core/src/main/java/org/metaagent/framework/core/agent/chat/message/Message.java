@@ -24,6 +24,7 @@
 
 package org.metaagent.framework.core.agent.chat.message;
 
+import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import org.metaagent.framework.common.content.MediaContent;
 import org.metaagent.framework.common.content.MediaResource;
 import org.metaagent.framework.common.content.TextContent;
@@ -37,6 +38,11 @@ import java.util.List;
  *
  * @author vyckey
  */
+@JsonTypeInfo(
+        use=JsonTypeInfo.Id.NAME,
+        include=JsonTypeInfo.As.PROPERTY,
+        property="type"
+)
 public interface Message extends TextContent, MediaContent {
     /**
      * Get the unique identifier of the message.

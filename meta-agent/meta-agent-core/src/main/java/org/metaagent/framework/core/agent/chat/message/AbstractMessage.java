@@ -24,7 +24,8 @@
 
 package org.metaagent.framework.core.agent.chat.message;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
+import org.metaagent.framework.common.metadata.MapMetadataProvider;
 import org.metaagent.framework.common.metadata.MetadataProvider;
 
 import java.time.Instant;
@@ -35,7 +36,9 @@ import java.time.Instant;
  * @author vyckey
  */
 public abstract class AbstractMessage implements Message {
+    @JsonDeserialize(as = MessageIdValue.class)
     protected MessageId id;
+    @JsonDeserialize(as = MapMetadataProvider.class)
     protected MetadataProvider metadata;
     protected Instant createdAt = Instant.now();
 
@@ -55,7 +58,6 @@ public abstract class AbstractMessage implements Message {
         return metadata;
     }
 
-    @JsonIgnore
     @Override
     public Instant getCreatedAt() {
         return createdAt;

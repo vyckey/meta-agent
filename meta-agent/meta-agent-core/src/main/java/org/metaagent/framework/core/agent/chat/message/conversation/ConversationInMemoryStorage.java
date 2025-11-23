@@ -28,7 +28,7 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
- * description is here
+ * In-memory implementation of ConversationStorage.
  *
  * @author vyckey
  */
@@ -40,7 +40,7 @@ public class ConversationInMemoryStorage implements ConversationStorage {
     }
 
     @Override
-    public void save(Conversation conversation) {
+    public void store(Conversation conversation) {
         conversations.put(conversation.id(), conversation);
     }
 

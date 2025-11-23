@@ -24,6 +24,8 @@
 
 package org.metaagent.framework.common.metadata;
 
+import com.fasterxml.jackson.annotation.JsonValue;
+
 import java.util.Map;
 import java.util.Optional;
 
@@ -52,10 +54,21 @@ public interface MetadataProvider {
     }
 
     /**
+     * Creates a MetadataProvider from the given properties map.
+     *
+     * @param properties the properties map.
+     * @return a MetadataProvider instance containing the given properties.
+     */
+    static MetadataProvider create(Map<String, Object> properties) {
+        return new MapMetadataProvider(properties);
+    }
+
+    /**
      * Gets all metadata as a map.
      *
      * @return a map containing all metadata.
      */
+    @JsonValue
     Map<String, Object> getProperties();
 
     /**

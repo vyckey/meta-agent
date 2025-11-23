@@ -24,6 +24,7 @@
 
 package org.metaagent.framework.common.metadata;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
 import com.google.common.collect.Maps;
 
 import java.util.Collections;
@@ -47,6 +48,7 @@ public class MapMetadataProvider implements MetadataProvider {
         this.metadata = Maps.newHashMap();
     }
 
+    @JsonCreator
     public static MapMetadataProvider immutable(Map<String, Object> metadata) {
         return new MapMetadataProvider(Collections.unmodifiableMap(metadata));
     }
