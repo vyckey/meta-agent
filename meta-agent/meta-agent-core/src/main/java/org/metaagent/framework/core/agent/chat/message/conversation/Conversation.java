@@ -25,6 +25,7 @@
 package org.metaagent.framework.core.agent.chat.message.conversation;
 
 import org.metaagent.framework.core.agent.chat.message.Message;
+import org.metaagent.framework.core.agent.chat.message.MessageId;
 
 import java.util.List;
 import java.util.Optional;
@@ -93,13 +94,22 @@ public interface Conversation extends Iterable<Message> {
     List<Message> lastMessages(int count);
 
     /**
+     * Resets the conversation to the state after the specified message ID.
+     * All messages after the given message ID will be removed.
+     *
+     * @param messageId the message ID to reset to
+     * @param inclusive if true, the message with the specified ID will also be removed
+     */
+    void resetAfter(MessageId messageId, boolean inclusive);
+
+    /**
      * Clears all messages from the conversation.
      * This operation is irreversible and will remove all messages.
      */
     void clear();
 
     /**
-     * Returns an iterable of messages in reverse order.
+     * Returns an iterable of messages in time reverse order.
      * This is useful for iterating from the most recent message to the oldest.
      *
      * @return an iterable of messages in reverse order

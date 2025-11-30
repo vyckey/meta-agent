@@ -26,8 +26,6 @@ package org.metaagent.framework.core.agent.chat.message;
 
 import com.fasterxml.jackson.annotation.JsonValue;
 
-import java.util.UUID;
-
 /**
  * Represents a unique identifier for a message.
  *
@@ -41,7 +39,7 @@ public interface MessageId {
      * @return a random MessageId
      */
     static MessageId random() {
-        return () -> UUID.randomUUID().toString();
+        return MessageIdValue.random();
     }
 
     /**

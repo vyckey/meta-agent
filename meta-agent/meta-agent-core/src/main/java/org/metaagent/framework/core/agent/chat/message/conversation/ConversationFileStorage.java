@@ -59,7 +59,7 @@ public class ConversationFileStorage implements ConversationStorage {
             }
         }
         try {
-            ConversationDO convDo = new ConversationDO(conversation.id(), Lists.newArrayList(conversation.reverse()));
+            ConversationDO convDo = new ConversationDO(conversation.id(), Lists.newArrayList(conversation));
             MessageSerializer.getObjectMapper().writeValue(file, convDo);
         } catch (IOException e) {
             throw new IllegalStateException("Failed to store conversation " + conversation.id() + ": " + e.getMessage(), e);

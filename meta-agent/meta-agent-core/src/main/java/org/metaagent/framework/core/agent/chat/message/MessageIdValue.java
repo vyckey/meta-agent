@@ -28,13 +28,24 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonValue;
 import lombok.EqualsAndHashCode;
 
+import java.util.UUID;
+
 @EqualsAndHashCode
 public class MessageIdValue implements MessageId {
     private final String value;
 
-    @JsonCreator
-    public MessageIdValue(String value) {
+    private MessageIdValue(String value) {
         this.value = value;
+    }
+
+    @JsonCreator
+    public static MessageIdValue valueOf(String value) {
+        return new MessageIdValue(value);
+    }
+
+    public static MessageIdValue random() {
+        String uuid = UUID.randomUUID().toString();
+        return new MessageIdValue(uuid.replace("-", "").substring(0, 16));
     }
 
     @JsonValue

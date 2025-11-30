@@ -25,11 +25,20 @@
 package org.metaagent.framework.core.agent.chat.message.storage;
 
 import org.junit.jupiter.api.Test;
+import org.metaagent.framework.common.content.MediaResource;
+import org.metaagent.framework.common.metadata.MetadataProvider;
 import org.metaagent.framework.core.agent.chat.message.RoleMessage;
-import org.metaagent.framework.core.agent.chat.message.conversation.DefaultConversation;
 import org.metaagent.framework.core.agent.chat.message.conversation.Conversation;
 import org.metaagent.framework.core.agent.chat.message.conversation.ConversationFileStorage;
 import org.metaagent.framework.core.agent.chat.message.conversation.ConversationStorage;
+import org.metaagent.framework.core.agent.chat.message.conversation.DefaultConversation;
+import org.springframework.util.MimeType;
+
+import java.net.URI;
+import java.util.List;
+import java.util.Map;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 /**
  * description is here
@@ -38,13 +47,24 @@ import org.metaagent.framework.core.agent.chat.message.conversation.Conversation
  */
 class ConversationStorageTest {
     @Test
-    void test() {
+    void fileStorageTest() {
         Conversation conversation = new DefaultConversation();
         conversation.appendMessage(RoleMessage.user("Who are you?"));
         conversation.appendMessage(RoleMessage.assistant("I am your assistant."));
 
+        MediaResource media = MediaResource.builder().mimeType(MimeType.valueOf("image/*")).name("img").uri(URI.create("images/hello.jpg")).build();
+        RoleMessage message = RoleMessage.user("How is today?", List.of(), MetadataProvider.create(Map.of(
+                "k1", 1,
+                "k2", "v2"
+        )));
+        conversation.appendMessage(message);
+
         ConversationStorage conversationStorage = new ConversationFileStorage("data/chat/session_%s.json");
-        conversationStorage.save(conversation);
+        conversationStorage.store(conversation);
+
+        DefaultConversation conversation2 = new DefaultConversation(conversation.id());
+        conversationStorage.load(conversation2);
+        assertEquals(conversation.toString(), conversation2.toString());
 
         conversationStorage.clear(conversation.id());
     }

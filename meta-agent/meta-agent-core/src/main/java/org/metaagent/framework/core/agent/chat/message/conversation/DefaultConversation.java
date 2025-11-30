@@ -26,7 +26,11 @@ package org.metaagent.framework.core.agent.chat.message.conversation;
 
 import com.google.common.collect.Lists;
 import org.metaagent.framework.core.agent.chat.message.Message;
+import org.metaagent.framework.core.agent.chat.message.MessageId;
 
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Objects;
@@ -40,6 +44,7 @@ import java.util.function.Predicate;
  * @author vyckey
  */
 public class DefaultConversation implements Conversation {
+    private static final DateTimeFormatter TIME_FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ssXXX");
     protected final String conversationId;
     protected final List<Message> messages;
 
@@ -113,18 +118,33 @@ public class DefaultConversation implements Conversation {
     }
 
     @Override
+    public void resetAfter(MessageId messageId, boolean inclusive) {
+        int index = -1;
+        for (int i = messages.size() - 1; i >= 0; i--) {
+            if (messages.get(i).getId().equals(messageId)) {
+                index = inclusive ? i - 1 : i;
+                break;
+            }
+        }
+        if (index == -1) {
+            throw new IllegalStateException("MessageId " + messageId + " not found in conversation " + conversationId);
+        }
+        messages.subList(index + 1, messages.size()).clear();
+    }
+
+    @Override
     public void clear() {
         this.messages.clear();
     }
 
     @Override
     public Iterator<Message> iterator() {
-        return Lists.reverse(messages).iterator();
+        return messages.iterator();
     }
 
     public String asText(int maxMessageSize, int maxMessageLength) {
         StringBuilder sb = new StringBuilder()
-                .append("Message history (").append(conversationId).append("):\n");
+                .append("Conversation history (ID=").append(conversationId).append("):\n");
         boolean hasMoreMessages = false;
         List<Message> lastMessages = Lists.newArrayList();
         for (Message message : reverse()) {
@@ -152,13 +172,15 @@ public class DefaultConversation implements Conversation {
             if (content.length() > maxMessageLength) {
                 content = content.substring(0, maxMessageLength) + "...(truncated)";
             }
+            ZonedDateTime createdTime = message.getCreatedAt().atZone(ZoneId.systemDefault());
+            sb.append("[").append(createdTime.format(TIME_FORMATTER)).append("] ");
             sb.append(message.getRole()).append(": ").append(content);
             sb.append("\n");
         }
     }
 
     public Iterable<Message> reverse() {
-        return messages;
+        return Lists.reverse(messages);
     }
 
     @Override
