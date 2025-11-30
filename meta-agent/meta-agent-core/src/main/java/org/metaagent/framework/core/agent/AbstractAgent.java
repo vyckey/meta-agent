@@ -24,7 +24,6 @@
 
 package org.metaagent.framework.core.agent;
 
-import org.apache.commons.lang3.tuple.Pair;
 import org.metaagent.framework.core.agent.input.AgentInput;
 import org.metaagent.framework.core.agent.loop.AgentLoopControlStrategy;
 import org.metaagent.framework.core.agent.loop.MaxLoopCountAgentLoopControl;
@@ -34,9 +33,9 @@ import org.metaagent.framework.core.tool.ToolContext;
 import org.metaagent.framework.core.tool.executor.ToolExecutorContext;
 import org.metaagent.framework.core.tool.manager.ToolManager;
 import reactor.core.publisher.Flux;
-import reactor.core.publisher.Sinks;
 
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.Consumer;
 
 /**
  * Abstract {@link Agent} implementation.
@@ -74,44 +73,35 @@ public abstract class AbstractAgent<I, O, S>
     }
 
     @Override
-    protected Flux<AgentOutput<S>> doRunStream(AgentInput<I> input) {
+    protected Flux<AgentOutput<S>> doRunStream(AgentInput<I> input, Consumer<AgentOutput<O>> onRunStreamComplete) {
         Agent<I, O, S> agent = this;
 
-        Sinks.Many<AgentOutput<O>> fullOutputSink = Sinks.many().replay().latest();
-        AtomicReference<AgentStateHolder<AgentInput<I>, AgentOutput<O>>> holderRef = new AtomicReference<>(
-                new AgentStateHolder<>(input, null)
-        );
+        AtomicReference<AgentInput<I>> currentInputRef = new AtomicReference<>(input);
+        AtomicReference<AgentOutput<O>> lastOutputRef = new AtomicReference<>();
 
-        // perform first step
-        Pair<Flux<AgentOutput<S>>, AtomicReference<AgentOutput<O>>> firstStepPair = stepStreamWithOutput(input);
-        Flux<AgentOutput<S>> firstStepStream = firstStepPair.getLeft()
-                .doOnComplete(() -> fullOutputSink.tryEmitNext(firstStepPair.getRight().get()));
+        return Flux.defer(() -> stepStream(currentInputRef.get(), lastOutputRef::set))
+                .repeat(() -> {
+                    AgentOutput<O> lastAgentOutput = lastOutputRef.get();
+                    AgentInput<I> currentInput = currentInputRef.get();
 
-        // perform remaining steps util loop control strategy tells us to stop
-        return firstStepStream
-                .concatWith(Flux.defer(() -> fullOutputSink.asFlux()
-                        .flatMap(fullOutput -> {
-                            // update input and output state
-                            holderRef.set(new AgentStateHolder<>(holderRef.get().input(), fullOutput));
-
-                            if (getLoopControlStrategy().shouldContinueLoop(agent, input, fullOutput)) {
-                                // perform next step
-                                AgentInput<I> nextInput = buildNextStepInput(holderRef.get().input(), holderRef.get().fullOutput());
-                                holderRef.set(new AgentStateHolder<>(nextInput, null));
-
-                                Pair<Flux<AgentOutput<S>>, AtomicReference<AgentOutput<O>>> stepPair = stepStreamWithOutput(input);
-                                return stepPair.getLeft()
-                                        .doOnComplete(() -> fullOutputSink.tryEmitNext(firstStepPair.getRight().get()));
-                            } else {
-                                // stop loop
-                                return Flux.empty();
-                            }
-                        })
-                        .takeWhile(output -> getLoopControlStrategy()
-                                .shouldContinueLoop(agent, input, holderRef.get().fullOutput())
-                        )
-                ))
-                .doFinally(signal -> fullOutputSink.tryEmitComplete());
+                    if (getLoopControlStrategy().shouldContinueLoop(agent, currentInput, lastAgentOutput)) {
+                        // perform next step
+                        AgentInput<I> nextInput = buildNextStepInput(currentInput, lastAgentOutput);
+                        agentState.incrLoopCount();
+                        currentInputRef.set(nextInput);
+                        return true;
+                    } else {
+                        // stop loop
+                        return false;
+                    }
+                })
+                .doOnComplete(() -> {
+                    AgentOutput<O> lastOutput = lastOutputRef.get();
+                    System.out.println("Invoking onRunStreamComplete callback...");
+                    if (onRunStreamComplete != null) {
+                        onRunStreamComplete.accept(lastOutput);
+                    }
+                });
     }
 
     /**

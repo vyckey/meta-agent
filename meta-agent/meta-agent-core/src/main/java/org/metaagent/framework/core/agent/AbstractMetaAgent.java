@@ -25,7 +25,6 @@
 package org.metaagent.framework.core.agent;
 
 import com.google.common.collect.Lists;
-import org.apache.commons.lang3.tuple.Pair;
 import org.metaagent.framework.core.agent.ability.AgentAbilityManager;
 import org.metaagent.framework.core.agent.ability.DefaultAgentAbilityManager;
 import org.metaagent.framework.core.agent.fallback.AgentFallbackStrategy;
@@ -206,17 +205,18 @@ public abstract class AbstractMetaAgent<I, O, S> implements MetaAgent<I, O, S> {
         agentState.setStatus(AgentRunStatus.RUNNING);
 
         MetaAgent<I, O, S> agent = this;
-        return doRunStream(input)
+        AtomicReference<AgentOutput<O>> fullOutputRef = new AtomicReference<>();
+        return doRunStream(input, fullOutputRef::set)
                 .doOnSubscribe(sub -> {
                     notifyListeners(runListeners, listener -> listener.onAgentStart(agent, input));
                 })
-                .doOnNext(output -> notifyListeners(runListeners, listener -> listener.onAgentOutput(agent, input, null)))
                 .onErrorResume(throwable -> {
                     if (throwable instanceof Exception ex) {
                         return fallbackStream(input, ex);
                     }
                     return Flux.error(throwable);
                 })
+                .doOnComplete(() -> notifyListeners(runListeners, listener -> listener.onAgentOutput(agent, input, fullOutputRef.get())))
                 .doOnComplete(() -> agentState.setStatus(AgentRunStatus.COMPLETED))
                 .doOnError(throwable -> {
                     Exception ex = wrapException(throwable);
@@ -226,33 +226,34 @@ public abstract class AbstractMetaAgent<I, O, S> implements MetaAgent<I, O, S> {
                 });
     }
 
-    protected Flux<AgentOutput<S>> doRunStream(AgentInput<I> input) {
-        return stepStream(input);
+    protected Flux<AgentOutput<S>> doRunStream(AgentInput<I> input, Consumer<AgentOutput<O>> onRunStreamComplete) {
+        return stepStream(input, onRunStreamComplete);
     }
 
     @Override
     public Flux<AgentOutput<S>> stepStream(AgentInput<I> input) {
-        return stepStreamWithOutput(input).getLeft();
+        return stepStream(input, fullOutput -> {
+        });
     }
 
-    protected Pair<Flux<AgentOutput<S>>, AtomicReference<AgentOutput<O>>> stepStreamWithOutput(AgentInput<I> input) {
+    protected Flux<AgentOutput<S>> stepStream(AgentInput<I> input, Consumer<AgentOutput<O>> onStepStreamComplete) {
         MetaAgent<I, O, S> agent = this;
 
         AtomicReference<List<AgentOutput<S>>> streamOutputsRef = new AtomicReference<>(Lists.newArrayList());
         AtomicReference<AgentOutput<O>> fullOutputRef = new AtomicReference<>();
 
         AgentStreamOutputAggregator<S, O> aggregator = getStreamOutputAggregator();
-        Flux<AgentOutput<S>> stream = doStepStream(input)
+        return doStepStream(input)
                 .doOnSubscribe(sub -> notifyListeners(stepListeners, listener -> listener.onAgentStepStart(agent, input)))
                 .doOnNext(output -> streamOutputsRef.get().add(output))
                 .doOnComplete(() -> fullOutputRef.set(aggregator.aggregate(streamOutputsRef.get())))
+                .doOnComplete(() -> onStepStreamComplete.accept(fullOutputRef.get()))
                 .doOnComplete(() -> notifyListeners(stepListeners, listener -> listener.onAgentStepFinish(agent, input, fullOutputRef.get())))
                 .doOnError(throwable -> {
                     Exception ex = wrapException(throwable);
                     agentState.setLastException(ex);
                     notifyListeners(stepListeners, listener -> listener.onAgentStepError(agent, input, ex));
                 });
-        return Pair.of(stream, fullOutputRef);
     }
 
     protected Flux<AgentOutput<S>> doStepStream(AgentInput<I> input) {

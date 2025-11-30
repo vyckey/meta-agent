@@ -44,6 +44,18 @@ public interface AgentOutput<O> {
     }
 
     /**
+     * Creates an agent output with the given output.
+     *
+     * @param output   the output
+     * @param <O>      the type of the output
+     * @param metadata the output metadata
+     * @return the agent output
+     */
+    static <O> AgentOutput<O> create(O output, MetadataProvider metadata) {
+        return new DefaultAgentOutput<>(output, metadata);
+    }
+
+    /**
      * Gets agent output metadata.
      *
      * @return output metadata.

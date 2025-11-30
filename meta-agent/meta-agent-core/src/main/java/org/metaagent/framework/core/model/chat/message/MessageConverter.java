@@ -85,10 +85,6 @@ public class MessageConverter implements BiConverter<Message, org.springframewor
                     .metadata(message.getMetadata().getProperties())
                     .media(media)
                     .build();
-        } else if (message instanceof SystemMessage systemMessage) {
-            return new org.springframework.ai.chat.messages.SystemMessage(
-                    systemMessage.getContent()
-            );
         } else if (message instanceof ToolCallMessage toolCallMessage) {
             List<Media> media = toolCallMessage.getMedia().stream().map(this::convertMedia).toList();
             List<AssistantMessage.ToolCall> toolCalls = toolCallMessage.getToolCalls().stream()
@@ -147,9 +143,6 @@ public class MessageConverter implements BiConverter<Message, org.springframewor
                 } else {
                     return RoleMessage.assistant(content, media, metadata);
                 }
-            }
-            case SYSTEM -> {
-                return new SystemMessage(message.getText());
             }
             case TOOL -> {
                 org.springframework.ai.chat.messages.ToolResponseMessage responseMessage =

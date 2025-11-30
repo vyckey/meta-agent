@@ -22,34 +22,20 @@
  * SOFTWARE.
  */
 
-package org.metaagent.framework.core.model.chat.message;
+package org.metaagent.framework.core.agents.task.assignment;
 
-import lombok.EqualsAndHashCode;
 import lombok.Getter;
-import org.metaagent.framework.common.metadata.MapMetadataProvider;
-import org.metaagent.framework.core.agent.chat.message.AbstractMessage;
 
-import java.util.Map;
+import java.util.List;
 
-/**
- * Represents a system message in a chat model.
- * This message type is typically used to convey system-level information or instructions.
- *
- * @author vyckey
- */
 @Getter
-@EqualsAndHashCode(callSuper = true)
-public class SystemMessage extends AbstractMessage {
-    public static String ROLE_SYSTEM = "system";
-    private final String content;
+public class TaskAssignOutput {
+    private final List<TaskAssignment> assignments;
 
-    public SystemMessage(String content) {
-        this.metadata = new MapMetadataProvider(Map.of());
-        this.content = content;
+    public TaskAssignOutput(List<TaskAssignment> assignments) {
+        this.assignments = assignments;
     }
 
-    @Override
-    public String getRole() {
-        return ROLE_SYSTEM;
+    public record TaskAssignment(String taskId, String assignee) {
     }
 }

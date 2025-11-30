@@ -62,6 +62,6 @@ public class ChatAgentOutput {
 
     @Override
     public String toString() {
-        return messages().stream().map(Message::getContent).collect(Collectors.joining("\n"));
+        return messages().stream().map(Message::toString).collect(Collectors.joining("\n"));
     }
 }

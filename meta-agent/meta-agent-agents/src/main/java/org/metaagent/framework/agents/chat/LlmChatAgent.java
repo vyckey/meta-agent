@@ -38,10 +38,13 @@ import org.metaagent.framework.core.agents.chat.ChatAgentInput;
 import org.metaagent.framework.core.agents.chat.ChatAgentOutput;
 import org.metaagent.framework.core.agents.chat.ChatAgentStreamOutput;
 import org.metaagent.framework.core.model.chat.ChatModelClient;
+import org.metaagent.framework.core.model.chat.ChatModelResponse;
+import org.metaagent.framework.core.model.chat.message.MessageConverter;
 import org.metaagent.framework.core.model.prompt.PromptTemplate;
 import org.metaagent.framework.core.model.prompt.PromptValue;
 import org.metaagent.framework.core.model.prompt.StringPromptTemplate;
 import org.metaagent.framework.core.model.prompt.registry.PromptRegistry;
+import org.springframework.ai.chat.messages.SystemMessage;
 import org.springframework.ai.chat.model.ChatModel;
 import reactor.core.publisher.Flux;
 
@@ -50,6 +53,7 @@ import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.function.Consumer;
 
 /**
  * {@link ChatAgent} implementation with Large Language Model (LLM).
@@ -62,6 +66,7 @@ public class LlmChatAgent extends AbstractAgent<ChatAgentInput, ChatAgentOutput,
     protected final ChatModel chatModel;
     protected ChatModelClient chatModelClient;
     protected PromptTemplate systemPromptTemplate;
+    protected MessageConverter messageConverter = new MessageConverter(true);
 
     public LlmChatAgent(String name, ChatModel chatModel, PromptTemplate systemPromptTemplate) {
         super(name);
@@ -85,34 +90,49 @@ public class LlmChatAgent extends AbstractAgent<ChatAgentInput, ChatAgentOutput,
     }
 
     @Override
-    protected void beforeRun(AgentInput<ChatAgentInput> input) {
+    protected void beforeRun(AgentInput<ChatAgentInput> agentInput) {
         // set system prompt
-        String modelCutoffDate = input.metadata().getProperty("model_cutoff_date", String.class, "Unknown");
+        String modelCutoffDate = agentInput.metadata().getProperty("model_cutoff_date", String.class, "Unknown");
         PromptValue systemPrompt = systemPromptTemplate.format(Map.of(
                 "name", getName(),
                 "current_date", LocalDateTime.now().format(DateTimeFormatter.ISO_LOCAL_DATE),
                 "model_cutoff_date", modelCutoffDate
         ));
-        chatModelClient.setSystemPrompt(systemPrompt);
+        chatModelClient.setSystemMessage(new SystemMessage(systemPrompt.toString()));
+        chatModelClient.setToolContext(buildToolExecutorContext(agentInput), agentInput.context().getToolExecutor());
 
-        chatModelClient.setToolContext(buildToolExecutorContext(input), input.context().getToolExecutor());
+        agentInput.input().messages().forEach(conversation::appendMessage);
     }
 
     @Override
     protected AgentOutput<ChatAgentOutput> doStep(AgentInput<ChatAgentInput> agentInput) {
         ChatAgentInput input = agentInput.input();
-        Message outputMessage = chatModelClient.sendMessage(input.messages());
+        ChatModelResponse chatResponse = chatModelClient.sendMessages(input.messages().stream().map(messageConverter::convert).toList());
 
-        chatModelClient.getNewMessages().forEach(conversation::appendMessage);
-        ChatAgentOutput chatOutput = new ChatAgentOutput(List.of(outputMessage));
+        List<Message> outputMessages = chatModelClient.lastTurnOutputMessages().stream().map(messageConverter::convertTo).toList();
+        outputMessages.forEach(conversation::appendMessage);
+
+        ChatAgentOutput chatOutput = new ChatAgentOutput(outputMessages);
         return AgentOutput.create(chatOutput);
+    }
+
+    @Override
+    protected Flux<AgentOutput<ChatAgentStreamOutput>> stepStream(AgentInput<ChatAgentInput> input, Consumer<AgentOutput<ChatAgentOutput>> onStepStreamComplete) {
+        return super.stepStream(input, agentOutput -> {
+            ChatAgentOutput chatAgentOutput = agentOutput.result();
+            chatAgentOutput.messages().forEach(conversation::appendMessage);
+            onStepStreamComplete.accept(agentOutput);
+        });
     }
 
     @Override
     protected Flux<AgentOutput<ChatAgentStreamOutput>> doStepStream(AgentInput<ChatAgentInput> agentInput) {
         ChatAgentInput input = agentInput.input();
-        Flux<Message> messageFlux = chatModelClient.sendMessageStream(input.messages());
-        return messageFlux.map(output -> AgentOutput.create(new ChatAgentStreamOutput(output)));
+        Flux<ChatModelResponse> messageFlux = chatModelClient.sendMessageStream(input.messages().stream().map(messageConverter::convert).toList());
+        return messageFlux.map(output -> {
+            ChatAgentStreamOutput streamOutput = new ChatAgentStreamOutput(messageConverter.convertTo(output.getOutput()));
+            return AgentOutput.create(streamOutput);
+        });
     }
 
     @Override

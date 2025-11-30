@@ -32,6 +32,7 @@ import org.metaagent.framework.core.agent.chat.message.AbstractMessage;
 
 import java.util.List;
 import java.util.Objects;
+import java.util.stream.Collectors;
 
 /**
  * Represents a tool call message in a chat model.
@@ -68,6 +69,14 @@ public class ToolCallMessage extends AbstractMessage {
 
     public boolean hasToolCalls() {
         return toolCalls != null && !toolCalls.isEmpty();
+    }
+
+    @Override
+    public String toString() {
+        String toolNames = toolCalls.stream()
+                .map(toolCall -> "- " + toolCall.name() + ": " + toolCall.arguments())
+                .collect(Collectors.joining("\n"));
+        return getRole() + ":\n" + toolNames;
     }
 
     public record ToolCall(String id, String type, String name, String arguments) {
