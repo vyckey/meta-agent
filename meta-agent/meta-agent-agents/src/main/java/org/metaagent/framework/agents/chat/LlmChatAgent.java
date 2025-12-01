@@ -25,6 +25,7 @@
 package org.metaagent.framework.agents.chat;
 
 import com.google.common.collect.Lists;
+import org.metaagent.framework.common.metadata.MetadataProvider;
 import org.metaagent.framework.core.agent.AbstractAgent;
 import org.metaagent.framework.core.agent.chat.message.Message;
 import org.metaagent.framework.core.agent.chat.message.StreamMessageAggregator;
@@ -39,6 +40,7 @@ import org.metaagent.framework.core.agents.chat.ChatAgentOutput;
 import org.metaagent.framework.core.agents.chat.ChatAgentStreamOutput;
 import org.metaagent.framework.core.model.chat.ChatModelClient;
 import org.metaagent.framework.core.model.chat.ChatModelResponse;
+import org.metaagent.framework.core.model.chat.ChatModelUtils;
 import org.metaagent.framework.core.model.chat.message.MessageConverter;
 import org.metaagent.framework.core.model.prompt.PromptTemplate;
 import org.metaagent.framework.core.model.prompt.PromptValue;
@@ -129,22 +131,25 @@ public class LlmChatAgent extends AbstractAgent<ChatAgentInput, ChatAgentOutput,
     protected Flux<AgentOutput<ChatAgentStreamOutput>> doStepStream(AgentInput<ChatAgentInput> agentInput) {
         ChatAgentInput input = agentInput.input();
         Flux<ChatModelResponse> messageFlux = chatModelClient.sendMessageStream(input.messages().stream().map(messageConverter::convert).toList());
-        return messageFlux.map(output -> {
-            ChatAgentStreamOutput streamOutput = new ChatAgentStreamOutput(messageConverter.convertTo(output.getOutput()));
-            return AgentOutput.create(streamOutput);
+        return messageFlux.map(chatModelResponse -> {
+            Message message = messageConverter.convertTo(chatModelResponse.getOutput());
+            ChatAgentStreamOutput streamOutput = new ChatAgentStreamOutput(message);
+            return AgentOutput.create(streamOutput, ChatModelUtils.getMetadata(chatModelResponse));
         });
     }
 
     @Override
     public AgentStreamOutputAggregator<ChatAgentStreamOutput, ChatAgentOutput> getStreamOutputAggregator() {
         return streamOutputs -> {
+            MetadataProvider metadata = MetadataProvider.create();
             List<Message> streamMessages = Lists.newArrayList();
             for (AgentOutput<ChatAgentStreamOutput> streamOutput : streamOutputs) {
                 streamMessages.add(streamOutput.result().message());
+                metadata.merge(streamOutput.metadata());
             }
 
             List<Message> outputMessages = StreamMessageAggregator.INSTANCE.aggregate(streamMessages);
-            return AgentOutput.create(new ChatAgentOutput(outputMessages));
+            return AgentOutput.create(new ChatAgentOutput(outputMessages), metadata);
         };
     }
 
