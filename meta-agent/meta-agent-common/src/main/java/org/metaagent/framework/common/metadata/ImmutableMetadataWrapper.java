@@ -24,36 +24,50 @@
 
 package org.metaagent.framework.common.metadata;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonValue;
+import lombok.EqualsAndHashCode;
+
+import java.util.Collections;
 import java.util.Map;
+import java.util.Objects;
 
 /**
- * Immutable empty metadata implementation of {@link MetadataProvider}.
+ * Immutable metadata wrapper
  *
  * @author vyckey
  */
-public class EmptyMetadataProvider implements ImmutableMetadataProvider, MetadataProvider {
-    public static final EmptyMetadataProvider INSTANCE = new EmptyMetadataProvider();
+@EqualsAndHashCode(of = "metadata")
+public class ImmutableMetadataWrapper implements ImmutableMetadataProvider {
+    private final MetadataProvider metadata;
 
-    private EmptyMetadataProvider() {
+    public ImmutableMetadataWrapper(MetadataProvider metadata) {
+        this.metadata = Objects.requireNonNull(metadata);
     }
 
+    @JsonCreator
+    public ImmutableMetadataWrapper(Map<String, Object> properties) {
+        this(new MapMetadataProvider(properties));
+    }
+
+    @JsonValue
     @Override
     public Map<String, Object> getProperties() {
-        return Map.of();
+        return Collections.unmodifiableMap(metadata.getProperties());
     }
 
     @Override
     public Object getProperty(String key) {
-        return null;
+        return metadata.getProperty(key);
     }
 
     @Override
     public <T> T getProperty(String key, Class<T> type) {
-        return null;
+        return metadata.getProperty(key, type);
     }
 
     @Override
     public MetadataProvider union(MetadataProvider other) {
-        return other;
+        return metadata.union(other);
     }
 }

@@ -59,8 +59,17 @@ public interface MetadataProvider {
      * @param properties the properties map.
      * @return a MetadataProvider instance containing the given properties.
      */
-    static MetadataProvider create(Map<String, Object> properties) {
+    static MetadataProvider from(Map<String, Object> properties) {
         return new MapMetadataProvider(properties);
+    }
+
+    /**
+     * Creates a {@code MapMetadataProvider} builder.
+     *
+     * @return a MapMetadataProvider builder instance.
+     */
+    static MapMetadataProvider.Builder builder() {
+        return MapMetadataProvider.builder();
     }
 
     /**
@@ -120,9 +129,22 @@ public interface MetadataProvider {
     void removeProperty(String key);
 
     /**
+     * Removes all metadata.
+     */
+    void clear();
+
+    /**
      * Merges metadata from another MetadataProvider into this one.
      *
      * @param other the MetadataProvider to merge from.
      */
     void merge(MetadataProvider other);
+
+    /**
+     * Merge two metadata instances to a new instance.
+     *
+     * @param other the MetadataProvider to merge.
+     * @return a new merged MetadataProvider instance.
+     */
+    MetadataProvider union(MetadataProvider other);
 }

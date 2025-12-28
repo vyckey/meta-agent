@@ -25,9 +25,10 @@
 package org.metaagent.framework.common.metadata;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonValue;
 import com.google.common.collect.Maps;
+import lombok.EqualsAndHashCode;
 
-import java.util.Collections;
 import java.util.Map;
 import java.util.Objects;
 
@@ -37,35 +38,37 @@ import java.util.Objects;
  *
  * @author vyckey
  */
+@EqualsAndHashCode(of = "properties")
 public class MapMetadataProvider implements MetadataProvider {
-    private final Map<String, Object> metadata;
+    private final Map<String, Object> properties;
 
-    public MapMetadataProvider(Map<String, Object> metadata) {
-        this.metadata = Objects.requireNonNull(metadata);
+    @JsonCreator
+    public MapMetadataProvider(Map<String, Object> properties) {
+        this.properties = Objects.requireNonNull(properties);
     }
 
     public MapMetadataProvider() {
-        this.metadata = Maps.newHashMap();
+        this(Maps.newHashMap());
     }
 
-    @JsonCreator
-    public static MapMetadataProvider immutable(Map<String, Object> metadata) {
-        return new MapMetadataProvider(Collections.unmodifiableMap(metadata));
+    public static Builder builder() {
+        return new Builder();
     }
 
+    @JsonValue
     @Override
     public Map<String, Object> getProperties() {
-        return metadata;
+        return properties;
     }
 
     @Override
     public Object getProperty(String key) {
-        return metadata.get(key);
+        return properties.get(key);
     }
 
     @Override
     public <T> T getProperty(String key, Class<T> type) {
-        Object obj = metadata.get(key);
+        Object obj = properties.get(key);
         if (obj == null) {
             return null;
         }
@@ -74,17 +77,63 @@ public class MapMetadataProvider implements MetadataProvider {
 
     @Override
     public MetadataProvider setProperty(String key, Object value) {
-        metadata.put(key, value);
+        properties.put(key, value);
         return this;
     }
 
     @Override
     public void removeProperty(String key) {
-        metadata.remove(key);
+        properties.remove(key);
+    }
+
+    @Override
+    public void clear() {
+        properties.clear();
     }
 
     @Override
     public void merge(MetadataProvider other) {
-        this.metadata.putAll(other.getProperties());
+        this.properties.putAll(other.getProperties());
+    }
+
+    @Override
+    public MetadataProvider union(MetadataProvider other) {
+        return new Builder(getProperties())
+                .setProperties(other.getProperties())
+                .build();
+    }
+
+    public ImmutableMetadataProvider immutable() {
+        return new ImmutableMetadataWrapper(this);
+    }
+
+
+    public record Builder(Map<String, Object> metadata) {
+        private Builder() {
+            this(Maps.newHashMap());
+        }
+
+        public Builder(Map<String, Object> metadata) {
+            this.metadata = Objects.requireNonNull(metadata);
+        }
+
+        public Builder setProperties(Map<String, Object> metadata) {
+            metadata.putAll(metadata);
+            return this;
+        }
+
+        public Builder setProperty(String key, Object value) {
+            metadata.put(key, value);
+            return this;
+        }
+
+        public Builder removeProperty(String key, Object value) {
+            metadata.remove(key);
+            return this;
+        }
+
+        public MapMetadataProvider build() {
+            return new MapMetadataProvider(metadata);
+        }
     }
 }

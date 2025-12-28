@@ -24,36 +24,29 @@
 
 package org.metaagent.framework.common.metadata;
 
-import java.util.Map;
-
 /**
- * Immutable empty metadata implementation of {@link MetadataProvider}.
+ * Immutable Metadata Provider
  *
  * @author vyckey
  */
-public class EmptyMetadataProvider implements ImmutableMetadataProvider, MetadataProvider {
-    public static final EmptyMetadataProvider INSTANCE = new EmptyMetadataProvider();
-
-    private EmptyMetadataProvider() {
+public interface ImmutableMetadataProvider extends MetadataProvider {
+    @Override
+    default MetadataProvider setProperty(String key, Object value) {
+        throw new UnsupportedOperationException("Not supported operation for immutable metadata");
     }
 
     @Override
-    public Map<String, Object> getProperties() {
-        return Map.of();
+    default void removeProperty(String key) {
+        throw new UnsupportedOperationException("Not supported operation for immutable metadata");
     }
 
     @Override
-    public Object getProperty(String key) {
-        return null;
+    default void merge(MetadataProvider other) {
+        throw new UnsupportedOperationException("Not supported operation for immutable metadata");
     }
 
     @Override
-    public <T> T getProperty(String key, Class<T> type) {
-        return null;
-    }
-
-    @Override
-    public MetadataProvider union(MetadataProvider other) {
-        return other;
+    default void clear() {
+        throw new UnsupportedOperationException("Not supported operation for immutable metadata");
     }
 }
