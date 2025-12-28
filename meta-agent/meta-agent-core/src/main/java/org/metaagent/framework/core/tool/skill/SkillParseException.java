@@ -22,33 +22,21 @@
  * SOFTWARE.
  */
 
-package org.metaagent.framework.core.agents.coordinator;
+package org.metaagent.framework.core.tool.skill;
 
-import org.metaagent.framework.core.agent.Agent;
-import org.metaagent.framework.core.agent.group.AgentGroup;
-import org.metaagent.framework.core.agent.input.AgentInput;
-import org.metaagent.framework.core.agent.output.AgentOutput;
+import java.io.IOException;
 
 /**
- * CoordinateAgent is an interface that represents an agent responsible for coordinating.
+ * Skill parse exception
  *
  * @author vyckey
  */
-public interface CoordinateAgent<I, O> extends Agent<I, O> {
-    /**
-     * Gets the agent group managed by this coordinator.
-     *
-     * @return the agent group containing all managed agents
-     */
-    AgentGroup getAgentGroup();
+public class SkillParseException extends IOException {
+    public SkillParseException(String message) {
+        super(message);
+    }
 
-    /**
-     * Coordinates the execution by selecting an appropriate agent based on the input.
-     * The selection strategy depends on the specific implementation.
-     *
-     * @param input the input to process
-     * @return the output from the selected agent
-     */
-    @Override
-    AgentOutput<O> step(AgentInput<I> input);
+    public SkillParseException(String message, Throwable cause) {
+        super(message, cause);
+    }
 }

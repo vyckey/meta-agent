@@ -40,7 +40,7 @@ import org.metaagent.framework.core.agent.output.thought.Thought;
  *
  * @author vyckey
  */
-public interface ReActAgent<I, O, S> extends Agent<I, O, S> {
+public interface ReActAgent<I, O> extends Agent<I, O> {
 
     default AgentOutput<O> step(AgentInput<I> input) {
         Thought thought = think(input);

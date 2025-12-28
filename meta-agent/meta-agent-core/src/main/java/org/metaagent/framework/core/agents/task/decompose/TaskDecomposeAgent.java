@@ -35,7 +35,7 @@ import org.metaagent.framework.core.agent.task.Task;
  * for agents that decompose tasks into smaller, manageable parts.
  * It provides a method to run the agent with a Task object.
  */
-public interface TaskDecomposeAgent extends Agent<TaskDecomposeInput, TaskDecomposeOutput, Object> {
+public interface TaskDecomposeAgent extends Agent<TaskDecomposeInput, TaskDecomposeOutput> {
     /**
      * Runs the agent with the provided Task object.
      *

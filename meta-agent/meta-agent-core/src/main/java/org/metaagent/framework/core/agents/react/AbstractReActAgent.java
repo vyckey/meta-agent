@@ -40,8 +40,8 @@ import org.metaagent.framework.core.agent.output.thought.Thought;
  *
  * @author vyckey
  */
-public abstract class AbstractReActAgent<I, O, S>
-        extends AbstractAgent<I, O, S> implements ReActAgent<I, O, S> {
+public abstract class AbstractReActAgent<I, O>
+        extends AbstractAgent<I, O> implements ReActAgent<I, O> {
 
     protected AbstractReActAgent(String name) {
         super(name);
