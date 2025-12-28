@@ -33,10 +33,9 @@ import org.metaagent.framework.core.agent.output.AgentOutput;
  *
  * @param <I> the type of agent input
  * @param <O> the type of agent output
- * @param <S> the type of agent stream output
  * @author vyckey
  */
-public interface AgentLoopControlStrategy<I, O, S> {
+public interface AgentLoopControlStrategy<I, O> {
     /**
      * Determines whether the agent should continue looping.
      *
@@ -45,5 +44,5 @@ public interface AgentLoopControlStrategy<I, O, S> {
      * @param output the output which can be null
      * @return true if the agent should continue looping, false otherwise
      */
-    boolean shouldContinueLoop(Agent<I, O, S> agent, AgentInput<I> input, AgentOutput<O> output);
+    boolean shouldContinueLoop(Agent<I, O> agent, AgentInput<I> input, AgentOutput<O> output);
 }

@@ -33,10 +33,9 @@ import org.metaagent.framework.core.agent.output.AgentOutput;
  *
  * @param <I> the type of agent input
  * @param <O> the type of agent output
- * @param <S> the type of agent stream output
  * @author vyckey
  */
-public interface AgentFallbackStrategy<I, O, S> {
+public interface AgentFallbackStrategy<I, O> {
     /**
      * Fallback when agent execution failed.
      *
@@ -45,5 +44,5 @@ public interface AgentFallbackStrategy<I, O, S> {
      * @param exception exception
      * @return the agent output
      */
-    AgentOutput<O> fallback(MetaAgent<I, O, S> agent, AgentInput<I> input, Exception exception);
+    AgentOutput<O> fallback(MetaAgent<I, O> agent, AgentInput<I> input, Exception exception);
 }

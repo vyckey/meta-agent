@@ -32,21 +32,16 @@ import org.metaagent.framework.core.agent.profile.AgentProfile;
 import org.metaagent.framework.core.tool.ToolContext;
 import org.metaagent.framework.core.tool.executor.ToolExecutorContext;
 import org.metaagent.framework.core.tool.manager.ToolManager;
-import reactor.core.publisher.Flux;
-
-import java.util.concurrent.atomic.AtomicReference;
-import java.util.function.Consumer;
 
 /**
  * Abstract {@link Agent} implementation.
  *
  * @param <I> the type of agent input
  * @param <O> the type of agent output
- * @param <S> the type of agent stream output
  * @author vyckey
  */
-public abstract class AbstractAgent<I, O, S>
-        extends AbstractMetaAgent<I, O, S> implements Agent<I, O, S> {
+public abstract class AbstractAgent<I, O>
+        extends AbstractMetaAgent<I, O> implements Agent<I, O> {
     protected ToolManager toolManager = ToolManager.create();
 
     protected AbstractAgent(String name) {
@@ -63,59 +58,13 @@ public abstract class AbstractAgent<I, O, S>
     }
 
     @Override
-    public AgentLoopControlStrategy<I, O, S> getLoopControlStrategy() {
+    public AgentLoopControlStrategy<I, O> getLoopControlStrategy() {
         return new MaxLoopCountAgentLoopControl<>(1);
     }
 
     @Override
     protected AgentOutput<O> doRun(AgentInput<I> input) {
         return Agent.super.run(input);
-    }
-
-    @Override
-    protected Flux<AgentOutput<S>> doRunStream(AgentInput<I> input, Consumer<AgentOutput<O>> onRunStreamComplete) {
-        Agent<I, O, S> agent = this;
-
-        AtomicReference<AgentInput<I>> currentInputRef = new AtomicReference<>(input);
-        AtomicReference<AgentOutput<O>> lastOutputRef = new AtomicReference<>();
-
-        return Flux.defer(() -> stepStream(currentInputRef.get(), lastOutputRef::set))
-                .repeat(() -> {
-                    AgentOutput<O> lastAgentOutput = lastOutputRef.get();
-                    AgentInput<I> currentInput = currentInputRef.get();
-
-                    if (getLoopControlStrategy().shouldContinueLoop(agent, currentInput, lastAgentOutput)) {
-                        // perform next step
-                        AgentInput<I> nextInput = buildNextStepInput(currentInput, lastAgentOutput);
-                        agentState.incrLoopCount();
-                        currentInputRef.set(nextInput);
-                        return true;
-                    } else {
-                        // stop loop
-                        return false;
-                    }
-                })
-                .doOnComplete(() -> {
-                    AgentOutput<O> lastOutput = lastOutputRef.get();
-                    System.out.println("Invoking onRunStreamComplete callback...");
-                    if (onRunStreamComplete != null) {
-                        onRunStreamComplete.accept(lastOutput);
-                    }
-                });
-    }
-
-    /**
-     * Builds the next step input for the streaming agent.
-     *
-     * @param input  The current input for the agent.
-     * @param output The output from the current step.
-     * @return The next step input for the agent.
-     */
-    protected AgentInput<I> buildNextStepInput(AgentInput<I> input, AgentOutput<O> output) {
-        return input;
-    }
-
-    record AgentStateHolder<I, O>(I input, O fullOutput) {
     }
 
     protected ToolExecutorContext buildToolExecutorContext(AgentInput<I> input) {

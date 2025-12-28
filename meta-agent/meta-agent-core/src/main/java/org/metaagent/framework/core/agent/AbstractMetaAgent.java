@@ -25,8 +25,6 @@
 package org.metaagent.framework.core.agent;
 
 import com.google.common.collect.Lists;
-import org.metaagent.framework.core.agent.ability.AgentAbilityManager;
-import org.metaagent.framework.core.agent.ability.DefaultAgentAbilityManager;
 import org.metaagent.framework.core.agent.fallback.AgentFallbackStrategy;
 import org.metaagent.framework.core.agent.fallback.FastFailAgentFallbackStrategy;
 import org.metaagent.framework.core.agent.input.AgentInput;
@@ -37,18 +35,14 @@ import org.metaagent.framework.core.agent.observability.AgentLogger;
 import org.metaagent.framework.core.agent.observability.AgentRunListener;
 import org.metaagent.framework.core.agent.observability.AgentStepListener;
 import org.metaagent.framework.core.agent.output.AgentOutput;
-import org.metaagent.framework.core.agent.output.AgentStreamOutputAggregator;
 import org.metaagent.framework.core.agent.profile.AgentProfile;
-import org.metaagent.framework.core.agent.profile.DefaultAgentProfile;
 import org.metaagent.framework.core.agent.state.AgentRunStatus;
 import org.metaagent.framework.core.agent.state.AgentState;
 import org.metaagent.framework.core.agent.state.DefaultAgentState;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import reactor.core.publisher.Flux;
 
 import java.util.List;
-import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
 
 /**
@@ -56,27 +50,27 @@ import java.util.function.Consumer;
  *
  * @param <I> the type of agent input
  * @param <O> the type of agent output
- * @param <S> the type of agent stream output
  * @author vyckey
  */
-public abstract class AbstractMetaAgent<I, O, S> implements MetaAgent<I, O, S> {
+public abstract class AbstractMetaAgent<I, O> implements MetaAgent<I, O> {
 
+    protected String agentName;
     protected AgentProfile profile;
     protected AgentState agentState = DefaultAgentState.builder().build();
     protected Memory memory = EmptyMemory.INSTANCE;
-    protected AgentAbilityManager abilityManager = new DefaultAgentAbilityManager();
-    protected final List<AgentRunListener<I, O, S>> runListeners = Lists.newArrayList();
-    protected final List<AgentStepListener<I, O, S>> stepListeners = Lists.newArrayList();
+    protected final List<AgentRunListener<I, O>> runListeners = Lists.newArrayList();
+    protected final List<AgentStepListener<I, O>> stepListeners = Lists.newArrayList();
     protected AgentLogger agentLogger;
     protected Logger logger = LoggerFactory.getLogger(getClass());
 
-    protected AbstractMetaAgent(AgentProfile profile) {
-        this.profile = profile;
-        this.agentLogger = AgentLogger.getLogger(profile.getName());
+    protected AbstractMetaAgent(String name) {
+        this.agentName = name;
+        this.agentLogger = AgentLogger.getLogger(name);
     }
 
-    protected AbstractMetaAgent(String name) {
-        this(new DefaultAgentProfile(name));
+    protected AbstractMetaAgent(AgentProfile profile) {
+        this(profile.getName());
+        this.profile = profile;
     }
 
     @Override
@@ -99,31 +93,26 @@ public abstract class AbstractMetaAgent<I, O, S> implements MetaAgent<I, O, S> {
         return memory;
     }
 
-    @Override
-    public AgentAbilityManager getAbilityManager() {
-        return abilityManager;
-    }
-
     public void initialize() {
         // Register log listener to capture agent logs
-        AgentLogListener<I, O, S> logListener = new AgentLogListener<>(agentState, agentLogger);
+        AgentLogListener<I, O> logListener = new AgentLogListener<>(agentState, agentLogger);
         registerRunListener(logListener);
         registerStepListener(logListener);
     }
 
-    public void registerRunListener(AgentRunListener<I, O, S> listener) {
+    public void registerRunListener(AgentRunListener<I, O> listener) {
         runListeners.add(listener);
     }
 
-    public void unregisterRunListener(AgentRunListener<I, O, S> listener) {
+    public void unregisterRunListener(AgentRunListener<I, O> listener) {
         runListeners.remove(listener);
     }
 
-    public void registerStepListener(AgentStepListener<I, O, S> listener) {
+    public void registerStepListener(AgentStepListener<I, O> listener) {
         stepListeners.add(listener);
     }
 
-    public void unregisterStepListener(AgentStepListener<I, O, S> listener) {
+    public void unregisterStepListener(AgentStepListener<I, O> listener) {
         stepListeners.remove(listener);
     }
 
@@ -137,7 +126,7 @@ public abstract class AbstractMetaAgent<I, O, S> implements MetaAgent<I, O, S> {
         }
     }
 
-    public AgentFallbackStrategy<I, O, S> getFallbackStrategy() {
+    public AgentFallbackStrategy<I, O> getFallbackStrategy() {
         return new FastFailAgentFallbackStrategy<>();
     }
 
@@ -198,79 +187,6 @@ public abstract class AbstractMetaAgent<I, O, S> implements MetaAgent<I, O, S> {
     }
 
     protected abstract AgentOutput<O> doStep(AgentInput<I> input);
-
-    @Override
-    public Flux<AgentOutput<S>> runStream(AgentInput<I> input) {
-        beforeRun(input);
-        agentState.setStatus(AgentRunStatus.RUNNING);
-
-        MetaAgent<I, O, S> agent = this;
-        AtomicReference<AgentOutput<O>> fullOutputRef = new AtomicReference<>();
-        return doRunStream(input, fullOutputRef::set)
-                .doOnSubscribe(sub -> {
-                    notifyListeners(runListeners, listener -> listener.onAgentStart(agent, input));
-                })
-                .onErrorResume(throwable -> {
-                    if (throwable instanceof Exception ex) {
-                        return fallbackStream(input, ex);
-                    }
-                    return Flux.error(throwable);
-                })
-                .doOnComplete(() -> notifyListeners(runListeners, listener -> listener.onAgentOutput(agent, input, fullOutputRef.get())))
-                .doOnComplete(() -> agentState.setStatus(AgentRunStatus.COMPLETED))
-                .doOnError(throwable -> {
-                    Exception ex = wrapException(throwable);
-                    agentState.setLastException(ex);
-                    agentState.setStatus(AgentRunStatus.FAILED);
-                    notifyListeners(runListeners, listener -> listener.onAgentException(agent, input, ex));
-                });
-    }
-
-    protected Flux<AgentOutput<S>> doRunStream(AgentInput<I> input, Consumer<AgentOutput<O>> onRunStreamComplete) {
-        return stepStream(input, onRunStreamComplete);
-    }
-
-    @Override
-    public Flux<AgentOutput<S>> stepStream(AgentInput<I> input) {
-        return stepStream(input, fullOutput -> {
-        });
-    }
-
-    protected Flux<AgentOutput<S>> stepStream(AgentInput<I> input, Consumer<AgentOutput<O>> onStepStreamComplete) {
-        MetaAgent<I, O, S> agent = this;
-
-        AtomicReference<List<AgentOutput<S>>> streamOutputsRef = new AtomicReference<>(Lists.newArrayList());
-        AtomicReference<AgentOutput<O>> fullOutputRef = new AtomicReference<>();
-
-        AgentStreamOutputAggregator<S, O> aggregator = getStreamOutputAggregator();
-        return doStepStream(input)
-                .doOnSubscribe(sub -> notifyListeners(stepListeners, listener -> listener.onAgentStepStart(agent, input)))
-                .doOnNext(output -> streamOutputsRef.get().add(output))
-                .doOnComplete(() -> fullOutputRef.set(aggregator.aggregate(streamOutputsRef.get())))
-                .doOnComplete(() -> onStepStreamComplete.accept(fullOutputRef.get()))
-                .doOnComplete(() -> notifyListeners(stepListeners, listener -> listener.onAgentStepFinish(agent, input, fullOutputRef.get())))
-                .doOnError(throwable -> {
-                    Exception ex = wrapException(throwable);
-                    agentState.setLastException(ex);
-                    notifyListeners(stepListeners, listener -> listener.onAgentStepError(agent, input, ex));
-                });
-    }
-
-    protected Flux<AgentOutput<S>> doStepStream(AgentInput<I> input) {
-        throw new UnsupportedOperationException("Streaming step not supported");
-    }
-
-    protected Flux<AgentOutput<S>> fallbackStream(AgentInput<I> input, Exception ex) {
-        return Flux.error(ex);
-    }
-
-    protected Exception wrapException(Throwable throwable) {
-        if (throwable instanceof Exception e) {
-            return e;
-        } else {
-            return new AgentExecutionException(throwable);
-        }
-    }
 
     @Override
     public void reset() {

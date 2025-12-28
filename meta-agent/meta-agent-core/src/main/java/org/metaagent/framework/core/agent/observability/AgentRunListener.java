@@ -31,16 +31,18 @@ import org.metaagent.framework.core.agent.output.AgentOutput;
 /**
  * AgentRunListener is an interface for listening to agent run events.
  *
+ * @param <I> the type of agent input
+ * @param <O> the type of agent output
  * @author vyckey
  */
-public interface AgentRunListener<I, O, S> {
+public interface AgentRunListener<I, O> {
     /**
      * Called when an agent starts running.
      *
      * @param agent the agent that started running
      * @param input the input provided to the agent
      */
-    default void onAgentStart(MetaAgent<I, O, S> agent, AgentInput<I> input) {
+    default void onAgentStart(MetaAgent<I, O> agent, AgentInput<I> input) {
     }
 
     /**
@@ -50,7 +52,7 @@ public interface AgentRunListener<I, O, S> {
      * @param input  the input provided to the agent
      * @param output the output produced by the agent
      */
-    default void onAgentOutput(MetaAgent<I, O, S> agent, AgentInput<I> input, AgentOutput<O> output) {
+    default void onAgentOutput(MetaAgent<I, O> agent, AgentInput<I> input, AgentOutput<O> output) {
     }
 
     /**
@@ -60,6 +62,6 @@ public interface AgentRunListener<I, O, S> {
      * @param input     the input provided to the agent
      * @param exception the exception encountered by the agent
      */
-    default void onAgentException(MetaAgent<I, O, S> agent, AgentInput<I> input, Exception exception) {
+    default void onAgentException(MetaAgent<I, O> agent, AgentInput<I> input, Exception exception) {
     }
 }

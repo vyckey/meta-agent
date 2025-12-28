@@ -25,16 +25,12 @@
 package org.metaagent.framework.core.agent;
 
 import org.apache.commons.lang3.NotImplementedException;
-import org.metaagent.framework.core.agent.ability.AgentAbility;
-import org.metaagent.framework.core.agent.ability.AgentAbilityManager;
 import org.metaagent.framework.core.agent.converter.AgentIOConverter;
 import org.metaagent.framework.core.agent.input.AgentInput;
 import org.metaagent.framework.core.agent.memory.Memory;
 import org.metaagent.framework.core.agent.output.AgentOutput;
-import org.metaagent.framework.core.agent.output.AgentStreamOutputAggregator;
 import org.metaagent.framework.core.agent.profile.AgentProfile;
 import org.metaagent.framework.core.agent.state.AgentState;
-import reactor.core.publisher.Flux;
 
 import java.util.concurrent.CompletableFuture;
 
@@ -43,10 +39,9 @@ import java.util.concurrent.CompletableFuture;
  *
  * @param <I> the type of agent input
  * @param <O> the type of agent output
- * @param <S> the type of agent stream output
  * @author vyckey
  */
-public interface MetaAgent<I, O, S> {
+public interface MetaAgent<I, O> {
 
     /**
      * Gets agent name.
@@ -79,30 +74,21 @@ public interface MetaAgent<I, O, S> {
     Memory getMemory();
 
     /**
-     * Gets agent abilities manager.
-     *
-     * @return the ability manager.
-     */
-    AgentAbilityManager getAbilityManager();
-
-    /**
-     * Gets specialized agent ability by class type.
-     *
-     * @param abilityType the ability class type.
-     * @param <T>         the ability type.
-     * @return the agent ability.
-     */
-    default <T extends AgentAbility> T getAbility(Class<T> abilityType) {
-        return getAbilityManager().getAbility(abilityType);
-    }
-
-    /**
      * Gets Input/Output converter.
      *
      * @return the converter.
      */
     default AgentIOConverter<I, O> getIOConverter() {
         throw new NotImplementedException("not implement yet");
+    }
+
+    /**
+     * Creates a new default execution context.
+     *
+     * @return the new default execution context.
+     */
+    default AgentExecutionContext newExecutionContext() {
+        return AgentExecutionContext.create();
     }
 
     /**
@@ -122,7 +108,7 @@ public interface MetaAgent<I, O, S> {
      * @return the agent output
      */
     default O run(I input) {
-        AgentOutput<O> agentOutput = run(AgentInput.builder(input).build());
+        AgentOutput<O> agentOutput = run(AgentInput.builder(input).context(newExecutionContext()).build());
         return agentOutput.result();
     }
 
@@ -143,7 +129,7 @@ public interface MetaAgent<I, O, S> {
      * @return the agent out
      */
     default CompletableFuture<O> runAsync(I input) {
-        CompletableFuture<AgentOutput<O>> future = runAsync(AgentInput.builder(input).build());
+        CompletableFuture<AgentOutput<O>> future = runAsync(AgentInput.builder(input).context(newExecutionContext()).build());
         return future.thenApply(AgentOutput::result);
     }
 
@@ -154,46 +140,6 @@ public interface MetaAgent<I, O, S> {
      * @return the agent output.
      */
     AgentOutput<O> step(AgentInput<I> input);
-
-    /**
-     * Runs agent logic in a streaming way.
-     *
-     * @param input the agent input.
-     * @return the streaming agent output.
-     */
-    default Flux<AgentOutput<S>> runStream(AgentInput<I> input) {
-        return stepStream(input);
-    }
-
-    /**
-     * Runs agent logic in a streaming way.
-     *
-     * @param input the agent input
-     * @return the streaming agent output
-     */
-    default Flux<S> runStream(I input) {
-        Flux<AgentOutput<S>> stream = runStream(AgentInput.builder(input).build());
-        return stream.map(AgentOutput::result);
-    }
-
-    /**
-     * Start an agent step.
-     *
-     * @param input the agent input.
-     * @return the agent output.
-     */
-    default Flux<AgentOutput<S>> stepStream(AgentInput<I> input) {
-        throw new UnsupportedOperationException("Streaming is not supported");
-    }
-
-    /**
-     * Get the agent stream output aggregator.
-     *
-     * @return the agent stream output aggregator.
-     */
-    default AgentStreamOutputAggregator<S, O> getStreamOutputAggregator() {
-        throw new UnsupportedOperationException("Streaming is not supported");
-    }
 
     /**
      * Reset the agent to initial state.

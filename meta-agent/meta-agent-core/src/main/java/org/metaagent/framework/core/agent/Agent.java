@@ -37,10 +37,9 @@ import org.metaagent.framework.core.tool.manager.ToolManager;
  *
  * @param <I> the type of agent input
  * @param <O> the type of agent output
- * @param <S> the type of agent stream output
  * @author vyckey
  */
-public interface Agent<I, O, S> extends MetaAgent<I, O, S> {
+public interface Agent<I, O> extends MetaAgent<I, O> {
 
     /**
      * Gets the agent tool manager.
@@ -54,14 +53,14 @@ public interface Agent<I, O, S> extends MetaAgent<I, O, S> {
      *
      * @return the loop control strategy.
      */
-    AgentLoopControlStrategy<I, O, S> getLoopControlStrategy();
+    AgentLoopControlStrategy<I, O> getLoopControlStrategy();
 
     /**
      * Gets agent fallback strategy. It will be used to handle unexpected exceptions while running the agent.
      *
      * @return the fallback strategy.
      */
-    AgentFallbackStrategy<I, O, S> getFallbackStrategy();
+    AgentFallbackStrategy<I, O> getFallbackStrategy();
 
     /**
      * Run with execution context and string input.

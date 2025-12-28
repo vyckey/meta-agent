@@ -36,7 +36,7 @@ import org.metaagent.framework.core.agent.state.AgentState;
  * @author vyckey
  */
 @Slf4j
-public class RetryAgentFallbackStrategy<I, O, S> implements AgentFallbackStrategy<I, O, S> {
+public class RetryAgentFallbackStrategy<I, O> implements AgentFallbackStrategy<I, O> {
     private final int maxRetries;
 
     public RetryAgentFallbackStrategy(int maxRetries) {
@@ -44,13 +44,13 @@ public class RetryAgentFallbackStrategy<I, O, S> implements AgentFallbackStrateg
     }
 
     @Override
-    public AgentOutput<O> fallback(MetaAgent<I, O, S> agent, AgentInput<I> input, Exception exception) {
+    public AgentOutput<O> fallback(MetaAgent<I, O> agent, AgentInput<I> input, Exception exception) {
         AgentState agentState = agent.getAgentState();
         if (agentState.getRetryCount() < maxRetries) {
             agentState.incrRetryCount();
             return agent.step(input);
         }
         log.warn("Failed to retry agent after {} retries", maxRetries);
-        return new FastFailAgentFallbackStrategy<I, O, S>().fallback(agent, input, exception);
+        return new FastFailAgentFallbackStrategy<I, O>().fallback(agent, input, exception);
     }
 }

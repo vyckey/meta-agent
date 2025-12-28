@@ -53,7 +53,7 @@ class ConversationStorageTest {
         conversation.appendMessage(RoleMessage.assistant("I am your assistant."));
 
         MediaResource media = MediaResource.builder().mimeType(MimeType.valueOf("image/*")).name("img").uri(URI.create("images/hello.jpg")).build();
-        RoleMessage message = RoleMessage.user("How is today?", List.of(), MetadataProvider.create(Map.of(
+        RoleMessage message = RoleMessage.user("How is today?", List.of(), MetadataProvider.from(Map.of(
                 "k1", 1,
                 "k2", "v2"
         )));
