@@ -1,7 +1,10 @@
 package org.metaagent.framework.core.model.prompt;
 
+import com.fasterxml.jackson.core.type.TypeReference;
 import lombok.Getter;
 import org.apache.commons.collections.MapUtils;
+import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.tuple.Pair;
 import org.metaagent.framework.common.io.IOUtils;
 import org.metaagent.framework.common.io.MarkdownUtils;
 import org.metaagent.framework.common.template.TemplateRenderException;
@@ -80,12 +83,17 @@ public class StringPromptTemplate implements PromptTemplate {
         String template;
         try {
             template = IOUtils.readToString(fileName);
+            Pair<String, String> pair = MarkdownUtils.parseFrontMatterAndMainText(template);
+            if (StringUtils.isNotEmpty(pair.getLeft())) {
+                Map<String, String> frontMatter = MarkdownUtils.parseFrontMatter(pair.getLeft(), new TypeReference<>() {
+                });
+                String formatter = MapUtils.getString(frontMatter, "formatter");
+                return from(Optional.ofNullable(formatter).orElse(formatterName), template);
+            }
+            return from(template);
         } catch (IOException e) {
             throw new IllegalArgumentException("Failed to read prompt template from file: " + fileName, e);
         }
-        String formatter = MapUtils.getString(MarkdownUtils.parseMetadata(template), "formatter");
-        template = MarkdownUtils.removeFrontMatter(template);
-        return from(Optional.ofNullable(formatter).orElse(formatterName), template);
     }
 
     @Override

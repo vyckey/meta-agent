@@ -115,7 +115,7 @@ public class LlmChatAgent extends AbstractAgent<ChatAgentInput, ChatAgentOutput,
         outputMessages.forEach(conversation::appendMessage);
 
         ChatAgentOutput chatOutput = new ChatAgentOutput(outputMessages);
-        return AgentOutput.create(chatOutput);
+        return AgentOutput.create(chatOutput, ChatModelUtils.getMetadata(chatResponse));
     }
 
     @Override

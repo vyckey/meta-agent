@@ -25,10 +25,8 @@
 package org.metaagent.framework.core.agent.profile;
 
 import lombok.Getter;
-import org.apache.commons.configuration2.BaseConfiguration;
-import org.apache.commons.configuration2.Configuration;
 import org.apache.commons.lang3.StringUtils;
-import org.metaagent.framework.common.metadata.ConfigurationMetadataProvider;
+import org.metaagent.framework.common.metadata.MetadataProvider;
 
 import java.util.Objects;
 
@@ -41,21 +39,19 @@ import java.util.Objects;
 public class DefaultAgentProfile implements AgentProfile {
     protected final String name;
     protected String description;
-    protected final Configuration configuration;
-    protected final ConfigurationMetadataProvider metadata;
+    protected final MetadataProvider metadata;
 
-    public DefaultAgentProfile(String name, String description, Configuration configuration) {
+    public DefaultAgentProfile(String name, String description, MetadataProvider metadata) {
         if (StringUtils.isBlank(name)) {
             throw new IllegalArgumentException("Agent name is blank");
         }
         this.name = name.trim();
         setDescription(description);
-        this.configuration = Objects.requireNonNull(configuration, "configuration is required");
-        this.metadata = new ConfigurationMetadataProvider(configuration);
+        this.metadata = Objects.requireNonNull(metadata);
     }
 
     public DefaultAgentProfile(String name, String description) {
-        this(name, description, new BaseConfiguration());
+        this(name, description, MetadataProvider.create());
     }
 
     public DefaultAgentProfile(String name) {
