@@ -107,9 +107,8 @@ public interface MetaAgent<I, O> {
      * @param input the agent input
      * @return the agent output
      */
-    default O run(I input) {
-        AgentOutput<O> agentOutput = run(AgentInput.builder(input).context(newExecutionContext()).build());
-        return agentOutput.result();
+    default AgentOutput<O> run(I input) {
+        return run(AgentInput.builder(input).context(newExecutionContext()).build());
     }
 
     /**
@@ -128,9 +127,8 @@ public interface MetaAgent<I, O> {
      * @param input the agent input
      * @return the agent out
      */
-    default CompletableFuture<O> runAsync(I input) {
-        CompletableFuture<AgentOutput<O>> future = runAsync(AgentInput.builder(input).context(newExecutionContext()).build());
-        return future.thenApply(AgentOutput::result);
+    default CompletableFuture<AgentOutput<O>> runAsync(I input) {
+        return runAsync(AgentInput.builder(input).context(newExecutionContext()).build());
     }
 
     /**

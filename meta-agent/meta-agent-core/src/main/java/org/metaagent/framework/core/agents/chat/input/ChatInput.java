@@ -22,22 +22,37 @@
  * SOFTWARE.
  */
 
-package org.metaagent.framework.core.agent.ability.dialog;
+package org.metaagent.framework.core.agents.chat.input;
 
-import org.metaagent.framework.core.agent.ability.AgentAbility;
 import org.metaagent.framework.core.agent.chat.message.Message;
-import org.metaagent.framework.core.agent.chat.message.conversation.Conversation;
-import org.metaagent.framework.core.agents.chat.output.ChatOutput;
+import org.metaagent.framework.core.agents.chat.ChatAgent;
+
+import java.util.List;
 
 /**
- * description is here
+ * {@link ChatAgent} input
  *
  * @author vyckey
  */
-public interface AgentDialogAbility extends AgentAbility {
-    ChatOutput handleMessage(Message message);
+public interface ChatInput {
+    /**
+     * Get the messages of this input.
+     *
+     * @return the messages of this input
+     */
+    List<Message> messages();
 
-    Conversation messageHistory();
+    /**
+     * Check whether the agent is thinking enabled. It's determined by the agent's implementation if not present.
+     *
+     * @return true if the agent is thinking enabled, false otherwise
+     */
+    Boolean isThinkingEnabled();
 
-    void reset();
+    /**
+     * Check whether the agent is streaming enabled.  It's determined by the agent's implementation if not present.
+     *
+     * @return true if the agent is streaming enabled, false otherwise
+     */
+    Boolean isStreamingEnabled();
 }

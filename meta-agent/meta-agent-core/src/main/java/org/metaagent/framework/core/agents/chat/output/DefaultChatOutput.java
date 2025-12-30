@@ -22,9 +22,10 @@
  * SOFTWARE.
  */
 
-package org.metaagent.framework.core.agents.chat;
+package org.metaagent.framework.core.agents.chat.output;
 
 import org.metaagent.framework.core.agent.chat.message.Message;
+import org.metaagent.framework.core.agents.chat.ChatAgent;
 
 import java.util.List;
 import java.util.Objects;
@@ -35,33 +36,57 @@ import java.util.stream.Collectors;
  *
  * @author vyckey
  */
-public class ChatAgentOutput {
-    protected List<Message> messages;
-    protected String thoughtProcess;
+public class DefaultChatOutput implements ChatOutput {
+    private final List<Message> messages;
+    private final String thought;
 
-    public ChatAgentOutput(List<Message> messages, String thoughtProcess) {
+    public DefaultChatOutput(Builder builder) {
+        this.messages = Objects.requireNonNull(builder.messages, "messages is required");
+        this.thought = builder.thought;
+    }
+
+    public DefaultChatOutput(List<Message> messages) {
         this.messages = Objects.requireNonNull(messages, "messages is required");
-        this.thoughtProcess = thoughtProcess;
+        this.thought = null;
     }
 
-    public ChatAgentOutput(List<Message> messages) {
-        this(messages, null);
-    }
-
-    public ChatAgentOutput(Message... messages) {
-        this(List.of(messages));
+    public static Builder builder() {
+        return new Builder();
     }
 
     public List<Message> messages() {
         return messages;
     }
 
-    public String thoughtProcess() {
-        return thoughtProcess;
+    public String thought() {
+        return thought;
     }
 
     @Override
     public String toString() {
         return messages().stream().map(Message::toString).collect(Collectors.joining("\n"));
     }
+
+    public static class Builder {
+        private List<Message> messages;
+        private String thought;
+
+        private Builder() {
+        }
+
+        public Builder messages(List<Message> messages) {
+            this.messages = messages;
+            return this;
+        }
+
+        public Builder thought(String thought) {
+            this.thought = thought;
+            return this;
+        }
+
+        public DefaultChatOutput build() {
+            return new DefaultChatOutput(this);
+        }
+    }
+
 }

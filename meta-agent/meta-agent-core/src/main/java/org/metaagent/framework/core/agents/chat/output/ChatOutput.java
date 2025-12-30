@@ -22,22 +22,30 @@
  * SOFTWARE.
  */
 
-package org.metaagent.framework.core.agent.ability.dialog;
+package org.metaagent.framework.core.agents.chat.output;
 
-import org.metaagent.framework.core.agent.ability.AgentAbility;
 import org.metaagent.framework.core.agent.chat.message.Message;
-import org.metaagent.framework.core.agent.chat.message.conversation.Conversation;
-import org.metaagent.framework.core.agents.chat.output.ChatOutput;
+import org.metaagent.framework.core.agents.chat.ChatAgent;
+
+import java.util.List;
 
 /**
- * description is here
+ * {@link ChatAgent} output.
  *
  * @author vyckey
  */
-public interface AgentDialogAbility extends AgentAbility {
-    ChatOutput handleMessage(Message message);
+public interface ChatOutput {
+    /**
+     * Get the thought process of this agent.
+     *
+     * @return the thought process of this agent
+     */
+    String thought();
 
-    Conversation messageHistory();
-
-    void reset();
+    /**
+     * Get the output messages of this agent.
+     *
+     * @return the output messages of this agent
+     */
+    List<Message> messages();
 }

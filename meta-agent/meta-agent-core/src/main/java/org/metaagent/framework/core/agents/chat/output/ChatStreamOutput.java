@@ -22,15 +22,21 @@
  * SOFTWARE.
  */
 
-package org.metaagent.framework.core.agents.chat;
+package org.metaagent.framework.core.agents.chat.output;
 
 import org.metaagent.framework.core.agent.chat.message.Message;
+import org.metaagent.framework.core.agents.chat.ChatAgent;
 
 /**
  * {@link ChatAgent} streaming output.
  *
  * @author vyckey
  */
-public record ChatAgentStreamOutput(
-        Message message) {
+public interface ChatStreamOutput {
+    /**
+     * Get the streaming message of this agent.
+     *
+     * @return the streaming message of this agent
+     */
+    Message message();
 }

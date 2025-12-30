@@ -22,39 +22,24 @@
  * SOFTWARE.
  */
 
-package org.metaagent.framework.core.agents.chat;
+package org.metaagent.framework.core.agents.chat.output;
 
+import com.google.common.collect.Lists;
 import org.metaagent.framework.core.agent.chat.message.Message;
+import org.metaagent.framework.core.agent.chat.message.StreamMessageAggregator;
+import org.metaagent.framework.core.agent.output.AgentStreamOutput;
 
 import java.util.List;
-import java.util.Objects;
-import java.util.stream.Collectors;
 
-/**
- * {@link ChatAgent} input
- *
- * @author vyckey
- */
-public class ChatAgentInput {
-    public static final String OPTION_DEEP_THINK_ENABLED = "deepThinkEnabled";
-    public static final String OPTION_SEARCH_ENABLED = "searchEnabled";
-
-    protected List<Message> messages;
-
-    public ChatAgentInput(List<Message> messages) {
-        this.messages = Objects.requireNonNull(messages, "messages is required");
-    }
-
-    public ChatAgentInput(Message... messages) {
-        this(List.of(messages));
-    }
-
-    public List<Message> messages() {
-        return messages;
-    }
-
-    @Override
-    public String toString() {
-        return messages().stream().map(Message::getContent).collect(Collectors.joining("\n"));
+public record DefaultChatStreamOutput(Message message) implements ChatStreamOutput {
+    public static AgentStreamOutput.Aggregator<ChatStreamOutput, ChatOutput> aggregator() {
+        return streamOutputs -> {
+            List<Message> streamMessages = Lists.newArrayList();
+            for (ChatStreamOutput streamOutput : streamOutputs) {
+                streamMessages.add(streamOutput.message());
+            }
+            List<Message> aggregatedMessages = StreamMessageAggregator.INSTANCE.aggregate(streamMessages);
+            return new DefaultChatOutput(aggregatedMessages);
+        };
     }
 }

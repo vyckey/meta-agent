@@ -188,6 +188,14 @@ public abstract class AbstractMetaAgent<I, O> implements MetaAgent<I, O> {
 
     protected abstract AgentOutput<O> doStep(AgentInput<I> input);
 
+    protected Exception wrapException(Throwable throwable) {
+        if (throwable instanceof Exception e) {
+            return e;
+        } else {
+            return new AgentExecutionException(throwable);
+        }
+    }
+
     @Override
     public void reset() {
         this.agentState.reset();

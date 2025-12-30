@@ -22,22 +22,33 @@
  * SOFTWARE.
  */
 
-package org.metaagent.framework.core.agent.ability.dialog;
+package org.metaagent.framework.core.agent.output;
 
-import org.metaagent.framework.core.agent.ability.AgentAbility;
-import org.metaagent.framework.core.agent.chat.message.Message;
-import org.metaagent.framework.core.agent.chat.message.conversation.Conversation;
-import org.metaagent.framework.core.agents.chat.output.ChatOutput;
+import org.metaagent.framework.common.metadata.MetadataProvider;
+import reactor.core.publisher.Flux;
+
+import java.util.Objects;
 
 /**
- * description is here
+ * Default implementation of {@link AgentStreamOutput}
  *
  * @author vyckey
  */
-public interface AgentDialogAbility extends AgentAbility {
-    ChatOutput handleMessage(Message message);
+public record DefaultAgentStreamOutput<O, S>(
+        Flux<S> stream,
+        O result,
+        MetadataProvider metadata) implements AgentStreamOutput<O, S> {
+    public DefaultAgentStreamOutput(Flux<S> stream, O result, MetadataProvider metadata) {
+        this.stream = Objects.requireNonNull(stream, "stream is required");
+        this.result = result;
+        this.metadata = Objects.requireNonNull(metadata, "metadata is required");
+    }
 
-    Conversation messageHistory();
+    public DefaultAgentStreamOutput(Flux<S> stream, MetadataProvider metadata) {
+        this(stream, null, metadata);
+    }
 
-    void reset();
+    public DefaultAgentStreamOutput(Flux<S> stream) {
+        this(stream, null, MetadataProvider.empty());
+    }
 }
