@@ -49,7 +49,7 @@ public class DefaultChatModelMetadata extends ClassMetadataProvider implements C
     }
 
     @Override
-    public Instant getCutOffDay() {
+    public Instant getCutOffDate() {
         return cutOffDay;
     }
 

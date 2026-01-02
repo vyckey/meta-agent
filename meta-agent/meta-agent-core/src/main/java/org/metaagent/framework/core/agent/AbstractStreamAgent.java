@@ -83,7 +83,7 @@ public abstract class AbstractStreamAgent<I, O, S>
         return buildOutput(input, stream, agentOutput);
     }
 
-    protected AgentStreamOutput<O, S> doRunStream(AgentInput<I> input, Consumer<AgentOutput<O>> onRunStreamComplete) {
+    protected AgentStreamOutput<O, S> doRunStream(AgentInput<I> input, Consumer<AgentOutput<O>> onStreamComplete) {
         Agent<I, O> agent = this;
 
         AtomicReference<AgentInput<I>> currentInputRef = new AtomicReference<>(input);
@@ -109,8 +109,8 @@ public abstract class AbstractStreamAgent<I, O, S>
                 .doOnComplete(() -> {
                     AgentOutput<O> lastOutput = lastOutputRef.get();
                     System.out.println("Invoking onRunStreamComplete callback...");
-                    if (onRunStreamComplete != null) {
-                        onRunStreamComplete.accept(lastOutput);
+                    if (onStreamComplete != null) {
+                        onStreamComplete.accept(lastOutput);
                     }
                 });
         return buildOutput(input, stream, null);
@@ -137,7 +137,7 @@ public abstract class AbstractStreamAgent<I, O, S>
         });
     }
 
-    protected AgentStreamOutput<O, S> stepStream(AgentInput<I> input, Consumer<AgentOutput<O>> onStepStreamComplete) {
+    protected AgentStreamOutput<O, S> stepStream(AgentInput<I> input, Consumer<AgentOutput<O>> onStreamComplete) {
         MetaAgent<I, O> agent = this;
 
         AtomicReference<List<S>> streamOutputsRef = new AtomicReference<>(Lists.newArrayList());
@@ -151,7 +151,7 @@ public abstract class AbstractStreamAgent<I, O, S>
                 .doOnComplete(() -> fullOutputRef.set(aggregator.aggregate(streamOutputsRef.get())))
                 .doOnComplete(() -> {
                     AgentOutput<O> aggOutput = AgentOutput.create(fullOutputRef.get(), agentOutput.metadata());
-                    onStepStreamComplete.accept(aggOutput);
+                    onStreamComplete.accept(aggOutput);
                     notifyListeners(stepListeners, listener -> listener.onAgentStepFinish(agent, input, aggOutput));
                 })
                 .doOnError(throwable -> {

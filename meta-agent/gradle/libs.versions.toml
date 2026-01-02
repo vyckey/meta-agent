@@ -19,7 +19,7 @@ collections = '3.2.2'
 mockito = '5.16.0'
 mcp = '0.10.0'
 reactorCore = '3.7.4'
-springAI = '1.1.0-M2'
+springAI = '2.0.0-M1'
 jinjava = '2.8.0'
 okhttp = '4.12.0'
 

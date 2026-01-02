@@ -76,9 +76,12 @@ public class MessageConverter implements BiConverter<Message, org.springframewor
         if (message instanceof RoleMessage roleMessage) {
             List<Media> media = roleMessage.getMedia().stream().map(this::convertMedia).toList();
             if (roleMessage.getRole().equals(RoleMessage.ROLE_ASSISTANT)) {
-                return new org.springframework.ai.chat.messages.AssistantMessage(
-                        message.getContent(), message.getMetadata().getProperties(), List.of(), media
-                );
+                return org.springframework.ai.chat.messages.AssistantMessage.builder()
+                        .content(message.getContent())
+                        .media(List.of())
+                        .properties(message.getMetadata().getProperties())
+                        .toolCalls(List.of())
+                        .build();
             }
             return org.springframework.ai.chat.messages.UserMessage.builder()
                     .text(message.getContent())
@@ -90,17 +93,22 @@ public class MessageConverter implements BiConverter<Message, org.springframewor
             List<AssistantMessage.ToolCall> toolCalls = toolCallMessage.getToolCalls().stream()
                     .map(call -> new AssistantMessage.ToolCall(call.id(), call.type(), call.name(), call.arguments()))
                     .toList();
-            return new org.springframework.ai.chat.messages.AssistantMessage(
-                    message.getContent(), message.getMetadata().getProperties(), toolCalls, media
-            );
+            return org.springframework.ai.chat.messages.AssistantMessage.builder()
+                    .content(message.getContent())
+                    .media(media)
+                    .properties(message.getMetadata().getProperties())
+                    .toolCalls(toolCalls)
+                    .build();
         } else if (message instanceof ToolResponseMessage responseMessage) {
-            return new org.springframework.ai.chat.messages.ToolResponseMessage(
+            List<org.springframework.ai.chat.messages.ToolResponseMessage.ToolResponse> toolResponses =
                     responseMessage.getToolResponses().stream().map(toolResponse ->
-                            new org.springframework.ai.chat.messages.ToolResponseMessage.ToolResponse(
-                                    toolResponse.id(), toolResponse.name(), toolResponse.responseData())
-                    ).toList(),
-                    responseMessage.getMetadata().getProperties()
-            );
+                                    new org.springframework.ai.chat.messages.ToolResponseMessage.ToolResponse(
+                                            toolResponse.id(), toolResponse.name(), toolResponse.responseData()))
+                            .toList();
+            return org.springframework.ai.chat.messages.ToolResponseMessage.builder()
+                    .responses(toolResponses)
+                    .metadata(responseMessage.getMetadata().getProperties())
+                    .build();
         } else {
             throw new IllegalArgumentException("message cannot be converted: " + message.getClass().getName());
         }

@@ -24,6 +24,7 @@
 
 package org.metaagent.framework.core.agents.chat.output;
 
+import org.metaagent.framework.common.metadata.MetadataProvider;
 import org.metaagent.framework.core.agent.chat.message.Message;
 import org.metaagent.framework.core.agents.chat.ChatAgent;
 
@@ -48,4 +49,13 @@ public interface ChatOutput {
      * @return the output messages of this agent
      */
     List<Message> messages();
+
+    /**
+     * Get the output metadata of this agent.
+     *
+     * @return the output metadata of this agent
+     */
+    default MetadataProvider metadata() {
+        return MetadataProvider.empty();
+    }
 }

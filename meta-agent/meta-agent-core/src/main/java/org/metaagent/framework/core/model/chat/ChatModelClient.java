@@ -30,7 +30,6 @@ import org.metaagent.framework.core.model.chat.metadata.TokenUsage;
 import org.metaagent.framework.core.tool.executor.ToolExecutor;
 import org.metaagent.framework.core.tool.executor.ToolExecutorContext;
 import org.metaagent.framework.core.tool.tools.spring.ToolCallbackUtils;
-import org.springframework.ai.chat.messages.AssistantMessage;
 import org.springframework.ai.chat.messages.Message;
 import org.springframework.ai.chat.messages.SystemMessage;
 import org.springframework.ai.chat.model.ChatModel;
@@ -175,14 +174,7 @@ public class ChatModelClient {
     protected Flux<ChatModelResponse> stream(Prompt prompt, ChatResponse previousResponse) {
         return Flux.deferContextual(contextView -> {
             Flux<ChatModelResponse> chatResponseFlux = chatModel.stream(prompt)
-                    .map(chatResponse -> {
-                        if (chatResponse.getResult() == null) {
-                            return ChatResponse.builder().from(chatResponse)
-                                    .generations(List.of(new Generation(new AssistantMessage(""))))
-                                    .build();
-                        }
-                        return chatResponse;
-                    })
+                    .map(ChatResponseUtils::rebuildResponseIfRequired)
                     .switchMap(response -> {
                         ChatModelResponse.Builder responseBuilder = ChatModelResponse.newBuilder().merge(previousResponse);
                         responseBuilder.merge(response);

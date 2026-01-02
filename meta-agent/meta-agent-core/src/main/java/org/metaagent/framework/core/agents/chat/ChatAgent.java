@@ -29,6 +29,7 @@ import org.metaagent.framework.core.agent.chat.message.Message;
 import org.metaagent.framework.core.agent.chat.message.RoleMessage;
 import org.metaagent.framework.core.agent.chat.message.conversation.Conversation;
 import org.metaagent.framework.core.agent.output.AgentOutput;
+import org.metaagent.framework.core.agent.output.AgentStreamOutput;
 import org.metaagent.framework.core.agents.chat.input.ChatInput;
 import org.metaagent.framework.core.agents.chat.output.ChatOutput;
 import org.metaagent.framework.core.agents.chat.output.ChatStreamOutput;
@@ -72,7 +73,7 @@ public interface ChatAgent<I extends ChatInput, O extends ChatOutput, S extends 
      * @param input the input to run the agent with
      * @return the output of the agent
      */
-    default AgentOutput<O> runStream(String input) {
+    default AgentStreamOutput<O, S> runStream(String input) {
         return runStream(RoleMessage.user(input));
     }
 
@@ -82,6 +83,6 @@ public interface ChatAgent<I extends ChatInput, O extends ChatOutput, S extends 
      * @param messages the messages to run this agent with
      * @return the output of this agent
      */
-    AgentOutput<O> runStream(Message... messages);
+    AgentStreamOutput<O, S> runStream(Message... messages);
 
 }

@@ -75,7 +75,7 @@ public abstract class AbstractMetaAgent<I, O> implements MetaAgent<I, O> {
 
     @Override
     public final String getName() {
-        return profile.getName();
+        return agentName;
     }
 
     @Override

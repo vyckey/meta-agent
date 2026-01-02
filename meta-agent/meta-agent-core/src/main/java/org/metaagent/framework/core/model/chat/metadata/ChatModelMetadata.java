@@ -48,7 +48,7 @@ public interface ChatModelMetadata extends ModelMetadata {
      *
      * @return the model cut-off day
      */
-    Instant getCutOffDay();
+    Instant getCutOffDate();
 
     /**
      * Gets max window size of model

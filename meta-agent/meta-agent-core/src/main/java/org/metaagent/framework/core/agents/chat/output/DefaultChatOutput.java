@@ -24,6 +24,7 @@
 
 package org.metaagent.framework.core.agents.chat.output;
 
+import org.metaagent.framework.common.metadata.MetadataProvider;
 import org.metaagent.framework.core.agent.chat.message.Message;
 import org.metaagent.framework.core.agents.chat.ChatAgent;
 
@@ -39,15 +40,18 @@ import java.util.stream.Collectors;
 public class DefaultChatOutput implements ChatOutput {
     private final List<Message> messages;
     private final String thought;
+    private final MetadataProvider metadata;
 
     public DefaultChatOutput(Builder builder) {
         this.messages = Objects.requireNonNull(builder.messages, "messages is required");
         this.thought = builder.thought;
+        this.metadata = builder.metadata != null ? builder.metadata : MetadataProvider.empty();
     }
 
     public DefaultChatOutput(List<Message> messages) {
         this.messages = Objects.requireNonNull(messages, "messages is required");
         this.thought = null;
+        this.metadata = MetadataProvider.empty();
     }
 
     public static Builder builder() {
@@ -63,6 +67,11 @@ public class DefaultChatOutput implements ChatOutput {
     }
 
     @Override
+    public MetadataProvider metadata() {
+        return metadata;
+    }
+
+    @Override
     public String toString() {
         return messages().stream().map(Message::toString).collect(Collectors.joining("\n"));
     }
@@ -70,6 +79,7 @@ public class DefaultChatOutput implements ChatOutput {
     public static class Builder {
         private List<Message> messages;
         private String thought;
+        private MetadataProvider metadata;
 
         private Builder() {
         }
@@ -81,6 +91,11 @@ public class DefaultChatOutput implements ChatOutput {
 
         public Builder thought(String thought) {
             this.thought = thought;
+            return this;
+        }
+
+        public Builder metadata(MetadataProvider metadata) {
+            this.metadata = metadata;
             return this;
         }
 
