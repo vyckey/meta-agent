@@ -26,11 +26,6 @@ package org.metaagent.framework.tools.script.engine;
 
 import lombok.Setter;
 import org.metaagent.framework.common.abort.AbortException;
-import org.metaagent.framework.common.metadata.MetadataProvider;
-import org.metaagent.framework.core.security.SecurityLevel;
-import org.metaagent.framework.core.security.approver.HumanApprovalInput;
-import org.metaagent.framework.core.security.approver.HumanApprovalOutput;
-import org.metaagent.framework.core.security.approver.HumanApprover;
 import org.metaagent.framework.core.tool.Tool;
 import org.metaagent.framework.core.tool.ToolContext;
 import org.metaagent.framework.core.tool.converter.ToolConverter;
@@ -62,7 +57,6 @@ public class ScriptEngineTool implements Tool<ScriptInput, ScriptOutput> {
     private static final ToolConverter<ScriptInput, ScriptOutput> TOOL_CONVERTER =
             ToolConverters.jsonConverter(ScriptInput.class);
     protected final ScriptEngineManager scriptEngineManager;
-    protected HumanApprover humanApprover = HumanApprover.skipApprover();
 
     public ScriptEngineTool(ScriptEngineManager scriptEngineManager) {
         this.scriptEngineManager = scriptEngineManager;
@@ -84,9 +78,6 @@ public class ScriptEngineTool implements Tool<ScriptInput, ScriptOutput> {
 
         if (toolContext.getAbortSignal().isAborted()) {
             throw new AbortException("Tool " + getName() + " is cancelled");
-        }
-        if (toolContext.getSecurityLevel().compareTo(SecurityLevel.UNRESTRICTED_DANGEROUSLY) < 0) {
-            requestApprovalBeforeExecute(scriptInput.getLanguage(), scriptInput.getScript());
         }
         return executeScript(scriptEngine, scriptInput);
     }
@@ -124,12 +115,4 @@ public class ScriptEngineTool implements Tool<ScriptInput, ScriptOutput> {
         return ScriptOutput.builder().result(result != null ? result.toString() : null).build();
     }
 
-    protected void requestApprovalBeforeExecute(String language, String script) {
-        String approval = "Whether execute the " + language + " script:\n" + getShortScript(script);
-        HumanApprovalInput approvalInput = HumanApprovalInput.ofTool(getName(), approval, MetadataProvider.create());
-        HumanApprovalOutput approvalOutput = humanApprover.request(approvalInput);
-        if (!approvalOutput.isApproved()) {
-            throw new ToolExecutionException("User reject to execute script");
-        }
-    }
 }

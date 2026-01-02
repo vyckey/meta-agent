@@ -28,11 +28,6 @@ import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import org.jetbrains.annotations.NotNull;
 import org.metaagent.framework.common.abort.AbortException;
-import org.metaagent.framework.common.metadata.MetadataProvider;
-import org.metaagent.framework.core.security.SecurityLevel;
-import org.metaagent.framework.core.security.approver.HumanApprovalInput;
-import org.metaagent.framework.core.security.approver.HumanApprovalOutput;
-import org.metaagent.framework.core.security.approver.HumanApprover;
 import org.metaagent.framework.core.tool.Tool;
 import org.metaagent.framework.core.tool.ToolContext;
 import org.metaagent.framework.core.tool.converter.ToolConverter;
@@ -65,7 +60,6 @@ public class WriteTextFileTool implements Tool<WriteTextFileInput, WriteTextFile
             .build();
     private static final ToolConverter<WriteTextFileInput, WriteTextFileOutput> TOOL_CONVERTER =
             ToolConverters.jsonConverter(WriteTextFileInput.class);
-    private HumanApprover humanApprover = HumanApprover.skipApprover();
 
     @Override
     public ToolDefinition getDefinition() {
@@ -86,9 +80,6 @@ public class WriteTextFileTool implements Tool<WriteTextFileInput, WriteTextFile
         final String content = input.getContent() == null ? "" : input.getContent();
         Path filePath = FileUtils.resolvePath(toolContext.getToolConfig().workingDirectory(), Path.of(input.getFilePath()));
 
-        if (toolContext.getSecurityLevel().compareTo(SecurityLevel.UNRESTRICTED_DANGEROUSLY) < 0) {
-            requestApprovalBeforeWriteFile(filePath, content);
-        }
         if (toolContext.getAbortSignal().isAborted()) {
             throw new AbortException("Tool " + getName() + " is cancelled");
         }
@@ -109,15 +100,6 @@ public class WriteTextFileTool implements Tool<WriteTextFileInput, WriteTextFile
         }
     }
 
-    private void requestApprovalBeforeWriteFile(Path filePath, String content) {
-        String truncatedContent = content.length() > 100 ? content.substring(0, 100) + "..." : content;
-        String approval = "Request to write file " + filePath + " with content:\n" + truncatedContent;
-        HumanApprovalInput approvalInput = HumanApprovalInput.ofTool(getName(), approval, MetadataProvider.create());
-        HumanApprovalOutput approvalOutput = humanApprover.request(approvalInput);
-        if (!approvalOutput.isApproved()) {
-            throw new ToolExecutionException("User reject to write file: " + filePath);
-        }
-    }
 
     @NotNull
     private static File createFileIfNotExists(Path filePath) throws IOException {

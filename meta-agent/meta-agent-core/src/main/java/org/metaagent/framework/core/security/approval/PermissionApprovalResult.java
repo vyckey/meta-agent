@@ -71,6 +71,9 @@ public record PermissionApprovalResult(
         private String content;
         private MetadataProvider metadata;
 
+        private Builder() {
+        }
+
         public Builder approvalStatus(ApprovalStatus approvalStatus) {
             this.approvalStatus = approvalStatus;
             return this;

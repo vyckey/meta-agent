@@ -29,11 +29,7 @@ import com.google.common.io.CharStreams;
 import lombok.Setter;
 import org.apache.commons.lang3.StringUtils;
 import org.metaagent.framework.common.abort.AbortException;
-import org.metaagent.framework.common.metadata.MetadataProvider;
 import org.metaagent.framework.core.security.SecurityLevel;
-import org.metaagent.framework.core.security.approver.HumanApprovalInput;
-import org.metaagent.framework.core.security.approver.HumanApprovalOutput;
-import org.metaagent.framework.core.security.approver.HumanApprover;
 import org.metaagent.framework.core.tool.Tool;
 import org.metaagent.framework.core.tool.ToolContext;
 import org.metaagent.framework.core.tool.config.ToolConfig;
@@ -66,7 +62,6 @@ public class ShellCommandTool implements Tool<ShellCommandInput, ShellCommandOut
             .build();
     private static final ToolConverter<ShellCommandInput, ShellCommandOutput> TOOL_CONVERTER =
             ToolConverters.jsonConverter(ShellCommandInput.class);
-    private HumanApprover humanApprover = HumanApprover.skipApprover();
 
     @Override
     public ToolDefinition getDefinition() {
@@ -106,18 +101,6 @@ public class ShellCommandTool implements Tool<ShellCommandInput, ShellCommandOut
         if (CommandApproval.DISALLOW == approval) {
             throw new ToolExecutionException("The command has been disallowed by the user.");
         }
-        if (CommandApproval.TO_CONFIRM == approval) {
-            if (!confirmBeforeExecution(toolContext, commandInput)) {
-                throw new ToolExecutionException("The command execution is rejected by the user.");
-            }
-        }
-    }
-
-    private boolean confirmBeforeExecution(ToolContext toolContext, ShellCommandInput commandInput) {
-        String approval = "Whether execute the command [\"" + commandInput.command() + "\"] ?";
-        HumanApprovalInput approvalInput = HumanApprovalInput.ofTool(getName(), approval, MetadataProvider.create());
-        HumanApprovalOutput approvalOutput = humanApprover.request(approvalInput);
-        return approvalOutput.isApproved();
     }
 
     @Override
