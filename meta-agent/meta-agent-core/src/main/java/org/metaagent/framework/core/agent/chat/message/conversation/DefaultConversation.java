@@ -44,12 +44,12 @@ import java.util.function.Predicate;
  * @author vyckey
  */
 public class DefaultConversation implements Conversation {
-    private static final DateTimeFormatter TIME_FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ssXXX");
+    public static final DateTimeFormatter TIME_FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ssXXX");
     protected final String conversationId;
     protected final List<Message> messages;
 
     public DefaultConversation(String conversationId, List<Message> messages) {
-        this.conversationId = Objects.requireNonNull(conversationId, "historyId is required");
+        this.conversationId = Objects.requireNonNull(conversationId, "conversationId is required");
         this.messages = Objects.requireNonNull(messages, "messages is required");
     }
 
@@ -58,10 +58,10 @@ public class DefaultConversation implements Conversation {
     }
 
     public DefaultConversation() {
-        this(generateHistoryId());
+        this(generateConversationId());
     }
 
-    public static String generateHistoryId() {
+    public static String generateConversationId() {
         return UUID.randomUUID().toString().replaceAll("-", "").substring(0, 16);
     }
 

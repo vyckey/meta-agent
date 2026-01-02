@@ -24,6 +24,8 @@
 
 package org.metaagent.framework.core.agent.chat.message.conversation;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.common.collect.Lists;
 import org.metaagent.framework.core.agent.chat.message.Message;
 import org.metaagent.framework.core.agent.chat.message.MessageSerializer;
@@ -59,7 +61,17 @@ public class ConversationFileStorage implements ConversationStorage {
             }
         }
         try {
-            ConversationDO convDo = new ConversationDO(conversation.id(), Lists.newArrayList(conversation));
+            String className = conversation.getClass().getTypeName();
+            ConversationDO convDo;
+            if (conversation instanceof TurnBasedConversation turnBasedConversation) {
+                List<MessageTurnDO> messageTurns = Lists.newArrayList();
+                for (MessageTurn messageTurn : turnBasedConversation.turns(false)) {
+                    messageTurns.add(new MessageTurnDO(messageTurn));
+                }
+                convDo = new ConversationDO(conversation.id(), null, messageTurns, className);
+            } else {
+                convDo = new ConversationDO(conversation.id(), Lists.newArrayList(conversation), null, className);
+            }
             MessageSerializer.getObjectMapper().writeValue(file, convDo);
         } catch (IOException e) {
             throw new IllegalStateException("Failed to store conversation " + conversation.id() + ": " + e.getMessage(), e);
@@ -73,9 +85,15 @@ public class ConversationFileStorage implements ConversationStorage {
         if (file.exists()) {
             try {
                 ConversationDO convDo = MessageSerializer.getObjectMapper().readValue(file, ConversationDO.class);
-                List<Message> messages = convDo.messages;
-                conversation.clear();
-                messages.forEach(conversation::appendMessage);
+                if (conversation instanceof TurnBasedConversation turnBasedConversation && convDo.messageTurns != null) {
+                    convDo.messageTurns.stream()
+                            .map(turnDO -> new DefaultMessageTurn(turnDO.messages, turnDO.finished))
+                            .forEach(turnBasedConversation::appendTurn);
+                } else {
+                    conversation.clear();
+                    List<Message> messages = convDo.messages;
+                    messages.forEach(conversation::appendMessage);
+                }
             } catch (IOException e) {
                 throw new IllegalStateException("Failed to load conversation file " + file.getAbsolutePath() + ": " + e.getMessage(), e);
             }
@@ -91,6 +109,14 @@ public class ConversationFileStorage implements ConversationStorage {
         }
     }
 
-    private record ConversationDO(String convId, List<Message> messages) {
+    private record MessageTurnDO(List<Message> messages, boolean finished) {
+        private MessageTurnDO(MessageTurn messageTurn) {
+            this(messageTurn.messages(), messageTurn.isFinished());
+        }
+    }
+
+    @JsonInclude(JsonInclude.Include.NON_NULL)
+    private record ConversationDO(String convId, List<Message> messages, List<MessageTurnDO> messageTurns,
+                                  @JsonProperty("@class") String className) {
     }
 }
