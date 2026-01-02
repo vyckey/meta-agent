@@ -1,7 +1,7 @@
 /*
  * MIT License
  *
- * Copyright (c) 2025 MetaAgent
+ * Copyright (c) 2026 MetaAgent
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -22,28 +22,29 @@
  * SOFTWARE.
  */
 
-package org.metaagent.framework.core.security.approver;
+package org.metaagent.framework.core.security.approval.event;
+
+import org.metaagent.framework.core.security.approval.PermissionRequest;
+
+import java.util.Objects;
+import java.util.UUID;
 
 /**
- * HumanApprover is an interface that defines the contract for human approvers.
+ * PermissionApprovalEvent represents an event of a permission approval request.
  *
  * @author vyckey
  */
-public interface HumanApprover {
-    /**
-     * A HumanApprover implementation that automatically approves all requests.
-     *
-     * @return A HumanApprover that always approves.
-     */
-    static HumanApprover skipApprover() {
-        return input -> new HumanApprovalOutput(HumanApprovalStatus.APPROVED, "Skip human approval");
+public record PermissionApprovalEvent<T extends PermissionRequest>(
+        String eventId,
+        T request,
+        long timestamp) {
+    public PermissionApprovalEvent(String eventId, T request, long timestamp) {
+        this.eventId = Objects.requireNonNull(eventId, "eventId is required");
+        this.request = Objects.requireNonNull(request, "approval request is required");
+        this.timestamp = timestamp;
     }
 
-    /**
-     * Requests human approval for a given input.
-     *
-     * @param input The input to be approved.
-     * @return The approval output.
-     */
-    HumanApprovalOutput request(HumanApprovalInput input);
+    public PermissionApprovalEvent(T request) {
+        this(UUID.randomUUID().toString(), request, System.currentTimeMillis());
+    }
 }

@@ -1,7 +1,7 @@
 /*
  * MIT License
  *
- * Copyright (c) 2025 MetaAgent
+ * Copyright (c) 2026 MetaAgent
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -22,14 +22,22 @@
  * SOFTWARE.
  */
 
-package org.metaagent.framework.core.security.approver;
+package org.metaagent.framework.core.security.approval.event;
+
+import org.metaagent.framework.core.security.approval.PermissionRequest;
 
 /**
- * HumanApprovalStatus represents the status of a human approval request.
+ * ApprovalEventPublisher is a functional interface for publishing approval events.
  *
  * @author vyckey
  */
-public enum HumanApprovalStatus {
-    APPROVED,
-    REJECTED,
+@FunctionalInterface
+public interface ApprovalEventPublisher<T extends PermissionRequest> {
+    /**
+     * Publishes an approval event.
+     *
+     * @param approval the approval event to publish
+     * @return true if the event was published successfully, false otherwise
+     */
+    boolean publish(PermissionApprovalEvent<T> approval);
 }
