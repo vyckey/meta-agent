@@ -41,6 +41,9 @@ import org.metaagent.framework.core.agents.chat.output.ChatStreamOutput;
  */
 public interface ChatAgent<I extends ChatInput, O extends ChatOutput, S extends ChatStreamOutput>
         extends StreamingAgent<I, O, S> {
+    String PROPERTY_CONTEXT_COMPRESSION_RATIO = "contextCompressionRatio";
+    String PROPERTY_COMPRESSION_RESERVED_MESSAGES_COUNT = "compressionReservedMessageCount";
+
     /**
      * Get the conversation of this agent.
      *
