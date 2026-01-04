@@ -41,7 +41,7 @@ import java.util.concurrent.CompletableFuture;
  * @param <O> the type of agent output
  * @author vyckey
  */
-public interface MetaAgent<I, O> {
+public interface MetaAgent<I, O> extends AutoCloseable {
 
     /**
      * Gets agent name.

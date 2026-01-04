@@ -29,6 +29,7 @@ import org.metaagent.framework.core.agent.input.AgentInput;
 import org.metaagent.framework.core.agent.output.AgentOutput;
 import org.metaagent.framework.core.agent.output.AgentStreamOutput;
 import org.metaagent.framework.core.agent.output.DefaultAgentStreamOutput;
+import org.metaagent.framework.core.agent.profile.AgentProfile;
 import org.metaagent.framework.core.agent.state.AgentRunStatus;
 import reactor.core.publisher.Flux;
 
@@ -45,6 +46,14 @@ public abstract class AbstractStreamAgent<I, O, S>
         extends AbstractAgent<I, O> implements StreamingAgent<I, O, S> {
     protected AbstractStreamAgent(String name) {
         super(name);
+    }
+
+    protected AbstractStreamAgent(AgentProfile profile) {
+        super(profile);
+    }
+
+    protected AbstractStreamAgent(AbstractAgentBuilder<?, ?, I, O> builder) {
+        super(builder);
     }
 
     protected AgentStreamOutput<O, S> buildOutput(AgentInput<I> input, Flux<S> stream, AgentStreamOutput<O, S> lastOutput) {

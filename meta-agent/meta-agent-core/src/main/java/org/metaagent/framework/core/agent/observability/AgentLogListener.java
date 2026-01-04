@@ -29,6 +29,8 @@ import org.metaagent.framework.core.agent.input.AgentInput;
 import org.metaagent.framework.core.agent.output.AgentOutput;
 import org.metaagent.framework.core.agent.state.AgentState;
 
+import java.util.Objects;
+
 /**
  * AgentLogListener is a listener for logging agent runs and steps.
  * It implements both AgentRunListener and AgentStepListener interfaces.
@@ -44,8 +46,8 @@ public class AgentLogListener<I, O>
     private final AgentLogger agentLogger;
 
     public AgentLogListener(AgentState agentState, AgentLogger agentLogger) {
-        this.agentState = agentState;
-        this.agentLogger = agentLogger;
+        this.agentState = Objects.requireNonNull(agentState, "agentState is required");
+        this.agentLogger = Objects.requireNonNull(agentLogger, "agentLogger is required");
     }
 
     @Override

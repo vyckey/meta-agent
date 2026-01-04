@@ -52,6 +52,11 @@ public abstract class AbstractAgent<I, O>
         super(profile);
     }
 
+    protected AbstractAgent(AbstractAgentBuilder<?, ?, I, O> builder) {
+        super(builder);
+        this.toolManager = builder.toolManager != null ? builder.toolManager : ToolManager.create();
+    }
+
     @Override
     public ToolManager getToolManager() {
         return toolManager;

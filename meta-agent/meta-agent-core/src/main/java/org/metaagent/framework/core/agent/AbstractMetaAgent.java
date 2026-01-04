@@ -43,6 +43,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.List;
+import java.util.Objects;
 import java.util.function.Consumer;
 
 /**
@@ -56,8 +57,8 @@ public abstract class AbstractMetaAgent<I, O> implements MetaAgent<I, O> {
 
     protected String agentName;
     protected AgentProfile profile;
-    protected AgentState agentState = DefaultAgentState.builder().build();
-    protected Memory memory = EmptyMemory.INSTANCE;
+    protected AgentState agentState;
+    protected Memory memory;
     protected final List<AgentRunListener<I, O>> runListeners = Lists.newArrayList();
     protected final List<AgentStepListener<I, O>> stepListeners = Lists.newArrayList();
     protected AgentLogger agentLogger;
@@ -65,12 +66,22 @@ public abstract class AbstractMetaAgent<I, O> implements MetaAgent<I, O> {
 
     protected AbstractMetaAgent(String name) {
         this.agentName = name;
+        this.agentState = DefaultAgentState.builder().build();
+        this.memory = EmptyMemory.INSTANCE;
         this.agentLogger = AgentLogger.getLogger(name);
     }
 
     protected AbstractMetaAgent(AgentProfile profile) {
         this(profile.getName());
         this.profile = profile;
+    }
+
+    protected AbstractMetaAgent(AbstractAgentBuilder<?, ?, I, O> builder) {
+        this.profile = Objects.requireNonNull(builder.profile, "agent profile is required");
+        this.agentName = builder.profile.getName();
+        this.agentLogger = AgentLogger.getLogger(this.agentName);
+        this.agentState = builder.agentState != null ? builder.agentState : DefaultAgentState.builder().build();
+        this.memory = builder.memory != null ? builder.memory : EmptyMemory.INSTANCE;
     }
 
     @Override
