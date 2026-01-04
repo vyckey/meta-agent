@@ -26,7 +26,7 @@ package org.metaagent.framework.core.agent.chat.channel;
 
 import org.metaagent.framework.core.agent.chat.message.Message;
 import org.metaagent.framework.core.agent.chat.message.MessageListener;
-import org.metaagent.framework.core.agent.chat.message.conversation.Conversation;
+import org.metaagent.framework.core.agent.chat.conversation.Conversation;
 
 import java.io.Closeable;
 import java.io.IOException;

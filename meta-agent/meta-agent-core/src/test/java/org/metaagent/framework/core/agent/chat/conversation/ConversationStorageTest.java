@@ -1,7 +1,7 @@
 /*
  * MIT License
  *
- * Copyright (c) 2025 MetaAgent
+ * Copyright (c) 2026 MetaAgent
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -22,16 +22,12 @@
  * SOFTWARE.
  */
 
-package org.metaagent.framework.core.agent.chat.message.storage;
+package org.metaagent.framework.core.agent.chat.conversation;
 
 import org.junit.jupiter.api.Test;
 import org.metaagent.framework.common.content.MediaResource;
 import org.metaagent.framework.common.metadata.MetadataProvider;
 import org.metaagent.framework.core.agent.chat.message.RoleMessage;
-import org.metaagent.framework.core.agent.chat.message.conversation.Conversation;
-import org.metaagent.framework.core.agent.chat.message.conversation.ConversationFileStorage;
-import org.metaagent.framework.core.agent.chat.message.conversation.ConversationStorage;
-import org.metaagent.framework.core.agent.chat.message.conversation.DefaultConversation;
 import org.springframework.util.MimeType;
 
 import java.net.URI;

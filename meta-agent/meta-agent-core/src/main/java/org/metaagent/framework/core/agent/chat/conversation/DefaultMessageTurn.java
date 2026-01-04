@@ -22,7 +22,7 @@
  * SOFTWARE.
  */
 
-package org.metaagent.framework.core.agent.chat.message.conversation;
+package org.metaagent.framework.core.agent.chat.conversation;
 
 import com.google.common.collect.Lists;
 import org.metaagent.framework.core.agent.chat.message.Message;
@@ -34,7 +34,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Objects;
 
-import static org.metaagent.framework.core.agent.chat.message.conversation.DefaultConversation.TIME_FORMATTER;
+import static org.metaagent.framework.core.agent.chat.conversation.DefaultConversation.TIME_FORMATTER;
 
 /**
  * DefaultMessageTurn is a default implementation of {@link MessageTurn}.

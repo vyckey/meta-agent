@@ -22,10 +22,14 @@
  * SOFTWARE.
  */
 
-package org.metaagent.framework.core.agent.chat.message.conversation;
+package org.metaagent.framework.core.agent.chat.conversation;
 
 import com.google.common.collect.Lists;
 import org.junit.jupiter.api.Test;
+import org.metaagent.framework.core.agent.chat.conversation.DefaultMessageTurn;
+import org.metaagent.framework.core.agent.chat.conversation.DefaultTurnBasedConversation;
+import org.metaagent.framework.core.agent.chat.conversation.MessageTurn;
+import org.metaagent.framework.core.agent.chat.conversation.TurnBasedConversation;
 import org.metaagent.framework.core.agent.chat.message.Message;
 import org.metaagent.framework.core.agent.chat.message.MessageId;
 import org.metaagent.framework.core.agent.chat.message.RoleMessage;

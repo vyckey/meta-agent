@@ -22,7 +22,7 @@
  * SOFTWARE.
  */
 
-package org.metaagent.framework.core.agent.chat.message.conversation;
+package org.metaagent.framework.core.agent.chat.conversation;
 
 import org.metaagent.framework.core.agent.chat.message.Message;
 

@@ -25,9 +25,9 @@
 package org.metaagent.framework.core.agents.chat;
 
 import org.metaagent.framework.core.agent.StreamingAgent;
+import org.metaagent.framework.core.agent.chat.conversation.Conversation;
 import org.metaagent.framework.core.agent.chat.message.Message;
 import org.metaagent.framework.core.agent.chat.message.RoleMessage;
-import org.metaagent.framework.core.agent.chat.message.conversation.Conversation;
 import org.metaagent.framework.core.agent.output.AgentOutput;
 import org.metaagent.framework.core.agent.output.AgentStreamOutput;
 import org.metaagent.framework.core.agents.chat.input.ChatInput;

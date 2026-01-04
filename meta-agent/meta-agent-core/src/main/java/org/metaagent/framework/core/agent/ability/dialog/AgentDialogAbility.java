@@ -26,7 +26,7 @@ package org.metaagent.framework.core.agent.ability.dialog;
 
 import org.metaagent.framework.core.agent.ability.AgentAbility;
 import org.metaagent.framework.core.agent.chat.message.Message;
-import org.metaagent.framework.core.agent.chat.message.conversation.Conversation;
+import org.metaagent.framework.core.agent.chat.conversation.Conversation;
 import org.metaagent.framework.core.agents.chat.output.ChatOutput;
 
 /**
