@@ -27,6 +27,8 @@ package org.metaagent.framework.core.agent.chat.conversation;
 import org.metaagent.framework.core.agent.chat.message.Message;
 
 import java.util.List;
+import java.util.Optional;
+import java.util.function.Predicate;
 
 /**
  * A conversation that is based on turns.
@@ -42,6 +44,24 @@ public interface TurnBasedConversation extends Conversation {
      * @return an iterable of turns in reverse order
      */
     Iterable<MessageTurn> turns(boolean reverse);
+
+    /**
+     * Finds all turns that match the given predicate.
+     *
+     * @param predicate the predicate to match turns against
+     * @param reverse   if true, search in reverse order
+     * @return a list of turns that match the predicate
+     */
+    List<MessageTurn> findTurns(Predicate<MessageTurn> predicate, boolean reverse);
+
+    /**
+     * Finds the first turn that matches the given predicate.
+     *
+     * @param predicate the predicate to match turns against
+     * @param reverse   if true, search in reverse order
+     * @return an Optional containing the first turn that matches the predicate, or empty if no turn matches
+     */
+    Optional<MessageTurn> findTurn(Predicate<MessageTurn> predicate, boolean reverse);
 
     /**
      * Returns the last turn in the conversation.

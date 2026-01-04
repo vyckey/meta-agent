@@ -24,6 +24,8 @@
 
 package org.metaagent.framework.core.agent.chat.conversation;
 
+import org.metaagent.framework.core.agent.chat.message.Message;
+
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -47,13 +49,27 @@ public class ConversationInMemoryStorage implements ConversationStorage {
     @Override
     public void load(Conversation conversation) {
         Conversation stored = conversations.get(conversation.id());
-        if (stored == null) {
-            throw new IllegalStateException("Conversation with id '" + conversation.id() + "' does not exist");
+        if (stored != null && conversation != stored) {
+            if (stored instanceof TurnBasedConversation storedConversation
+                    && conversation instanceof TurnBasedConversation targetConversation) {
+                for (MessageTurn messageTurn : storedConversation.turns(false)) {
+                    targetConversation.appendTurn(messageTurn);
+                }
+            } else {
+                for (Message message : conversation) {
+                    conversation.appendMessage(message);
+                }
+            }
         }
     }
 
     @Override
     public void clear(String conversationId) {
         conversations.remove(conversationId);
+    }
+
+    @Override
+    public void close() {
+        conversations.clear();
     }
 }

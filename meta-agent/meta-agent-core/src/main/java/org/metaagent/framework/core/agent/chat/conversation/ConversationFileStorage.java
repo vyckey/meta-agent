@@ -34,6 +34,7 @@ import java.io.File;
 import java.io.IOException;
 import java.util.List;
 import java.util.Objects;
+import java.util.function.Function;
 
 /**
  * File-based implementation of ConversationStorage.
@@ -41,14 +42,19 @@ import java.util.Objects;
  * @author vyckey
  */
 public class ConversationFileStorage implements ConversationStorage {
-    private final String filePathPattern;
+    private final Function<String, String> filePathResolver;
 
-    public ConversationFileStorage(String filePathPattern) {
-        this.filePathPattern = Objects.requireNonNull(filePathPattern).trim();
+    public ConversationFileStorage(Function<String, String> filePathResolver) {
+        this.filePathResolver = Objects.requireNonNull(filePathResolver, "File path resolver is required.");
     }
 
-    public String getFilePath(String historyId) {
-        return String.format(filePathPattern, historyId);
+    public String getFilePath(String conversationId) {
+        return filePathResolver.apply(conversationId);
+    }
+
+    public static ConversationFileStorage fromPattern(String filePathPattern) {
+        Objects.requireNonNull(filePathPattern, "filePathPattern is required");
+        return new ConversationFileStorage(conversationId -> String.format(filePathPattern.trim(), conversationId));
     }
 
     @Override
@@ -107,6 +113,11 @@ public class ConversationFileStorage implements ConversationStorage {
         if (file.exists()) {
             file.delete();
         }
+    }
+
+    @Override
+    public void close() {
+        // nothing to do
     }
 
     private record MessageTurnDO(List<Message> messages, boolean finished) {

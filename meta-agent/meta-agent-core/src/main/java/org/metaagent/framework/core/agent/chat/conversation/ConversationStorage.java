@@ -29,7 +29,7 @@ package org.metaagent.framework.core.agent.chat.conversation;
  *
  * @author vyckey
  */
-public interface ConversationStorage {
+public interface ConversationStorage extends AutoCloseable {
     /**
      * Store the conversation.
      *

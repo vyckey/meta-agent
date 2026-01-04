@@ -70,6 +70,18 @@ public class DefaultTurnBasedConversation implements TurnBasedConversation {
     }
 
     @Override
+    public List<MessageTurn> findTurns(Predicate<MessageTurn> predicate, boolean reverse) {
+        List<MessageTurn> turns = reverse ? Lists.reverse(this.turns) : this.turns;
+        return turns.stream().filter(predicate).toList();
+    }
+
+    @Override
+    public Optional<MessageTurn> findTurn(Predicate<MessageTurn> predicate, boolean reverse) {
+        List<MessageTurn> turns = reverse ? Lists.reverse(this.turns) : this.turns;
+        return turns.stream().filter(predicate).findFirst();
+    }
+
+    @Override
     public MessageTurn lastTurn() {
         return turns.isEmpty() ? null : turns.get(turns.size() - 1);
     }
