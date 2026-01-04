@@ -116,7 +116,7 @@ public class ConversationFileStorage implements ConversationStorage {
     }
 
     @Override
-    public void close() {
+    public void close() throws IOException {
         // nothing to do
     }
 

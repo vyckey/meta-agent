@@ -24,7 +24,6 @@
 
 package org.metaagent.framework.core.agent.profile;
 
-import lombok.Getter;
 import org.apache.commons.lang3.StringUtils;
 import org.metaagent.framework.common.metadata.MetadataProvider;
 
@@ -35,31 +34,37 @@ import java.util.Objects;
  *
  * @author vyckey
  */
-@Getter
-public class DefaultAgentProfile implements AgentProfile {
-    protected final String name;
-    protected String description;
-    protected final MetadataProvider metadata;
+public record DefaultAgentProfile(
+        String name,
+        String description,
+        MetadataProvider metadata
+) implements AgentProfile {
 
-    public DefaultAgentProfile(String name, String description, MetadataProvider metadata) {
-        if (StringUtils.isBlank(name)) {
-            throw new IllegalArgumentException("Agent name is blank");
+    public DefaultAgentProfile {
+        if (StringUtils.isEmpty(name)) {
+            throw new IllegalArgumentException("agent name is empty");
         }
-        this.name = name.trim();
-        setDescription(description);
-        this.metadata = Objects.requireNonNull(metadata);
+        description = StringUtils.defaultIfEmpty(description, null);
+        Objects.requireNonNull(metadata, "agent metadata is required");
     }
 
-    public DefaultAgentProfile(String name, String description) {
-        this(name, description, MetadataProvider.create());
+    public static Builder<?> builder() {
+        return new Builder<>();
     }
 
-    public DefaultAgentProfile(String name) {
-        this(name, null);
+    @Override
+    public String getName() {
+        return name;
     }
 
-    public void setDescription(String description) {
-        this.description = description != null ? description.trim() : "";
+    @Override
+    public String getDescription() {
+        return description;
+    }
+
+    @Override
+    public MetadataProvider getMetadata() {
+        return metadata;
     }
 
     @Override
@@ -68,5 +73,50 @@ public class DefaultAgentProfile implements AgentProfile {
             return name;
         }
         return name + ": " + description;
+    }
+
+    public static class Builder<B extends Builder<B>> implements AgentProfile.Builder {
+        private String name;
+        private String description;
+        private MetadataProvider metadata;
+
+        protected Builder<B> self() {
+            return this;
+        }
+
+        @Override
+        public Builder<B> name(String name) {
+            this.name = name;
+            return self();
+        }
+
+        @Override
+        public Builder<B> description(String description) {
+            this.description = description;
+            return this;
+        }
+
+        @Override
+        public Builder<B> metadata(MetadataProvider metadata) {
+            this.metadata = metadata;
+            return this;
+        }
+
+        @Override
+        public Builder<B> metadata(String key, Object value) {
+            if (metadata == null) {
+                metadata = MetadataProvider.create();
+            }
+            metadata.setProperty(key, value);
+            return this;
+        }
+
+        @Override
+        public AgentProfile build() {
+            if (metadata == null) {
+                metadata = MetadataProvider.empty();
+            }
+            return new DefaultAgentProfile(name, description, metadata);
+        }
     }
 }

@@ -40,7 +40,7 @@ import org.metaagent.framework.core.agent.chat.message.RoleMessage;
 import org.metaagent.framework.core.agent.input.AgentInput;
 import org.metaagent.framework.core.agent.output.AgentOutput;
 import org.metaagent.framework.core.agent.output.AgentStreamOutput;
-import org.metaagent.framework.core.agent.profile.DefaultAgentProfile;
+import org.metaagent.framework.core.agent.profile.AgentProfile;
 import org.metaagent.framework.core.agents.chat.ChatAgent;
 import org.metaagent.framework.core.agents.chat.input.ChatInput;
 import org.metaagent.framework.core.agents.chat.input.DefaultChatInput;
@@ -70,6 +70,7 @@ import org.springframework.ai.chat.messages.SystemMessage;
 import org.springframework.ai.chat.model.ChatModel;
 import reactor.core.publisher.Flux;
 
+import java.io.IOException;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
@@ -107,7 +108,7 @@ public class LlmChatAgent extends AbstractStreamAgent<ChatInput, ChatOutput, Cha
     }
 
     public LlmChatAgent(String name, String description, ChatModelProvider modelProvider, PromptTemplate systemPromptTemplate) {
-        super(new DefaultAgentProfile(name, description));
+        super(AgentProfile.create(name, description));
         this.modelProvider = Objects.requireNonNull(modelProvider, "modelProvider is required");
         this.chatModelClient = new ChatModelClient(modelProvider.getModel());
         this.systemPromptTemplate = systemPromptTemplate != null ?
@@ -199,9 +200,9 @@ public class LlmChatAgent extends AbstractStreamAgent<ChatInput, ChatOutput, Cha
                 Lists.newArrayList(conversation).stream().map(messageConverter::convertTo).toList();
 
         MetadataProvider agentMetadata = getAgentProfile().getMetadata();
-        float contextCompressionRatio = agentMetadata.getProperty(ChatAgent.PROPERTY_CONTEXT_COMPRESSION_RATIO,
+        float contextCompressionRatio = agentMetadata.getProperty(ChatAgent.METADATA_KEY_CONTEXT_COMPRESSION_RATIO,
                 Float.class, DEFAULT_CONTEXT_COMPRESSION_RATIO);
-        int maxMessagesCount = agentMetadata.getProperty(ChatAgent.PROPERTY_COMPRESSION_RESERVED_MESSAGES_COUNT,
+        int maxMessagesCount = agentMetadata.getProperty(ChatAgent.METADATA_KEY_COMPRESSION_RESERVED_MESSAGES_COUNT,
                 Integer.class, DEFAULT_COMPRESSION_RESERVED_MESSAGES_COUNT);
 
         int maxTokens = (int) (modelProvider.getModelMetadata().getMaxWindowSize() * contextCompressionRatio);
@@ -307,6 +308,12 @@ public class LlmChatAgent extends AbstractStreamAgent<ChatInput, ChatOutput, Cha
     @Override
     public void close() {
         this.conversationStorage.store(conversation);
+        try {
+            this.conversationStorage.close();
+            this.compressedConversationStorage.close();
+        } catch (IOException e) {
+            logger.error("Failed to close conversation storage", e);
+        }
     }
 
 

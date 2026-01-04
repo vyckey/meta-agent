@@ -43,7 +43,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
  */
 class ConversationStorageTest {
     @Test
-    void fileStorageTest() {
+    void fileStorageTest() throws Exception {
         Conversation conversation = new DefaultConversation();
         conversation.appendMessage(RoleMessage.user("Who are you?"));
         conversation.appendMessage(RoleMessage.assistant("I am your assistant."));
@@ -55,14 +55,15 @@ class ConversationStorageTest {
         )));
         conversation.appendMessage(message);
 
-        ConversationStorage conversationStorage = new ConversationFileStorage("data/chat/session_%s.json");
-        conversationStorage.store(conversation);
+        try (ConversationStorage conversationStorage = ConversationFileStorage.fromPattern("data/chat/session_%s.json")) {
+            conversationStorage.store(conversation);
 
-        DefaultConversation conversation2 = new DefaultConversation(conversation.id());
-        conversationStorage.load(conversation2);
-        assertEquals(conversation.toString(), conversation2.toString());
+            DefaultConversation conversation2 = new DefaultConversation(conversation.id());
+            conversationStorage.load(conversation2);
+            assertEquals(conversation.toString(), conversation2.toString());
 
-        conversationStorage.clear(conversation.id());
+            conversationStorage.clear(conversation.id());
+        }
     }
 }
 

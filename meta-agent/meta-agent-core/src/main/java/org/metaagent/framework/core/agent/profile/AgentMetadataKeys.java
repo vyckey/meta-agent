@@ -22,34 +22,16 @@
  * SOFTWARE.
  */
 
-package org.metaagent.framework.core.agent.chat.conversation;
-
-import java.io.Closeable;
+package org.metaagent.framework.core.agent.profile;
 
 /**
- * Conversation storage interface for storing and retrieving messages.
+ * AgentMetadataKeys defines the keys used for metadata in an agent profile.
  *
  * @author vyckey
  */
-public interface ConversationStorage extends Closeable {
-    /**
-     * Store the conversation.
-     *
-     * @param conversation the conversation to save
-     */
-    void store(Conversation conversation);
-
-    /**
-     * Load the conversation.
-     *
-     * @param conversation the conversation to load
-     */
-    void load(Conversation conversation);
-
-    /**
-     * Clear the conversation.
-     *
-     * @param conversationId the conversation ID to clear
-     */
-    void clear(String conversationId);
+public interface AgentMetadataKeys {
+    String MODEL_NAME = "modelName";
+    String SYSTEM_PROMPT = "systemPrompt";
+    String TOOL_NAMES = "toolNames";
+    String ALLOWED_TOOL_NAMES = "allowedToolNames";
 }

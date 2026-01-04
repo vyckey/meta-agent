@@ -26,6 +26,7 @@ package org.metaagent.framework.core.agent.chat.conversation;
 
 import org.metaagent.framework.core.agent.chat.message.Message;
 
+import java.io.IOException;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -69,7 +70,7 @@ public class ConversationInMemoryStorage implements ConversationStorage {
     }
 
     @Override
-    public void close() {
+    public void close() throws IOException {
         conversations.clear();
     }
 }
