@@ -34,7 +34,7 @@ import org.metaagent.framework.core.agent.output.AgentOutput;
  *
  * @author vyckey
  */
-public interface CoordinateAgent<I, O, S> extends Agent<I, O, S> {
+public interface CoordinateAgent<I, O> extends Agent<I, O> {
     /**
      * Gets the agent group managed by this coordinator.
      *

@@ -24,21 +24,26 @@
 
 package org.metaagent.framework.core.agents.chat;
 
-import org.metaagent.framework.core.agent.Agent;
-import org.metaagent.framework.core.agent.AgentExecutionContext;
+import org.metaagent.framework.core.agent.StreamingAgent;
+import org.metaagent.framework.core.agent.chat.conversation.Conversation;
 import org.metaagent.framework.core.agent.chat.message.Message;
 import org.metaagent.framework.core.agent.chat.message.RoleMessage;
-import org.metaagent.framework.core.agent.chat.message.conversation.Conversation;
-import org.metaagent.framework.core.agent.input.AgentInput;
 import org.metaagent.framework.core.agent.output.AgentOutput;
-import reactor.core.publisher.Flux;
+import org.metaagent.framework.core.agent.output.AgentStreamOutput;
+import org.metaagent.framework.core.agents.chat.input.ChatInput;
+import org.metaagent.framework.core.agents.chat.output.ChatOutput;
+import org.metaagent.framework.core.agents.chat.output.ChatStreamOutput;
 
 /**
  * ChatAgent is an agent that has an ability to chat with message history.
  *
  * @author vyckey
  */
-public interface ChatAgent extends Agent<ChatAgentInput, ChatAgentOutput, ChatAgentStreamOutput> {
+public interface ChatAgent<I extends ChatInput, O extends ChatOutput, S extends ChatStreamOutput>
+        extends StreamingAgent<I, O, S> {
+    String METADATA_KEY_CONTEXT_COMPRESSION_RATIO = "contextCompressionRatio";
+    String METADATA_KEY_COMPRESSION_RESERVED_MESSAGES_COUNT = "compressionReservedMessageCount";
+
     /**
      * Get the conversation of this agent.
      *
@@ -53,35 +58,39 @@ public interface ChatAgent extends Agent<ChatAgentInput, ChatAgentOutput, ChatAg
      * @return the output of the agent
      */
     @Override
-    default AgentOutput<ChatAgentOutput> run(String input) {
+    default AgentOutput<O> run(String input) {
         return run(RoleMessage.user(input));
     }
 
     /**
-     * Run chat agent with a message.
+     * Run chat agent with messages.
      *
      * @param messages the messages to run this agent with
      * @return the output of this agent
      */
-    default AgentOutput<ChatAgentOutput> run(Message... messages) {
-        AgentInput<ChatAgentInput> agentInput = AgentInput
-                .builder(new ChatAgentInput(messages))
-                .context(AgentExecutionContext.create())
-                .build();
-        return run(agentInput);
+    AgentOutput<O> run(Message... messages);
+
+    /**
+     * Run the agent with the given input.
+     *
+     * @param input the input to run the agent with
+     * @return the output of the agent
+     */
+    default AgentStreamOutput<O, S> runStream(String input) {
+        return runStream(RoleMessage.user(input));
     }
 
     /**
-     * Runs chat streaming agent with a message.
+     * Run chat agent with messages.
      *
-     * @param messages the message to run this agent with
+     * @param messages the messages to run this agent with
      * @return the output of this agent
      */
-    default Flux<AgentOutput<ChatAgentStreamOutput>> runStream(Message... messages) {
-        AgentInput<ChatAgentInput> agentInput = AgentInput
-                .builder(new ChatAgentInput(messages))
-                .context(AgentExecutionContext.create())
-                .build();
-        return runStream(agentInput);
-    }
+    AgentStreamOutput<O, S> runStream(Message... messages);
+
+    /**
+     * Close the agent.
+     */
+    @Override
+    void close();
 }

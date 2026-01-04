@@ -26,6 +26,8 @@ package org.metaagent.framework.core.tool;
 
 import org.metaagent.framework.common.abort.AbortSignal;
 import org.metaagent.framework.core.security.SecurityLevel;
+import org.metaagent.framework.core.security.approval.PermissionApprovalManager;
+import org.metaagent.framework.core.tool.approval.ToolApprovalRequest;
 import org.metaagent.framework.core.tool.config.ToolConfig;
 
 /**
@@ -67,6 +69,13 @@ public interface ToolContext {
     SecurityLevel getSecurityLevel();
 
     /**
+     * Gets the permission approval manager for managing tool permissions.
+     *
+     * @return the permission approval manager
+     */
+    PermissionApprovalManager<ToolApprovalRequest> getApprovalManager();
+
+    /**
      * Gets the abort signal for managing tool execution aborts.
      *
      * @return the abort signal
@@ -93,6 +102,14 @@ public interface ToolContext {
          * @return the builder instance
          */
         Builder securityLevel(SecurityLevel securityLevel);
+
+        /**
+         * Sets the permission approval manager for the tool context.
+         *
+         * @param approvalManager the permission approval manager
+         * @return the builder instance
+         */
+        Builder approvalManager(PermissionApprovalManager<ToolApprovalRequest> approvalManager);
 
         /**
          * Sets the abort signal for the tool context.

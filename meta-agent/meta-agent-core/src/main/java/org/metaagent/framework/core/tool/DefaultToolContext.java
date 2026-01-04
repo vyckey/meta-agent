@@ -28,10 +28,15 @@ import lombok.Getter;
 import org.metaagent.framework.common.abort.AbortController;
 import org.metaagent.framework.common.abort.AbortSignal;
 import org.metaagent.framework.core.security.SecurityLevel;
+import org.metaagent.framework.core.security.approval.AsyncEventPermissionApprovalManager;
+import org.metaagent.framework.core.security.approval.PermissionApprovalManager;
+import org.metaagent.framework.core.security.approval.PermissionApprover;
+import org.metaagent.framework.core.tool.approval.ToolApprovalRequest;
 import org.metaagent.framework.core.tool.config.DefaultToolConfig;
 import org.metaagent.framework.core.tool.config.ToolConfig;
 
 import java.util.Objects;
+import java.util.concurrent.ForkJoinPool;
 
 /**
  * Default implementation of {@link ToolContext} interface.
@@ -42,11 +47,13 @@ import java.util.Objects;
 public class DefaultToolContext implements ToolContext {
     private final ToolConfig toolConfig;
     private final SecurityLevel securityLevel;
+    private final PermissionApprovalManager<ToolApprovalRequest> approvalManager;
     private final AbortSignal abortSignal;
 
     protected DefaultToolContext(Builder builder) {
         this.toolConfig = Objects.requireNonNull(builder.toolConfig, "ToolConfig must not be null");
         this.securityLevel = Objects.requireNonNull(builder.securityLevel, "SecurityLevel must not be null");
+        this.approvalManager = Objects.requireNonNull(builder.approvalManager, "ApprovalManager must not be null");
         this.abortSignal = Objects.requireNonNull(builder.abortSignal, "AbortSignal must not be null");
     }
 
@@ -57,6 +64,7 @@ public class DefaultToolContext implements ToolContext {
     public static class Builder implements ToolContext.Builder {
         private ToolConfig toolConfig;
         private SecurityLevel securityLevel;
+        private PermissionApprovalManager<ToolApprovalRequest> approvalManager;
         private AbortSignal abortSignal;
 
         @Override
@@ -68,6 +76,12 @@ public class DefaultToolContext implements ToolContext {
         @Override
         public ToolContext.Builder securityLevel(SecurityLevel securityLevel) {
             this.securityLevel = securityLevel;
+            return this;
+        }
+
+        @Override
+        public ToolContext.Builder approvalManager(PermissionApprovalManager<ToolApprovalRequest> approvalManager) {
+            this.approvalManager = approvalManager;
             return this;
         }
 
@@ -84,6 +98,12 @@ public class DefaultToolContext implements ToolContext {
             }
             if (securityLevel == null) {
                 this.securityLevel = SecurityLevel.RESTRICTED_DEFAULT_SALE;
+            }
+            if (approvalManager == null) {
+                this.approvalManager = AsyncEventPermissionApprovalManager.assign(
+                        PermissionApprover.alwaysApproved(),
+                        ForkJoinPool.commonPool()
+                );
             }
             if (abortSignal == null) {
                 this.abortSignal = AbortController.global().signal();

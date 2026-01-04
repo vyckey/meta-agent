@@ -58,7 +58,7 @@ import java.util.Map;
  *
  * @author vyckey
  */
-public class SearchAgent extends AbstractAgent<SearchAgentInput, SearchAgentOutput, SearchAgentOutput> {
+public class SearchAgent extends AbstractAgent<SearchAgentInput, SearchAgentOutput> {
     protected final ChatModel chatModel;
     protected final ChatOptions chatOptions;
 
@@ -75,7 +75,7 @@ public class SearchAgent extends AbstractAgent<SearchAgentInput, SearchAgentOutp
     }
 
     @Override
-    public AgentFallbackStrategy<SearchAgentInput, SearchAgentOutput, SearchAgentOutput> getFallbackStrategy() {
+    public AgentFallbackStrategy<SearchAgentInput, SearchAgentOutput> getFallbackStrategy() {
         return new RetryAgentFallbackStrategy<>(2);
     }
 
@@ -132,4 +132,7 @@ public class SearchAgent extends AbstractAgent<SearchAgentInput, SearchAgentOutp
                 .build();
     }
 
+    @Override
+    public void close() {
+    }
 }

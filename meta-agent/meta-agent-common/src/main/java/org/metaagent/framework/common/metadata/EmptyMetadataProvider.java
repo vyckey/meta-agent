@@ -31,7 +31,7 @@ import java.util.Map;
  *
  * @author vyckey
  */
-public class EmptyMetadataProvider implements MetadataProvider {
+public class EmptyMetadataProvider implements ImmutableMetadataProvider, MetadataProvider {
     public static final EmptyMetadataProvider INSTANCE = new EmptyMetadataProvider();
 
     private EmptyMetadataProvider() {
@@ -53,17 +53,7 @@ public class EmptyMetadataProvider implements MetadataProvider {
     }
 
     @Override
-    public MetadataProvider setProperty(String key, Object value) {
-        throw new UnsupportedOperationException("Not supported operation for empty metadata");
-    }
-
-    @Override
-    public void removeProperty(String key) {
-        throw new UnsupportedOperationException("Not supported operation for empty metadata");
-    }
-
-    @Override
-    public void merge(MetadataProvider other) {
-        throw new UnsupportedOperationException("Not supported operation for empty metadata");
+    public MetadataProvider union(MetadataProvider other) {
+        return other;
     }
 }

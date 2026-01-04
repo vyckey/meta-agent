@@ -26,11 +26,7 @@ package org.metaagent.framework.tools.file.text;
 
 import org.apache.commons.lang3.StringUtils;
 import org.metaagent.framework.common.abort.AbortException;
-import org.metaagent.framework.common.metadata.MetadataProvider;
 import org.metaagent.framework.core.security.SecurityLevel;
-import org.metaagent.framework.core.security.approver.HumanApprovalInput;
-import org.metaagent.framework.core.security.approver.HumanApprover;
-import org.metaagent.framework.core.security.approver.TerminalHumanApprover;
 import org.metaagent.framework.core.tool.Tool;
 import org.metaagent.framework.core.tool.ToolContext;
 import org.metaagent.framework.core.tool.converter.ToolConverter;
@@ -64,7 +60,6 @@ public class EditTextFileTool implements Tool<EditTextFileInput, EditTextFileOut
             .build();
     private static final ToolConverter<EditTextFileInput, EditTextFileOutput> TOOL_CONVERTER =
             ToolConverters.jsonConverter(EditTextFileInput.class);
-    protected HumanApprover humanApprover = TerminalHumanApprover.INSTANCE;
 
     @Override
     public ToolDefinition getDefinition() {
@@ -74,10 +69,6 @@ public class EditTextFileTool implements Tool<EditTextFileInput, EditTextFileOut
     @Override
     public ToolConverter<EditTextFileInput, EditTextFileOutput> getConverter() {
         return TOOL_CONVERTER;
-    }
-
-    public void setHumanApprover(HumanApprover humanApprover) {
-        this.humanApprover = humanApprover;
     }
 
     private File validateInput(ToolContext toolContext, EditTextFileInput input) {
@@ -109,10 +100,6 @@ public class EditTextFileTool implements Tool<EditTextFileInput, EditTextFileOut
         }
 
         FileContentReplacement contentReplacement = buildReplacement(file, input);
-        if (toolContext.getSecurityLevel().compareTo(SecurityLevel.UNRESTRICTED_DANGEROUSLY) < 0) {
-            EditTextFileOutput editOutput = applyReplacement(contentReplacement, false);
-            confirmReplacement(contentReplacement, editOutput.editDiff());
-        }
 
         if (toolContext.getAbortSignal().isAborted()) {
             throw new AbortException("Tool " + getName() + " is cancelled");
@@ -136,21 +123,6 @@ public class EditTextFileTool implements Tool<EditTextFileInput, EditTextFileOut
             throw new ToolExecutionException("Error reading file '" + file.getAbsolutePath() + "' caused by " + e, e);
         }
         return new FileContentReplacement(file.toPath(), currentContent, input.newString(), input.oldString(), expectedReplacements, false);
-    }
-
-    protected void confirmReplacement(FileContentReplacement replacement, TextFileEditDiff editDiff) throws ToolExecutionException {
-        StringBuilder sb = new StringBuilder("Are you sure you want to replace below content for file '")
-                .append(replacement.filePath).append("'?");
-        sb.append("\nOld String: ").append(replacement.oldString());
-        sb.append("\n\nNew String: ").append(replacement.newString());
-
-        MetadataProvider metadata = MetadataProvider.create();
-        metadata.setProperty("replacement", replacement);
-        metadata.setProperty("editDiff", editDiff);
-        HumanApprovalInput approvalInput = HumanApprovalInput.ofTool(getName(), sb.toString(), metadata);
-        if (!humanApprover.request(approvalInput).isApproved()) {
-            throw new ToolExecutionException("Replacement not approved by user");
-        }
     }
 
     protected EditTextFileOutput applyReplacement(FileContentReplacement replacement, boolean editEnabled) throws ToolExecutionException {

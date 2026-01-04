@@ -31,15 +31,17 @@ import org.metaagent.framework.core.agent.output.AgentOutput;
 /**
  * AgentStepListener is a listener that is called before the agent next loop.
  *
+ * @param <I> the type of agent input
+ * @param <O> the type of agent output
  * @author vyckey
  */
-public interface AgentStepListener<I, O, S> {
+public interface AgentStepListener<I, O> {
     /**
      * Called before the agent next loop.
      *
      * @param agent the agent
      */
-    default void onAgentNextLoop(MetaAgent<I, O, S> agent) {
+    default void onAgentNextLoop(MetaAgent<I, O> agent) {
     }
 
     /**
@@ -48,7 +50,7 @@ public interface AgentStepListener<I, O, S> {
      * @param agent the agent
      * @param input the input
      */
-    default void onAgentStepStart(MetaAgent<I, O, S> agent, AgentInput<I> input) {
+    default void onAgentStepStart(MetaAgent<I, O> agent, AgentInput<I> input) {
     }
 
     /**
@@ -58,7 +60,7 @@ public interface AgentStepListener<I, O, S> {
      * @param input  the input
      * @param output the output
      */
-    default void onAgentStepFinish(MetaAgent<I, O, S> agent, AgentInput<I> input, AgentOutput<O> output) {
+    default void onAgentStepFinish(MetaAgent<I, O> agent, AgentInput<I> input, AgentOutput<O> output) {
     }
 
     /**
@@ -68,6 +70,6 @@ public interface AgentStepListener<I, O, S> {
      * @param input     the input
      * @param exception the exception
      */
-    default void onAgentStepError(MetaAgent<I, O, S> agent, AgentInput<I> input, Exception exception) {
+    default void onAgentStepError(MetaAgent<I, O> agent, AgentInput<I> input, Exception exception) {
     }
 }

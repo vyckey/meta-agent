@@ -34,10 +34,10 @@ import org.metaagent.framework.core.agent.output.AgentOutput;
  *
  * @author vyckey
  */
-public class FastFailAgentFallbackStrategy<I, O, S> implements AgentFallbackStrategy<I, O, S> {
+public class FastFailAgentFallbackStrategy<I, O> implements AgentFallbackStrategy<I, O> {
 
     @Override
-    public AgentOutput<O> fallback(MetaAgent<I, O, S> agent, AgentInput<I> input, Exception exception) {
+    public AgentOutput<O> fallback(MetaAgent<I, O> agent, AgentInput<I> input, Exception exception) {
         agent.getAgentState().setLastException(exception);
         if (exception instanceof AgentExecutionException) {
             throw (AgentExecutionException) exception;

@@ -24,7 +24,9 @@
 
 package org.metaagent.framework.core.model.chat;
 
+import org.metaagent.framework.common.metadata.MetadataProvider;
 import org.springframework.ai.chat.messages.AssistantMessage;
+import org.springframework.ai.chat.metadata.ChatResponseMetadata;
 import org.springframework.ai.chat.model.ChatModel;
 import org.springframework.ai.chat.model.ChatResponse;
 import org.springframework.ai.chat.model.Generation;
@@ -81,5 +83,13 @@ public class ChatModelUtils {
             Prompt newPrompt = new Prompt(toolExecutionResult.conversationHistory(), prompt.getOptions());
             return callWithToolCall(chatModel, newPrompt, response);
         }
+    }
+
+    public static MetadataProvider getMetadata(ChatResponse chatResponse) {
+        ChatResponseMetadata responseMetadata = chatResponse.getMetadata();
+        return MetadataProvider.create()
+                .setProperty("id", responseMetadata.getId())
+                .setProperty("model", responseMetadata.getModel())
+                .setProperty("usage", responseMetadata.getUsage());
     }
 }

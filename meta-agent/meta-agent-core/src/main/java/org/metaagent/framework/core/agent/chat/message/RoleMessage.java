@@ -24,6 +24,8 @@
 
 package org.metaagent.framework.core.agent.chat.message;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import org.metaagent.framework.common.content.MediaResource;
@@ -47,7 +49,11 @@ public class RoleMessage extends AbstractMessage implements Message {
     private final String content;
     private final List<MediaResource> media;
 
-    public RoleMessage(String role, String content, List<MediaResource> media, MetadataProvider metadata) {
+    @JsonCreator
+    public RoleMessage(@JsonProperty("role") String role,
+                       @JsonProperty("content") String content,
+                       @JsonProperty("media") List<MediaResource> media,
+                       @JsonProperty("metadata") MetadataProvider metadata) {
         this.role = Objects.requireNonNull(role, "role is required");
         this.content = Objects.requireNonNull(content, "content is required");
         this.media = Objects.requireNonNull(media, "media is required");

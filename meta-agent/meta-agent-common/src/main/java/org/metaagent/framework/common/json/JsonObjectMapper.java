@@ -28,6 +28,7 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.JavaType;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.PropertyNamingStrategies;
 import com.fasterxml.jackson.databind.PropertyNamingStrategy;
 import com.fasterxml.jackson.databind.type.TypeFactory;
 import org.slf4j.Logger;
@@ -73,7 +74,7 @@ public class JsonObjectMapper {
     public static final JsonObjectMapper SNAKE_CASE = new JsonObjectMapper(new ObjectMapper()
             .disable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES)
             .enable(DeserializationFeature.ACCEPT_EMPTY_STRING_AS_NULL_OBJECT)
-            .setPropertyNamingStrategy(PropertyNamingStrategy.SNAKE_CASE)
+            .setPropertyNamingStrategy(PropertyNamingStrategies.SNAKE_CASE)
     );
 
     private final ObjectMapper objectMapper;

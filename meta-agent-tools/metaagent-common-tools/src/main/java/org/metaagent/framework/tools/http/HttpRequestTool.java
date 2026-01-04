@@ -32,10 +32,6 @@ import okhttp3.Request;
 import okhttp3.RequestBody;
 import okhttp3.Response;
 import org.metaagent.framework.common.abort.AbortException;
-import org.metaagent.framework.common.metadata.MetadataProvider;
-import org.metaagent.framework.core.security.approver.HumanApprovalInput;
-import org.metaagent.framework.core.security.approver.HumanApprovalOutput;
-import org.metaagent.framework.core.security.approver.HumanApprover;
 import org.metaagent.framework.core.tool.Tool;
 import org.metaagent.framework.core.tool.ToolContext;
 import org.metaagent.framework.core.tool.converter.ToolConverter;
@@ -68,7 +64,6 @@ public class HttpRequestTool implements Tool<HttpRequest, HttpResponse> {
     private static final List<String> SKIP_APPROVAL_METHODS = List.of("get", "head", "options");
 
     private final OkHttpClient httpClient;
-    private HumanApprover humanApprover = HumanApprover.skipApprover();
 
     public HttpRequestTool(OkHttpClient httpClient) {
         this.httpClient = Objects.requireNonNull(httpClient, "httpClient must not be null");
@@ -129,7 +124,6 @@ public class HttpRequestTool implements Tool<HttpRequest, HttpResponse> {
             throw new AbortException("Tool " + getName() + " is cancelled");
         }
 
-        requestApprovalBeforeRequest(realRequest);
         if (toolContext.getAbortSignal().isAborted()) {
             throw new AbortException("Tool " + getName() + " is cancelled");
         }
@@ -142,15 +136,4 @@ public class HttpRequestTool implements Tool<HttpRequest, HttpResponse> {
         }
     }
 
-    private void requestApprovalBeforeRequest(Request request) {
-        if (SKIP_APPROVAL_METHODS.contains(request.method().toLowerCase())) {
-            return;
-        }
-        String approval = request.method() + " " + request.url() + " " + request.body();
-        HumanApprovalInput approvalInput = HumanApprovalInput.ofTool(getName(), approval, MetadataProvider.create());
-        HumanApprovalOutput approvalOutput = humanApprover.request(approvalInput);
-        if (!approvalOutput.isApproved()) {
-            throw new ToolExecutionException("User reject to request HTTP URL " + request.url());
-        }
-    }
 }

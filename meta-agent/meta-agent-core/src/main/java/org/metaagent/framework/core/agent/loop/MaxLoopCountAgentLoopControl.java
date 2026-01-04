@@ -30,12 +30,11 @@ import org.metaagent.framework.core.agent.output.AgentOutput;
 import org.metaagent.framework.core.agent.state.AgentState;
 
 /**
- * description is here
+ * Controls the maximum loop count of an agent.
  *
  * @author vyckey
  */
-public class MaxLoopCountAgentLoopControl<I, O, S>
-        implements AgentLoopControlStrategy<I, O, S> {
+public class MaxLoopCountAgentLoopControl<I, O> implements AgentLoopControlStrategy<I, O> {
     private final int maxLoopCount;
 
     public MaxLoopCountAgentLoopControl(int maxLoopCount) {
@@ -43,7 +42,7 @@ public class MaxLoopCountAgentLoopControl<I, O, S>
     }
 
     @Override
-    public boolean shouldContinueLoop(Agent<I, O, S> agent, AgentInput<I> input, AgentOutput<O> output) {
+    public boolean shouldContinueLoop(Agent<I, O> agent, AgentInput<I> input, AgentOutput<O> output) {
         AgentState agentState = agent.getAgentState();
         if (agentState.getStatus().isFinished() || output != null) {
             return false;

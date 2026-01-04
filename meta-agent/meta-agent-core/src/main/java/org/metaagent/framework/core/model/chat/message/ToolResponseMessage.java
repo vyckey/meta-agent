@@ -30,6 +30,7 @@ import org.metaagent.framework.core.agent.chat.message.AbstractMessage;
 
 import java.util.List;
 import java.util.Objects;
+import java.util.stream.Collectors;
 
 /**
  * Represents a message containing tool responses in a chat context.
@@ -67,6 +68,14 @@ public class ToolResponseMessage extends AbstractMessage {
     @Override
     public String getContent() {
         return "";
+    }
+
+    @Override
+    public String toString() {
+        String toolResponses = this.toolResponses.stream()
+                .map(toolResponse -> "- " + toolResponse.name() + ": " + toolResponse.responseData())
+                .collect(Collectors.joining("\n"));
+        return getRole() + ":\n" + toolResponses;
     }
 
     public record ToolResponse(String id, String name, String responseData) {

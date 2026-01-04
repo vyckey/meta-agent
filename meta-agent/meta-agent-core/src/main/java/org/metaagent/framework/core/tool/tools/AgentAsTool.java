@@ -34,17 +34,18 @@ import org.metaagent.framework.core.tool.exception.ToolExecutionException;
 /**
  * AgentAsTool is a tool that can be used to execute an Agent. The agent is treated as a tool.
  *
+ * @param <A> the agent type
  * @param <I> the input type
  * @param <O> the output type
  * @author vyckey
  */
-public interface AgentAsTool<I, O, S> extends Tool<AgentInput<I>, AgentOutput<O>> {
+public interface AgentAsTool<A extends MetaAgent<I, O>, I, O> extends Tool<AgentInput<I>, AgentOutput<O>> {
     /**
      * Get the agent.
      *
      * @return the agent
      */
-    MetaAgent<I, O, S> getAgent();
+    A getAgent();
 
     /**
      * Get the tool's name.

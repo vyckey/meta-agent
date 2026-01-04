@@ -33,11 +33,24 @@ import org.metaagent.framework.common.metadata.MetadataProvider;
  */
 public interface AgentProfile {
     /**
-     * Gets agent metadata provider.
+     * Creates a new agent profile.
      *
-     * @return the metadata provider.
+     * @param name        the agent name
+     * @param description the agent description
+     * @return the agent profile
      */
-    MetadataProvider getMetadata();
+    static AgentProfile create(String name, String description) {
+        return AgentProfile.builder().name(name).description(description).build();
+    }
+
+    /**
+     * Creates a new builder for agent profile.
+     *
+     * @return the builder
+     */
+    static Builder builder() {
+        return DefaultAgentProfile.builder();
+    }
 
     /**
      * Gets agent name.
@@ -54,10 +67,55 @@ public interface AgentProfile {
     String getDescription();
 
     /**
-     * Sets agent description.
+     * Gets agent metadata provider.
      *
-     * @param description the agent description.
+     * @return the metadata provider.
      */
-    void setDescription(String description);
+    MetadataProvider getMetadata();
+
+    /**
+     * Agent profile builder.
+     */
+    interface Builder {
+        /**
+         * Sets agent name.
+         *
+         * @param name the agent name
+         * @return the builder
+         */
+        Builder name(String name);
+
+        /**
+         * Sets agent description.
+         *
+         * @param description the agent description
+         * @return the builder
+         */
+        Builder description(String description);
+
+        /**
+         * Sets agent metadata provider.
+         *
+         * @param metadata the metadata provider
+         * @return the builder
+         */
+        Builder metadata(MetadataProvider metadata);
+
+        /**
+         * Sets agent metadata.
+         *
+         * @param key   the metadata key
+         * @param value the metadata value
+         * @return the builder
+         */
+        Builder metadata(String key, Object value);
+
+        /**
+         * Builds the agent profile.
+         *
+         * @return the agent profile
+         */
+        AgentProfile build();
+    }
 
 }
