@@ -42,7 +42,8 @@ import java.time.ZoneId;
  * @author vyckey
  */
 public class GetCurrentTimeTool implements Tool<GetCurrentTimeInput, GetCurrentTimeOutput> {
-    private static final ToolDefinition TOOL_DEFINITION = ToolDefinition.builder("get_current_time")
+    public static final String TOOL_NAME = "get_current_time";
+    private static final ToolDefinition TOOL_DEFINITION = ToolDefinition.builder(TOOL_NAME)
             .description("Gets the current time in a specified timezone.")
             .inputSchema(GetCurrentTimeInput.class)
             .outputSchema(GetCurrentTimeOutput.class)

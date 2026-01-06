@@ -52,7 +52,8 @@ import java.util.Objects;
 @Slf4j
 @Setter
 public class HttpRequestTool implements Tool<HttpRequest, HttpResponse> {
-    private static final ToolDefinition TOOL_DEFINITION = ToolDefinition.builder("http_request")
+    public static final String TOOL_NAME = "http_request";
+    private static final ToolDefinition TOOL_DEFINITION = ToolDefinition.builder(TOOL_NAME)
             .description("Sends a HTTP request and returns the response.")
             .inputSchema(HttpRequest.class)
             .outputSchema(HttpResponse.class)

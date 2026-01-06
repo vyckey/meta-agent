@@ -24,8 +24,6 @@
 
 package org.metaagent.framework.tools.todo;
 
-import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.commons.lang3.StringUtils;
 import org.metaagent.framework.common.abort.AbortException;
 import org.metaagent.framework.core.tool.Tool;
@@ -34,9 +32,8 @@ import org.metaagent.framework.core.tool.converter.ToolConverter;
 import org.metaagent.framework.core.tool.converter.ToolConverters;
 import org.metaagent.framework.core.tool.definition.ToolDefinition;
 import org.metaagent.framework.core.tool.exception.ToolExecutionException;
+import org.metaagent.framework.tools.todo.service.FileBasedTodoService;
 
-import java.io.File;
-import java.io.IOException;
 import java.nio.file.Path;
 import java.util.List;
 
@@ -46,8 +43,8 @@ import java.util.List;
  * @author vyckey
  */
 public class TodoReadTool implements Tool<TodoReadInput, TodoReadOutput> {
-    static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
-    private static final ToolDefinition TOOL_DEFINITION = ToolDefinition.builder("todo_read")
+    public static final String TOOL_NAME = "todo_read";
+    private static final ToolDefinition TOOL_DEFINITION = ToolDefinition.builder(TOOL_NAME)
             .description("Read TODO items with specialized TODO list ID")
             .inputSchema(TodoWriteInput.class)
             .outputSchema(TodoWriteOutput.class)
@@ -78,33 +75,22 @@ public class TodoReadTool implements Tool<TodoReadInput, TodoReadOutput> {
             throw new AbortException("Tool " + getName() + " is cancelled");
         }
 
-        Path todoFilePath = getTodoFilePath(toolContext.getToolConfig().workingDirectory(), todoReadInput.todoId().trim());
         try {
-            List<TodoItem> todoItems = readTodoFile(todoFilePath);
-            return new TodoReadOutput(todoReadInput.todoId(), todoItems);
-        } catch (IOException e) {
-            throw new ToolExecutionException("Failed to read TODO file " + todoFilePath, e);
+            Path todoDirectory = getTodoDirectory(toolContext.getToolConfig().workingDirectory());
+            FileBasedTodoService todoService = new FileBasedTodoService(todoDirectory);
+            List<TodoItem> todos = todoService.getTodos(todoReadInput.todoId());
+            return new TodoReadOutput(todoReadInput.todoId(), todos);
+        } catch (IllegalStateException e) {
+            throw new ToolExecutionException("Failed to read TODO " + todoReadInput.todoId() + ": " + e, e);
         }
     }
 
-    static Path getTodoFilePath(Path workingDirectory, String todoId) {
-        Path todoFileDir = workingDirectory;
+    static Path getTodoDirectory(Path workingDirectory) {
+        Path todoDirectory = workingDirectory;
         if (StringUtils.isNotEmpty(System.getenv("TODO_FILE_DIR"))) {
-            todoFileDir = Path.of(System.getenv("TODO_FILE_DIR"));
+            todoDirectory = Path.of(System.getenv("TODO_FILE_DIR"));
         }
-        return todoFileDir.resolve(todoId + ".json");
+        return todoDirectory;
     }
 
-    static List<TodoItem> readTodoFile(Path todoFilePath) throws IOException {
-        File file = todoFilePath.toFile();
-        if (!file.exists()) {
-            return List.of();
-        }
-        try {
-            return OBJECT_MAPPER.readValue(file, new TypeReference<>() {
-            });
-        } catch (IOException e) {
-            throw new IOException("Read todo file error: " + e.getMessage());
-        }
-    }
 }

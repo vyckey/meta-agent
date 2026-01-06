@@ -50,7 +50,8 @@ import java.util.regex.Pattern;
 
 @Slf4j
 public class ReadManyFilesTool implements Tool<ReadManyFilesInput, ReadManyFilesOutput> {
-    private static final ToolDefinition TOOL_DEFINITION = ToolDefinition.builder("read_many_files")
+    public static final String TOOL_NAME = "read_many_files";
+    private static final ToolDefinition TOOL_DEFINITION = ToolDefinition.builder(TOOL_NAME)
             .description("Reads content from multiple files specified by paths or glob patterns within a specialized directory." +
                     " For text files, it concatenates their content into a single string. It is primarily designed for text-based files.")
             .inputSchema(ReadManyFilesInput.class)

@@ -50,6 +50,7 @@ import java.nio.file.Path;
 @Slf4j
 @Setter
 public class WriteTextFileTool implements Tool<WriteTextFileInput, WriteTextFileOutput> {
+    public static final String TOOL_NAME = "write_text_file";
     private static final ToolDefinition TOOL_DEFINITION = ToolDefinition
             .builder("write_text_file")
             .description("Write text content to a specified file")

@@ -53,6 +53,7 @@ import java.util.concurrent.TimeUnit;
  */
 @Setter
 public class ShellCommandTool implements Tool<ShellCommandInput, ShellCommandOutput> {
+    public static final String TOOL_NAME = "execute_shell_command";
     private static final ToolDefinition TOOL_DEFINITION = ToolDefinition.builder("execute_shell_command")
             .description("Executes a shell command and returns standard output, error, and exit code.")
             .inputSchema(ShellCommandInput.class)

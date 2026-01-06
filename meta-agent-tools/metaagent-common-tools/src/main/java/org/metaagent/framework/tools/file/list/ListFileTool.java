@@ -53,7 +53,8 @@ import java.util.regex.Pattern;
  */
 @Slf4j
 public class ListFileTool implements Tool<ListFileInput, ListFileOutput> {
-    private static final ToolDefinition TOOL_DEFINITION = ToolDefinition.builder("list_files")
+    public static final String TOOL_NAME = "list_files";
+    private static final ToolDefinition TOOL_DEFINITION = ToolDefinition.builder(TOOL_NAME)
             .description("List files which contains file name, size and permissions under specialized directory."
                     + "Can optionally include or ignore files by glob patterns.")
             .inputSchema(ListFileInput.class)

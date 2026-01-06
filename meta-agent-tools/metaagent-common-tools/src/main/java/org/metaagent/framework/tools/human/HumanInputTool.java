@@ -40,7 +40,8 @@ import java.util.Scanner;
  * @author vyckey
  */
 public class HumanInputTool implements Tool<String, String> {
-    private static final ToolDefinition TOOL_DEFINITION = ToolDefinition.builder("human_input")
+    public static final String TOOL_NAME = "human_input";
+    private static final ToolDefinition TOOL_DEFINITION = ToolDefinition.builder(TOOL_NAME)
             .description("Gets human input content")
             .inputSchema(String.class)
             .outputSchema(String.class)

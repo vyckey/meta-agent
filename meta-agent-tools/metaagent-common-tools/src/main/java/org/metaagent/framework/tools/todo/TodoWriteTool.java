@@ -34,15 +34,14 @@ import org.metaagent.framework.core.tool.converter.ToolConverters;
 import org.metaagent.framework.core.tool.definition.ToolDefinition;
 import org.metaagent.framework.core.tool.exception.ToolExecutionException;
 import org.metaagent.framework.core.tool.exception.ToolParameterException;
+import org.metaagent.framework.tools.todo.service.FileBasedTodoService;
 
-import java.io.IOException;
-import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.Date;
 import java.util.List;
 import java.util.Map;
-import java.util.function.Function;
 import java.util.stream.Collectors;
+
+import static org.metaagent.framework.tools.todo.TodoReadTool.getTodoDirectory;
 
 /**
  * TodoWriteTool is a tool that writes a todo item to a file.
@@ -50,7 +49,8 @@ import java.util.stream.Collectors;
  * @author vyckey
  */
 public class TodoWriteTool implements Tool<TodoWriteInput, TodoWriteOutput> {
-    private static final ToolDefinition TOOL_DEFINITION = ToolDefinition.builder("todo_write")
+    public static final String TOOL_NAME = "todo_write";
+    private static final ToolDefinition TOOL_DEFINITION = ToolDefinition.builder(TOOL_NAME)
             .description("Create or update TODO items for plan and complex tasks")
             .inputSchema(TodoWriteInput.class)
             .outputSchema(TodoWriteOutput.class)
@@ -81,63 +81,22 @@ public class TodoWriteTool implements Tool<TodoWriteInput, TodoWriteOutput> {
     public TodoWriteOutput run(ToolContext toolContext, TodoWriteInput input) throws ToolExecutionException {
         validateInput(input);
 
-        Path todoFilePath = TodoReadTool.getTodoFilePath(toolContext.getToolConfig().workingDirectory(), input.todoId());
-        if (!Files.exists(todoFilePath.getParent())) {
-            try {
-                Files.createDirectories(todoFilePath.getParent());
-            } catch (IOException e) {
-                throw new ToolExecutionException(e);
-            }
-        }
-
         if (toolContext.getAbortSignal().isAborted()) {
             throw new AbortException("Tool " + getName() + " is cancelled");
         }
 
-        List<TodoItem> oldTodoItems;
-        List<TodoItem> newTodoItems;
         try {
-            oldTodoItems = TodoReadTool.readTodoFile(todoFilePath);
-            newTodoItems = mergeTodoItems(oldTodoItems, input.todos());
-            TodoWriteTool.writeTodoFile(todoFilePath, newTodoItems);
-        } catch (IOException e) {
-            throw new ToolExecutionException("Failed to write TODO file " + todoFilePath, e);
+            Path todoDirectory = getTodoDirectory(toolContext.getToolConfig().workingDirectory());
+            FileBasedTodoService todoService = new FileBasedTodoService(todoDirectory);
+            TodoUpdateResult updateResult = todoService.updateTodos(input.todoId(), input.todos());
+            return TodoWriteOutput.builder()
+                    .oldTodos(updateResult.oldTodos())
+                    .newTodos(updateResult.newTodos())
+                    .summary(summary(input, updateResult.newTodos()))
+                    .build();
+        } catch (IllegalStateException e) {
+            throw new ToolExecutionException("Failed to write TODO " + input.todoId() + ": " + e, e);
         }
-
-        return TodoWriteOutput.builder()
-                .oldTodos(oldTodoItems)
-                .newTodos(newTodoItems)
-                .summary(summary(input, newTodoItems))
-                .build();
-    }
-
-    protected List<TodoItem> mergeTodoItems(List<TodoItem> oldTodoItems, List<TodoItemUpdate> todoItemUpdates) {
-        Map<String, TodoItem> todoItemsMap = oldTodoItems.stream()
-                .collect(Collectors.toMap(TodoItem::id, Function.identity()));
-        for (TodoItemUpdate newTodoItem : todoItemUpdates) {
-            newTodoItem = newTodoItem.withDefault();
-            TodoItem oldTodoItem = todoItemsMap.get(newTodoItem.id());
-            if (oldTodoItem != null) {
-                TodoItem todoItem = oldTodoItem.toBuilder()
-                        .content(newTodoItem.content())
-                        .status(newTodoItem.status())
-                        .priority(newTodoItem.priority())
-                        .tags(newTodoItem.tags())
-                        .previousStatus(oldTodoItem.status())
-                        .updatedAt(new Date())
-                        .build();
-                todoItemsMap.put(todoItem.id(), todoItem);
-            } else {
-                TodoItem todoItem = TodoItem.create(newTodoItem.id(),
-                        newTodoItem.content(), newTodoItem.priority(), newTodoItem.tags());
-                todoItemsMap.put(todoItem.id(), todoItem);
-            }
-        }
-        return todoItemsMap.values().stream().sorted().toList();
-    }
-
-    private static void writeTodoFile(Path todoFilePath, List<TodoItem> todoItems) throws IOException {
-        TodoReadTool.OBJECT_MAPPER.writeValue(todoFilePath.toFile(), todoItems);
     }
 
     protected String summary(TodoWriteInput input, List<TodoItem> todoItems) {

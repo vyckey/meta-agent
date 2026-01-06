@@ -59,7 +59,8 @@ import java.util.regex.Pattern;
  */
 @Slf4j
 public class GlobFileTool implements Tool<GlobFileInput, GlobFileOutput> {
-    private static final ToolDefinition TOOL_DEFINITION = ToolDefinition.builder("glob_files")
+    public static final String TOOL_NAME = "glob_files";
+    private static final ToolDefinition TOOL_DEFINITION = ToolDefinition.builder(TOOL_NAME)
             .description("Efficiently finds files matching specific glob patterns (e.g., `src/**/*.ts`, `**/*.md`), " +
                     "returning absolute paths sorted by modification time (newest first). " +
                     "Ideal for quickly locating files based on their name or path structure, especially in large codebases.")

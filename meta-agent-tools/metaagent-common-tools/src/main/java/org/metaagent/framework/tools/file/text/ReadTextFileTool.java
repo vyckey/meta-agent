@@ -51,7 +51,8 @@ import java.util.stream.Stream;
  */
 @Slf4j
 public class ReadTextFileTool implements Tool<ReadTextFileInput, ReadTextFileOutput> {
-    private static final ToolDefinition TOOL_DEFINITION = ToolDefinition.builder("read_text_file")
+    public static final String TOOL_NAME = "read_text_file";
+    private static final ToolDefinition TOOL_DEFINITION = ToolDefinition.builder(TOOL_NAME)
             .description("Read and return text file content. Can optionally specialize the start number and limit of lines to read.")
             .inputSchema(ReadTextFileInput.class)
             .outputSchema(ReadTextFileOutput.class)

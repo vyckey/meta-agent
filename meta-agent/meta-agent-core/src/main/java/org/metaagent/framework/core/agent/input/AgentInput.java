@@ -34,6 +34,16 @@ import org.metaagent.framework.core.agent.AgentExecutionContext;
  */
 public interface AgentInput<I> {
     /**
+     * Creates an AgentInput instance.
+     *
+     * @param input the input
+     * @return the AgentInput instance
+     */
+    static <I> AgentInput<I> create(I input) {
+        return DefaultAgentInput.builder(input).build();
+    }
+
+    /**
      * Returns the agent input builder.
      *
      * @return the agent input builder

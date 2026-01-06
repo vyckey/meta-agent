@@ -48,7 +48,8 @@ import java.nio.file.Path;
  * @author vyckey
  */
 public class EditTextFileTool implements Tool<EditTextFileInput, EditTextFileOutput> {
-    private static final ToolDefinition TOOL_DEFINITION = ToolDefinition.builder("edit_text_file")
+    public static final String TOOL_NAME = "edit_text_file";
+    private static final ToolDefinition TOOL_DEFINITION = ToolDefinition.builder(TOOL_NAME)
             .description("Replaces text within a file. By default, replaces a single occurrence, " +
                     "but can replace multiple occurrences when `expectedReplacements` is specified. " +
                     "This tool requires providing significant context around the change to ensure precise targeting. " +

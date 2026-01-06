@@ -48,7 +48,8 @@ import java.util.Base64;
  */
 @Slf4j
 public class ReadImageFileTool implements Tool<ReadImageFileInput, ReadImageFileOutput> {
-    private static final ToolDefinition TOOL_DEFINITION = ToolDefinition.builder("read_image_file")
+    public static final String TOOL_NAME = "read_image_file";
+    private static final ToolDefinition TOOL_DEFINITION = ToolDefinition.builder(TOOL_NAME)
             .description("Read image file content and return it as a Base64 encoded string. "
                     + "The file must be an image file (e.g., PNG, JPEG). ")
             .inputSchema(ReadImageFileInput.class)
