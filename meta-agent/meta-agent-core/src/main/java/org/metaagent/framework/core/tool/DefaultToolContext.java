@@ -35,7 +35,9 @@ import org.metaagent.framework.core.tool.approval.ToolApprovalRequest;
 import org.metaagent.framework.core.tool.config.DefaultToolConfig;
 import org.metaagent.framework.core.tool.config.ToolConfig;
 
+import java.nio.file.Path;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.concurrent.ForkJoinPool;
 
 /**
@@ -46,15 +48,25 @@ import java.util.concurrent.ForkJoinPool;
 @Getter
 public class DefaultToolContext implements ToolContext {
     private final ToolConfig toolConfig;
+    private final Path workingDirectory;
     private final SecurityLevel securityLevel;
     private final PermissionApprovalManager<ToolApprovalRequest> approvalManager;
     private final AbortSignal abortSignal;
 
     protected DefaultToolContext(Builder builder) {
         this.toolConfig = Objects.requireNonNull(builder.toolConfig, "ToolConfig must not be null");
+        this.workingDirectory = Optional.ofNullable(builder.workingDirectory).orElse(defaultWorkingDirectory());
         this.securityLevel = Objects.requireNonNull(builder.securityLevel, "SecurityLevel must not be null");
         this.approvalManager = Objects.requireNonNull(builder.approvalManager, "ApprovalManager must not be null");
         this.abortSignal = Objects.requireNonNull(builder.abortSignal, "AbortSignal must not be null");
+    }
+
+    public static Path defaultWorkingDirectory() {
+        if (System.getProperty("CWD") != null) {
+            return Path.of(System.getProperty("CWD")).toAbsolutePath();
+        } else {
+            return Path.of(".").toAbsolutePath().normalize();
+        }
     }
 
     public static Builder builder() {
@@ -63,6 +75,7 @@ public class DefaultToolContext implements ToolContext {
 
     public static class Builder implements ToolContext.Builder {
         private ToolConfig toolConfig;
+        private Path workingDirectory;
         private SecurityLevel securityLevel;
         private PermissionApprovalManager<ToolApprovalRequest> approvalManager;
         private AbortSignal abortSignal;
@@ -70,6 +83,12 @@ public class DefaultToolContext implements ToolContext {
         @Override
         public ToolContext.Builder toolConfig(ToolConfig toolConfig) {
             this.toolConfig = toolConfig;
+            return this;
+        }
+
+        @Override
+        public ToolContext.Builder workingDirectory(Path workingDirectory) {
+            this.workingDirectory = workingDirectory;
             return this;
         }
 

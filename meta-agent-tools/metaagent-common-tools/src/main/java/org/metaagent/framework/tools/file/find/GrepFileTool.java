@@ -34,9 +34,10 @@ import org.metaagent.framework.core.tool.ToolContext;
 import org.metaagent.framework.core.tool.converter.ToolConverter;
 import org.metaagent.framework.core.tool.converter.ToolConverters;
 import org.metaagent.framework.core.tool.definition.ToolDefinition;
+import org.metaagent.framework.core.tool.exception.ToolArgumentException;
 import org.metaagent.framework.core.tool.exception.ToolExecutionError;
 import org.metaagent.framework.core.tool.exception.ToolExecutionException;
-import org.metaagent.framework.core.tool.exception.ToolParameterException;
+import org.metaagent.framework.core.tool.schema.ToolArgsValidator;
 import org.metaagent.framework.tools.file.util.FileUtils;
 
 import java.io.File;
@@ -79,19 +80,17 @@ public class GrepFileTool implements Tool<GrepFileInput, GrepFileOutput> {
     }
 
     protected Path validateInput(ToolContext toolContext, GrepFileInput input) throws ToolExecutionException {
-        if (input.getPattern() == null) {
-            throw new ToolParameterException("Grep pattern must be specified.");
-        }
+        ToolArgsValidator.validate(input);
         if (StringUtils.isBlank(input.getDirectory()) && System.getenv("CWD") == null) {
-            throw new ToolParameterException("Current working directory is unknown. Please specify a path.");
+            throw new ToolArgumentException("Current working directory is unknown. Please specify a path.");
         }
 
-        Path directory = toolContext.getToolConfig().workingDirectory();
+        Path directory = toolContext.workingDirectory();
         if (StringUtils.isNotEmpty(input.getDirectory())) {
-            directory = FileUtils.resolvePath(toolContext.getToolConfig().workingDirectory(), Path.of(input.getDirectory()));
+            directory = FileUtils.resolvePath(toolContext.workingDirectory(), Path.of(input.getDirectory()));
         }
         if (!directory.toFile().exists()) {
-            throw new ToolParameterException("Directory does not exist: " + directory);
+            throw new ToolArgumentException("Directory does not exist: " + directory);
         }
         return directory;
     }

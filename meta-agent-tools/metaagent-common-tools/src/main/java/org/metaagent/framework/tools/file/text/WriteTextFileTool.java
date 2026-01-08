@@ -34,7 +34,7 @@ import org.metaagent.framework.core.tool.converter.ToolConverter;
 import org.metaagent.framework.core.tool.converter.ToolConverters;
 import org.metaagent.framework.core.tool.definition.ToolDefinition;
 import org.metaagent.framework.core.tool.exception.ToolExecutionException;
-import org.metaagent.framework.core.tool.exception.ToolParameterException;
+import org.metaagent.framework.core.tool.exception.ToolArgumentException;
 import org.metaagent.framework.tools.file.util.FileUtils;
 
 import java.io.File;
@@ -79,7 +79,7 @@ public class WriteTextFileTool implements Tool<WriteTextFileInput, WriteTextFile
         }
 
         final String content = input.getContent() == null ? "" : input.getContent();
-        Path filePath = FileUtils.resolvePath(toolContext.getToolConfig().workingDirectory(), Path.of(input.getFilePath()));
+        Path filePath = FileUtils.resolvePath(toolContext.workingDirectory(), Path.of(input.getFilePath()));
 
         if (toolContext.getAbortSignal().isAborted()) {
             throw new AbortException("Tool " + getName() + " is cancelled");
@@ -107,7 +107,7 @@ public class WriteTextFileTool implements Tool<WriteTextFileInput, WriteTextFile
         File file = new File(filePath.toString());
         if (file.exists()) {
             if (!file.isFile()) {
-                throw new ToolParameterException("File is a directory");
+                throw new ToolArgumentException("File is a directory");
             }
         } else {
             if (!file.getParentFile().mkdirs()) {

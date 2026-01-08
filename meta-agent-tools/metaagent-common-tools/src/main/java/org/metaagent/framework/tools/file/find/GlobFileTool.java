@@ -34,8 +34,9 @@ import org.metaagent.framework.core.tool.ToolContext;
 import org.metaagent.framework.core.tool.converter.ToolConverter;
 import org.metaagent.framework.core.tool.converter.ToolConverters;
 import org.metaagent.framework.core.tool.definition.ToolDefinition;
+import org.metaagent.framework.core.tool.exception.ToolArgumentException;
 import org.metaagent.framework.core.tool.exception.ToolExecutionException;
-import org.metaagent.framework.core.tool.exception.ToolParameterException;
+import org.metaagent.framework.core.tool.schema.ToolArgsValidator;
 import org.metaagent.framework.tools.file.util.FilePathFilter;
 import org.metaagent.framework.tools.file.util.FileUtils;
 
@@ -82,21 +83,19 @@ public class GlobFileTool implements Tool<GlobFileInput, GlobFileOutput> {
         return TOOL_CONVERTER;
     }
 
-    protected Path validateInput(ToolContext toolContext, GlobFileInput input) throws ToolParameterException {
-        if (input.getPattern() == null) {
-            throw new ToolParameterException("Glob pattern must be specified.");
-        }
+    protected Path validateInput(ToolContext toolContext, GlobFileInput input) throws ToolArgumentException {
+        ToolArgsValidator.validate(input);
         if (StringUtils.isBlank(input.getDirectory()) && System.getenv("CWD") == null) {
-            throw new ToolParameterException("Current working directory is unknown. Please specify a path.");
+            throw new ToolArgumentException("Current working directory is unknown. Please specify a path.");
         }
 
-        Path workingDirectory = toolContext.getToolConfig().workingDirectory();
+        Path workingDirectory = toolContext.workingDirectory();
         Path directory = workingDirectory;
         if (StringUtils.isNotEmpty(input.getDirectory())) {
             directory = FileUtils.resolvePath(workingDirectory, Path.of(input.getDirectory()));
         }
         if (!directory.toFile().exists()) {
-            throw new ToolParameterException("Directory does not exist: " + directory);
+            throw new ToolArgumentException("Directory does not exist: " + directory);
         }
         return directory;
     }

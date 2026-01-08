@@ -44,7 +44,7 @@ import org.metaagent.framework.core.tool.converter.ToolConverter;
 import org.metaagent.framework.core.tool.converter.ToolConverters;
 import org.metaagent.framework.core.tool.definition.ToolDefinition;
 import org.metaagent.framework.core.tool.exception.ToolExecutionException;
-import org.metaagent.framework.core.tool.exception.ToolParameterException;
+import org.metaagent.framework.core.tool.exception.ToolArgumentException;
 import org.metaagent.framework.tools.web.utils.WebPageUtils;
 import org.springframework.ai.chat.messages.Message;
 import org.springframework.ai.chat.messages.SystemMessage;
@@ -145,10 +145,10 @@ public class WebFetchTool implements Tool<WebFetchInput, WebFetchOutput> {
     @Override
     public WebFetchOutput run(ToolContext toolContext, WebFetchInput fetchInput) throws ToolExecutionException {
         if (CollectionUtils.isEmpty(fetchInput.urls())) {
-            throw new ToolParameterException("urls must be not empty");
+            throw new ToolArgumentException("urls must be not empty");
         }
         if (fetchInput.prompt() == null || fetchInput.prompt().trim().isEmpty()) {
-            throw new ToolParameterException("prompt must be not empty");
+            throw new ToolArgumentException("prompt must be not empty");
         }
 
         // 1. Fetch URLs contents

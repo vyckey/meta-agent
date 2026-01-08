@@ -36,8 +36,9 @@ import org.metaagent.framework.core.tool.ToolContext;
 import org.metaagent.framework.core.tool.converter.ToolConverter;
 import org.metaagent.framework.core.tool.converter.ToolConverters;
 import org.metaagent.framework.core.tool.definition.ToolDefinition;
+import org.metaagent.framework.core.tool.exception.ToolArgumentException;
 import org.metaagent.framework.core.tool.exception.ToolExecutionException;
-import org.metaagent.framework.core.tool.exception.ToolParameterException;
+import org.metaagent.framework.core.tool.schema.ToolArgsValidator;
 import org.metaagent.framework.tools.file.util.FilePathFilter;
 import org.metaagent.framework.tools.file.util.FileUtils;
 
@@ -81,14 +82,15 @@ public class ReadManyFilesTool implements Tool<ReadManyFilesInput, ReadManyFiles
         }
 
         if (!Files.exists(directory)) {
-            throw new ToolParameterException("Directory " + directory + " does not exist");
+            throw new ToolArgumentException("Directory " + directory + " does not exist");
         }
         return directory;
     }
 
     @Override
     public ReadManyFilesOutput run(ToolContext toolContext, ReadManyFilesInput input) throws ToolExecutionException {
-        Path directory = validateDirectory(toolContext.getToolConfig().workingDirectory(), input.getDirectory());
+        ToolArgsValidator.validate(input);
+        Path directory = validateDirectory(toolContext.workingDirectory(), input.getDirectory());
         FilteredFiles filteredFiles = filterFiles(input, directory);
 
         if (toolContext.getAbortSignal().isAborted()) {

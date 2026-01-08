@@ -24,6 +24,7 @@
 
 package org.metaagent.framework.tools;
 
+import org.metaagent.framework.core.tool.Tool;
 import org.metaagent.framework.core.tool.toolkit.Toolkit;
 import org.metaagent.framework.tools.file.find.GlobFileTool;
 import org.metaagent.framework.tools.file.find.GrepFileTool;
@@ -41,55 +42,61 @@ import org.metaagent.framework.tools.time.GetCurrentTimeTool;
 import org.metaagent.framework.tools.todo.TodoReadTool;
 import org.metaagent.framework.tools.todo.TodoWriteTool;
 
+import java.util.Arrays;
 import java.util.List;
+import java.util.Objects;
+import java.util.function.Supplier;
 
 /**
  * CommonTools is a class that provides a collection of common tools for file operations, HTTP requests, scripting, and more.
- * It is designed to be used as a singleton, and all methods are static.
  *
  * @author MetaAgent
  */
-public abstract class CommonTools {
-    public static final String GLOB_FILES_TOOL_NAME = GlobFileTool.TOOL_NAME;
-    public static final String GREP_TOOL_NAME = GrepFileTool.TOOL_NAME;
-    public static final String LIST_FILES_TOOL_NAME = ListFileTool.TOOL_NAME;
-    public static final String READ_TEX_FILE_TOOL_NAME = ReadTextFileTool.TOOL_NAME;
-    public static final String READ_MANY_FILES_TOOL_NAME = ReadManyFilesTool.TOOL_NAME;
-    public static final String WRITE_TEXT_FILE_TOOL_NAME = WriteTextFileTool.TOOL_NAME;
-    public static final String EDIT_TEX_FILE_TOOL_NAME = EditTextFileTool.TOOL_NAME;
-    public static final String READ_IMAGE_FILE_NAME = ReadImageFileTool.TOOL_NAME;
-    public static final String GET_CURRENT_TIME_TOOL_NAME = GetCurrentTimeTool.TOOL_NAME;
-    public static final String TODO_READ_TOOL_NAME = TodoReadTool.TOOL_NAME;
-    public static final String TODO_WRITE_TOOL_NAME = TodoWriteTool.TOOL_NAME;
-    public static final String SHELL_COMMAND_TOOL_NAME = ShellCommandTool.TOOL_NAME;
-    public static final String HTTP_REQUEST_TOOL_NAME = HttpRequestTool.TOOL_NAME;
-    public static final String HUMAN_INPUT_TOOL_NAME = HumanInputTool.TOOL_NAME;
-    public static final String SCRIPT_ENGINE_TOOL_NAME = ScriptEngineTool.TOOL_NAME;
-    private static final List<String> TOOL_NAMES;
-    private static volatile Toolkit toolkit;
+public enum CommonTools {
+    GLOB_FILES_TOOL(GlobFileTool.TOOL_NAME, GlobFileTool::new),
+    GREP_TOOL(GrepFileTool.TOOL_NAME, GrepFileTool::new),
+    LIST_FILES_TOOL(ListFileTool.TOOL_NAME, ListFileTool::new),
+    READ_TEX_FILE_TOOL(ReadTextFileTool.TOOL_NAME, ReadTextFileTool::new),
+    READ_MANY_FILES_TOOL(ReadManyFilesTool.TOOL_NAME, ReadManyFilesTool::new),
+    WRITE_TEXT_FILE_TOOL(WriteTextFileTool.TOOL_NAME, WriteTextFileTool::new),
+    EDIT_TEX_FILE_TOOL(EditTextFileTool.TOOL_NAME, EditTextFileTool::new),
+    READ_IMAGE_FILE_TOOL(ReadImageFileTool.TOOL_NAME, ReadImageFileTool::new),
+    GET_CURRENT_TIME_TOOL(GetCurrentTimeTool.TOOL_NAME, GetCurrentTimeTool::new),
+    TODO_READ_TOOL(TodoReadTool.TOOL_NAME, TodoReadTool::new),
+    TODO_WRITE_TOOL(TodoWriteTool.TOOL_NAME, TodoWriteTool::new),
+    SHELL_COMMAND_TOOL(ShellCommandTool.TOOL_NAME, ShellCommandTool::new),
+    HTTP_REQUEST_TOOL(HttpRequestTool.TOOL_NAME, HttpRequestTool::new),
+    HUMAN_INPUT_TOOL(HumanInputTool.TOOL_NAME, HumanInputTool::new),
+    SCRIPT_ENGINE_TOOL(ScriptEngineTool.TOOL_NAME, ScriptEngineTool::new),
+    ;
 
-    static {
-        TOOL_NAMES = List.of(
-                GLOB_FILES_TOOL_NAME,
-                GREP_TOOL_NAME,
-                LIST_FILES_TOOL_NAME,
-                READ_TEX_FILE_TOOL_NAME,
-                READ_MANY_FILES_TOOL_NAME,
-                WRITE_TEXT_FILE_TOOL_NAME,
-                EDIT_TEX_FILE_TOOL_NAME,
-                READ_IMAGE_FILE_NAME,
-                GET_CURRENT_TIME_TOOL_NAME,
-                TODO_READ_TOOL_NAME,
-                TODO_WRITE_TOOL_NAME,
-                SHELL_COMMAND_TOOL_NAME,
-                HTTP_REQUEST_TOOL_NAME,
-                HUMAN_INPUT_TOOL_NAME,
-                SCRIPT_ENGINE_TOOL_NAME
-        );
+    private static volatile Toolkit toolkit;
+    private final String name;
+    private final Supplier<Tool<?, ?>> toolInstantiator;
+    private volatile Tool<?, ?> instance;
+
+    CommonTools(String name, Supplier<Tool<?, ?>> toolInstantiator) {
+        this.name = name;
+        this.toolInstantiator = toolInstantiator;
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public Tool<?, ?> getInstance() {
+        if (instance == null) {
+            synchronized (this) {
+                if (instance == null) {
+                    instance = Objects.requireNonNull(toolInstantiator.get(), "Cannot instantiate tool " + name);
+                }
+            }
+        }
+        return instance;
     }
 
     public static List<String> getToolNames() {
-        return TOOL_NAMES;
+        return Arrays.stream(CommonTools.values()).map(CommonTools::name).toList();
     }
 
     public static Toolkit getToolkit() {
@@ -104,24 +111,11 @@ public abstract class CommonTools {
     }
 
     private static Toolkit createToolkit() {
+        Tool<?, ?>[] tools = Arrays.stream(CommonTools.values()).map(CommonTools::getInstance).toArray(Tool[]::new);
         return Toolkit.fromTools(
                 "Common Tools",
                 "A collection of common tools for file operations, HTTP requests, scripting, and more.",
-                new GlobFileTool(),
-                new GrepFileTool(),
-                new ListFileTool(),
-                new ReadTextFileTool(),
-                new ReadManyFilesTool(),
-                new WriteTextFileTool(),
-                new EditTextFileTool(),
-                new ReadImageFileTool(),
-                new GetCurrentTimeTool(),
-                new TodoReadTool(),
-                new TodoWriteTool(),
-                new ShellCommandTool(),
-                new HttpRequestTool(),
-                new HumanInputTool(),
-                new ScriptEngineTool()
+                tools
         );
     }
 }

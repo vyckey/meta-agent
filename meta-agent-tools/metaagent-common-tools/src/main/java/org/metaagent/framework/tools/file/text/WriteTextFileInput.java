@@ -27,6 +27,7 @@ package org.metaagent.framework.tools.file.text;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
+import jakarta.validation.constraints.NotBlank;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
@@ -41,6 +42,7 @@ import org.metaagent.framework.core.tool.schema.ToolDisplayable;
 @Builder
 @AllArgsConstructor(access = lombok.AccessLevel.PRIVATE)
 public class WriteTextFileInput implements ToolDisplayable {
+    @NotBlank(message = "filePath cannot be blank")
     @JsonProperty(required = true)
     @JsonPropertyDescription("The absolute path to the file to write. Relative paths are not supported.")
     private final String filePath;

@@ -27,13 +27,16 @@ package org.metaagent.framework.tools.file.find;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
+import jakarta.validation.constraints.NotBlank;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
+import org.apache.commons.lang3.StringUtils;
 import org.metaagent.framework.core.tool.schema.ToolDisplayable;
 
 import java.util.List;
+import java.util.Optional;
 
 /**
  * Input for the GlobFile tool.
@@ -48,6 +51,7 @@ public class GlobFileInput implements ToolDisplayable {
     @JsonPropertyDescription("The directory to search in. Optional, defaults to current working directory")
     private String directory;
 
+    @NotBlank(message = "pattern must be specified")
     @JsonProperty(required = true)
     @JsonPropertyDescription("The glob pattern to match files against")
     private String pattern;
@@ -66,7 +70,10 @@ public class GlobFileInput implements ToolDisplayable {
 
     @Override
     public String display() {
-        String dir = directory == null ? System.getenv("CWD") : directory;
+        String dir = directory;
+        if (StringUtils.isEmpty(dir)) {
+            dir = Optional.ofNullable(System.getenv("CWD")).orElse(".");
+        }
         return "Find files in directory '" + dir + "': " + pattern;
     }
 

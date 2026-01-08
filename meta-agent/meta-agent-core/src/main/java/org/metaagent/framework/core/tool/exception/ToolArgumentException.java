@@ -25,16 +25,16 @@
 package org.metaagent.framework.core.tool.exception;
 
 /**
- * ToolParameterException is thrown when a tool parameter is invalid.
+ * ToolArgumentException is thrown when a tool argument is invalid.
  *
  * @author vyckey
  */
-public class ToolParameterException extends ToolExecutionException {
-    public ToolParameterException(String message) {
+public class ToolArgumentException extends ToolExecutionException {
+    public ToolArgumentException(String message) {
         super(message);
     }
 
-    public ToolParameterException(String message, Throwable cause) {
+    public ToolArgumentException(String message, Throwable cause) {
         super(message, cause);
     }
 }

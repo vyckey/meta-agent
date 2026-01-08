@@ -31,8 +31,9 @@ import org.metaagent.framework.core.tool.ToolContext;
 import org.metaagent.framework.core.tool.converter.ToolConverter;
 import org.metaagent.framework.core.tool.converter.ToolConverters;
 import org.metaagent.framework.core.tool.definition.ToolDefinition;
+import org.metaagent.framework.core.tool.exception.ToolArgumentException;
 import org.metaagent.framework.core.tool.exception.ToolExecutionException;
-import org.metaagent.framework.core.tool.exception.ToolParameterException;
+import org.metaagent.framework.core.tool.schema.ToolArgsValidator;
 import org.metaagent.framework.tools.file.util.FileUtils;
 
 import java.io.File;
@@ -71,13 +72,14 @@ public class ReadImageFileTool implements Tool<ReadImageFileInput, ReadImageFile
     }
 
     protected File resolveFile(Path workingDirectory, ReadImageFileInput input) {
+        ToolArgsValidator.validate(input);
         Path filePath = FileUtils.resolvePath(workingDirectory, Path.of(input.filePath()));
         File file = filePath.toFile();
         if (!file.exists()) {
-            throw new ToolParameterException("File not found: " + filePath);
+            throw new ToolArgumentException("File not found: " + filePath);
         }
         if (!file.isFile()) {
-            throw new ToolParameterException("File is a directory: " + file);
+            throw new ToolArgumentException("File is a directory: " + file);
         }
         return file;
     }
@@ -88,7 +90,7 @@ public class ReadImageFileTool implements Tool<ReadImageFileInput, ReadImageFile
             throw new AbortException("Tool " + getName() + " is cancelled");
         }
 
-        File file = resolveFile(toolContext.getToolConfig().workingDirectory(), input);
+        File file = resolveFile(toolContext.workingDirectory(), input);
         try {
             return readFile(file);
         } catch (IOException e) {

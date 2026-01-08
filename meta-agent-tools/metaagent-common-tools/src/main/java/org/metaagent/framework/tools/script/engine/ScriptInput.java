@@ -26,6 +26,7 @@ package org.metaagent.framework.tools.script.engine;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
+import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
@@ -33,6 +34,7 @@ import lombok.NoArgsConstructor;
 import org.metaagent.framework.core.tool.schema.ToolDisplayable;
 
 import java.util.Map;
+import java.util.Optional;
 
 /**
  * Represents the input for executing a script using a specific engine.
@@ -51,6 +53,7 @@ public class ScriptInput implements ToolDisplayable {
     @JsonPropertyDescription("The language of the script (e.g., JavaScript, Python)")
     private String language;
 
+    @NotNull(message = "Script cannot be null")
     @JsonProperty(required = true)
     @JsonPropertyDescription("The script to be executed")
     private String script;
@@ -60,7 +63,8 @@ public class ScriptInput implements ToolDisplayable {
 
     @Override
     public String display() {
+        String lang = Optional.ofNullable(language).orElse(engine);
         String scriptSnippet = script.length() > 50 ? script.substring(0, 50) + "..." : script;
-        return "Execute " + language + " script: " + scriptSnippet;
+        return "Execute " + lang + " script: " + scriptSnippet;
     }
 }

@@ -28,6 +28,8 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 import com.google.common.collect.Maps;
+import jakarta.validation.constraints.Min;
+import jakarta.validation.constraints.NotBlank;
 import org.metaagent.framework.core.tool.schema.ToolDisplayable;
 
 import java.util.Map;
@@ -39,6 +41,7 @@ import java.util.stream.Collectors;
  * @author vyckey
  */
 public record ShellCommandInput(
+        @NotBlank(message = "command is required.")
         @JsonProperty(required = true)
         @JsonPropertyDescription("The shell command to be executed")
         String command,
@@ -46,6 +49,7 @@ public record ShellCommandInput(
         @JsonPropertyDescription("The environment variables to be passed to the command. Optional")
         Map<String, String> envs,
 
+        @Min(value = 0L, message = "timeoutSeconds must be a positive number or null.")
         @JsonPropertyDescription("The timeout in seconds for the command to complete. Optional, default no timeout")
         Long timeoutSeconds) implements ToolDisplayable {
 

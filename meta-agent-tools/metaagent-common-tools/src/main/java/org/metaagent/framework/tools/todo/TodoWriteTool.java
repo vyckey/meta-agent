@@ -33,7 +33,7 @@ import org.metaagent.framework.core.tool.converter.ToolConverter;
 import org.metaagent.framework.core.tool.converter.ToolConverters;
 import org.metaagent.framework.core.tool.definition.ToolDefinition;
 import org.metaagent.framework.core.tool.exception.ToolExecutionException;
-import org.metaagent.framework.core.tool.exception.ToolParameterException;
+import org.metaagent.framework.core.tool.exception.ToolArgumentException;
 import org.metaagent.framework.tools.todo.service.FileBasedTodoService;
 
 import java.nio.file.Path;
@@ -70,10 +70,10 @@ public class TodoWriteTool implements Tool<TodoWriteInput, TodoWriteOutput> {
 
     protected void validateInput(TodoWriteInput input) {
         if (StringUtils.isEmpty(input.todoId())) {
-            throw new ToolParameterException("Todo ID must be specified.");
+            throw new ToolArgumentException("Todo ID must be specified.");
         }
         if (CollectionUtils.isEmpty(input.todos())) {
-            throw new ToolParameterException("Todo items cannot be empty.");
+            throw new ToolArgumentException("Todo items cannot be empty.");
         }
     }
 
@@ -86,7 +86,7 @@ public class TodoWriteTool implements Tool<TodoWriteInput, TodoWriteOutput> {
         }
 
         try {
-            Path todoDirectory = getTodoDirectory(toolContext.getToolConfig().workingDirectory());
+            Path todoDirectory = getTodoDirectory(toolContext.workingDirectory());
             FileBasedTodoService todoService = new FileBasedTodoService(todoDirectory);
             TodoUpdateResult updateResult = todoService.updateTodos(input.todoId(), input.todos());
             return TodoWriteOutput.builder()

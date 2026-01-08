@@ -27,6 +27,7 @@ package org.metaagent.framework.tools.file.list;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
+import jakarta.validation.constraints.Min;
 import lombok.Getter;
 import lombok.experimental.SuperBuilder;
 import org.apache.commons.collections.CollectionUtils;
@@ -34,6 +35,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.metaagent.framework.core.tool.schema.ToolDisplayable;
 
 import java.util.List;
+import java.util.Optional;
 
 /**
  * List files input.
@@ -49,6 +51,7 @@ public class ListFileInput implements ToolDisplayable {
     @JsonPropertyDescription("Whether to include the directories. Default is false")
     private boolean directoryIncluded;
 
+    @Min(1)
     @JsonPropertyDescription("The max depth of directory. Default is null")
     private Integer maxDepth;
 
@@ -66,7 +69,11 @@ public class ListFileInput implements ToolDisplayable {
 
     @Override
     public String display() {
-        StringBuilder sb = new StringBuilder("List files in directory '").append(directory).append("'");
+        String dir = directory;
+        if (StringUtils.isEmpty(dir)) {
+            dir = Optional.ofNullable(System.getenv("CWD")).orElse(".");
+        }
+        StringBuilder sb = new StringBuilder("List files in directory '").append(dir).append("'");
         if (CollectionUtils.isNotEmpty(excludePatterns)) {
             sb.append(" with exclude patterns (").append(StringUtils.join(excludePatterns, ",")).append(")");
         }

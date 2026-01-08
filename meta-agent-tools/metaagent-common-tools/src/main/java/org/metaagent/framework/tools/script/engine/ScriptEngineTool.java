@@ -33,8 +33,9 @@ import org.metaagent.framework.core.tool.ToolContext;
 import org.metaagent.framework.core.tool.converter.ToolConverter;
 import org.metaagent.framework.core.tool.converter.ToolConverters;
 import org.metaagent.framework.core.tool.definition.ToolDefinition;
+import org.metaagent.framework.core.tool.exception.ToolArgumentException;
 import org.metaagent.framework.core.tool.exception.ToolExecutionException;
-import org.metaagent.framework.core.tool.exception.ToolParameterException;
+import org.metaagent.framework.core.tool.schema.ToolArgsValidator;
 
 import javax.script.Bindings;
 import javax.script.Compilable;
@@ -115,14 +116,15 @@ public class ScriptEngineTool implements Tool<ScriptInput, ScriptOutput>, AutoCl
             if (language != null) {
                 error.append("language=").append(language);
             }
-            throw new ToolParameterException(error.toString());
+            throw new ToolArgumentException(error.toString());
         });
     }
 
     @Override
     public ScriptOutput run(ToolContext toolContext, ScriptInput scriptInput) throws ToolExecutionException {
+        ToolArgsValidator.validate(scriptInput);
         if (StringUtils.isEmpty(scriptInput.getEngine()) && StringUtils.isEmpty(scriptInput.getLanguage())) {
-            throw new ToolParameterException("Either engine or language must be specified");
+            throw new ToolArgumentException("Either engine or language must be specified");
         }
 
         ScriptEngine scriptEngine = getScriptEngine(scriptInput.getEngine(), scriptInput.getLanguage());

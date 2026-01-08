@@ -32,8 +32,9 @@ import org.metaagent.framework.core.tool.ToolContext;
 import org.metaagent.framework.core.tool.converter.ToolConverter;
 import org.metaagent.framework.core.tool.converter.ToolConverters;
 import org.metaagent.framework.core.tool.definition.ToolDefinition;
+import org.metaagent.framework.core.tool.exception.ToolArgumentException;
 import org.metaagent.framework.core.tool.exception.ToolExecutionException;
-import org.metaagent.framework.core.tool.exception.ToolParameterException;
+import org.metaagent.framework.core.tool.schema.ToolArgsValidator;
 import org.metaagent.framework.tools.file.util.FileUtils;
 
 import java.io.File;
@@ -73,22 +74,20 @@ public class EditTextFileTool implements Tool<EditTextFileInput, EditTextFileOut
     }
 
     private File validateInput(ToolContext toolContext, EditTextFileInput input) {
-        if (StringUtils.isBlank(input.filePath())) {
-            throw new ToolParameterException("filePath is required");
-        }
+        ToolArgsValidator.validate(input);
 
-        Path workingDirectory = toolContext.getToolConfig().workingDirectory();
+        Path workingDirectory = toolContext.workingDirectory();
         Path path = FileUtils.resolvePath(workingDirectory, Path.of(input.filePath()));
         if (toolContext.getSecurityLevel().compareTo(SecurityLevel.UNRESTRICTED_DANGEROUSLY) < 0
                 && !path.startsWith(workingDirectory)) {
-            throw new ToolParameterException("filePath must be within the working directory: " + workingDirectory);
+            throw new ToolArgumentException("filePath must be within the working directory: " + workingDirectory);
         }
         if (!path.isAbsolute()) {
-            throw new ToolParameterException("filePath must be absolute");
+            throw new ToolArgumentException("filePath must be absolute");
         }
         File file = path.toFile();
         if (file.isDirectory()) {
-            throw new ToolParameterException("filePath cannot be a directory");
+            throw new ToolArgumentException("filePath cannot be a directory");
         }
         return file;
     }

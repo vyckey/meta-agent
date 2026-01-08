@@ -38,6 +38,7 @@ import org.metaagent.framework.core.tool.converter.ToolConverter;
 import org.metaagent.framework.core.tool.converter.ToolConverters;
 import org.metaagent.framework.core.tool.definition.ToolDefinition;
 import org.metaagent.framework.core.tool.exception.ToolExecutionException;
+import org.metaagent.framework.core.tool.schema.ToolArgsValidator;
 
 import java.io.IOException;
 import java.util.List;
@@ -85,6 +86,7 @@ public class HttpRequestTool implements Tool<HttpRequest, HttpResponse> {
     }
 
     private Request buildRequest(HttpRequest request) {
+        ToolArgsValidator.validate(request);
         Request.Builder requestBuilder = new Request.Builder().url(request.url());
         if (request.headers() != null) {
             for (Map.Entry<String, String> entry : request.headers().entrySet()) {

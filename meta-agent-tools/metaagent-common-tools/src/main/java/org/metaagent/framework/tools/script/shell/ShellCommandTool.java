@@ -37,6 +37,7 @@ import org.metaagent.framework.core.tool.converter.ToolConverter;
 import org.metaagent.framework.core.tool.converter.ToolConverters;
 import org.metaagent.framework.core.tool.definition.ToolDefinition;
 import org.metaagent.framework.core.tool.exception.ToolExecutionException;
+import org.metaagent.framework.core.tool.schema.ToolArgsValidator;
 
 import java.io.IOException;
 import java.io.InputStreamReader;
@@ -75,6 +76,7 @@ public class ShellCommandTool implements Tool<ShellCommandInput, ShellCommandOut
     }
 
     protected void validateInput(ToolContext toolContext, ShellCommandInput commandInput) throws ToolExecutionException {
+        ToolArgsValidator.validate(commandInput);
         String command = commandInput.command();
         if (StringUtils.isBlank(command)) {
             throw new ToolExecutionException("Command is required.");

@@ -30,6 +30,8 @@ import org.metaagent.framework.core.security.approval.PermissionApprovalManager;
 import org.metaagent.framework.core.tool.approval.ToolApprovalRequest;
 import org.metaagent.framework.core.tool.config.ToolConfig;
 
+import java.nio.file.Path;
+
 /**
  * ToolContext provides the context for tool execution,
  *
@@ -60,6 +62,19 @@ public interface ToolContext {
      * @return the tool configuration
      */
     ToolConfig getToolConfig();
+
+    /**
+     * Gets the working directory for executing tools.
+     *
+     * @return the working directory
+     */
+    default Path workingDirectory() {
+        if (System.getProperty("CWD") != null) {
+            return Path.of(System.getProperty("CWD")).toAbsolutePath();
+        } else {
+            return Path.of(".").toAbsolutePath().normalize();
+        }
+    }
 
     /**
      * Gets the security level for the tool execution.
@@ -94,6 +109,14 @@ public interface ToolContext {
          * @return the builder instance
          */
         Builder toolConfig(ToolConfig toolConfig);
+
+        /**
+         * Sets the working directory for the tool context.
+         *
+         * @param workingDirectory the working directory
+         * @return the builder instance
+         */
+        Builder workingDirectory(Path workingDirectory);
 
         /**
          * Sets the security level for the tool context.

@@ -34,8 +34,9 @@ import org.metaagent.framework.core.tool.ToolContext;
 import org.metaagent.framework.core.tool.converter.ToolConverter;
 import org.metaagent.framework.core.tool.converter.ToolConverters;
 import org.metaagent.framework.core.tool.definition.ToolDefinition;
+import org.metaagent.framework.core.tool.exception.ToolArgumentException;
 import org.metaagent.framework.core.tool.exception.ToolExecutionException;
-import org.metaagent.framework.core.tool.exception.ToolParameterException;
+import org.metaagent.framework.core.tool.schema.ToolArgsValidator;
 import org.metaagent.framework.tools.file.util.FilePathFilter;
 import org.metaagent.framework.tools.file.util.FileUtils;
 
@@ -77,12 +78,13 @@ public class ListFileTool implements Tool<ListFileInput, ListFileOutput> {
 
     @Override
     public ListFileOutput run(ToolContext toolContext, ListFileInput input) throws ToolExecutionException {
-        Path directory = toolContext.getToolConfig().workingDirectory();
+        ToolArgsValidator.validate(input);
+        Path directory = toolContext.workingDirectory();
         if (StringUtils.isNotEmpty(input.getDirectory())) {
-            directory = FileUtils.resolvePath(toolContext.getToolConfig().workingDirectory(), Path.of(input.getDirectory()));
+            directory = FileUtils.resolvePath(toolContext.workingDirectory(), Path.of(input.getDirectory()));
         }
         if (!Files.exists(directory)) {
-            throw new ToolParameterException("Directory " + directory.toAbsolutePath() + " does not exist");
+            throw new ToolArgumentException("Directory " + directory.toAbsolutePath() + " does not exist");
         }
 
         if (toolContext.getAbortSignal().isAborted()) {
