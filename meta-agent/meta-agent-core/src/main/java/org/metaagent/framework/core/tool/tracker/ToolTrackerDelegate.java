@@ -28,12 +28,13 @@ import org.metaagent.framework.core.tool.Tool;
 import org.metaagent.framework.core.tool.ToolContext;
 import org.metaagent.framework.core.tool.converter.ToolConverter;
 import org.metaagent.framework.core.tool.definition.ToolDefinition;
+import org.metaagent.framework.core.tool.exception.ToolExecutionError;
 import org.metaagent.framework.core.tool.exception.ToolExecutionException;
 
 import java.util.Objects;
 
 /**
- * description is here
+ * ToolTrackerDelegate is a tool delegate that tracks the tool call.
  *
  * @author vyckey
  */
@@ -76,7 +77,7 @@ public class ToolTrackerDelegate<I, O> implements Tool<I, O> {
             builder.exception(ex);
             throw ex;
         } catch (Exception e) {
-            ToolExecutionException ex = new ToolExecutionException("Call tool " + toolName + " fail", e);
+            ToolExecutionException ex = new ToolExecutionError("Call tool " + toolName + " fail", e);
             builder.exception(ex);
             throw ex;
         } finally {

@@ -35,13 +35,23 @@ import org.metaagent.framework.core.tool.exception.ToolExecutionException;
  */
 public interface ToolExecuteListener {
     /**
+     * Called when a tool receives call.
+     *
+     * @param tool  the tool that received the request
+     * @param input the request provided to the tool
+     */
+    default void onToolInputRequest(Tool<?, ?> tool, String input) {
+    }
+
+    /**
      * Called when a tool receives input.
      *
      * @param tool  the tool that received the input
      * @param input the input provided to the tool
      * @param <I>   the type of the input
      */
-    <I> void onToolInput(Tool<I, ?> tool, I input);
+    default <I> void onToolInput(Tool<I, ?> tool, I input) {
+    }
 
     /**
      * Called when a tool produces output.
@@ -52,7 +62,8 @@ public interface ToolExecuteListener {
      * @param <I>    the type of the input
      * @param <O>    the type of the output
      */
-    <I, O> void onToolOutput(Tool<I, O> tool, I input, O output);
+    default <I, O> void onToolOutput(Tool<I, O> tool, I input, O output) {
+    }
 
     /**
      * Called when a tool execution results in an exception.
@@ -62,5 +73,16 @@ public interface ToolExecuteListener {
      * @param exception the exception thrown during tool execution
      * @param <I>       the type of the input
      */
-    <I> void onToolException(Tool<I, ?> tool, I input, ToolExecutionException exception);
+    default <I> void onToolException(Tool<I, ?> tool, I input, ToolExecutionException exception) {
+    }
+
+    /**
+     * Called when a tool responses.
+     *
+     * @param tool   the tool that produced the output
+     * @param input  the call provided to the tool
+     * @param output the response produced by the tool
+     */
+    default void onToolResponse(Tool<?, ?> tool, String input, String output) {
+    }
 }

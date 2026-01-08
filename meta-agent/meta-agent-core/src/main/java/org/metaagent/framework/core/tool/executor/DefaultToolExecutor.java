@@ -81,10 +81,22 @@ public class DefaultToolExecutor implements ToolExecutor {
 
     @Override
     public <I, O> String execute(ToolExecutorContext executorContext, Tool<I, O> tool, String input) throws ToolExecutionException {
+        ToolExecuteListenerRegistry listenerRegistry = executorContext.getToolListenerRegistry();
         ToolTrackerDelegate<I, O> trackerDelegate = new ToolTrackerDelegate<>(executorContext.getToolCallTracker(), tool) {
             @Override
             public O run(ToolContext context, I input) throws ToolExecutionException {
                 return execute(executorContext, tool, input);
+            }
+
+            @Override
+            public String call(ToolContext context, String input) throws ToolExecutionException {
+                notifyListeners(listenerRegistry, listener -> listener.onToolInputRequest(tool, input));
+
+                // perform tool call
+                String response = super.call(context, input);
+
+                notifyListeners(listenerRegistry, listener -> listener.onToolResponse(tool, input, response));
+                return response;
             }
         };
         Tool<I, O> delegate = new WrapExceptionTool<>(trackerDelegate);
