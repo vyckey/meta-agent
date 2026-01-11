@@ -29,14 +29,19 @@ import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.metaagent.framework.common.abort.AbortException;
 import org.metaagent.framework.common.ignorefile.GitIgnoreLikeFileFilter;
+import org.metaagent.framework.core.security.approval.ApprovalStatus;
+import org.metaagent.framework.core.security.approval.PermissionApproval;
 import org.metaagent.framework.core.tool.Tool;
 import org.metaagent.framework.core.tool.ToolContext;
+import org.metaagent.framework.core.tool.approval.ToolApprovalRequest;
 import org.metaagent.framework.core.tool.converter.ToolConverter;
 import org.metaagent.framework.core.tool.converter.ToolConverters;
 import org.metaagent.framework.core.tool.definition.ToolDefinition;
 import org.metaagent.framework.core.tool.exception.ToolArgumentException;
 import org.metaagent.framework.core.tool.exception.ToolExecutionException;
+import org.metaagent.framework.core.tool.exception.ToolRejectException;
 import org.metaagent.framework.core.tool.schema.ToolArgsValidator;
+import org.metaagent.framework.tools.file.AbstractFileTool;
 import org.metaagent.framework.tools.file.util.FilePathFilter;
 import org.metaagent.framework.tools.file.util.FileUtils;
 
@@ -53,7 +58,8 @@ import java.util.regex.Pattern;
  * @author vyckey
  */
 @Slf4j
-public class ListFileTool implements Tool<ListFileInput, ListFileOutput> {
+public class ListFileTool extends AbstractFileTool<ListFileInput, ListFileOutput>
+        implements Tool<ListFileInput, ListFileOutput> {
     public static final String TOOL_NAME = "list_files";
     private static final ToolDefinition TOOL_DEFINITION = ToolDefinition.builder(TOOL_NAME)
             .description("List files which contains file name, size and permissions under specialized directory."
@@ -76,17 +82,40 @@ public class ListFileTool implements Tool<ListFileInput, ListFileOutput> {
         return TOOL_CONVERTER;
     }
 
-    @Override
-    public ListFileOutput run(ToolContext toolContext, ListFileInput input) throws ToolExecutionException {
+    protected Path validateInput(ToolContext toolContext, ListFileInput input) throws ToolExecutionException {
         ToolArgsValidator.validate(input);
+
         Path directory = toolContext.workingDirectory();
         if (StringUtils.isNotEmpty(input.getDirectory())) {
-            directory = FileUtils.resolvePath(toolContext.workingDirectory(), Path.of(input.getDirectory()));
-        }
-        if (!Files.exists(directory)) {
-            throw new ToolArgumentException("Directory " + directory.toAbsolutePath() + " does not exist");
+            Path filePath = Path.of(input.getDirectory());
+            directory = FileUtils.resolvePath(toolContext.workingDirectory(), filePath);
+
+            if (!checkFileAccessible(toolContext, directory)) {
+                ToolApprovalRequest approvalRequest = ToolApprovalRequest.builder()
+                        .id(toolContext.getExecutionId())
+                        .toolName(getName())
+                        .approvalContent("Request list files in root directory: " + directory)
+                        .input(input)
+                        .build();
+                PermissionApproval approvalResult = toolContext.requestApproval(approvalRequest);
+                if (approvalResult.getApprovalStatus() == ApprovalStatus.REJECTED) {
+                    throw new ToolRejectException(getName(), "user rejected to list files in root directory '" + directory + "'");
+                }
+            }
         }
 
+        if (!directory.toFile().isDirectory()) {
+            throw new ToolArgumentException("'" + directory + "' is not a valid directory");
+        }
+        if (!Files.exists(directory)) {
+            throw new ToolArgumentException("Directory '" + directory + "' does not exist");
+        }
+        return directory;
+    }
+
+    @Override
+    public ListFileOutput run(ToolContext toolContext, ListFileInput input) throws ToolExecutionException {
+        Path directory = validateInput(toolContext, input);
         if (toolContext.getAbortSignal().isAborted()) {
             throw new AbortException("Tool " + getName() + " is cancelled");
         }

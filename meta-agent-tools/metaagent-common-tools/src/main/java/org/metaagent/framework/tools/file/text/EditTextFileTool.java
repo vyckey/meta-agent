@@ -26,15 +26,19 @@ package org.metaagent.framework.tools.file.text;
 
 import org.apache.commons.lang3.StringUtils;
 import org.metaagent.framework.common.abort.AbortException;
-import org.metaagent.framework.core.security.SecurityLevel;
+import org.metaagent.framework.core.security.approval.ApprovalStatus;
+import org.metaagent.framework.core.security.approval.PermissionApproval;
 import org.metaagent.framework.core.tool.Tool;
 import org.metaagent.framework.core.tool.ToolContext;
+import org.metaagent.framework.core.tool.approval.ToolApprovalRequest;
 import org.metaagent.framework.core.tool.converter.ToolConverter;
 import org.metaagent.framework.core.tool.converter.ToolConverters;
 import org.metaagent.framework.core.tool.definition.ToolDefinition;
 import org.metaagent.framework.core.tool.exception.ToolArgumentException;
 import org.metaagent.framework.core.tool.exception.ToolExecutionException;
+import org.metaagent.framework.core.tool.exception.ToolRejectException;
 import org.metaagent.framework.core.tool.schema.ToolArgsValidator;
+import org.metaagent.framework.tools.file.AbstractFileTool;
 import org.metaagent.framework.tools.file.util.FileUtils;
 
 import java.io.File;
@@ -48,7 +52,8 @@ import java.nio.file.Path;
  *
  * @author vyckey
  */
-public class EditTextFileTool implements Tool<EditTextFileInput, EditTextFileOutput> {
+public class EditTextFileTool extends AbstractFileTool<EditTextFileInput, EditTextFileOutput>
+        implements Tool<EditTextFileInput, EditTextFileOutput> {
     public static final String TOOL_NAME = "edit_text_file";
     private static final ToolDefinition TOOL_DEFINITION = ToolDefinition.builder(TOOL_NAME)
             .description("Replaces text within a file. By default, replaces a single occurrence, " +
@@ -73,33 +78,40 @@ public class EditTextFileTool implements Tool<EditTextFileInput, EditTextFileOut
         return TOOL_CONVERTER;
     }
 
-    private File validateInput(ToolContext toolContext, EditTextFileInput input) {
+    private Path validateInput(ToolContext toolContext, EditTextFileInput input) {
         ToolArgsValidator.validate(input);
-
-        Path workingDirectory = toolContext.workingDirectory();
-        Path path = FileUtils.resolvePath(workingDirectory, Path.of(input.filePath()));
-        if (toolContext.getSecurityLevel().compareTo(SecurityLevel.UNRESTRICTED_DANGEROUSLY) < 0
-                && !path.startsWith(workingDirectory)) {
-            throw new ToolArgumentException("filePath must be within the working directory: " + workingDirectory);
-        }
-        if (!path.isAbsolute()) {
-            throw new ToolArgumentException("filePath must be absolute");
-        }
-        File file = path.toFile();
-        if (file.isDirectory()) {
+        Path filePath = FileUtils.resolvePath(toolContext.workingDirectory(), Path.of(input.filePath()));
+        if (filePath.toFile().isDirectory()) {
             throw new ToolArgumentException("filePath cannot be a directory");
         }
-        return file;
+        return filePath;
     }
 
     @Override
     public EditTextFileOutput run(ToolContext toolContext, EditTextFileInput input) throws ToolExecutionException {
-        File file = validateInput(toolContext, input);
+        Path filePath = validateInput(toolContext, input);
+        File file = filePath.toFile();
         if (toolContext.getAbortSignal().isAborted()) {
             throw new AbortException("Tool " + getName() + " is cancelled");
         }
 
         FileContentReplacement contentReplacement = buildReplacement(file, input);
+        if (!checkFileAccessible(toolContext, filePath)) {
+            ToolApprovalRequest approvalRequest = ToolApprovalRequest.builder()
+                    .id(toolContext.getExecutionId())
+                    .toolName(getName())
+                    .approvalContent("Request edit file: " + filePath)
+                    .input(input)
+                    .metadata("isNewFile", contentReplacement.isNewFile())
+                    .metadata("fileContent", contentReplacement.fileContent())
+                    .metadata("oldString", contentReplacement.oldString())
+                    .metadata("newString", contentReplacement.newString())
+                    .build();
+            PermissionApproval approvalResult = toolContext.requestApproval(approvalRequest);
+            if (approvalResult.getApprovalStatus() == ApprovalStatus.REJECTED) {
+                throw new ToolRejectException(getName(), "user rejected to edit file '" + filePath + "'");
+            }
+        }
 
         if (toolContext.getAbortSignal().isAborted()) {
             throw new AbortException("Tool " + getName() + " is cancelled");

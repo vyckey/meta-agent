@@ -1,7 +1,7 @@
 /*
  * MIT License
  *
- * Copyright (c) 2025 MetaAgent
+ * Copyright (c) 2026 MetaAgent
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -24,53 +24,44 @@
 
 package org.metaagent.framework.core.tool.config;
 
-import java.nio.file.Path;
+import java.util.List;
 import java.util.Set;
 
 /**
- * Configuration interface for tools.
+ * Tool execution configuration interface.
  *
  * @author vyckey
  */
-public interface ToolConfig {
-    /**
-     * Gets the working directory for executing tools.
-     *
-     * @return the working directory
-     */
-    default Path workingDirectory() {
-        if (System.getProperty("CWD") != null) {
-            return Path.of(System.getProperty("CWD")).toAbsolutePath();
-        } else {
-            return Path.of(".").toAbsolutePath().normalize();
-        }
-    }
+public interface ToolExecutionConfig {
 
     /**
-     * Get the set of allowed commands prefixes, for example, {"ls", "cat", "echo", "git status"}.
+     * Return the set of allowed tools.
      *
      * @return a set of allowed command strings
      */
-    Set<String> allowedCommands();
+    Set<ToolPattern> allowedTools();
 
     /**
-     * Get the set of disallowed commands, for example, {"rm", "shutdown", "reboot"}.
+     * Return the set of allowed tools for a specific tool name.
+     *
+     * @param toolName the name of the tool
+     * @return a list of allowed command strings for the specified tool
+     */
+    List<ToolPattern> allowedTools(String toolName);
+
+    /**
+     * Return the set of disallowed tools.
      *
      * @return a set of disallowed command strings
      */
-    Set<String> disallowedCommands();
+    Set<ToolPattern> disallowedTools();
 
     /**
-     * Get the set of allowed commands in a session, for example, {"cd", "export"}.
+     * Return the set of disallowed tools for a specific tool name.
      *
-     * @return a set of allowed command strings
+     * @param toolName the name of the tool
+     * @return a list of disallowed command strings for the specified tool
      */
-    Set<String> sessionAllowedCommands();
+    List<ToolPattern> disallowedTools(String toolName);
 
-    /**
-     * Get the set of disallowed commands in a session, for example, {"rm", "shutdown", "reboot"}.
-     *
-     * @return a set of disallowed command strings
-     */
-    Set<String> sessionDisallowedCommands();
 }

@@ -26,14 +26,19 @@ package org.metaagent.framework.tools.file.image;
 
 import lombok.extern.slf4j.Slf4j;
 import org.metaagent.framework.common.abort.AbortException;
+import org.metaagent.framework.core.security.approval.ApprovalStatus;
+import org.metaagent.framework.core.security.approval.PermissionApproval;
 import org.metaagent.framework.core.tool.Tool;
 import org.metaagent.framework.core.tool.ToolContext;
+import org.metaagent.framework.core.tool.approval.ToolApprovalRequest;
 import org.metaagent.framework.core.tool.converter.ToolConverter;
 import org.metaagent.framework.core.tool.converter.ToolConverters;
 import org.metaagent.framework.core.tool.definition.ToolDefinition;
 import org.metaagent.framework.core.tool.exception.ToolArgumentException;
 import org.metaagent.framework.core.tool.exception.ToolExecutionException;
+import org.metaagent.framework.core.tool.exception.ToolRejectException;
 import org.metaagent.framework.core.tool.schema.ToolArgsValidator;
+import org.metaagent.framework.tools.file.AbstractFileTool;
 import org.metaagent.framework.tools.file.util.FileUtils;
 
 import java.io.File;
@@ -48,7 +53,8 @@ import java.util.Base64;
  * @author vyckey
  */
 @Slf4j
-public class ReadImageFileTool implements Tool<ReadImageFileInput, ReadImageFileOutput> {
+public class ReadImageFileTool extends AbstractFileTool<ReadImageFileInput, ReadImageFileOutput>
+        implements Tool<ReadImageFileInput, ReadImageFileOutput> {
     public static final String TOOL_NAME = "read_image_file";
     private static final ToolDefinition TOOL_DEFINITION = ToolDefinition.builder(TOOL_NAME)
             .description("Read image file content and return it as a Base64 encoded string. "
@@ -71,26 +77,40 @@ public class ReadImageFileTool implements Tool<ReadImageFileInput, ReadImageFile
         return TOOL_CONVERTER;
     }
 
-    protected File resolveFile(Path workingDirectory, ReadImageFileInput input) {
+    private File validateInput(ToolContext toolContext, ReadImageFileInput input) {
         ToolArgsValidator.validate(input);
-        Path filePath = FileUtils.resolvePath(workingDirectory, Path.of(input.filePath()));
+
+        Path filePath = FileUtils.resolvePath(toolContext.workingDirectory(), Path.of(input.filePath()));
         File file = filePath.toFile();
-        if (!file.exists()) {
-            throw new ToolArgumentException("File not found: " + filePath);
+        if (file.isDirectory()) {
+            throw new ToolArgumentException("filePath cannot be a directory");
         }
-        if (!file.isFile()) {
-            throw new ToolArgumentException("File is a directory: " + file);
+        if (!file.exists()) {
+            throw new ToolArgumentException("File not found: " + input.filePath());
+        }
+
+        if (!checkFileAccessible(toolContext, filePath)) {
+            ToolApprovalRequest approvalRequest = ToolApprovalRequest.builder()
+                    .id(toolContext.getExecutionId())
+                    .toolName(getName())
+                    .approvalContent("Request read image file: " + filePath)
+                    .input(input)
+                    .build();
+            PermissionApproval approvalResult = toolContext.requestApproval(approvalRequest);
+            if (approvalResult.getApprovalStatus() == ApprovalStatus.REJECTED) {
+                throw new ToolRejectException(getName(), "user rejected to read image file '" + filePath + "'");
+            }
         }
         return file;
     }
 
     @Override
     public ReadImageFileOutput run(ToolContext toolContext, ReadImageFileInput input) throws ToolExecutionException {
+        File file = validateInput(toolContext, input);
         if (toolContext.getAbortSignal().isAborted()) {
             throw new AbortException("Tool " + getName() + " is cancelled");
         }
 
-        File file = resolveFile(toolContext.workingDirectory(), input);
         try {
             return readFile(file);
         } catch (IOException e) {

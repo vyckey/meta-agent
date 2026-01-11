@@ -1,7 +1,7 @@
 /*
  * MIT License
  *
- * Copyright (c) 2025 MetaAgent
+ * Copyright (c) 2026 MetaAgent
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -22,17 +22,26 @@
  * SOFTWARE.
  */
 
-package org.metaagent.framework.core.tool.executor;
-
-import java.util.List;
+package org.metaagent.framework.core.tool.exception;
 
 /**
- * Batch tool outputs
+ * ToolRejectException is thrown when a tool is rejected for execution.
  *
  * @author vyckey
  */
-public record BatchToolOutputs(List<ToolOutput> outputs) {
+public class ToolRejectException extends ToolExecutionException {
+    private final String toolName;
+    private final String reason;
 
-    public record ToolOutput(String id, String toolName, String output) {
+    public ToolRejectException(String toolName, String reason) {
+        super("Tool '" + toolName + "' was rejected: " + reason);
+        this.toolName = toolName;
+        this.reason = reason;
+    }
+
+    public ToolRejectException(String toolName, String reason, Throwable cause) {
+        super("Tool '" + toolName + "' was rejected: " + reason, cause);
+        this.toolName = toolName;
+        this.reason = reason;
     }
 }

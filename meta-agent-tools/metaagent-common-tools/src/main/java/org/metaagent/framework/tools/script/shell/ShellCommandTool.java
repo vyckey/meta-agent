@@ -24,26 +24,29 @@
 
 package org.metaagent.framework.tools.script.shell;
 
-import com.google.common.collect.Sets;
 import com.google.common.io.CharStreams;
 import lombok.Setter;
 import org.apache.commons.lang3.StringUtils;
 import org.metaagent.framework.common.abort.AbortException;
 import org.metaagent.framework.core.security.SecurityLevel;
+import org.metaagent.framework.core.security.approval.ApprovalStatus;
+import org.metaagent.framework.core.security.approval.PermissionApproval;
 import org.metaagent.framework.core.tool.Tool;
 import org.metaagent.framework.core.tool.ToolContext;
-import org.metaagent.framework.core.tool.config.ToolConfig;
+import org.metaagent.framework.core.tool.approval.ToolApprovalRequest;
+import org.metaagent.framework.core.tool.config.ToolExecutionConfig;
+import org.metaagent.framework.core.tool.config.ToolPattern;
 import org.metaagent.framework.core.tool.converter.ToolConverter;
 import org.metaagent.framework.core.tool.converter.ToolConverters;
 import org.metaagent.framework.core.tool.definition.ToolDefinition;
 import org.metaagent.framework.core.tool.exception.ToolExecutionException;
+import org.metaagent.framework.core.tool.exception.ToolRejectException;
 import org.metaagent.framework.core.tool.schema.ToolArgsValidator;
 
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
-import java.util.Set;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
@@ -77,38 +80,69 @@ public class ShellCommandTool implements Tool<ShellCommandInput, ShellCommandOut
 
     protected void validateInput(ToolContext toolContext, ShellCommandInput commandInput) throws ToolExecutionException {
         ToolArgsValidator.validate(commandInput);
-        String command = commandInput.command();
-        if (StringUtils.isBlank(command)) {
-            throw new ToolExecutionException("Command is required.");
-        }
+    }
 
-        if (toolContext.getSecurityLevel().compareTo(SecurityLevel.UNRESTRICTED_DANGEROUSLY) >= 0) {
+    protected void requestApprovalIfNeeded(ToolContext toolContext, ShellCommandInput commandInput) throws ToolExecutionException {
+        String command = commandInput.command();
+        if (toolContext.getSecurityLevel().compareTo(SecurityLevel.UNRESTRICTED_DANGEROUSLY) <= 0) {
             return;
         }
 
-        ToolConfig toolConfig = toolContext.getToolConfig();
         List<String> subCommands = ShellCommandUtils.splitCommands(command);
-        CommandApproval approval = CommandApproval.TO_CONFIRM;
+
+        ToolExecutionConfig toolExecutionConfig = toolContext.getToolExecutionConfig();
+        List<ToolPattern> disallowedTools = toolExecutionConfig.disallowedTools(getName());
+        List<ToolPattern> allowedTools = toolExecutionConfig.allowedTools(getName());
+
+        boolean needApproval = allowedTools.isEmpty();
         for (String subCommand : subCommands) {
             if (toolContext.getSecurityLevel().compareTo(SecurityLevel.RESTRICTED_HIGHLY_SAFE) <= 0
                     && ShellCommandUtils.hasCommandSubstitution(subCommand)) {
                 throw new ToolExecutionException("Substitution command is not allowed in restricted highly safe environment.");
             }
 
-            CommandApproval subApproval = CommandApproval.request(toolConfig, subCommand.trim());
-            if (subApproval.ordinal() < approval.ordinal()) {
-                approval = subApproval;
+            for (ToolPattern disallowedTool : disallowedTools) {
+                if (!matchToolPattern(subCommand, disallowedTool.pattern())) {
+                    throw new ToolRejectException(disallowedTool.toolName(),
+                            "The command \"" + command + "\" has been disallowed by the rule " + disallowedTool);
+                }
+            }
+
+            boolean subCommandAllowed = allowedTools.stream()
+                    .anyMatch(allowedTool -> matchToolPattern(subCommand, allowedTool.pattern()));
+            if (!subCommandAllowed) {
+                needApproval = true;
+                break;
             }
         }
-
-        if (CommandApproval.DISALLOW == approval) {
-            throw new ToolExecutionException("The command has been disallowed by the user.");
+        if (needApproval) {
+            ToolApprovalRequest approvalRequest = ToolApprovalRequest.builder()
+                    .id(toolContext.getExecutionId())
+                    .toolName(getName())
+                    .approvalContent("Request approval to execute shell command: " + command)
+                    .input(commandInput)
+                    .build();
+            PermissionApproval approvalResult = toolContext.requestApproval(approvalRequest);
+            if (approvalResult.getApprovalStatus() == ApprovalStatus.REJECTED) {
+                logger.warn("The execution of tool {} with command \"{}\" is not approved, reason: {} ",
+                        getName(), command, approvalResult.getContent());
+                throw new ToolRejectException(getName(), approvalResult.getContent());
+            }
         }
+    }
+
+    protected boolean matchToolPattern(String command, String pattern) {
+        if (StringUtils.isEmpty(pattern)) {
+            return true;
+        }
+        String regex = pattern.replaceAll("[*]+", ".*");
+        return command.matches(regex);
     }
 
     @Override
     public ShellCommandOutput run(ToolContext toolContext, ShellCommandInput commandInput) throws ToolExecutionException {
         validateInput(toolContext, commandInput);
+        requestApprovalIfNeeded(toolContext, commandInput);
 
         if (toolContext.getAbortSignal().isAborted()) {
             throw new AbortException("Tool " + getName() + " is cancelled");
@@ -158,27 +192,4 @@ public class ShellCommandTool implements Tool<ShellCommandInput, ShellCommandOut
         return outputBuilder.build();
     }
 
-    enum CommandApproval {
-        DISALLOW,
-        ALLOW,
-        TO_CONFIRM,
-        ;
-
-        static CommandApproval request(ToolConfig toolConfig, String command) {
-            Set<String> allowedCommands = Sets.union(toolConfig.allowedCommands(), toolConfig.sessionAllowedCommands());
-            for (String allowedCommand : allowedCommands) {
-                if (command.startsWith(allowedCommand)) {
-                    return ALLOW;
-                }
-            }
-
-            Set<String> disallowedCommands = Sets.union(toolConfig.disallowedCommands(), toolConfig.sessionDisallowedCommands());
-            for (String disallowedCommand : disallowedCommands) {
-                if (command.startsWith(disallowedCommand)) {
-                    return DISALLOW;
-                }
-            }
-            return TO_CONFIRM;
-        }
-    }
 }

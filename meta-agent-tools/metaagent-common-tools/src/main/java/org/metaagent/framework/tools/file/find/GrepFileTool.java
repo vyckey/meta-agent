@@ -29,15 +29,20 @@ import com.google.common.io.CharStreams;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.metaagent.framework.common.abort.AbortException;
+import org.metaagent.framework.core.security.approval.ApprovalStatus;
+import org.metaagent.framework.core.security.approval.PermissionApproval;
 import org.metaagent.framework.core.tool.Tool;
 import org.metaagent.framework.core.tool.ToolContext;
+import org.metaagent.framework.core.tool.approval.ToolApprovalRequest;
 import org.metaagent.framework.core.tool.converter.ToolConverter;
 import org.metaagent.framework.core.tool.converter.ToolConverters;
 import org.metaagent.framework.core.tool.definition.ToolDefinition;
 import org.metaagent.framework.core.tool.exception.ToolArgumentException;
 import org.metaagent.framework.core.tool.exception.ToolExecutionError;
 import org.metaagent.framework.core.tool.exception.ToolExecutionException;
+import org.metaagent.framework.core.tool.exception.ToolRejectException;
 import org.metaagent.framework.core.tool.schema.ToolArgsValidator;
+import org.metaagent.framework.tools.file.AbstractFileTool;
 import org.metaagent.framework.tools.file.util.FileUtils;
 
 import java.io.File;
@@ -55,7 +60,8 @@ import java.util.regex.Pattern;
  * @author vyckey
  */
 @Slf4j
-public class GrepFileTool implements Tool<GrepFileInput, GrepFileOutput> {
+public class GrepFileTool extends AbstractFileTool<GrepFileInput, GrepFileOutput>
+        implements Tool<GrepFileInput, GrepFileOutput> {
     public static final String TOOL_NAME = "grep_files";
     private static final ToolDefinition TOOL_DEFINITION = ToolDefinition.builder(TOOL_NAME)
             .description("Searches for a regular expression pattern within the content of files in a specified directory" +
@@ -81,16 +87,28 @@ public class GrepFileTool implements Tool<GrepFileInput, GrepFileOutput> {
 
     protected Path validateInput(ToolContext toolContext, GrepFileInput input) throws ToolExecutionException {
         ToolArgsValidator.validate(input);
-        if (StringUtils.isBlank(input.getDirectory()) && System.getenv("CWD") == null) {
-            throw new ToolArgumentException("Current working directory is unknown. Please specify a path.");
-        }
 
         Path directory = toolContext.workingDirectory();
         if (StringUtils.isNotEmpty(input.getDirectory())) {
-            directory = FileUtils.resolvePath(toolContext.workingDirectory(), Path.of(input.getDirectory()));
+            Path filePath = Path.of(input.getDirectory());
+            directory = FileUtils.resolvePath(toolContext.workingDirectory(), filePath);
+
+            if (!checkFileAccessible(toolContext, directory)) {
+                ToolApprovalRequest approvalRequest = ToolApprovalRequest.builder()
+                        .id(toolContext.getExecutionId())
+                        .toolName(getName())
+                        .approvalContent("Request grep directory: " + directory)
+                        .input(input)
+                        .build();
+                PermissionApproval approvalResult = toolContext.requestApproval(approvalRequest);
+                if (approvalResult.getApprovalStatus() == ApprovalStatus.REJECTED) {
+                    throw new ToolRejectException(getName(), "user rejected to grep directory '" + directory + "'");
+                }
+            }
         }
-        if (!directory.toFile().exists()) {
-            throw new ToolArgumentException("Directory does not exist: " + directory);
+
+        if (!directory.toFile().isDirectory()) {
+            throw new ToolArgumentException("'" + directory + "' is not a valid directory");
         }
         return directory;
     }

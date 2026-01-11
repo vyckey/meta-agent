@@ -25,21 +25,34 @@
 package org.metaagent.framework.core.security;
 
 /**
- * Security levels of agent.
+ * Security level interface defining different levels of security restrictions.
  *
  * @author vyckey
  */
-public enum SecurityLevel {
-    /**
-     * Most restrictive level, only allows execution of a minimal set of safe commands.
-     */
-    RESTRICTED_HIGHLY_SAFE,
-    /**
-     * Default level, allows execution of a broader set of commands while still maintaining safety.
-     */
-    RESTRICTED_DEFAULT_SALE,
+@FunctionalInterface
+public interface SecurityLevel extends Comparable<SecurityLevel> {
     /**
      * Use with caution, this level allows execution of potentially dangerous commands. Recommended only for trusted sandbox environments.
      */
-    UNRESTRICTED_DANGEROUSLY,
+    SecurityLevel UNRESTRICTED_DANGEROUSLY = () -> 100;
+    /**
+     * Default level, allows execution of a broader set of commands while still maintaining safety.
+     */
+    SecurityLevel RESTRICTED_DEFAULT_SALE = () -> 10_000;
+    /**
+     * Most restrictive level, only allows execution of a minimal set of safe commands.
+     */
+    SecurityLevel RESTRICTED_HIGHLY_SAFE = () -> 100_000;
+
+    /**
+     * Get the integer value of the security level. The higher the value, the more restricted the level.
+     *
+     * @return The integer value of the security level.
+     */
+    int value();
+
+    @Override
+    default int compareTo(SecurityLevel another) {
+        return Integer.compare(value(), another.value());
+    }
 }

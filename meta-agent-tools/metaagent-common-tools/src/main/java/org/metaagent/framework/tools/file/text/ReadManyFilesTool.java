@@ -31,14 +31,19 @@ import org.apache.commons.lang3.BooleanUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.metaagent.framework.common.abort.AbortException;
 import org.metaagent.framework.common.ignorefile.GitIgnoreLikeFileFilter;
+import org.metaagent.framework.core.security.approval.ApprovalStatus;
+import org.metaagent.framework.core.security.approval.PermissionApproval;
 import org.metaagent.framework.core.tool.Tool;
 import org.metaagent.framework.core.tool.ToolContext;
+import org.metaagent.framework.core.tool.approval.ToolApprovalRequest;
 import org.metaagent.framework.core.tool.converter.ToolConverter;
 import org.metaagent.framework.core.tool.converter.ToolConverters;
 import org.metaagent.framework.core.tool.definition.ToolDefinition;
 import org.metaagent.framework.core.tool.exception.ToolArgumentException;
 import org.metaagent.framework.core.tool.exception.ToolExecutionException;
+import org.metaagent.framework.core.tool.exception.ToolRejectException;
 import org.metaagent.framework.core.tool.schema.ToolArgsValidator;
+import org.metaagent.framework.tools.file.AbstractFileTool;
 import org.metaagent.framework.tools.file.util.FilePathFilter;
 import org.metaagent.framework.tools.file.util.FileUtils;
 
@@ -50,7 +55,8 @@ import java.util.List;
 import java.util.regex.Pattern;
 
 @Slf4j
-public class ReadManyFilesTool implements Tool<ReadManyFilesInput, ReadManyFilesOutput> {
+public class ReadManyFilesTool extends AbstractFileTool<ReadManyFilesInput, ReadManyFilesOutput>
+        implements Tool<ReadManyFilesInput, ReadManyFilesOutput> {
     public static final String TOOL_NAME = "read_many_files";
     private static final ToolDefinition TOOL_DEFINITION = ToolDefinition.builder(TOOL_NAME)
             .description("Reads content from multiple files specified by paths or glob patterns within a specialized directory." +
@@ -75,22 +81,37 @@ public class ReadManyFilesTool implements Tool<ReadManyFilesInput, ReadManyFiles
         return TOOL_CONVERTER;
     }
 
-    private Path validateDirectory(Path workingDirectory, String dir) {
-        Path directory = workingDirectory;
-        if (StringUtils.isNotEmpty(dir)) {
-            directory = FileUtils.resolvePath(workingDirectory, Path.of(dir));
+    protected Path validateInput(ToolContext toolContext, ReadManyFilesInput input) throws ToolArgumentException {
+        ToolArgsValidator.validate(input);
+
+        Path directory = toolContext.workingDirectory();
+        if (StringUtils.isNotEmpty(input.getDirectory())) {
+            Path filePath = Path.of(input.getDirectory());
+            directory = FileUtils.resolvePath(toolContext.workingDirectory(), filePath);
+
+            if (!checkFileAccessible(toolContext, directory)) {
+                ToolApprovalRequest approvalRequest = ToolApprovalRequest.builder()
+                        .id(toolContext.getExecutionId())
+                        .toolName(getName())
+                        .approvalContent("Request read files in directory: " + directory)
+                        .input(input)
+                        .build();
+                PermissionApproval approvalResult = toolContext.requestApproval(approvalRequest);
+                if (approvalResult.getApprovalStatus() == ApprovalStatus.REJECTED) {
+                    throw new ToolRejectException(getName(), "user rejected to read files in directory '" + directory + "'");
+                }
+            }
         }
 
-        if (!Files.exists(directory)) {
-            throw new ToolArgumentException("Directory " + directory + " does not exist");
+        if (!directory.toFile().isDirectory()) {
+            throw new ToolArgumentException("'" + directory + "' is not a valid directory");
         }
         return directory;
     }
 
     @Override
     public ReadManyFilesOutput run(ToolContext toolContext, ReadManyFilesInput input) throws ToolExecutionException {
-        ToolArgsValidator.validate(input);
-        Path directory = validateDirectory(toolContext.workingDirectory(), input.getDirectory());
+        Path directory = validateInput(toolContext, input);
         FilteredFiles filteredFiles = filterFiles(input, directory);
 
         if (toolContext.getAbortSignal().isAborted()) {

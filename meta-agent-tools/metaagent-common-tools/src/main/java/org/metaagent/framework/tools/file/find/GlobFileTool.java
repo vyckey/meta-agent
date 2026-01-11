@@ -29,14 +29,19 @@ import org.apache.commons.lang3.BooleanUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.metaagent.framework.common.abort.AbortException;
 import org.metaagent.framework.common.ignorefile.GitIgnoreLikeFileFilter;
+import org.metaagent.framework.core.security.approval.ApprovalStatus;
+import org.metaagent.framework.core.security.approval.PermissionApproval;
 import org.metaagent.framework.core.tool.Tool;
 import org.metaagent.framework.core.tool.ToolContext;
+import org.metaagent.framework.core.tool.approval.ToolApprovalRequest;
 import org.metaagent.framework.core.tool.converter.ToolConverter;
 import org.metaagent.framework.core.tool.converter.ToolConverters;
 import org.metaagent.framework.core.tool.definition.ToolDefinition;
 import org.metaagent.framework.core.tool.exception.ToolArgumentException;
 import org.metaagent.framework.core.tool.exception.ToolExecutionException;
+import org.metaagent.framework.core.tool.exception.ToolRejectException;
 import org.metaagent.framework.core.tool.schema.ToolArgsValidator;
+import org.metaagent.framework.tools.file.AbstractFileTool;
 import org.metaagent.framework.tools.file.util.FilePathFilter;
 import org.metaagent.framework.tools.file.util.FileUtils;
 
@@ -59,7 +64,8 @@ import java.util.regex.Pattern;
  * @author vyckey
  */
 @Slf4j
-public class GlobFileTool implements Tool<GlobFileInput, GlobFileOutput> {
+public class GlobFileTool extends AbstractFileTool<GlobFileInput, GlobFileOutput>
+        implements Tool<GlobFileInput, GlobFileOutput> {
     public static final String TOOL_NAME = "glob_files";
     private static final ToolDefinition TOOL_DEFINITION = ToolDefinition.builder(TOOL_NAME)
             .description("Efficiently finds files matching specific glob patterns (e.g., `src/**/*.ts`, `**/*.md`), " +
@@ -85,17 +91,28 @@ public class GlobFileTool implements Tool<GlobFileInput, GlobFileOutput> {
 
     protected Path validateInput(ToolContext toolContext, GlobFileInput input) throws ToolArgumentException {
         ToolArgsValidator.validate(input);
-        if (StringUtils.isBlank(input.getDirectory()) && System.getenv("CWD") == null) {
-            throw new ToolArgumentException("Current working directory is unknown. Please specify a path.");
+
+        Path directory = toolContext.workingDirectory();
+        if (StringUtils.isNotEmpty(input.getDirectory())) {
+            Path filePath = Path.of(input.getDirectory());
+            directory = FileUtils.resolvePath(toolContext.workingDirectory(), filePath);
+
+            if (!checkFileAccessible(toolContext, directory)) {
+                ToolApprovalRequest approvalRequest = ToolApprovalRequest.builder()
+                        .id(toolContext.getExecutionId())
+                        .toolName(getName())
+                        .approvalContent("Request glob directory: " + directory)
+                        .input(input)
+                        .build();
+                PermissionApproval approvalResult = toolContext.requestApproval(approvalRequest);
+                if (approvalResult.getApprovalStatus() == ApprovalStatus.REJECTED) {
+                    throw new ToolRejectException(getName(), "user rejected to glob directory '" + directory + "'");
+                }
+            }
         }
 
-        Path workingDirectory = toolContext.workingDirectory();
-        Path directory = workingDirectory;
-        if (StringUtils.isNotEmpty(input.getDirectory())) {
-            directory = FileUtils.resolvePath(workingDirectory, Path.of(input.getDirectory()));
-        }
-        if (!directory.toFile().exists()) {
-            throw new ToolArgumentException("Directory does not exist: " + directory);
+        if (!directory.toFile().isDirectory()) {
+            throw new ToolArgumentException("'" + directory + "' is not a valid directory");
         }
         return directory;
     }

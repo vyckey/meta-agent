@@ -26,9 +26,10 @@ package org.metaagent.framework.core.tool;
 
 import org.metaagent.framework.common.abort.AbortSignal;
 import org.metaagent.framework.core.security.SecurityLevel;
+import org.metaagent.framework.core.security.approval.PermissionApproval;
 import org.metaagent.framework.core.security.approval.PermissionApprovalManager;
 import org.metaagent.framework.core.tool.approval.ToolApprovalRequest;
-import org.metaagent.framework.core.tool.config.ToolConfig;
+import org.metaagent.framework.core.tool.config.ToolExecutionConfig;
 
 import java.nio.file.Path;
 
@@ -57,11 +58,11 @@ public interface ToolContext {
     }
 
     /**
-     * Gets the tool configuration.
+     * Gets the tool execution configuration.
      *
      * @return the tool configuration
      */
-    ToolConfig getToolConfig();
+    ToolExecutionConfig getToolExecutionConfig();
 
     /**
      * Gets the working directory for executing tools.
@@ -91,11 +92,33 @@ public interface ToolContext {
     PermissionApprovalManager<ToolApprovalRequest> getApprovalManager();
 
     /**
+     * Initiates a tool permission approval request and wait for approval, it will block until the request is approved or rejected.
+     *
+     * @param approvalRequest the permission approval request
+     * @return the permission approval
+     */
+    PermissionApproval requestApproval(ToolApprovalRequest approvalRequest);
+
+    /**
      * Gets the abort signal for managing tool execution aborts.
      *
      * @return the abort signal
      */
     AbortSignal getAbortSignal();
+
+    /**
+     * Gets the execution id for the current tool call.
+     *
+     * @return the execution id
+     */
+    String getExecutionId();
+
+    /**
+     * Sets the execution id for the current tool call.
+     *
+     * @param executionId the execution id
+     */
+    void setExecutionId(String executionId);
 
 
     /**
@@ -103,12 +126,12 @@ public interface ToolContext {
      */
     interface Builder {
         /**
-         * Sets the tool configuration for the tool context.
+         * Sets the tool execution configuration for the tool context.
          *
-         * @param toolConfig the tool configuration
+         * @param toolExecutionConfig the tool configuration
          * @return the builder instance
          */
-        Builder toolConfig(ToolConfig toolConfig);
+        Builder toolExecutionConfig(ToolExecutionConfig toolExecutionConfig);
 
         /**
          * Sets the working directory for the tool context.
