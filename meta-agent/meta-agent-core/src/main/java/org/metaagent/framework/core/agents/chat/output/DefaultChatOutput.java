@@ -37,24 +37,28 @@ import java.util.stream.Collectors;
  *
  * @author vyckey
  */
-public class DefaultChatOutput implements ChatOutput {
-    private final List<Message> messages;
-    private final String thought;
-    private final Flux<Message> stream;
-    private final MetadataProvider metadata;
+public record DefaultChatOutput(
+        List<Message> messages,
+        String thought,
+        Flux<Message> stream,
+        MetadataProvider metadata
+) implements ChatOutput {
+
+    public DefaultChatOutput {
+        if (messages == null && stream == null) {
+            throw new IllegalArgumentException("messages or stream is required");
+        }
+        if (metadata == null) {
+            metadata = MetadataProvider.empty();
+        }
+    }
 
     public DefaultChatOutput(Builder builder) {
-        this.messages = Objects.requireNonNull(builder.messages, "messages is required");
-        this.thought = builder.thought;
-        this.stream = builder.stream;
-        this.metadata = builder.metadata != null ? builder.metadata : MetadataProvider.empty();
+        this(builder.messages, builder.thought, builder.stream, builder.metadata);
     }
 
     public DefaultChatOutput(List<Message> messages) {
-        this.messages = Objects.requireNonNull(messages, "messages is required");
-        this.thought = null;
-        this.stream = null;
-        this.metadata = MetadataProvider.empty();
+        this(Objects.requireNonNull(messages, "messages is required"), null, null, null);
     }
 
     public static Builder builder() {
@@ -65,22 +69,9 @@ public class DefaultChatOutput implements ChatOutput {
         return new Builder(chatOutput);
     }
 
-    public List<Message> messages() {
-        return messages;
-    }
-
-    public String thought() {
-        return thought;
-    }
-
     @Override
     public Flux<Message> stream() {
         return stream;
-    }
-
-    @Override
-    public MetadataProvider metadata() {
-        return metadata;
     }
 
     @Override
@@ -92,7 +83,8 @@ public class DefaultChatOutput implements ChatOutput {
         if (thought != null) {
             sb.append("\nthought: ").append(thought);
         }
-        sb.append("\nmessages: ").append(messages().stream().map(Message::toString).collect(Collectors.joining("\n")));
+        String messages = messages().stream().map(m -> m + "- " + m).collect(Collectors.joining("\n"));
+        sb.append("\nmessages:\n").append(messages);
         return sb.append("\n}").toString();
     }
 

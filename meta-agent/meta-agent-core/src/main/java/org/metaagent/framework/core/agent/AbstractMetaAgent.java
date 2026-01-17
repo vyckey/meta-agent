@@ -63,6 +63,7 @@ public abstract class AbstractMetaAgent<I, O> implements MetaAgent<I, O> {
     protected Memory memory;
     protected final List<AgentRunListener<I, O>> runListeners = Lists.newArrayList();
     protected final List<AgentStepListener<I, O>> stepListeners = Lists.newArrayList();
+    protected boolean initialized = false;
     protected AgentLogger agentLogger;
     protected Logger logger = LoggerFactory.getLogger(getClass());
 
@@ -107,10 +108,15 @@ public abstract class AbstractMetaAgent<I, O> implements MetaAgent<I, O> {
     }
 
     public void initialize() {
+        if (initialized) {
+            return;
+        }
+
         // Register log listener to capture agent logs
         AgentLogListener<I, O> logListener = new AgentLogListener<>(agentState, agentLogger);
         registerRunListener(logListener);
         registerStepListener(logListener);
+        initialized = true;
     }
 
     public void registerRunListener(AgentRunListener<I, O> listener) {
@@ -187,8 +193,8 @@ public abstract class AbstractMetaAgent<I, O> implements MetaAgent<I, O> {
      * @return the preprocessed agent input
      */
     protected AgentInput<I> preprocess(AgentInput<I> input) {
-        if (agentState.getStatus().isFinished()) {
-            throw new AgentExecutionException("Agent " + getName() + " has run finished. Please reset it before running again.");
+        if (!initialized) {
+            initialize();
         }
         return input;
     }
@@ -234,14 +240,6 @@ public abstract class AbstractMetaAgent<I, O> implements MetaAgent<I, O> {
     }
 
     protected abstract AgentOutput<O> doStep(AgentInput<I> input);
-
-    protected Exception wrapException(Throwable throwable) {
-        if (throwable instanceof Exception e) {
-            return e;
-        } else {
-            return new AgentExecutionException(throwable);
-        }
-    }
 
     @Override
     public void reset() {

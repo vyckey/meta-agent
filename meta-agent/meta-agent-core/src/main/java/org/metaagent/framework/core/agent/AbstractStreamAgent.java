@@ -35,6 +35,7 @@ import org.metaagent.framework.core.agent.state.AgentStepState;
 import reactor.core.publisher.Flux;
 
 import java.util.List;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
 
@@ -122,8 +123,16 @@ public abstract class AbstractStreamAgent<I, O extends StreamOutput<S>, S>
         AtomicReference<AgentInput<I>> currentInputRef = new AtomicReference<>(input);
         AtomicReference<AgentOutput<O>> lastOutputRef = new AtomicReference<>();
 
+        AtomicBoolean isFirstStep = new AtomicBoolean(true);
+        AgentOutput<O> firstAgentOutput = stepStream(currentInputRef.get(), lastOutputRef::set);
         Flux<S> stream = Flux
-                .defer(() -> stepStream(currentInputRef.get(), lastOutputRef::set).result().stream())
+                .defer(() -> {
+                    if (isFirstStep.get()) {
+                        isFirstStep.set(false);
+                        return firstAgentOutput.result().stream();
+                    }
+                    return stepStream(currentInputRef.get(), lastOutputRef::set).result().stream();
+                })
                 .repeat(() -> {
                     AgentOutput<O> lastAgentOutput = lastOutputRef.get();
                     AgentInput<I> currentInput = currentInputRef.get();
@@ -147,7 +156,7 @@ public abstract class AbstractStreamAgent<I, O extends StreamOutput<S>, S>
                         onStreamComplete.accept(lastOutput);
                     }
                 });
-        return rebuildOutput(input, null, stream);
+        return rebuildOutput(input, firstAgentOutput, stream);
     }
 
     /**

@@ -25,7 +25,6 @@
 package org.metaagent.framework.core.agents.chat.input;
 
 import org.metaagent.framework.core.agent.chat.message.Message;
-import org.metaagent.framework.core.agents.chat.ChatAgent;
 
 import java.util.List;
 import java.util.Objects;
@@ -51,6 +50,10 @@ public class DefaultChatInput implements ChatInput {
         return new Builder();
     }
 
+    public static Builder builder(ChatInput chatInput) {
+        return new Builder(chatInput);
+    }
+
     @Override
     public List<Message> messages() {
         return messages;
@@ -69,13 +72,14 @@ public class DefaultChatInput implements ChatInput {
     @Override
     public String toString() {
         StringBuilder sb = new StringBuilder("DefaultChatInput{");
-        if (isThinkingEnabled) {
+        if (isThinkingEnabled != null) {
             sb.append("\nthinking: ").append(isThinkingEnabled);
         }
-        if (isStreamingEnabled) {
+        if (isStreamingEnabled != null) {
             sb.append("\nstreaming: ").append(isStreamingEnabled);
         }
-        sb.append("\nmessages: ").append(messages().stream().map(Message::getContent).collect(Collectors.joining("\n")));
+        String messages = messages().stream().map(m -> "- " + m).collect(Collectors.joining("\n"));
+        sb.append("\nmessages:\n").append(messages);
         return sb.append("\n}").toString();
     }
 
@@ -85,6 +89,12 @@ public class DefaultChatInput implements ChatInput {
         private Boolean isStreamingEnabled;
 
         private Builder() {
+        }
+
+        public Builder(ChatInput chatInput) {
+            this.messages = chatInput.messages();
+            this.isThinkingEnabled = chatInput.isThinkingEnabled();
+            this.isStreamingEnabled = chatInput.isStreamingEnabled();
         }
 
         @Override
