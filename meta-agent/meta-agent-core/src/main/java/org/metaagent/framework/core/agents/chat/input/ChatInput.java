@@ -36,6 +36,15 @@ import java.util.List;
  */
 public interface ChatInput {
     /**
+     * Create a new builder.
+     *
+     * @return a new builder
+     */
+    static Builder builder() {
+        return DefaultChatInput.builder();
+    }
+
+    /**
      * Get the messages of this input.
      *
      * @return the messages of this input
@@ -55,4 +64,49 @@ public interface ChatInput {
      * @return true if the agent is streaming enabled, false otherwise
      */
     Boolean isStreamingEnabled();
+
+
+    /**
+     * Builder for {@link ChatInput}.
+     */
+    interface Builder {
+        /**
+         * Set the messages of this input.
+         *
+         * @param messages the messages of this input
+         * @return this builder
+         */
+        Builder messages(List<Message> messages);
+
+        /**
+         * Set the messages of this input.
+         *
+         * @param messages the messages of this input
+         * @return this builder
+         */
+        Builder messages(Message... messages);
+
+        /**
+         * Set whether the agent is thinking enabled.
+         *
+         * @param isThinkingEnabled true if the agent is thinking enabled, false otherwise
+         * @return this builder
+         */
+        Builder isThinkingEnabled(Boolean isThinkingEnabled);
+
+        /**
+         * Set whether the agent is streaming enabled.
+         *
+         * @param isStreamingEnabled true if the agent is streaming enabled, false otherwise
+         * @return this builder
+         */
+        Builder isStreamingEnabled(Boolean isStreamingEnabled);
+
+        /**
+         * Build the {@link ChatInput}.
+         *
+         * @return the {@link ChatInput}
+         */
+        ChatInput build();
+    }
 }

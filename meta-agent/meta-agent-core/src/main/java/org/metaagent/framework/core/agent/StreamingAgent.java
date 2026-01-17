@@ -25,7 +25,8 @@
 package org.metaagent.framework.core.agent;
 
 import org.metaagent.framework.core.agent.input.AgentInput;
-import org.metaagent.framework.core.agent.output.AgentStreamOutput;
+import org.metaagent.framework.core.agent.output.AgentOutput;
+import org.metaagent.framework.core.agent.output.StreamOutput;
 
 /**
  * The streaming agent abstraction.
@@ -35,14 +36,14 @@ import org.metaagent.framework.core.agent.output.AgentStreamOutput;
  * @param <S> the type of agent stream output
  * @author vyckey
  */
-public interface StreamingAgent<I, O, S> extends Agent<I, O> {
+public interface StreamingAgent<I, O extends StreamOutput<S>, S> extends Agent<I, O> {
     /**
      * Runs agent logic in a streaming way.
      *
      * @param input the agent input.
      * @return the streaming agent output.
      */
-    default AgentStreamOutput<O, S> runStream(AgentInput<I> input) {
+    default AgentOutput<O> runStream(AgentInput<I> input) {
         return stepStream(input);
     }
 
@@ -52,7 +53,7 @@ public interface StreamingAgent<I, O, S> extends Agent<I, O> {
      * @param input the agent input.
      * @return the streaming agent output.
      */
-    default AgentStreamOutput<O, S> runStream(I input) {
+    default AgentOutput<O> runStream(I input) {
         return runStream(AgentInput.builder(input).context(newExecutionContext()).build());
     }
 
@@ -62,7 +63,7 @@ public interface StreamingAgent<I, O, S> extends Agent<I, O> {
      * @param input the agent input.
      * @return the agent output.
      */
-    default AgentStreamOutput<O, S> stepStream(AgentInput<I> input) {
+    default AgentOutput<O> stepStream(AgentInput<I> input) {
         throw new UnsupportedOperationException("Streaming is not supported");
     }
 
@@ -71,7 +72,7 @@ public interface StreamingAgent<I, O, S> extends Agent<I, O> {
      *
      * @return the agent stream output aggregator.
      */
-    default AgentStreamOutput.Aggregator<S, O> getStreamOutputAggregator() {
+    default StreamOutput.Aggregator<S, O> getStreamOutputAggregator() {
         throw new UnsupportedOperationException("Streaming is not supported");
     }
 }

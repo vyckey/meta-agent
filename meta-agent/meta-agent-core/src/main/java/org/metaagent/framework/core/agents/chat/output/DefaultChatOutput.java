@@ -26,36 +26,43 @@ package org.metaagent.framework.core.agents.chat.output;
 
 import org.metaagent.framework.common.metadata.MetadataProvider;
 import org.metaagent.framework.core.agent.chat.message.Message;
-import org.metaagent.framework.core.agents.chat.ChatAgent;
+import reactor.core.publisher.Flux;
 
 import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
 
 /**
- * {@link ChatAgent} output.
+ * Default implementation of {@link ChatOutput}.
  *
  * @author vyckey
  */
 public class DefaultChatOutput implements ChatOutput {
     private final List<Message> messages;
     private final String thought;
+    private final Flux<Message> stream;
     private final MetadataProvider metadata;
 
     public DefaultChatOutput(Builder builder) {
         this.messages = Objects.requireNonNull(builder.messages, "messages is required");
         this.thought = builder.thought;
+        this.stream = builder.stream;
         this.metadata = builder.metadata != null ? builder.metadata : MetadataProvider.empty();
     }
 
     public DefaultChatOutput(List<Message> messages) {
         this.messages = Objects.requireNonNull(messages, "messages is required");
         this.thought = null;
+        this.stream = null;
         this.metadata = MetadataProvider.empty();
     }
 
     public static Builder builder() {
         return new Builder();
+    }
+
+    public static Builder builder(ChatOutput chatOutput) {
+        return new Builder(chatOutput);
     }
 
     public List<Message> messages() {
@@ -67,38 +74,69 @@ public class DefaultChatOutput implements ChatOutput {
     }
 
     @Override
+    public Flux<Message> stream() {
+        return stream;
+    }
+
+    @Override
     public MetadataProvider metadata() {
         return metadata;
     }
 
     @Override
     public String toString() {
-        return messages().stream().map(Message::toString).collect(Collectors.joining("\n"));
+        StringBuilder sb = new StringBuilder("DefaultChatOutput{");
+        if (stream != null) {
+            return sb.append("stream=true").append("}").toString();
+        }
+        if (thought != null) {
+            sb.append("\nthought: ").append(thought);
+        }
+        sb.append("\nmessages: ").append(messages().stream().map(Message::toString).collect(Collectors.joining("\n")));
+        return sb.append("\n}").toString();
     }
 
-    public static class Builder {
+    public static class Builder implements ChatOutput.Builder {
         private List<Message> messages;
         private String thought;
+        private Flux<Message> stream;
         private MetadataProvider metadata;
 
         private Builder() {
         }
 
+        private Builder(ChatOutput chatOutput) {
+            this.messages = chatOutput.messages();
+            this.thought = chatOutput.thought();
+            this.stream = chatOutput.stream();
+            this.metadata = chatOutput.metadata();
+        }
+
+        @Override
         public Builder messages(List<Message> messages) {
             this.messages = messages;
             return this;
         }
 
+        @Override
         public Builder thought(String thought) {
             this.thought = thought;
             return this;
         }
 
+        @Override
+        public Builder stream(Flux<Message> stream) {
+            this.stream = stream;
+            return this;
+        }
+
+        @Override
         public Builder metadata(MetadataProvider metadata) {
             this.metadata = metadata;
             return this;
         }
 
+        @Override
         public DefaultChatOutput build() {
             return new DefaultChatOutput(this);
         }

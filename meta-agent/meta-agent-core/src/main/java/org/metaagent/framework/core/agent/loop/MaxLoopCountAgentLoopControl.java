@@ -47,6 +47,6 @@ public class MaxLoopCountAgentLoopControl<I, O> implements AgentLoopControlStrat
         if (agentState.getStatus().isFinished() || output != null) {
             return false;
         }
-        return agentState.getLoopCount() < maxLoopCount;
+        return agentState.getStepState().getLoopCount().get() < maxLoopCount;
     }
 }

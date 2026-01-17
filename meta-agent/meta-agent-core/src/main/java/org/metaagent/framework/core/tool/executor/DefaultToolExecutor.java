@@ -76,9 +76,9 @@ public class DefaultToolExecutor implements ToolExecutor {
         if (toolContext.getSecurityLevel().compareTo(SecurityLevel.UNRESTRICTED_DANGEROUSLY) <= 0) {
             return false;
         } else if (toolContext.getSecurityLevel().compareTo(SecurityLevel.RESTRICTED_DEFAULT_SALE) <= 0) {
-//            if (tool.getDefinition().isReadOnly()) {
-//                return false;
-//            }
+            if (tool.getDefinition().isReadOnly()) {
+                return false;
+            }
         }
 
         String toolName = tool.getName();
@@ -112,6 +112,9 @@ public class DefaultToolExecutor implements ToolExecutor {
         List<BatchToolOutputs.ToolOutput> outputs = Lists.newArrayList();
         for (BatchToolInputs.ToolInput toolInput : toolInputs.inputs()) {
             Tool<?, ?> tool = toolManager.getTool(toolInput.toolName());
+            if (tool == null) {
+                throw new ToolExecutionException("tool not found: " + toolInput.toolName());
+            }
             String output = execute(executorContext, tool, toolInput.input());
             outputs.add(new BatchToolOutputs.ToolOutput(toolContext.getExecutionId(), toolInput.toolName(), output));
         }

@@ -1,7 +1,7 @@
 /*
  * MIT License
  *
- * Copyright (c) 2025 MetaAgent
+ * Copyright (c) 2026 MetaAgent
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -22,26 +22,23 @@
  * SOFTWARE.
  */
 
-package org.metaagent.framework.core.agent.fallback;
-
-import org.metaagent.framework.core.agent.AgentExecutionException;
-import org.metaagent.framework.core.agent.MetaAgent;
-import org.metaagent.framework.core.agent.input.AgentInput;
-import org.metaagent.framework.core.agent.output.AgentOutput;
+package org.metaagent.framework.core.agent;
 
 /**
- * Fast Fail Agent Fallback Strategy
+ * AgentInterruptedException is thrown when an agent is interrupted.
  *
  * @author vyckey
  */
-public class FastFailAgentFallbackStrategy<I, O> implements AgentFallbackStrategy<I, O> {
+public class AgentInterruptedException extends RuntimeException {
+    public AgentInterruptedException(String message) {
+        super(message);
+    }
 
-    @Override
-    public AgentOutput<O> fallback(MetaAgent<I, O> agent, AgentInput<I> input, Exception exception) {
-        agent.getAgentState().getStepState().setLastException(exception);
-        if (exception instanceof AgentExecutionException) {
-            throw (AgentExecutionException) exception;
-        }
-        throw new AgentExecutionException("Agent " + agent.getName() + " execute fail", exception);
+    public AgentInterruptedException(String message, Throwable cause) {
+        super(message, cause);
+    }
+
+    public AgentInterruptedException(Throwable cause) {
+        super(cause);
     }
 }

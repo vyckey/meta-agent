@@ -27,10 +27,11 @@ package org.metaagent.framework.core.agent;
 import com.google.common.collect.Lists;
 import org.metaagent.framework.core.agent.input.AgentInput;
 import org.metaagent.framework.core.agent.output.AgentOutput;
-import org.metaagent.framework.core.agent.output.AgentStreamOutput;
-import org.metaagent.framework.core.agent.output.DefaultAgentStreamOutput;
+import org.metaagent.framework.core.agent.output.StreamOutput;
 import org.metaagent.framework.core.agent.profile.AgentProfile;
 import org.metaagent.framework.core.agent.state.AgentRunStatus;
+import org.metaagent.framework.core.agent.state.AgentState;
+import org.metaagent.framework.core.agent.state.AgentStepState;
 import reactor.core.publisher.Flux;
 
 import java.util.List;
@@ -42,7 +43,7 @@ import java.util.function.Consumer;
  *
  * @author vyckey
  */
-public abstract class AbstractStreamAgent<I, O, S>
+public abstract class AbstractStreamAgent<I, O extends StreamOutput<S>, S>
         extends AbstractAgent<I, O> implements StreamingAgent<I, O, S> {
     protected AbstractStreamAgent(String name) {
         super(name);
@@ -56,22 +57,43 @@ public abstract class AbstractStreamAgent<I, O, S>
         super(builder);
     }
 
-    protected AgentStreamOutput<O, S> buildOutput(AgentInput<I> input, Flux<S> stream, AgentStreamOutput<O, S> lastOutput) {
-        if (lastOutput != null) {
-            return new DefaultAgentStreamOutput<>(stream, lastOutput.result(), lastOutput.metadata());
-        } else {
-            return AgentStreamOutput.create(stream);
-        }
+    protected Flux<S> doRunStreamComplete(Flux<S> stream) {
+        return stream
+                .doOnComplete(() -> agentState.setStatus(AgentRunStatus.COMPLETED))
+                .doOnError(throwable -> {
+                    AgentState agentState = getAgentState();
+                    if (throwable instanceof AgentInterruptedException ex) {
+                        agentState.setStatus(AgentRunStatus.INTERRUPTED);
+                        agentState.getStepState().setLastException(ex);
+                        throw ex;
+                    } else if (throwable instanceof AgentExecutionException ex) {
+                        agentState.setStatus(AgentRunStatus.FAILED);
+                        agentState.getStepState().setLastException(ex);
+                        throw ex;
+                    } else {
+                        agentState.setStatus(AgentRunStatus.FAILED);
+                        AgentExecutionException ex = new AgentExecutionException("agent execution failed", throwable);
+                        agentState.getStepState().setLastException(ex);
+                        throw ex;
+                    }
+                });
     }
 
-    public AgentStreamOutput<O, S> runStream(AgentInput<I> input) {
-        beforeRun(input);
+    public AgentOutput<O> runStream(AgentInput<I> agentInput) {
+        AgentState agentState = getAgentState();
+        if (agentState.getStatus() == AgentRunStatus.RUNNING) {
+            throw new AgentExecutionException("agent is already running");
+        }
+
         agentState.setStatus(AgentRunStatus.RUNNING);
+        agentState.resetStepState();
 
         MetaAgent<I, O> agent = this;
         AtomicReference<AgentOutput<O>> fullOutputRef = new AtomicReference<>();
-        AgentStreamOutput<O, S> agentOutput = doRunStream(input, fullOutputRef::set);
-        Flux<S> stream = agentOutput.stream()
+
+        AgentInput<I> input = preprocess(agentInput);
+        AgentOutput<O> agentOutput = doRunStream(input, fullOutputRef::set);
+        Flux<S> stream = agentOutput.result().stream()
                 .doOnSubscribe(sub -> {
                     notifyListeners(runListeners, listener -> listener.onAgentStart(agent, input));
                 })
@@ -82,32 +104,35 @@ public abstract class AbstractStreamAgent<I, O, S>
                     return Flux.error(throwable);
                 })
                 .doOnComplete(() -> notifyListeners(runListeners, listener -> listener.onAgentOutput(agent, input, fullOutputRef.get())))
-                .doOnComplete(() -> agentState.setStatus(AgentRunStatus.COMPLETED))
                 .doOnError(throwable -> {
-                    Exception ex = wrapException(throwable);
-                    agentState.setLastException(ex);
-                    agentState.setStatus(AgentRunStatus.FAILED);
-                    notifyListeners(runListeners, listener -> listener.onAgentException(agent, input, ex));
+                    if (throwable instanceof Exception ex) {
+                        notifyListeners(runListeners, listener -> listener.onAgentException(agent, input, ex));
+                    } else {
+                        AgentExecutionException ex = new AgentExecutionException("agent execution failed", throwable);
+                        notifyListeners(runListeners, listener -> listener.onAgentException(agent, input, ex));
+                    }
                 });
-        return buildOutput(input, stream, agentOutput);
+        stream = doRunStreamComplete(stream);
+        return rebuildOutput(input, agentOutput, stream);
     }
 
-    protected AgentStreamOutput<O, S> doRunStream(AgentInput<I> input, Consumer<AgentOutput<O>> onStreamComplete) {
+    protected AgentOutput<O> doRunStream(AgentInput<I> input, Consumer<AgentOutput<O>> onStreamComplete) {
         Agent<I, O> agent = this;
 
         AtomicReference<AgentInput<I>> currentInputRef = new AtomicReference<>(input);
         AtomicReference<AgentOutput<O>> lastOutputRef = new AtomicReference<>();
 
         Flux<S> stream = Flux
-                .defer(() -> stepStream(currentInputRef.get(), lastOutputRef::set).stream())
+                .defer(() -> stepStream(currentInputRef.get(), lastOutputRef::set).result().stream())
                 .repeat(() -> {
                     AgentOutput<O> lastAgentOutput = lastOutputRef.get();
                     AgentInput<I> currentInput = currentInputRef.get();
 
                     if (getLoopControlStrategy().shouldContinueLoop(agent, currentInput, lastAgentOutput)) {
                         // perform next step
+                        AgentStepState stepState = agentState.resetStepState();
                         AgentInput<I> nextInput = buildNextStepInput(currentInput, lastAgentOutput);
-                        agentState.incrLoopCount();
+                        stepState.getLoopCount().incrementAndGet();
                         currentInputRef.set(nextInput);
                         return true;
                     } else {
@@ -122,7 +147,7 @@ public abstract class AbstractStreamAgent<I, O, S>
                         onStreamComplete.accept(lastOutput);
                     }
                 });
-        return buildOutput(input, stream, null);
+        return rebuildOutput(input, null, stream);
     }
 
     /**
@@ -141,20 +166,20 @@ public abstract class AbstractStreamAgent<I, O, S>
     }
 
     @Override
-    public AgentStreamOutput<O, S> stepStream(AgentInput<I> input) {
+    public AgentOutput<O> stepStream(AgentInput<I> input) {
         return stepStream(input, fullOutput -> {
         });
     }
 
-    protected AgentStreamOutput<O, S> stepStream(AgentInput<I> input, Consumer<AgentOutput<O>> onStreamComplete) {
+    protected AgentOutput<O> stepStream(AgentInput<I> input, Consumer<AgentOutput<O>> onStreamComplete) {
         MetaAgent<I, O> agent = this;
 
         AtomicReference<List<S>> streamOutputsRef = new AtomicReference<>(Lists.newArrayList());
         AtomicReference<O> fullOutputRef = new AtomicReference<>();
 
-        AgentStreamOutput.Aggregator<S, O> aggregator = getStreamOutputAggregator();
-        AgentStreamOutput<O, S> agentOutput = doStepStream(input);
-        Flux<S> stream = agentOutput.stream()
+        StreamOutput.Aggregator<S, O> aggregator = getStreamOutputAggregator();
+        AgentOutput<O> agentOutput = doStepStream(input);
+        Flux<S> stream = agentOutput.result().stream()
                 .doOnSubscribe(sub -> notifyListeners(stepListeners, listener -> listener.onAgentStepStart(agent, input)))
                 .doOnNext(output -> streamOutputsRef.get().add(output))
                 .doOnComplete(() -> fullOutputRef.set(aggregator.aggregate(streamOutputsRef.get())))
@@ -164,13 +189,18 @@ public abstract class AbstractStreamAgent<I, O, S>
                     notifyListeners(stepListeners, listener -> listener.onAgentStepFinish(agent, input, aggOutput));
                 })
                 .doOnError(throwable -> {
-                    Exception ex = wrapException(throwable);
-                    agentState.setLastException(ex);
-                    notifyListeners(stepListeners, listener -> listener.onAgentStepError(agent, input, ex));
+                    if (throwable instanceof Exception ex) {
+                        notifyListeners(stepListeners, listener -> listener.onAgentStepError(agent, input, ex));
+                    } else {
+                        AgentExecutionException ex = new AgentExecutionException("agent execution failed", throwable);
+                        notifyListeners(stepListeners, listener -> listener.onAgentStepError(agent, input, ex));
+                    }
                 });
-        return buildOutput(input, stream, agentOutput);
+        return rebuildOutput(input, agentOutput, stream);
     }
 
-    protected abstract AgentStreamOutput<O, S> doStepStream(AgentInput<I> input);
+    protected abstract AgentOutput<O> rebuildOutput(AgentInput<I> input, AgentOutput<O> agentOutput, Flux<S> stream);
+
+    protected abstract AgentOutput<O> doStepStream(AgentInput<I> input);
 
 }

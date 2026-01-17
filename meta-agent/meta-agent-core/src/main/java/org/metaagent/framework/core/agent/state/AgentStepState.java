@@ -1,7 +1,7 @@
 /*
  * MIT License
  *
- * Copyright (c) 2025 MetaAgent
+ * Copyright (c) 2026 MetaAgent
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -22,26 +22,41 @@
  * SOFTWARE.
  */
 
-package org.metaagent.framework.core.agent.fallback;
+package org.metaagent.framework.core.agent.state;
 
-import org.metaagent.framework.core.agent.AgentExecutionException;
-import org.metaagent.framework.core.agent.MetaAgent;
-import org.metaagent.framework.core.agent.input.AgentInput;
-import org.metaagent.framework.core.agent.output.AgentOutput;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
- * Fast Fail Agent Fallback Strategy
+ * Agent step state interface.
  *
  * @author vyckey
  */
-public class FastFailAgentFallbackStrategy<I, O> implements AgentFallbackStrategy<I, O> {
+public interface AgentStepState {
+    /**
+     * Get the loop count of the agent.
+     *
+     * @return the loop count of the agent
+     */
+    AtomicInteger getLoopCount();
 
-    @Override
-    public AgentOutput<O> fallback(MetaAgent<I, O> agent, AgentInput<I> input, Exception exception) {
-        agent.getAgentState().getStepState().setLastException(exception);
-        if (exception instanceof AgentExecutionException) {
-            throw (AgentExecutionException) exception;
-        }
-        throw new AgentExecutionException("Agent " + agent.getName() + " execute fail", exception);
-    }
+    /**
+     * Get the retry count of the agent.
+     *
+     * @return the retry count of the agent
+     */
+    AtomicInteger getRetryCount();
+
+    /**
+     * Get the last execution exception.
+     *
+     * @return the last execution exception
+     */
+    Exception getLastException();
+
+    /**
+     * Set the last exception to the agent.
+     *
+     * @param ex the last exception to the agent
+     */
+    void setLastException(Exception ex);
 }

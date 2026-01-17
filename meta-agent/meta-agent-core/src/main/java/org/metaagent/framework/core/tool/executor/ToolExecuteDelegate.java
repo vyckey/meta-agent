@@ -28,6 +28,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.metaagent.framework.core.tool.Tool;
 import org.metaagent.framework.core.tool.ToolContext;
 import org.metaagent.framework.core.tool.ToolDelegate;
+import org.metaagent.framework.core.tool.exception.ToolArgumentException;
 import org.metaagent.framework.core.tool.exception.ToolExecutionError;
 import org.metaagent.framework.core.tool.exception.ToolExecutionException;
 import org.metaagent.framework.core.tool.listener.ToolExecuteListener;
@@ -96,31 +97,57 @@ public class ToolExecuteDelegate<I, O> extends ToolDelegate<I, O> {
                 .id(context.getExecutionId())
                 .toolName(toolName)
                 .toolInput(input);
-        I toolInput = null;
+
+        @SuppressWarnings("unchecked") I[] toolInputHolder = (I[]) new Object[1];
+        String output = null;
         try {
             notifyListeners(listenerRegistry, listener -> listener.onToolInputRequest(tool, input));
 
-            toolInput = getConverter().inputConverter().convert(input);
+            I toolInput = getConverter().inputConverter().convert(input);
+            toolInputHolder[0] = toolInput;
             O toolOutput = run(context, toolInput);
-            String output = getConverter().outputConverter().convert(toolOutput);
-            builder.toolOutput(output);
 
-            notifyListeners(listenerRegistry, listener -> listener.onToolResponse(tool, input, output));
-            return output;
+            notifyListeners(listenerRegistry, listener -> listener.onToolOutput(tool, toolInputHolder[0], toolOutput));
+            output = getConverter().outputConverter().convert(toolOutput);
+            builder.toolOutput(output);
         } catch (ToolExecutionException ex) {
-            final I finalInput = toolInput;
-            notifyListeners(listenerRegistry, listener -> listener.onToolException(tool, finalInput, ex));
+            notifyListeners(listenerRegistry, listener -> listener.onToolException(tool, toolInputHolder[0], ex));
             builder.exception(ex);
-            throw ex;
+
+            output = processException(context, input, ex);
         } catch (Exception e) {
-            final I finalInput = toolInput;
             ToolExecutionException ex = new ToolExecutionError("Call tool " + toolName + " fail", e);
-            notifyListeners(listenerRegistry, listener -> listener.onToolException(tool, finalInput, ex));
+            notifyListeners(listenerRegistry, listener -> listener.onToolException(tool, toolInputHolder[0], ex));
             builder.exception(ex);
-            throw ex;
+
+            output = processException(context, input, ex);
         } finally {
-            ToolCallRecord callRecord = builder.build();
+            if (output != null) {
+                String finalOutput = output;
+                notifyListeners(listenerRegistry, listener -> listener.onToolResponse(tool, input, finalOutput));
+            }
+
+            ToolCallRecord callRecord = builder.toolOutput(output).build();
             executorContext.getToolCallTracker().track(callRecord);
+        }
+        return output;
+    }
+
+    protected String processException(ToolContext context, String input, ToolExecutionException ex) {
+        if (ex instanceof ToolExecutionError error) {
+            StringBuilder sb = new StringBuilder("Unexpected error occurred while calling tool '")
+                    .append(getName()).append("': ").append(error.getMessage());
+            if (error.getCause() != null) {
+                sb.append(". Cause: ").append(error.getCause().getMessage());
+            }
+            sb.append(". Try an alternative approach because the tool may exists an internal error.");
+            return sb.toString();
+        } else if (ex instanceof ToolArgumentException argEx) {
+            return "Invalid argument while calling tool '" + getName() + "': " + argEx.getMessage()
+                    + ". Correct the input and try again.";
+        } else {
+            return "An error occurred while calling tool '" + getName() + "': " + ex.getMessage()
+                    + ". Fix your input if needed and try again.";
         }
     }
 }

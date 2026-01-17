@@ -30,6 +30,7 @@ import org.metaagent.framework.core.agent.loop.AgentLoopControlStrategy;
 import org.metaagent.framework.core.agent.output.AgentOutput;
 import org.metaagent.framework.core.agent.state.AgentRunStatus;
 import org.metaagent.framework.core.agent.state.AgentState;
+import org.metaagent.framework.core.agent.state.AgentStepState;
 import org.metaagent.framework.core.tool.manager.ToolManager;
 
 /**
@@ -70,7 +71,7 @@ public interface Agent<I, O> extends MetaAgent<I, O> {
      * @return the final agent output.
      */
     default AgentOutput<O> run(String input) {
-        throw new IllegalArgumentException("string agent input is unsupported");
+        throw new UnsupportedOperationException("string agent input is unsupported");
     }
 
     /**
@@ -82,20 +83,41 @@ public interface Agent<I, O> extends MetaAgent<I, O> {
     @Override
     default AgentOutput<O> run(AgentInput<I> input) {
         AgentState agentState = getAgentState();
-        AgentOutput<O> output = null;
-        while (getLoopControlStrategy().shouldContinueLoop(this, input, output)) {
-            try {
-                agentState.setStatus(AgentRunStatus.RUNNING);
-                output = step(input);
-            } catch (Exception ex) {
-                agentState.setLastException(ex);
-                output = getFallbackStrategy().fallback(this, input, ex);
-            } finally {
-                agentState.incrLoopCount();
-            }
+        if (agentState.getStatus() == AgentRunStatus.RUNNING) {
+            throw new AgentExecutionException("agent is already running");
         }
-        if (!agentState.getStatus().isFinished()) {
-            agentState.setStatus(AgentRunStatus.COMPLETED);
+
+        AgentOutput<O> output = null;
+        agentState.setStatus(AgentRunStatus.RUNNING);
+        AgentStepState stepState = agentState.resetStepState();
+        try {
+            while (getLoopControlStrategy().shouldContinueLoop(this, input, output)) {
+                try {
+                    stepState = agentState.resetStepState();
+                    output = step(input);
+                } catch (Exception ex) {
+                    output = getFallbackStrategy().fallback(this, input, ex);
+                } finally {
+                    stepState.getLoopCount().incrementAndGet();
+                }
+            }
+        } catch (AgentInterruptedException ex) {
+            agentState.setStatus(AgentRunStatus.INTERRUPTED);
+            stepState.setLastException(ex);
+            throw ex;
+        } catch (AgentExecutionException ex) {
+            agentState.setStatus(AgentRunStatus.FAILED);
+            stepState.setLastException(ex);
+            throw ex;
+        } catch (Exception ex) {
+            agentState.setStatus(AgentRunStatus.FAILED);
+            AgentExecutionException exception = new AgentExecutionException("agent execution failed", ex);
+            stepState.setLastException(exception);
+            throw exception;
+        } finally {
+            if (!agentState.getStatus().isFinished()) {
+                agentState.setStatus(AgentRunStatus.COMPLETED);
+            }
         }
         return output;
     }

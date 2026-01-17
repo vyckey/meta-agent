@@ -32,7 +32,7 @@ import java.util.Objects;
 import java.util.stream.Collectors;
 
 /**
- * {@link ChatAgent} input
+ * Default implementation of {@link ChatInput}.
  *
  * @author vyckey
  */
@@ -68,10 +68,18 @@ public class DefaultChatInput implements ChatInput {
 
     @Override
     public String toString() {
-        return messages().stream().map(Message::getContent).collect(Collectors.joining("\n"));
+        StringBuilder sb = new StringBuilder("DefaultChatInput{");
+        if (isThinkingEnabled) {
+            sb.append("\nthinking: ").append(isThinkingEnabled);
+        }
+        if (isStreamingEnabled) {
+            sb.append("\nstreaming: ").append(isStreamingEnabled);
+        }
+        sb.append("\nmessages: ").append(messages().stream().map(Message::getContent).collect(Collectors.joining("\n")));
+        return sb.append("\n}").toString();
     }
 
-    public static class Builder {
+    public static class Builder implements ChatInput.Builder {
         private List<Message> messages;
         private Boolean isThinkingEnabled;
         private Boolean isStreamingEnabled;
@@ -79,22 +87,26 @@ public class DefaultChatInput implements ChatInput {
         private Builder() {
         }
 
+        @Override
         public Builder messages(List<Message> messages) {
             this.messages = messages;
             return this;
         }
 
+        @Override
         public Builder messages(Message... messages) {
             return messages(List.of(messages));
         }
 
-        public Builder thinkingEnabled(Boolean thinkingEnabled) {
-            this.isThinkingEnabled = thinkingEnabled;
+        @Override
+        public Builder isThinkingEnabled(Boolean isThinkingEnabled) {
+            this.isThinkingEnabled = isThinkingEnabled;
             return this;
         }
 
-        public Builder streamingEnabled(Boolean streamingEnabled) {
-            this.isStreamingEnabled = streamingEnabled;
+        @Override
+        public Builder isStreamingEnabled(Boolean isStreamingEnabled) {
+            this.isStreamingEnabled = isStreamingEnabled;
             return this;
         }
 

@@ -49,7 +49,7 @@ public abstract class AbstractReActAgent<I, O>
 
     @Override
     public AgentOutput<O> doStep(AgentInput<I> input) {
-        int turnNum = agentState.getLoopCount() + 1;
+        int turnNum = agentState.getStepState().getLoopCount().get() + 1;
 
         Thought thought = think(input);
         agentLogger.info("Thought #{}: {}", turnNum, thought.getText());

@@ -1,7 +1,7 @@
 /*
  * MIT License
  *
- * Copyright (c) 2025 MetaAgent
+ * Copyright (c) 2026 MetaAgent
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -22,26 +22,47 @@
  * SOFTWARE.
  */
 
-package org.metaagent.framework.core.agent.fallback;
+package org.metaagent.framework.core.agents.chat;
 
-import org.metaagent.framework.core.agent.AgentExecutionException;
-import org.metaagent.framework.core.agent.MetaAgent;
 import org.metaagent.framework.core.agent.input.AgentInput;
 import org.metaagent.framework.core.agent.output.AgentOutput;
+import org.metaagent.framework.core.agents.chat.input.ChatInput;
+import org.metaagent.framework.core.agents.chat.output.ChatOutput;
+
+import java.time.Instant;
+import java.util.concurrent.CompletableFuture;
 
 /**
- * Fast Fail Agent Fallback Strategy
+ * {@link ChatAgent} task interface.
  *
  * @author vyckey
  */
-public class FastFailAgentFallbackStrategy<I, O> implements AgentFallbackStrategy<I, O> {
+public interface ChatAgentTask {
+    /**
+     * Gets the task ID.
+     *
+     * @return task ID
+     */
+    String taskId();
 
-    @Override
-    public AgentOutput<O> fallback(MetaAgent<I, O> agent, AgentInput<I> input, Exception exception) {
-        agent.getAgentState().getStepState().setLastException(exception);
-        if (exception instanceof AgentExecutionException) {
-            throw (AgentExecutionException) exception;
-        }
-        throw new AgentExecutionException("Agent " + agent.getName() + " execute fail", exception);
-    }
+    /**
+     * Gets the task input.
+     *
+     * @return task input
+     */
+    AgentInput<ChatInput> input();
+
+    /**
+     * Gets the async task output.
+     *
+     * @return task output
+     */
+    CompletableFuture<AgentOutput<ChatOutput>> outputFuture();
+
+    /**
+     * Gets the task start time.
+     *
+     * @return task start time
+     */
+    Instant startTime();
 }

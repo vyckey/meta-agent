@@ -38,12 +38,14 @@ import org.metaagent.framework.core.agent.output.AgentOutput;
 import org.metaagent.framework.core.agent.profile.AgentProfile;
 import org.metaagent.framework.core.agent.state.AgentRunStatus;
 import org.metaagent.framework.core.agent.state.AgentState;
+import org.metaagent.framework.core.agent.state.AgentStepState;
 import org.metaagent.framework.core.agent.state.DefaultAgentState;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.List;
 import java.util.Objects;
+import java.util.concurrent.Callable;
 import java.util.function.Consumer;
 
 /**
@@ -142,37 +144,71 @@ public abstract class AbstractMetaAgent<I, O> implements MetaAgent<I, O> {
     }
 
     /**
-     * This method is called before the agent runs. It also checks the agent state and the agent input.
+     * Performs the agent run.
      *
-     * @param input the agent input
+     * @param callable the callable to execute
+     * @param <V>      the type of the callable result
+     * @return the callable result
      */
-    protected void beforeRun(AgentInput<I> input) {
-        if (agentState.getStatus().isFinished()) {
-            throw new AgentExecutionException("Agent " + getName() + " has run finished. Please reset it before running again.");
+    protected <V> V performRun(Callable<V> callable) {
+        AgentState agentState = getAgentState();
+        if (agentState.getStatus() == AgentRunStatus.RUNNING) {
+            throw new AgentExecutionException("agent is already running");
+        }
+
+        agentState.setStatus(AgentRunStatus.RUNNING);
+        AgentStepState stepState = agentState.resetStepState();
+        try {
+            return callable.call();
+        } catch (AgentInterruptedException ex) {
+            agentState.setStatus(AgentRunStatus.INTERRUPTED);
+            stepState.setLastException(ex);
+            throw ex;
+        } catch (AgentExecutionException ex) {
+            agentState.setStatus(AgentRunStatus.FAILED);
+            stepState.setLastException(ex);
+            throw ex;
+        } catch (Exception ex) {
+            agentState.setStatus(AgentRunStatus.FAILED);
+            AgentExecutionException exception = new AgentExecutionException("agent execution failed", ex);
+            stepState.setLastException(exception);
+            throw exception;
+        } finally {
+            if (!agentState.getStatus().isFinished()) {
+                agentState.setStatus(AgentRunStatus.COMPLETED);
+            }
         }
     }
 
-    @Override
-    public AgentOutput<O> run(AgentInput<I> input) {
-        beforeRun(input);
-
-        agentState.setStatus(AgentRunStatus.RUNNING);
-        try {
-            notifyListeners(runListeners, listener -> listener.onAgentStart(this, input));
-            AgentOutput<O> output = doRun(input);
-            notifyListeners(runListeners, listener -> listener.onAgentOutput(this, input, output));
-
-            agentState.setStatus(AgentRunStatus.COMPLETED);
-            return output;
-        } catch (AgentExecutionException ex) {
-            agentState.setLastException(ex);
-            notifyListeners(runListeners, listener -> listener.onAgentException(this, input, ex));
-            throw ex;
-        } catch (Exception ex) {
-            agentState.setLastException(ex);
-            notifyListeners(runListeners, listener -> listener.onAgentException(this, input, ex));
-            throw new AgentExecutionException(ex);
+    /**
+     * Preprocess agent input before running.
+     *
+     * @param input the agent input
+     * @return the preprocessed agent input
+     */
+    protected AgentInput<I> preprocess(AgentInput<I> input) {
+        if (agentState.getStatus().isFinished()) {
+            throw new AgentExecutionException("Agent " + getName() + " has run finished. Please reset it before running again.");
         }
+        return input;
+    }
+
+    @Override
+    public AgentOutput<O> run(AgentInput<I> agentInput) {
+        return performRun(() -> {
+            AgentInput<I> input = preprocess(agentInput);
+            try {
+                notifyListeners(runListeners, listener -> listener.onAgentStart(this, input));
+
+                AgentOutput<O> output = doRun(input);
+
+                notifyListeners(runListeners, listener -> listener.onAgentOutput(this, input, output));
+                return output;
+            } catch (Exception ex) {
+                notifyListeners(runListeners, listener -> listener.onAgentException(this, input, ex));
+                throw ex;
+            }
+        });
     }
 
     protected AgentOutput<O> doRun(AgentInput<I> input) {
@@ -191,7 +227,7 @@ public abstract class AbstractMetaAgent<I, O> implements MetaAgent<I, O> {
             notifyListeners(stepListeners, listener -> listener.onAgentStepFinish(this, input, output));
             return output;
         } catch (Exception ex) {
-            agentState.setLastException(ex);
+            getAgentState().getStepState().setLastException(ex);
             notifyListeners(stepListeners, listener -> listener.onAgentStepError(this, input, ex));
             throw ex;
         }
