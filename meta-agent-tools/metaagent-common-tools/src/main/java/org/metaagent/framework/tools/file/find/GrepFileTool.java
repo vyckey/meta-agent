@@ -88,10 +88,10 @@ public class GrepFileTool extends AbstractFileTool<GrepFileInput, GrepFileOutput
     protected Path validateInput(ToolContext toolContext, GrepFileInput input) throws ToolExecutionException {
         ToolArgsValidator.validate(input);
 
-        Path directory = toolContext.workingDirectory();
+        Path directory = toolContext.getWorkingDirectory();
         if (StringUtils.isNotEmpty(input.getDirectory())) {
             Path filePath = Path.of(input.getDirectory());
-            directory = FileUtils.resolvePath(toolContext.workingDirectory(), filePath);
+            directory = FileUtils.resolvePath(toolContext.getWorkingDirectory(), filePath);
 
             if (!checkFileAccessible(toolContext, directory)) {
                 ToolApprovalRequest approvalRequest = ToolApprovalRequest.builder()

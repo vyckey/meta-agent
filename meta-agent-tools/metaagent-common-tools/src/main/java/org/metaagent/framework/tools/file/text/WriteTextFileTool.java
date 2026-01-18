@@ -82,7 +82,7 @@ public class WriteTextFileTool extends AbstractFileTool<WriteTextFileInput, Writ
     private Path validateInput(ToolContext toolContext, WriteTextFileInput input) {
         ToolArgsValidator.validate(input);
 
-        Path filePath = FileUtils.resolvePath(toolContext.workingDirectory(), Path.of(input.getFilePath()));
+        Path filePath = FileUtils.resolvePath(toolContext.getWorkingDirectory(), Path.of(input.getFilePath()));
         if (filePath.toFile().isDirectory()) {
             throw new ToolArgumentException("filePath cannot be a directory");
         }

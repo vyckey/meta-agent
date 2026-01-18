@@ -25,19 +25,19 @@
 package org.metaagent.framework.core.tool.config;
 
 import com.google.common.collect.Sets;
+import org.metaagent.framework.core.config.ConfigPaths;
 
-import java.nio.file.Path;
 import java.util.List;
 import java.util.Objects;
 import java.util.Set;
 
 public record DefaultToolExecutionConfig(
-        Path workingDirectory,
+        ConfigPaths configPaths,
         Set<ToolPattern> allowedCommands,
         Set<ToolPattern> disallowedCommands
 ) implements ToolExecutionConfig {
     public DefaultToolExecutionConfig {
-        Objects.requireNonNull(workingDirectory, "workingDirectory is required");
+        Objects.requireNonNull(configPaths, "configPaths is required");
         if (allowedCommands == null) {
             allowedCommands = Sets.newHashSet();
         }
@@ -47,7 +47,7 @@ public record DefaultToolExecutionConfig(
     }
 
     private DefaultToolExecutionConfig(Builder builder) {
-        this(builder.workingDirectory, builder.allowedCommands, builder.disallowedCommands);
+        this(builder.configPaths, builder.allowedCommands, builder.disallowedCommands);
     }
 
     public static Builder builder() {
@@ -75,15 +75,15 @@ public record DefaultToolExecutionConfig(
     }
 
     public static class Builder {
-        private Path workingDirectory;
+        private ConfigPaths configPaths;
         private Set<ToolPattern> allowedCommands;
         private Set<ToolPattern> disallowedCommands;
 
         private Builder() {
         }
 
-        public Builder workingDirectory(Path workingDirectory) {
-            this.workingDirectory = workingDirectory;
+        public Builder configPaths(ConfigPaths configPaths) {
+            this.configPaths = configPaths;
             return this;
         }
 
@@ -98,6 +98,9 @@ public record DefaultToolExecutionConfig(
         }
 
         public DefaultToolExecutionConfig build() {
+            if (configPaths == null) {
+                configPaths = ConfigPaths.newDefault();
+            }
             return new DefaultToolExecutionConfig(this);
         }
     }

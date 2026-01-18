@@ -40,7 +40,6 @@ import org.metaagent.framework.core.tool.exception.ToolRejectException;
 
 import java.nio.file.Path;
 import java.util.Objects;
-import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ForkJoinPool;
@@ -54,7 +53,6 @@ import java.util.concurrent.ForkJoinPool;
 public class DefaultToolContext implements ToolContext {
     private final Agent<?, ?> agent;
     private final ToolExecutionConfig toolExecutionConfig;
-    private final Path workingDirectory;
     private final SecurityLevel securityLevel;
     private final PermissionApprovalManager<ToolApprovalRequest> approvalManager;
     private final AbortSignal abortSignal;
@@ -63,7 +61,6 @@ public class DefaultToolContext implements ToolContext {
     protected DefaultToolContext(Builder builder) {
         this.agent = builder.agent;
         this.toolExecutionConfig = Objects.requireNonNull(builder.toolExecutionConfig, "ToolExecutionConfig must not be null");
-        this.workingDirectory = Optional.ofNullable(builder.workingDirectory).orElse(defaultWorkingDirectory());
         this.securityLevel = Objects.requireNonNull(builder.securityLevel, "SecurityLevel must not be null");
         this.approvalManager = Objects.requireNonNull(builder.approvalManager, "ApprovalManager must not be null");
         this.abortSignal = Objects.requireNonNull(builder.abortSignal, "AbortSignal must not be null");
@@ -108,7 +105,6 @@ public class DefaultToolContext implements ToolContext {
     public static class Builder implements ToolContext.Builder {
         private Agent<?, ?> agent;
         private ToolExecutionConfig toolExecutionConfig;
-        private Path workingDirectory;
         private SecurityLevel securityLevel;
         private PermissionApprovalManager<ToolApprovalRequest> approvalManager;
         private AbortSignal abortSignal;
@@ -122,12 +118,6 @@ public class DefaultToolContext implements ToolContext {
         @Override
         public ToolContext.Builder toolExecutionConfig(ToolExecutionConfig toolExecutionConfig) {
             this.toolExecutionConfig = toolExecutionConfig;
-            return this;
-        }
-
-        @Override
-        public ToolContext.Builder workingDirectory(Path workingDirectory) {
-            this.workingDirectory = workingDirectory;
             return this;
         }
 
@@ -151,12 +141,8 @@ public class DefaultToolContext implements ToolContext {
 
         @Override
         public DefaultToolContext build() {
-            if (workingDirectory == null) {
-                String cwd = Optional.ofNullable(System.getenv("CWD")).orElse(".");
-                workingDirectory = Path.of(cwd).toAbsolutePath().normalize();
-            }
             if (toolExecutionConfig == null) {
-                toolExecutionConfig = DefaultToolExecutionConfig.builder().workingDirectory(workingDirectory).build();
+                toolExecutionConfig = DefaultToolExecutionConfig.builder().build();
             }
             if (securityLevel == null) {
                 this.securityLevel = SecurityLevel.RESTRICTED_DEFAULT_SALE;

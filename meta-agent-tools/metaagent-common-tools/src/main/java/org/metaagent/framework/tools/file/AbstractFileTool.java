@@ -59,12 +59,12 @@ public abstract class AbstractFileTool<I, O> implements Tool<I, O> {
 
         Path normalizedFilePath = filePath.normalize();
         // If the file is within the working directory, allow it
-        if (FileUtils.inFileDirectory(normalizedFilePath, toolContext.workingDirectory())) {
+        if (FileUtils.inFileDirectory(normalizedFilePath, toolContext.getWorkingDirectory())) {
             return true;
         }
 
         // Check if the file is within the disallowed or allowed directories
-        Path relativizeFilePath = filePath.relativize(toolContext.workingDirectory());
+        Path relativizeFilePath = filePath.relativize(toolContext.getWorkingDirectory());
         for (ToolPattern disallowedTool : toolContext.getToolExecutionConfig().disallowedTools()) {
             if (StringUtils.isEmpty(disallowedTool.pattern())) {
                 throw new ToolRejectException(disallowedTool.toolName(), "not allowed execution");

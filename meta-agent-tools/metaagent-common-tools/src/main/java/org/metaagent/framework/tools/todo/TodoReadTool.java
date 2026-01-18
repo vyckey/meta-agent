@@ -76,7 +76,7 @@ public class TodoReadTool implements Tool<TodoReadInput, TodoReadOutput> {
         }
 
         try {
-            Path todoDirectory = getTodoDirectory(toolContext.workingDirectory());
+            Path todoDirectory = getTodoDirectory(toolContext.getWorkingDirectory());
             FileBasedTodoService todoService = new FileBasedTodoService(todoDirectory);
             List<TodoItem> todos = todoService.getTodos(todoReadInput.todoId());
             return new TodoReadOutput(todoReadInput.todoId(), todos);

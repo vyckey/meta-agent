@@ -24,6 +24,8 @@
 
 package org.metaagent.framework.core.tool.config;
 
+import org.metaagent.framework.core.config.ConfigPaths;
+
 import java.util.List;
 import java.util.Set;
 
@@ -33,6 +35,13 @@ import java.util.Set;
  * @author vyckey
  */
 public interface ToolExecutionConfig {
+
+    /**
+     * Return the configuration paths.
+     *
+     * @return the configuration paths
+     */
+    ConfigPaths configPaths();
 
     /**
      * Return the set of allowed tools.

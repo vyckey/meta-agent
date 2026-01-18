@@ -80,7 +80,7 @@ public class EditTextFileTool extends AbstractFileTool<EditTextFileInput, EditTe
 
     private Path validateInput(ToolContext toolContext, EditTextFileInput input) {
         ToolArgsValidator.validate(input);
-        Path filePath = FileUtils.resolvePath(toolContext.workingDirectory(), Path.of(input.filePath()));
+        Path filePath = FileUtils.resolvePath(toolContext.getWorkingDirectory(), Path.of(input.filePath()));
         if (filePath.toFile().isDirectory()) {
             throw new ToolArgumentException("filePath cannot be a directory");
         }

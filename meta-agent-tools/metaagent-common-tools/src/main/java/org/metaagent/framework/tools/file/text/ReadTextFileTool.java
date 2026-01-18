@@ -82,7 +82,7 @@ public class ReadTextFileTool extends AbstractFileTool<ReadTextFileInput, ReadTe
     private File validateInput(ToolContext toolContext, ReadTextFileInput input) {
         ToolArgsValidator.validate(input);
 
-        Path filePath = FileUtils.resolvePath(toolContext.workingDirectory(), Path.of(input.getFilePath()));
+        Path filePath = FileUtils.resolvePath(toolContext.getWorkingDirectory(), Path.of(input.getFilePath()));
         File file = filePath.toFile();
         if (file.isDirectory()) {
             throw new ToolArgumentException("filePath cannot be a directory");

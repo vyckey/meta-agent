@@ -85,10 +85,10 @@ public class ListFileTool extends AbstractFileTool<ListFileInput, ListFileOutput
     protected Path validateInput(ToolContext toolContext, ListFileInput input) throws ToolExecutionException {
         ToolArgsValidator.validate(input);
 
-        Path directory = toolContext.workingDirectory();
+        Path directory = toolContext.getWorkingDirectory();
         if (StringUtils.isNotEmpty(input.getDirectory())) {
             Path filePath = Path.of(input.getDirectory());
-            directory = FileUtils.resolvePath(toolContext.workingDirectory(), filePath);
+            directory = FileUtils.resolvePath(toolContext.getWorkingDirectory(), filePath);
 
             if (!checkFileAccessible(toolContext, directory)) {
                 ToolApprovalRequest approvalRequest = ToolApprovalRequest.builder()

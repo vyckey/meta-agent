@@ -80,7 +80,7 @@ public class ReadImageFileTool extends AbstractFileTool<ReadImageFileInput, Read
     private File validateInput(ToolContext toolContext, ReadImageFileInput input) {
         ToolArgsValidator.validate(input);
 
-        Path filePath = FileUtils.resolvePath(toolContext.workingDirectory(), Path.of(input.filePath()));
+        Path filePath = FileUtils.resolvePath(toolContext.getWorkingDirectory(), Path.of(input.filePath()));
         File file = filePath.toFile();
         if (file.isDirectory()) {
             throw new ToolArgumentException("filePath cannot be a directory");

@@ -77,12 +77,8 @@ public interface ToolContext {
      *
      * @return the working directory
      */
-    default Path workingDirectory() {
-        if (System.getProperty("CWD") != null) {
-            return Path.of(System.getProperty("CWD")).toAbsolutePath();
-        } else {
-            return Path.of(".").toAbsolutePath().normalize();
-        }
+    default Path getWorkingDirectory() {
+        return getToolExecutionConfig().configPaths().currentWorkingDirectory();
     }
 
     /**
@@ -148,14 +144,6 @@ public interface ToolContext {
          * @return the builder instance
          */
         Builder toolExecutionConfig(ToolExecutionConfig toolExecutionConfig);
-
-        /**
-         * Sets the working directory for the tool context.
-         *
-         * @param workingDirectory the working directory
-         * @return the builder instance
-         */
-        Builder workingDirectory(Path workingDirectory);
 
         /**
          * Sets the security level for the tool context.

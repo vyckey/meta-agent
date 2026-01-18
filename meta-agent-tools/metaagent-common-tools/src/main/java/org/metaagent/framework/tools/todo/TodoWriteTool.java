@@ -86,7 +86,7 @@ public class TodoWriteTool implements Tool<TodoWriteInput, TodoWriteOutput> {
         }
 
         try {
-            Path todoDirectory = getTodoDirectory(toolContext.workingDirectory());
+            Path todoDirectory = getTodoDirectory(toolContext.getWorkingDirectory());
             FileBasedTodoService todoService = new FileBasedTodoService(todoDirectory);
             TodoUpdateResult updateResult = todoService.updateTodos(input.todoId(), input.todos());
             return TodoWriteOutput.builder()
