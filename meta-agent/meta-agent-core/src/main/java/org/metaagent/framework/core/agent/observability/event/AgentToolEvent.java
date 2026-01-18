@@ -1,7 +1,7 @@
 /*
  * MIT License
  *
- * Copyright (c) 2025 MetaAgent
+ * Copyright (c) 2026 MetaAgent
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -22,19 +22,7 @@
  * SOFTWARE.
  */
 
-package org.metaagent.framework.core.tool.exception;
+package org.metaagent.framework.core.agent.observability.event;
 
-/**
- * ToolParameterException is thrown when a tool parameter is invalid.
- *
- * @author vyckey
- */
-public class ToolParameterException extends ToolExecutionException {
-    public ToolParameterException(String message) {
-        super(message);
-    }
-
-    public ToolParameterException(String message, Throwable cause) {
-        super(message, cause);
-    }
+public interface AgentToolEvent extends AgentEvent {
 }

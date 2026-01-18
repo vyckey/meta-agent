@@ -26,20 +26,21 @@ package org.metaagent.framework.core.tool.listener;
 
 import lombok.extern.slf4j.Slf4j;
 import org.metaagent.framework.core.tool.Tool;
+import org.metaagent.framework.core.tool.ToolContext;
 import org.metaagent.framework.core.tool.exception.ToolExecutionException;
 import org.metaagent.framework.core.tool.schema.ToolDisplayable;
 import org.slf4j.Logger;
 
 @Slf4j
-public class ToolExecuteDisplayListener implements ToolExecuteListener {
+public class ToolExecutionDisplayListener implements ToolExecutionListener {
     private static final Logger logger = Tool.logger;
-    public static final ToolExecuteDisplayListener INSTANCE = new ToolExecuteDisplayListener();
+    public static final ToolExecutionDisplayListener INSTANCE = new ToolExecutionDisplayListener();
 
-    private ToolExecuteDisplayListener() {
+    private ToolExecutionDisplayListener() {
     }
 
     @Override
-    public <I> void onToolInput(Tool<I, ?> tool, I input) {
+    public <I> void onToolInput(Tool<I, ?> tool, ToolContext toolContext, I input) {
         if (input instanceof ToolDisplayable) {
             String display = ((ToolDisplayable) input).display();
             logger.info("Tool [{}] Input > {}", tool.getName(), display);
@@ -47,7 +48,7 @@ public class ToolExecuteDisplayListener implements ToolExecuteListener {
     }
 
     @Override
-    public <I, O> void onToolOutput(Tool<I, O> tool, I input, O output) {
+    public <I, O> void onToolOutput(Tool<I, O> tool, ToolContext toolContext, I input, O output) {
         if (input instanceof ToolDisplayable) {
             String inputDisplay = ((ToolDisplayable) output).display();
             logger.info("Tool [{}] Output > {}", tool.getName(), inputDisplay);
@@ -55,7 +56,7 @@ public class ToolExecuteDisplayListener implements ToolExecuteListener {
     }
 
     @Override
-    public <I> void onToolException(Tool<I, ?> tool, I input, ToolExecutionException exception) {
+    public <I> void onToolException(Tool<I, ?> tool, ToolContext toolContext, I input, ToolExecutionException exception) {
         logger.error("Tool [{}] Exception > {}", tool.getName(), exception.getMessage(), exception);
     }
 }

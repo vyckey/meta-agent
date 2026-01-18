@@ -29,14 +29,20 @@ import com.google.common.io.CharStreams;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.metaagent.framework.common.abort.AbortException;
+import org.metaagent.framework.core.security.approval.ApprovalStatus;
+import org.metaagent.framework.core.security.approval.PermissionApproval;
 import org.metaagent.framework.core.tool.Tool;
 import org.metaagent.framework.core.tool.ToolContext;
+import org.metaagent.framework.core.tool.approval.ToolApprovalRequest;
 import org.metaagent.framework.core.tool.converter.ToolConverter;
 import org.metaagent.framework.core.tool.converter.ToolConverters;
 import org.metaagent.framework.core.tool.definition.ToolDefinition;
+import org.metaagent.framework.core.tool.exception.ToolArgumentException;
 import org.metaagent.framework.core.tool.exception.ToolExecutionError;
 import org.metaagent.framework.core.tool.exception.ToolExecutionException;
-import org.metaagent.framework.core.tool.exception.ToolParameterException;
+import org.metaagent.framework.core.tool.exception.ToolRejectException;
+import org.metaagent.framework.core.tool.schema.ToolArgsValidator;
+import org.metaagent.framework.tools.file.AbstractFileTool;
 import org.metaagent.framework.tools.file.util.FileUtils;
 
 import java.io.File;
@@ -54,8 +60,10 @@ import java.util.regex.Pattern;
  * @author vyckey
  */
 @Slf4j
-public class GrepFileTool implements Tool<GrepFileInput, GrepFileOutput> {
-    private static final ToolDefinition TOOL_DEFINITION = ToolDefinition.builder("grep_files")
+public class GrepFileTool extends AbstractFileTool<GrepFileInput, GrepFileOutput>
+        implements Tool<GrepFileInput, GrepFileOutput> {
+    public static final String TOOL_NAME = "grep_files";
+    private static final ToolDefinition TOOL_DEFINITION = ToolDefinition.builder(TOOL_NAME)
             .description("Searches for a regular expression pattern within the content of files in a specified directory" +
                     " (default current working directory). Can filter files by a glob pattern. Returns the lines " +
                     "containing matches, along with their file paths and line numbers.")
@@ -78,19 +86,29 @@ public class GrepFileTool implements Tool<GrepFileInput, GrepFileOutput> {
     }
 
     protected Path validateInput(ToolContext toolContext, GrepFileInput input) throws ToolExecutionException {
-        if (input.getPattern() == null) {
-            throw new ToolParameterException("Grep pattern must be specified.");
-        }
-        if (StringUtils.isBlank(input.getDirectory()) && System.getenv("CWD") == null) {
-            throw new ToolParameterException("Current working directory is unknown. Please specify a path.");
+        ToolArgsValidator.validate(input);
+
+        Path directory = toolContext.getWorkingDirectory();
+        if (StringUtils.isNotEmpty(input.getDirectory())) {
+            Path filePath = Path.of(input.getDirectory());
+            directory = FileUtils.resolvePath(toolContext.getWorkingDirectory(), filePath);
+
+            if (!checkFileAccessible(toolContext, directory)) {
+                ToolApprovalRequest approvalRequest = ToolApprovalRequest.builder()
+                        .id(toolContext.getExecutionId())
+                        .toolName(getName())
+                        .approvalContent("Request grep directory: " + directory)
+                        .input(input)
+                        .build();
+                PermissionApproval approvalResult = toolContext.requestApproval(approvalRequest);
+                if (approvalResult.getApprovalStatus() == ApprovalStatus.REJECTED) {
+                    throw new ToolRejectException(getName(), "user rejected to grep directory '" + directory + "'");
+                }
+            }
         }
 
-        Path directory = toolContext.getToolConfig().workingDirectory();
-        if (StringUtils.isNotEmpty(input.getDirectory())) {
-            directory = FileUtils.resolvePath(toolContext.getToolConfig().workingDirectory(), Path.of(input.getDirectory()));
-        }
-        if (!directory.toFile().exists()) {
-            throw new ToolParameterException("Directory does not exist: " + directory);
+        if (!directory.toFile().isDirectory()) {
+            throw new ToolArgumentException("'" + directory + "' is not a valid directory");
         }
         return directory;
     }

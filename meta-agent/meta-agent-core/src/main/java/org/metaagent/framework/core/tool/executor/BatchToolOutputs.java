@@ -33,6 +33,6 @@ import java.util.List;
  */
 public record BatchToolOutputs(List<ToolOutput> outputs) {
 
-    public record ToolOutput(String toolName, String output) {
+    public record ToolOutput(String id, String toolName, String output) {
     }
 }

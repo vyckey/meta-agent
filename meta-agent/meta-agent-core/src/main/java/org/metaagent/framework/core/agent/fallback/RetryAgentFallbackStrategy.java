@@ -46,8 +46,8 @@ public class RetryAgentFallbackStrategy<I, O> implements AgentFallbackStrategy<I
     @Override
     public AgentOutput<O> fallback(MetaAgent<I, O> agent, AgentInput<I> input, Exception exception) {
         AgentState agentState = agent.getAgentState();
-        if (agentState.getRetryCount() < maxRetries) {
-            agentState.incrRetryCount();
+        if (agentState.getStepState().getRetryCount().get() < maxRetries) {
+            agentState.getStepState().getRetryCount().incrementAndGet();
             return agent.step(input);
         }
         log.warn("Failed to retry agent after {} retries", maxRetries);

@@ -28,22 +28,22 @@ import com.google.common.collect.Lists;
 import org.metaagent.framework.common.metadata.MetadataProvider;
 import org.metaagent.framework.core.agent.chat.message.Message;
 import org.metaagent.framework.core.agent.chat.message.StreamMessageAggregator;
-import org.metaagent.framework.core.agent.output.AgentStreamOutput;
+import org.metaagent.framework.core.agent.output.StreamOutput;
 
 import java.util.List;
 
 public record DefaultChatStreamOutput(Message message, MetadataProvider metadata) implements ChatStreamOutput {
-    public static AgentStreamOutput.Aggregator<ChatStreamOutput, ChatOutput> aggregator() {
+    public static StreamOutput.Aggregator<Message, ChatOutput> aggregator() {
         return streamOutputs -> {
             MetadataProvider metadata = MetadataProvider.create();
             List<Message> streamMessages = Lists.newArrayList();
-            for (ChatStreamOutput streamOutput : streamOutputs) {
-                streamMessages.add(streamOutput.message());
-                metadata.merge(streamOutput.metadata());
+            for (Message message : streamOutputs) {
+                streamMessages.add(message);
             }
             List<Message> aggregatedMessages = StreamMessageAggregator.INSTANCE.aggregate(streamMessages);
-            return DefaultChatOutput.builder()
+            return ChatOutput.builder()
                     .messages(aggregatedMessages)
+                    .metadata(metadata)
                     .build();
         };
     }

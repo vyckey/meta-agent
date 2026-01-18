@@ -27,15 +27,19 @@ package org.metaagent.framework.tools.file.text;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
 import lombok.Builder;
 import org.metaagent.framework.core.tool.schema.ToolDisplayable;
 
 @Builder
 public record EditTextFileInput(
+        @NotBlank(message = "target filePath is required")
         @JsonProperty(required = true)
         @JsonPropertyDescription("The absolute path to the file to modify. Must start with '/'.")
         String filePath,
 
+        @NotNull(message = "oldString cannot be null")
         @JsonProperty(required = true)
         @JsonPropertyDescription("The exact literal text to replace, preferably unescaped. " +
                 "For single replacements (default), include at least 3 lines of context " +
@@ -44,6 +48,7 @@ public record EditTextFileInput(
                 "If this string is not the exact literal text (i.e. you escaped it) or does not match exactly, the tool will fail.")
         String oldString,
 
+        @NotNull(message = "newString cannot be null")
         @JsonProperty(required = true)
         @JsonPropertyDescription("The exact literal text to replace `old_string` with, preferably unescaped. " +
                 "Provide the EXACT text. Ensure the resulting code is correct and idiomatic.")

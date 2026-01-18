@@ -26,7 +26,7 @@ package org.metaagent.framework.core.tool.executor;
 
 import lombok.Getter;
 import org.metaagent.framework.core.tool.ToolContext;
-import org.metaagent.framework.core.tool.listener.ToolExecuteListenerRegistry;
+import org.metaagent.framework.core.tool.listener.ToolExecutionListenerRegistry;
 import org.metaagent.framework.core.tool.manager.ToolManager;
 import org.metaagent.framework.core.tool.tracker.ToolCallTracker;
 
@@ -35,7 +35,7 @@ import java.util.concurrent.Executor;
 @Getter
 public class DefaultToolExecutorContext implements ToolExecutorContext {
     private final ToolManager toolManager;
-    private final ToolExecuteListenerRegistry toolListenerRegistry;
+    private final ToolExecutionListenerRegistry toolListenerRegistry;
     private final ToolCallTracker toolCallTracker;
     private final ToolContext toolContext;
     private final Executor executor;
@@ -54,7 +54,7 @@ public class DefaultToolExecutorContext implements ToolExecutorContext {
 
     public static class Builder implements ToolExecutorContextBuilder {
         private ToolManager toolManager;
-        private ToolExecuteListenerRegistry toolListenerRegistry;
+        private ToolExecutionListenerRegistry toolListenerRegistry;
         private ToolCallTracker toolCallTracker;
         private ToolContext toolContext;
         private Executor executor;
@@ -72,7 +72,7 @@ public class DefaultToolExecutorContext implements ToolExecutorContext {
         }
 
         @Override
-        public Builder toolListenerRegistry(ToolExecuteListenerRegistry toolListenerRegistry) {
+        public Builder toolListenerRegistry(ToolExecutionListenerRegistry toolListenerRegistry) {
             this.toolListenerRegistry = toolListenerRegistry;
             return this;
         }
@@ -98,7 +98,7 @@ public class DefaultToolExecutorContext implements ToolExecutorContext {
                 this.toolCallTracker = ToolCallTracker.empty();
             }
             if (toolListenerRegistry == null) {
-                this.toolListenerRegistry = ToolExecuteListenerRegistry.DEFAULT;
+                this.toolListenerRegistry = ToolExecutionListenerRegistry.create();
             }
             if (toolContext == null) {
                 this.toolContext = ToolContext.create();

@@ -26,7 +26,9 @@ package org.metaagent.framework.core.agents.chat.output;
 
 import org.metaagent.framework.common.metadata.MetadataProvider;
 import org.metaagent.framework.core.agent.chat.message.Message;
+import org.metaagent.framework.core.agent.output.StreamOutput;
 import org.metaagent.framework.core.agents.chat.ChatAgent;
+import reactor.core.publisher.Flux;
 
 import java.util.List;
 
@@ -35,7 +37,16 @@ import java.util.List;
  *
  * @author vyckey
  */
-public interface ChatOutput {
+public interface ChatOutput extends StreamOutput<Message> {
+    /**
+     * Get a builder for {@link ChatOutput}.
+     *
+     * @return a builder for {@link ChatOutput}
+     */
+    static Builder builder() {
+        return DefaultChatOutput.builder();
+    }
+
     /**
      * Get the thought process of this agent.
      *
@@ -51,11 +62,63 @@ public interface ChatOutput {
     List<Message> messages();
 
     /**
+     * Get the stream of output messages of this agent.
+     *
+     * @return the stream of output messages of this agent
+     */
+    @Override
+    Flux<Message> stream();
+
+    /**
      * Get the output metadata of this agent.
      *
      * @return the output metadata of this agent
      */
     default MetadataProvider metadata() {
         return MetadataProvider.empty();
+    }
+
+    /**
+     * Builder for {@link ChatOutput}.
+     */
+    interface Builder {
+        /**
+         * Set the thought process of this agent.
+         *
+         * @param thought the thought process of this agent
+         * @return this builder
+         */
+        Builder thought(String thought);
+
+        /**
+         * Set the output messages of this agent.
+         *
+         * @param messages the output messages of this agent
+         * @return this builder
+         */
+        Builder messages(List<Message> messages);
+
+        /**
+         * Set the stream of output messages of this agent.
+         *
+         * @param stream the stream of output messages of this agent
+         * @return this builder
+         */
+        Builder stream(Flux<Message> stream);
+
+        /**
+         * Set the output metadata of this agent.
+         *
+         * @param metadata the output metadata of this agent
+         * @return this builder
+         */
+        Builder metadata(MetadataProvider metadata);
+
+        /**
+         * Build the {@link ChatOutput}.
+         *
+         * @return the {@link ChatOutput}
+         */
+        ChatOutput build();
     }
 }

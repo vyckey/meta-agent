@@ -30,8 +30,8 @@ import org.metaagent.framework.core.tool.ToolContext;
 import org.metaagent.framework.core.tool.converter.ToolConverter;
 import org.metaagent.framework.core.tool.converter.ToolConverters;
 import org.metaagent.framework.core.tool.definition.ToolDefinition;
+import org.metaagent.framework.core.tool.exception.ToolArgumentException;
 import org.metaagent.framework.core.tool.exception.ToolExecutionException;
-import org.metaagent.framework.core.tool.exception.ToolParameterException;
 
 import java.time.DateTimeException;
 import java.time.ZoneId;
@@ -42,7 +42,8 @@ import java.time.ZoneId;
  * @author vyckey
  */
 public class GetCurrentTimeTool implements Tool<GetCurrentTimeInput, GetCurrentTimeOutput> {
-    private static final ToolDefinition TOOL_DEFINITION = ToolDefinition.builder("get_current_time")
+    public static final String TOOL_NAME = "get_current_time";
+    private static final ToolDefinition TOOL_DEFINITION = ToolDefinition.builder(TOOL_NAME)
             .description("Gets the current time in a specified timezone.")
             .inputSchema(GetCurrentTimeInput.class)
             .outputSchema(GetCurrentTimeOutput.class)
@@ -68,7 +69,7 @@ public class GetCurrentTimeTool implements Tool<GetCurrentTimeInput, GetCurrentT
         try {
             zoneId = StringUtils.isNotEmpty(input.timezone()) ? ZoneId.of(input.timezone()) : ZoneId.of("UTC");
         } catch (DateTimeException e) {
-            throw new ToolParameterException("Invalid timezone: " + input.timezone(), e);
+            throw new ToolArgumentException("Invalid timezone: " + input.timezone(), e);
         }
         return GetCurrentTimeOutput.fromNow(zoneId);
     }

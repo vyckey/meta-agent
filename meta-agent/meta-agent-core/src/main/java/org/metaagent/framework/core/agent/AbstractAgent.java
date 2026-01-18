@@ -77,8 +77,9 @@ public abstract class AbstractAgent<I, O>
         return ToolExecutorContext.builder()
                 .toolManager(getToolManager())
                 .toolListenerRegistry(agentContext.getToolListenerRegistry())
-                .toolCallTracker(agentState.getToolCallTracker())
+                .toolCallTracker(getAgentState().getToolCallTracker())
                 .toolContext(ToolContext.builder()
+                        .agent(this)
                         .abortSignal(agentContext.getAbortSignal())
                         .build())
                 .build();

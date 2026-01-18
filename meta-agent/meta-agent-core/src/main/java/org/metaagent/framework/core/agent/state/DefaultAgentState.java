@@ -29,7 +29,8 @@ import org.metaagent.framework.core.agent.action.history.DefaultActionHistory;
 import org.metaagent.framework.core.tool.tracker.DefaultToolCallTracker;
 import org.metaagent.framework.core.tool.tracker.ToolCallTracker;
 
-import java.util.concurrent.TimeoutException;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicReference;
 
 /**
  * description is here
@@ -38,6 +39,7 @@ import java.util.concurrent.TimeoutException;
  */
 public class DefaultAgentState implements AgentState {
     protected AgentRunStatus status = AgentRunStatus.NOT_STARTED;
+    protected AgentStepState stepState;
     protected ActionHistory actionHistory;
     protected ToolCallTracker toolCallTracker;
     protected Exception exception;
@@ -45,6 +47,7 @@ public class DefaultAgentState implements AgentState {
     protected int retryCount = 0;
 
     protected DefaultAgentState(Builder builder) {
+        this.stepState = new DefaultAgentStepState();
         this.actionHistory = builder.actionHistory;
         this.toolCallTracker = builder.toolCallTracker;
     }
@@ -64,23 +67,15 @@ public class DefaultAgentState implements AgentState {
     }
 
     @Override
-    public int getLoopCount() {
-        return loopCount;
+    public AgentStepState getStepState() {
+        return stepState;
     }
 
     @Override
-    public int incrLoopCount() {
-        return ++loopCount;
-    }
-
-    @Override
-    public int getRetryCount() {
-        return retryCount;
-    }
-
-    @Override
-    public int incrRetryCount() {
-        return ++retryCount;
+    public AgentStepState resetStepState() {
+        DefaultAgentStepState agentStepState = new DefaultAgentStepState();
+        this.stepState = agentStepState;
+        return agentStepState;
     }
 
     @Override
@@ -94,24 +89,6 @@ public class DefaultAgentState implements AgentState {
     }
 
     @Override
-    public Exception getLastException() {
-        return exception;
-    }
-
-    @Override
-    public void setLastException(Exception ex) {
-        this.exception = ex;
-        if (ex == null) return;
-        if (ex instanceof TimeoutException) {
-            this.status = AgentRunStatus.TIMEOUT;
-        } else if (ex instanceof InterruptedException) {
-            this.status = AgentRunStatus.INTERRUPTED;
-        } else {
-            this.status = AgentRunStatus.FAILED;
-        }
-    }
-
-    @Override
     public void reset() {
         this.status = AgentRunStatus.NOT_STARTED;
         this.actionHistory.clearAll();
@@ -119,6 +96,36 @@ public class DefaultAgentState implements AgentState {
         this.exception = null;
         this.loopCount = 0;
         this.retryCount = 0;
+    }
+
+    public record DefaultAgentStepState(
+            AtomicInteger loopCount,
+            AtomicInteger retryCount,
+            AtomicReference<Exception> lastException
+    ) implements AgentStepState {
+        public DefaultAgentStepState() {
+            this(new AtomicInteger(), new AtomicInteger(), new AtomicReference<>());
+        }
+
+        @Override
+        public AtomicInteger getLoopCount() {
+            return loopCount;
+        }
+
+        @Override
+        public AtomicInteger getRetryCount() {
+            return retryCount;
+        }
+
+        @Override
+        public Exception getLastException() {
+            return lastException.get();
+        }
+
+        @Override
+        public void setLastException(Exception ex) {
+            lastException.set(ex);
+        }
     }
 
     public static class Builder {

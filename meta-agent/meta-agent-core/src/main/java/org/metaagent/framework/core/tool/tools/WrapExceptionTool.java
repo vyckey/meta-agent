@@ -31,7 +31,7 @@ import org.metaagent.framework.core.tool.converter.DefaultToolConverter;
 import org.metaagent.framework.core.tool.converter.ToolConverter;
 import org.metaagent.framework.core.tool.definition.ToolDefinition;
 import org.metaagent.framework.core.tool.exception.ToolExecutionException;
-import org.metaagent.framework.core.tool.exception.ToolParameterException;
+import org.metaagent.framework.core.tool.exception.ToolArgumentException;
 
 import java.util.Objects;
 
@@ -66,10 +66,10 @@ public class WrapExceptionTool<I, O> implements Tool<I, O> {
         return source -> {
             try {
                 return converter.convert(source);
-            } catch (ToolParameterException e) {
+            } catch (ToolArgumentException e) {
                 throw e;
             } catch (Exception e) {
-                throw new ToolParameterException("Failed to convert tool input or output", e);
+                throw new ToolArgumentException("Failed to convert tool input or output", e);
             }
         };
     }

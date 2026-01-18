@@ -40,23 +40,23 @@ public record ToolApprovalRequest(
         String toolName,
         String approvalContent,
         String arguments,
+        Object input,
         MetadataProvider metadata
 ) implements PermissionRequest {
 
-    public ToolApprovalRequest(String id, String toolName, String approvalContent, String arguments, MetadataProvider metadata) {
-        this.id = Objects.requireNonNull(id, "id is required");
-        this.toolName = Objects.requireNonNull(toolName, "toolName is required");
-        this.approvalContent = Objects.requireNonNull(approvalContent, "approvalContent is required");
-        this.arguments = arguments;
-        this.metadata = Objects.requireNonNull(metadata, "metadata is required");
+    public ToolApprovalRequest {
+        Objects.requireNonNull(id, "id is required");
+        Objects.requireNonNull(toolName, "toolName is required");
+        Objects.requireNonNull(approvalContent, "approvalContent is required");
+        Objects.requireNonNull(metadata, "metadata is required");
     }
 
-    public static ToolApprovalRequest requestCall(String toolName, String arguments, MetadataProvider metadata) {
+    public static ToolApprovalRequest requestCall(String id, String toolName, String arguments) {
         return ToolApprovalRequest.builder()
+                .id(id)
                 .toolName(toolName)
                 .approvalContent("Request to call tool " + toolName)
                 .arguments(arguments)
-                .metadata(metadata)
                 .build();
     }
 
@@ -89,6 +89,7 @@ public record ToolApprovalRequest(
         private String toolName;
         private String approvalContent;
         private String arguments;
+        private Object input;
         private MetadataProvider metadata;
 
         private Builder() {
@@ -114,8 +115,21 @@ public record ToolApprovalRequest(
             return this;
         }
 
+        public Builder input(Object input) {
+            this.input = input;
+            return this;
+        }
+
         public Builder metadata(MetadataProvider metadata) {
             this.metadata = metadata;
+            return this;
+        }
+
+        public Builder metadata(String key, Object value) {
+            if (metadata == null) {
+                metadata = MetadataProvider.create();
+            }
+            metadata.setProperty(key, value);
             return this;
         }
 
@@ -126,7 +140,7 @@ public record ToolApprovalRequest(
             if (metadata == null) {
                 metadata = MetadataProvider.empty();
             }
-            return new ToolApprovalRequest(id, toolName, approvalContent, arguments, metadata);
+            return new ToolApprovalRequest(id, toolName, approvalContent, arguments, input, metadata);
         }
     }
 }

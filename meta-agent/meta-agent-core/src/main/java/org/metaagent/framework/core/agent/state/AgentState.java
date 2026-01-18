@@ -28,31 +28,55 @@ import org.metaagent.framework.core.agent.action.history.ActionHistory;
 import org.metaagent.framework.core.tool.tracker.ToolCallTracker;
 
 /**
- * description is here
+ * AgentState interface is used to hold the state of an agent.
  *
  * @author vyckey
  */
 public interface AgentState {
-
+    /**
+     * Get the status of the agent.
+     *
+     * @return the status of the agent
+     */
     AgentRunStatus getStatus();
 
+    /**
+     * Set the status of the agent.
+     *
+     * @param status the status of the agent
+     */
     void setStatus(AgentRunStatus status);
 
-    int getLoopCount();
+    /**
+     * Get the agent step state of the agent.
+     *
+     * @return the agent step state of the agent
+     */
+    AgentStepState getStepState();
 
-    int incrLoopCount();
+    /**
+     * Reset the agent step state.
+     *
+     * @return the current agent step state of the agent
+     */
+    AgentStepState resetStepState();
 
-    int getRetryCount();
-
-    int incrRetryCount();
-
+    /**
+     * Get the action history of the agent.
+     *
+     * @return the action history of the agent
+     */
     ActionHistory getActionHistory();
 
+    /**
+     * Get the tool call tracker of the agent.
+     *
+     * @return the tool call tracker of the agent
+     */
     ToolCallTracker getToolCallTracker();
 
-    Exception getLastException();
-
-    void setLastException(Exception ex);
-
+    /**
+     * Reset the agent state.
+     */
     void reset();
 }

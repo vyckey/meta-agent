@@ -26,18 +26,20 @@ package org.metaagent.framework.core.tool.executor;
 
 import com.google.common.collect.Lists;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
+import org.metaagent.framework.core.security.SecurityLevel;
+import org.metaagent.framework.core.security.approval.PermissionApproval;
 import org.metaagent.framework.core.tool.Tool;
 import org.metaagent.framework.core.tool.ToolContext;
-import org.metaagent.framework.core.tool.exception.ToolExecutionError;
+import org.metaagent.framework.core.tool.approval.ToolApprovalRequest;
+import org.metaagent.framework.core.tool.config.ToolExecutionConfig;
+import org.metaagent.framework.core.tool.config.ToolPattern;
 import org.metaagent.framework.core.tool.exception.ToolExecutionException;
-import org.metaagent.framework.core.tool.listener.ToolExecuteListener;
-import org.metaagent.framework.core.tool.listener.ToolExecuteListenerRegistry;
+import org.metaagent.framework.core.tool.exception.ToolRejectException;
 import org.metaagent.framework.core.tool.manager.ToolManager;
-import org.metaagent.framework.core.tool.tools.WrapExceptionTool;
-import org.metaagent.framework.core.tool.tracker.ToolTrackerDelegate;
 
 import java.util.List;
-import java.util.function.Consumer;
+import java.util.UUID;
 
 /**
  * Default implementation of {@link ToolExecutor}.
@@ -48,58 +50,73 @@ import java.util.function.Consumer;
 public class DefaultToolExecutor implements ToolExecutor {
     public static final DefaultToolExecutor INSTANCE = new DefaultToolExecutor();
 
-    protected void notifyListeners(ToolExecuteListenerRegistry listenerRegistry,
-                                   Consumer<ToolExecuteListener> consumer) {
-        for (ToolExecuteListener listener : listenerRegistry.getListeners()) {
-            try {
-                consumer.accept(listener);
-            } catch (Exception e) {
-                log.error("Fail to invoke tool listener", e);
-            }
-        }
-    }
-
     @Override
     public <I, O> O execute(ToolExecutorContext executorContext, Tool<I, O> tool, I input) throws ToolExecutionException {
-        ToolExecuteListenerRegistry listenerRegistry = executorContext.getToolListenerRegistry();
-        try {
-            notifyListeners(listenerRegistry, listener -> listener.onToolInput(tool, input));
-
-            O output = tool.run(executorContext.getToolContext(), input);
-
-            notifyListeners(listenerRegistry, listener -> listener.onToolOutput(tool, input, output));
-            return output;
-        } catch (ToolExecutionException e) {
-            notifyListeners(listenerRegistry, listener -> listener.onToolException(tool, input, e));
-            throw e;
-        } catch (Exception e) {
-            ToolExecutionError ex = new ToolExecutionError("Call tool " + tool.getName() + " error", e);
-            notifyListeners(listenerRegistry, listener -> listener.onToolException(tool, input, ex));
-            throw ex;
-        }
+        ToolExecuteDelegate<I, O> delegate = new ToolExecuteDelegate<>(tool, executorContext);
+        return delegate.run(executorContext.getToolContext(), input);
     }
 
     @Override
     public <I, O> String execute(ToolExecutorContext executorContext, Tool<I, O> tool, String input) throws ToolExecutionException {
-        ToolTrackerDelegate<I, O> trackerDelegate = new ToolTrackerDelegate<>(executorContext.getToolCallTracker(), tool) {
-            @Override
-            public O run(ToolContext context, I input) throws ToolExecutionException {
-                return execute(executorContext, tool, input);
-            }
-        };
-        Tool<I, O> delegate = new WrapExceptionTool<>(trackerDelegate);
+        ToolContext toolContext = executorContext.getToolContext();
+        String toolCallId = UUID.randomUUID().toString().replaceAll("-", "").substring(16);
+        toolContext.setExecutionId(toolCallId);
+
+        boolean approvalRequired = approvalRequired(executorContext, tool, input);
+        if (approvalRequired) {
+            requestToolApproval(executorContext, tool, input);
+        }
+
+        ToolExecuteDelegate<I, O> delegate = new ToolExecuteDelegate<>(tool, executorContext);
         return delegate.call(executorContext.getToolContext(), input);
+    }
+
+    protected <I, O> boolean approvalRequired(ToolExecutorContext executorContext, Tool<I, O> tool, String input) {
+        ToolContext toolContext = executorContext.getToolContext();
+        if (toolContext.getSecurityLevel().compareTo(SecurityLevel.UNRESTRICTED_DANGEROUSLY) <= 0) {
+            return false;
+        } else if (toolContext.getSecurityLevel().compareTo(SecurityLevel.RESTRICTED_DEFAULT_SALE) <= 0) {
+            if (tool.getDefinition().isReadOnly()) {
+                return false;
+            }
+        }
+
+        String toolName = tool.getName();
+        ToolExecutionConfig executionConfig = toolContext.getToolExecutionConfig();
+        List<ToolPattern> disallowedTools = executionConfig.disallowedTools(toolName);
+        for (ToolPattern disallowedTool : disallowedTools) {
+            if (disallowedTool.toolName().equals(toolName) && StringUtils.isEmpty(disallowedTool.pattern())) {
+                throw new ToolRejectException(toolName, "not allowed execution");
+            }
+        }
+
+        List<ToolPattern> allowedTools = executionConfig.allowedTools(toolName);
+        return allowedTools.isEmpty();
+    }
+
+    protected void requestToolApproval(ToolExecutorContext executorContext, Tool<?, ?> tool, String input) {
+        ToolContext toolContext = executorContext.getToolContext();
+        ToolApprovalRequest approvalRequest = ToolApprovalRequest.requestCall(toolContext.getExecutionId(), tool.getName(), input);
+        PermissionApproval approval = toolContext.requestApproval(approvalRequest);
+        if (!approval.isApproved()) {
+            String reason = StringUtils.isNotEmpty(approval.getContent()) ? approval.getContent() : "user rejected tool execution";
+            throw new ToolRejectException(tool.getName(), reason);
+        }
     }
 
     @Override
     public BatchToolOutputs execute(ToolExecutorContext executorContext, BatchToolInputs toolInputs) throws ToolExecutionException {
         ToolManager toolManager = executorContext.getToolManager();
+        ToolContext toolContext = executorContext.getToolContext();
 
         List<BatchToolOutputs.ToolOutput> outputs = Lists.newArrayList();
         for (BatchToolInputs.ToolInput toolInput : toolInputs.inputs()) {
             Tool<?, ?> tool = toolManager.getTool(toolInput.toolName());
+            if (tool == null) {
+                throw new ToolExecutionException("tool not found: " + toolInput.toolName());
+            }
             String output = execute(executorContext, tool, toolInput.input());
-            outputs.add(new BatchToolOutputs.ToolOutput(toolInput.toolName(), output));
+            outputs.add(new BatchToolOutputs.ToolOutput(toolContext.getExecutionId(), toolInput.toolName(), output));
         }
         return new BatchToolOutputs(outputs);
     }

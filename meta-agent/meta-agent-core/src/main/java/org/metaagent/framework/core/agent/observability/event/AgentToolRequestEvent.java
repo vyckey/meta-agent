@@ -1,7 +1,7 @@
 /*
  * MIT License
  *
- * Copyright (c) 2025 MetaAgent
+ * Copyright (c) 2026 MetaAgent
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -22,45 +22,35 @@
  * SOFTWARE.
  */
 
-package org.metaagent.framework.core.tool.listener;
+package org.metaagent.framework.core.agent.observability.event;
 
-import java.util.List;
+import org.metaagent.framework.core.agent.MetaAgent;
+import org.metaagent.framework.core.tool.Tool;
+
+import java.time.Instant;
+import java.util.Objects;
 
 /**
- * Registry for managing ToolExecuteListener instances.
+ * AgentToolRequestEvent is an event that occurs when an agent requests a tool.
  *
  * @author vyckey
  */
-public interface ToolExecuteListenerRegistry {
-    /**
-     * Default instance of ToolExecuteListenerRegistry.
-     * This is a singleton instance that can be used throughout the application.
-     */
-    ToolExecuteListenerRegistry DEFAULT = DefaultToolExecuteListenerRegistry.getInstance();
+public record AgentToolRequestEvent(
+        MetaAgent<?, ?> agent,
+        Tool<?, ?> tool,
+        String request,
+        Instant occurredTime
+) implements AgentToolEvent {
+    public AgentToolRequestEvent {
+        Objects.requireNonNull(agent, "agent is required");
+        Objects.requireNonNull(tool, "tool is required");
+        Objects.requireNonNull(request, "request is required");
+        if (occurredTime == null) {
+            occurredTime = Instant.now();
+        }
+    }
 
-    /**
-     * Retrieves the list of registered ToolExecuteListener instances.
-     *
-     * @return List of ToolExecuteListener
-     */
-    List<ToolExecuteListener> getListeners();
-
-    /**
-     * Registers a ToolExecuteListener instance.
-     *
-     * @param listener the ToolExecuteListener to register
-     */
-    void registerListener(ToolExecuteListener listener);
-
-    /**
-     * Unregisters a ToolExecuteListener instance.
-     *
-     * @param listener the ToolExecuteListener to unregister
-     */
-    void unregisterListener(ToolExecuteListener listener);
-
-    /**
-     * Unregisters all ToolExecuteListener instances.
-     */
-    void removeAllListeners();
+    public AgentToolRequestEvent(MetaAgent<?, ?> agent, Tool<?, ?> tool, String request) {
+        this(agent, tool, request, Instant.now());
+    }
 }

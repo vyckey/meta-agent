@@ -24,21 +24,27 @@
 
 package org.metaagent.framework.tools.script.engine;
 
+import com.google.common.collect.Maps;
 import lombok.Setter;
+import org.apache.commons.lang3.StringUtils;
 import org.metaagent.framework.common.abort.AbortException;
 import org.metaagent.framework.core.tool.Tool;
 import org.metaagent.framework.core.tool.ToolContext;
 import org.metaagent.framework.core.tool.converter.ToolConverter;
 import org.metaagent.framework.core.tool.converter.ToolConverters;
 import org.metaagent.framework.core.tool.definition.ToolDefinition;
+import org.metaagent.framework.core.tool.exception.ToolArgumentException;
 import org.metaagent.framework.core.tool.exception.ToolExecutionException;
+import org.metaagent.framework.core.tool.schema.ToolArgsValidator;
 
 import javax.script.Bindings;
 import javax.script.Compilable;
 import javax.script.CompiledScript;
 import javax.script.ScriptEngine;
+import javax.script.ScriptEngineFactory;
 import javax.script.ScriptEngineManager;
 import javax.script.ScriptException;
+import java.util.Map;
 
 /**
  * Script engine tool
@@ -46,8 +52,9 @@ import javax.script.ScriptException;
  * @author vyckey
  */
 @Setter
-public class ScriptEngineTool implements Tool<ScriptInput, ScriptOutput> {
-    private static final ToolDefinition TOOL_DEFINITION = ToolDefinition.builder("execute_script")
+public class ScriptEngineTool implements Tool<ScriptInput, ScriptOutput>, AutoCloseable {
+    public static final String TOOL_NAME = "execute_script";
+    private static final ToolDefinition TOOL_DEFINITION = ToolDefinition.builder(TOOL_NAME)
             .description("Execute script with specialized language")
             .inputSchema(ScriptInput.class)
             .outputSchema(ScriptOutput.class)
@@ -56,10 +63,27 @@ public class ScriptEngineTool implements Tool<ScriptInput, ScriptOutput> {
             .build();
     private static final ToolConverter<ScriptInput, ScriptOutput> TOOL_CONVERTER =
             ToolConverters.jsonConverter(ScriptInput.class);
+    private static volatile ScriptEngineManager defaultScriptEngineManager;
     protected final ScriptEngineManager scriptEngineManager;
+    protected final ThreadLocal<Map<String, ScriptEngine>> scriptEngineCache = ThreadLocal.withInitial(Maps::newConcurrentMap);
+
+    public static ScriptEngineManager getDefaultScriptEngineManager() {
+        if (defaultScriptEngineManager == null) {
+            synchronized (ScriptEngineTool.class) {
+                if (defaultScriptEngineManager == null) {
+                    defaultScriptEngineManager = new ScriptEngineManager();
+                }
+            }
+        }
+        return defaultScriptEngineManager;
+    }
 
     public ScriptEngineTool(ScriptEngineManager scriptEngineManager) {
         this.scriptEngineManager = scriptEngineManager;
+    }
+
+    public ScriptEngineTool() {
+        this(getDefaultScriptEngineManager());
     }
 
     @Override
@@ -72,10 +96,38 @@ public class ScriptEngineTool implements Tool<ScriptInput, ScriptOutput> {
         return TOOL_CONVERTER;
     }
 
+    protected ScriptEngine getScriptEngine(String engineName, String language) {
+        String cacheKey = engineName + ":" + language;
+        Map<String, ScriptEngine> engineCache = scriptEngineCache.get();
+        return engineCache.computeIfAbsent(cacheKey, key -> {
+            for (ScriptEngineFactory engineFactory : scriptEngineManager.getEngineFactories()) {
+                if (engineName != null && !engineName.equalsIgnoreCase(engineFactory.getEngineName())) {
+                    continue;
+                }
+                if (language != null && !language.equalsIgnoreCase(engineFactory.getLanguageName())) {
+                    continue;
+                }
+                return engineFactory.getScriptEngine();
+            }
+            StringBuilder error = new StringBuilder("No script engine found for ");
+            if (engineName != null) {
+                error.append("engineName=").append(engineName);
+            }
+            if (language != null) {
+                error.append("language=").append(language);
+            }
+            throw new ToolArgumentException(error.toString());
+        });
+    }
+
     @Override
     public ScriptOutput run(ToolContext toolContext, ScriptInput scriptInput) throws ToolExecutionException {
-        ScriptEngine scriptEngine = this.scriptEngineManager.getEngineByName(scriptInput.getEngine());
+        ToolArgsValidator.validate(scriptInput);
+        if (StringUtils.isEmpty(scriptInput.getEngine()) && StringUtils.isEmpty(scriptInput.getLanguage())) {
+            throw new ToolArgumentException("Either engine or language must be specified");
+        }
 
+        ScriptEngine scriptEngine = getScriptEngine(scriptInput.getEngine(), scriptInput.getLanguage());
         if (toolContext.getAbortSignal().isAborted()) {
             throw new AbortException("Tool " + getName() + " is cancelled");
         }
@@ -115,4 +167,8 @@ public class ScriptEngineTool implements Tool<ScriptInput, ScriptOutput> {
         return ScriptOutput.builder().result(result != null ? result.toString() : null).build();
     }
 
+    @Override
+    public void close() {
+        scriptEngineCache.remove();
+    }
 }

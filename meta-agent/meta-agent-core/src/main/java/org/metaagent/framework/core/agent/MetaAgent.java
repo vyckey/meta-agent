@@ -30,7 +30,9 @@ import org.metaagent.framework.core.agent.input.AgentInput;
 import org.metaagent.framework.core.agent.memory.Memory;
 import org.metaagent.framework.core.agent.output.AgentOutput;
 import org.metaagent.framework.core.agent.profile.AgentProfile;
+import org.metaagent.framework.core.agent.state.AgentRunStatus;
 import org.metaagent.framework.core.agent.state.AgentState;
+import org.metaagent.framework.core.agent.state.AgentStepState;
 
 import java.util.concurrent.CompletableFuture;
 
@@ -98,7 +100,33 @@ public interface MetaAgent<I, O> extends AutoCloseable {
      * @return the agent output.
      */
     default AgentOutput<O> run(AgentInput<I> input) {
-        return step(input);
+        AgentState agentState = getAgentState();
+        if (agentState.getStatus() == AgentRunStatus.RUNNING) {
+            throw new AgentExecutionException("agent is already running");
+        }
+
+        agentState.setStatus(AgentRunStatus.RUNNING);
+        AgentStepState stepState = agentState.resetStepState();
+        try {
+            return step(input);
+        } catch (AgentInterruptedException ex) {
+            agentState.setStatus(AgentRunStatus.INTERRUPTED);
+            stepState.setLastException(ex);
+            throw ex;
+        } catch (AgentExecutionException ex) {
+            agentState.setStatus(AgentRunStatus.FAILED);
+            stepState.setLastException(ex);
+            throw ex;
+        } catch (Exception ex) {
+            agentState.setStatus(AgentRunStatus.FAILED);
+            AgentExecutionException exception = new AgentExecutionException("agent execution failed", ex);
+            stepState.setLastException(exception);
+            throw exception;
+        } finally {
+            if (!agentState.getStatus().isFinished()) {
+                agentState.setStatus(AgentRunStatus.COMPLETED);
+            }
+        }
     }
 
     /**

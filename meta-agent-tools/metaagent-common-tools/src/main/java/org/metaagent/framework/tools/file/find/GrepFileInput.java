@@ -27,6 +27,7 @@ package org.metaagent.framework.tools.file.find;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
+import jakarta.validation.constraints.NotBlank;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -35,6 +36,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.metaagent.framework.core.tool.schema.ToolDisplayable;
 
 import java.util.Objects;
+import java.util.Optional;
 import java.util.regex.Pattern;
 
 /**
@@ -46,6 +48,7 @@ import java.util.regex.Pattern;
 @Builder
 @AllArgsConstructor(access = AccessLevel.PRIVATE)
 public class GrepFileInput implements ToolDisplayable {
+    @NotBlank(message = "Grep pattern must be specified")
     @JsonProperty(required = true)
     @JsonPropertyDescription("The regular expression pattern to search for in file contents " +
             "(e.g., 'function\\s+testFunc', 'import\\\\s+\\\\{.*\\\\}\\\\s+from\\\\s+.*')")
@@ -65,7 +68,10 @@ public class GrepFileInput implements ToolDisplayable {
 
     @Override
     public String display() {
-        String dir = directory == null ? System.getenv("CWD") : directory;
+        String dir = directory;
+        if (StringUtils.isEmpty(dir)) {
+            dir = Optional.ofNullable(System.getenv("CWD")).orElse(".");
+        }
         StringBuilder sb = new StringBuilder("Search content in directory '")
                 .append(dir).append('\'');
         if (StringUtils.isNotEmpty(include)) {

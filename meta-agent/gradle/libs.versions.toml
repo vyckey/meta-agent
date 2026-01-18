@@ -11,6 +11,8 @@ slf4j = '2.0.13'
 log4j = '1.2.17'
 apacheLog4j = '2.24.3'
 guava = '33.2.1-jre'
+validationApi = '3.1.1'
+hibernateValidator = '9.1.0.Final'
 apacheCommon = '3.16.0'
 apacheCommonIO = '2.19.0'
 apacheCommonText = '1.13.1'
@@ -40,6 +42,8 @@ commons-io = { module = 'commons-io:commons-io', version.ref = 'apacheCommonIO' 
 commons-config = { module = 'org.apache.commons:commons-configuration2', version.ref = 'commonConfig' }
 collections4 = { module = 'commons-collections:commons-collections', version.ref = 'collections' }
 guava = { module = 'com.google.guava:guava', version.ref = 'guava' }
+validation-api = { module = 'jakarta.validation:jakarta.validation-api', version.ref = 'validationApi' }
+hibernate-validator = { module = 'org.hibernate.validator:hibernate-validator', version.ref = 'hibernateValidator' }
 slf4j-api = { module = 'org.slf4j:slf4j-api', version.ref = 'slf4j' }
 log4j-core = { module = 'org.apache.logging.log4j:log4j-core', version.ref = 'apacheLog4j' }
 log4j-api = { module = 'org.apache.logging.log4j:log4j-api', version.ref = 'apacheLog4j' }
@@ -62,7 +66,7 @@ jackson = ['jackson-annotations', 'jackson-core', 'jackson-databind']
 jsonschema = ['jsonschema-generator', 'jsonschema-jackson', 'jsonschema-swagger']
 jacksonYaml = ['jackson-yaml']
 lombok = ['lombok']
-utilies = ['commons-lang3', 'commons-config', 'commons-io', 'commons-text', 'collections4', 'guava']
+utilies = ['commons-lang3', 'commons-config', 'commons-io', 'commons-text', 'collections4', 'guava', 'validation-api', 'hibernate-validator']
 log = ['slf4j-api', 'log4j', 'log4j-core', 'log4j-api', 'slf4j-impl']
 mcp = ['mcp-sdk' , 'mcp-spring-webflux', 'mcp-spring-webmvc']
 reactor = ['reactor-core']

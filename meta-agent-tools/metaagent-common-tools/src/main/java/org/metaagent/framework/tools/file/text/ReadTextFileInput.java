@@ -27,6 +27,7 @@ package org.metaagent.framework.tools.file.text;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
+import jakarta.validation.constraints.NotBlank;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.experimental.SuperBuilder;
@@ -43,6 +44,7 @@ import java.util.Objects;
 @Getter
 @SuperBuilder
 public class ReadTextFileInput implements ToolDisplayable {
+    @NotBlank(message = "filePath is required")
     @JsonProperty(required = true)
     @JsonPropertyDescription("The absolute path to the file to read. Relative paths are not supported.")
     private final String filePath;

@@ -29,18 +29,16 @@ import org.metaagent.framework.core.agent.chat.conversation.Conversation;
 import org.metaagent.framework.core.agent.chat.message.Message;
 import org.metaagent.framework.core.agent.chat.message.RoleMessage;
 import org.metaagent.framework.core.agent.output.AgentOutput;
-import org.metaagent.framework.core.agent.output.AgentStreamOutput;
 import org.metaagent.framework.core.agents.chat.input.ChatInput;
 import org.metaagent.framework.core.agents.chat.output.ChatOutput;
-import org.metaagent.framework.core.agents.chat.output.ChatStreamOutput;
 
 /**
  * ChatAgent is an agent that has an ability to chat with message history.
  *
  * @author vyckey
  */
-public interface ChatAgent<I extends ChatInput, O extends ChatOutput, S extends ChatStreamOutput>
-        extends StreamingAgent<I, O, S> {
+public interface ChatAgent<I extends ChatInput, O extends ChatOutput>
+        extends StreamingAgent<I, O, Message> {
     String METADATA_KEY_CONTEXT_COMPRESSION_RATIO = "contextCompressionRatio";
     String METADATA_KEY_COMPRESSION_RESERVED_MESSAGES_COUNT = "compressionReservedMessageCount";
 
@@ -68,7 +66,11 @@ public interface ChatAgent<I extends ChatInput, O extends ChatOutput, S extends 
      * @param messages the messages to run this agent with
      * @return the output of this agent
      */
-    AgentOutput<O> run(Message... messages);
+    default AgentOutput<O> run(Message... messages) {
+        ChatInput chatInput = ChatInput.builder().messages(messages).build();
+        // noinspection unchecked
+        return run((I) chatInput);
+    }
 
     /**
      * Run the agent with the given input.
@@ -76,7 +78,7 @@ public interface ChatAgent<I extends ChatInput, O extends ChatOutput, S extends 
      * @param input the input to run the agent with
      * @return the output of the agent
      */
-    default AgentStreamOutput<O, S> runStream(String input) {
+    default AgentOutput<O> runStream(String input) {
         return runStream(RoleMessage.user(input));
     }
 
@@ -86,7 +88,11 @@ public interface ChatAgent<I extends ChatInput, O extends ChatOutput, S extends 
      * @param messages the messages to run this agent with
      * @return the output of this agent
      */
-    AgentStreamOutput<O, S> runStream(Message... messages);
+    default AgentOutput<O> runStream(Message... messages) {
+        ChatInput chatInput = ChatInput.builder().messages(messages).build();
+        //noinspection unchecked
+        return runStream((I) chatInput);
+    }
 
     /**
      * Close the agent.

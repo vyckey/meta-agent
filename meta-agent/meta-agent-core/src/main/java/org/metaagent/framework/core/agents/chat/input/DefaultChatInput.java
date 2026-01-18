@@ -25,14 +25,13 @@
 package org.metaagent.framework.core.agents.chat.input;
 
 import org.metaagent.framework.core.agent.chat.message.Message;
-import org.metaagent.framework.core.agents.chat.ChatAgent;
 
 import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
 
 /**
- * {@link ChatAgent} input
+ * Default implementation of {@link ChatInput}.
  *
  * @author vyckey
  */
@@ -49,6 +48,10 @@ public class DefaultChatInput implements ChatInput {
 
     public static Builder builder() {
         return new Builder();
+    }
+
+    public static Builder builder(ChatInput chatInput) {
+        return new Builder(chatInput);
     }
 
     @Override
@@ -68,10 +71,19 @@ public class DefaultChatInput implements ChatInput {
 
     @Override
     public String toString() {
-        return messages().stream().map(Message::getContent).collect(Collectors.joining("\n"));
+        StringBuilder sb = new StringBuilder("DefaultChatInput{");
+        if (isThinkingEnabled != null) {
+            sb.append("\nthinking: ").append(isThinkingEnabled);
+        }
+        if (isStreamingEnabled != null) {
+            sb.append("\nstreaming: ").append(isStreamingEnabled);
+        }
+        String messages = messages().stream().map(m -> "- " + m).collect(Collectors.joining("\n"));
+        sb.append("\nmessages:\n").append(messages);
+        return sb.append("\n}").toString();
     }
 
-    public static class Builder {
+    public static class Builder implements ChatInput.Builder {
         private List<Message> messages;
         private Boolean isThinkingEnabled;
         private Boolean isStreamingEnabled;
@@ -79,22 +91,32 @@ public class DefaultChatInput implements ChatInput {
         private Builder() {
         }
 
+        public Builder(ChatInput chatInput) {
+            this.messages = chatInput.messages();
+            this.isThinkingEnabled = chatInput.isThinkingEnabled();
+            this.isStreamingEnabled = chatInput.isStreamingEnabled();
+        }
+
+        @Override
         public Builder messages(List<Message> messages) {
             this.messages = messages;
             return this;
         }
 
+        @Override
         public Builder messages(Message... messages) {
             return messages(List.of(messages));
         }
 
-        public Builder thinkingEnabled(Boolean thinkingEnabled) {
-            this.isThinkingEnabled = thinkingEnabled;
+        @Override
+        public Builder isThinkingEnabled(Boolean isThinkingEnabled) {
+            this.isThinkingEnabled = isThinkingEnabled;
             return this;
         }
 
-        public Builder streamingEnabled(Boolean streamingEnabled) {
-            this.isStreamingEnabled = streamingEnabled;
+        @Override
+        public Builder isStreamingEnabled(Boolean isStreamingEnabled) {
+            this.isStreamingEnabled = isStreamingEnabled;
             return this;
         }
 

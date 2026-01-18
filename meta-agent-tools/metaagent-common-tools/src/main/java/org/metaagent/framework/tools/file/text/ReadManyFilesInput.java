@@ -26,6 +26,7 @@ package org.metaagent.framework.tools.file.text;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
+import jakarta.validation.constraints.NotEmpty;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.experimental.SuperBuilder;
@@ -40,6 +41,7 @@ public class ReadManyFilesInput implements ToolDisplayable {
     @JsonPropertyDescription("The target root directory. Optional, default is current working directory.")
     private String directory;
 
+    @NotEmpty(message = "Path patterns cannot be empty.")
     @JsonProperty(required = true)
     @JsonPropertyDescription("An array of glob patterns or paths relative to current working directory to read from. (e.g. [\"src/**/*.ts\"], [\"README.md\", \"docs/\"])")
     private List<String> pathPatterns;

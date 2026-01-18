@@ -1,0 +1,163 @@
+/*
+ * MIT License
+ *
+ * Copyright (c) 2026 MetaAgent
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included in all
+ * copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+ * SOFTWARE.
+ */
+
+package org.metaagent.framework.core.tool.executor;
+
+import lombok.extern.slf4j.Slf4j;
+import org.metaagent.framework.core.tool.Tool;
+import org.metaagent.framework.core.tool.ToolContext;
+import org.metaagent.framework.core.tool.ToolDelegate;
+import org.metaagent.framework.core.tool.exception.ToolArgumentException;
+import org.metaagent.framework.core.tool.exception.ToolExecutionError;
+import org.metaagent.framework.core.tool.exception.ToolExecutionException;
+import org.metaagent.framework.core.tool.listener.ToolExecutionListener;
+import org.metaagent.framework.core.tool.listener.ToolExecutionListenerRegistry;
+import org.metaagent.framework.core.tool.tracker.DefaultToolCallRecord;
+import org.metaagent.framework.core.tool.tracker.ToolCallRecord;
+
+import java.util.Objects;
+import java.util.function.Consumer;
+
+/**
+ * Tool execute delegate to handle tool execution with listeners and tracking.
+ *
+ * @param <I> Input type
+ * @param <O> Output type
+ * @author vyckey
+ */
+@Slf4j
+public class ToolExecuteDelegate<I, O> extends ToolDelegate<I, O> {
+    protected final ToolExecutorContext executorContext;
+
+    public ToolExecuteDelegate(Tool<I, O> delegateTool, ToolExecutorContext executorContext) {
+        super(delegateTool);
+        this.executorContext = Objects.requireNonNull(executorContext, "executorContext is required");
+    }
+
+    protected void notifyListeners(ToolExecutionListenerRegistry listenerRegistry,
+                                   Consumer<ToolExecutionListener> consumer) {
+        for (ToolExecutionListener listener : listenerRegistry.getListeners()) {
+            try {
+                consumer.accept(listener);
+            } catch (Exception e) {
+                log.error("Fail to invoke tool listener", e);
+            }
+        }
+    }
+
+    @Override
+    public O run(ToolContext context, I input) throws ToolExecutionException {
+        Tool<I, O> tool = getDelegateTool();
+        ToolExecutionListenerRegistry listenerRegistry = executorContext.getToolListenerRegistry();
+        try {
+            notifyListeners(listenerRegistry, listener -> listener.onToolInput(tool, context, input));
+
+            O output = getDelegateTool().run(executorContext.getToolContext(), input);
+
+            notifyListeners(listenerRegistry, listener -> listener.onToolOutput(tool, context, input, output));
+            return output;
+        } catch (ToolExecutionException e) {
+            notifyListeners(listenerRegistry, listener -> listener.onToolException(tool, context, input, e));
+            throw e;
+        } catch (Exception e) {
+            ToolExecutionError ex = new ToolExecutionError("Call tool " + tool.getName() + " error", e);
+            notifyListeners(listenerRegistry, listener -> listener.onToolException(tool, context, input, ex));
+            throw ex;
+        }
+    }
+
+    @Override
+    public String call(ToolContext context, String input) throws ToolExecutionException {
+        String toolName = getDefinition().name();
+        Tool<I, O> tool = getDelegateTool();
+        ToolExecutionListenerRegistry listenerRegistry = executorContext.getToolListenerRegistry();
+
+        DefaultToolCallRecord.Builder builder = DefaultToolCallRecord.builder()
+                .id(context.getExecutionId())
+                .toolName(toolName)
+                .toolInput(input);
+
+        @SuppressWarnings("unchecked") I[] toolInputHolder = (I[]) new Object[1];
+        String output = null;
+        try {
+            notifyListeners(listenerRegistry, listener ->
+                    listener.onToolInputRequest(tool, context, input)
+            );
+
+            I toolInput = getConverter().inputConverter().convert(input);
+            toolInputHolder[0] = toolInput;
+            O toolOutput = run(context, toolInput);
+
+            notifyListeners(listenerRegistry, listener ->
+                    listener.onToolOutput(tool, context, toolInputHolder[0], toolOutput)
+            );
+            output = getConverter().outputConverter().convert(toolOutput);
+            builder.toolOutput(output);
+        } catch (ToolExecutionException ex) {
+            notifyListeners(listenerRegistry, listener ->
+                    listener.onToolException(tool, context, toolInputHolder[0], ex)
+            );
+            builder.exception(ex);
+
+            output = processException(context, input, ex);
+        } catch (Exception e) {
+            ToolExecutionException ex = new ToolExecutionError("Call tool " + toolName + " fail", e);
+            notifyListeners(listenerRegistry, listener ->
+                    listener.onToolException(tool, context, toolInputHolder[0], ex)
+            );
+            builder.exception(ex);
+
+            output = processException(context, input, ex);
+        } finally {
+            if (output != null) {
+                String finalOutput = output;
+                notifyListeners(listenerRegistry, listener ->
+                        listener.onToolResponse(tool, context, input, finalOutput)
+                );
+            }
+
+            ToolCallRecord callRecord = builder.toolOutput(output).build();
+            executorContext.getToolCallTracker().track(callRecord);
+        }
+        return output;
+    }
+
+    protected String processException(ToolContext context, String input, ToolExecutionException ex) {
+        if (ex instanceof ToolExecutionError error) {
+            StringBuilder sb = new StringBuilder("Unexpected error occurred while calling tool '")
+                    .append(getName()).append("': ").append(error.getMessage());
+            if (error.getCause() != null) {
+                sb.append(". Cause: ").append(error.getCause().getMessage());
+            }
+            sb.append(". Try an alternative approach because the tool may exists an internal error.");
+            return sb.toString();
+        } else if (ex instanceof ToolArgumentException argEx) {
+            return "Invalid argument while calling tool '" + getName() + "': " + argEx.getMessage()
+                    + ". Correct the input and try again.";
+        } else {
+            return "An error occurred while calling tool '" + getName() + "': " + ex.getMessage()
+                    + ". Fix your input if needed and try again.";
+        }
+    }
+}

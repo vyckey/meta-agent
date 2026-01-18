@@ -1,7 +1,7 @@
 /*
  * MIT License
  *
- * Copyright (c) 2025 MetaAgent
+ * Copyright (c) 2026 MetaAgent
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -22,22 +22,12 @@
  * SOFTWARE.
  */
 
-package org.metaagent.framework.core.security.approver;
-
-import org.metaagent.framework.common.metadata.MetadataProvider;
+package org.metaagent.framework.core.agent.observability.event;
 
 /**
- * HumanApprovalInput represents the input required for human approval.
+ * AgentRunEvent represents an event that occurs during an agent run.
  *
- * @param content  The content that needs approval.
- * @param metadata Additional metadata related to the approval request.
  * @author vyckey
  */
-public record HumanApprovalInput(String content, MetadataProvider metadata) {
-    public static final String METADATA_TOOL_NAME = "TOOL_NAME";
-
-    public static HumanApprovalInput ofTool(String toolName, String content, MetadataProvider metadata) {
-        metadata.setProperty(METADATA_TOOL_NAME, toolName);
-        return new HumanApprovalInput(content, metadata);
-    }
+public interface AgentRunEvent extends AgentEvent {
 }

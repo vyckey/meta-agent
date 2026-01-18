@@ -26,79 +26,109 @@ package org.metaagent.framework.core.agents.chat.output;
 
 import org.metaagent.framework.common.metadata.MetadataProvider;
 import org.metaagent.framework.core.agent.chat.message.Message;
-import org.metaagent.framework.core.agents.chat.ChatAgent;
+import reactor.core.publisher.Flux;
 
 import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
 
 /**
- * {@link ChatAgent} output.
+ * Default implementation of {@link ChatOutput}.
  *
  * @author vyckey
  */
-public class DefaultChatOutput implements ChatOutput {
-    private final List<Message> messages;
-    private final String thought;
-    private final MetadataProvider metadata;
+public record DefaultChatOutput(
+        List<Message> messages,
+        String thought,
+        Flux<Message> stream,
+        MetadataProvider metadata
+) implements ChatOutput {
+
+    public DefaultChatOutput {
+        if (messages == null && stream == null) {
+            throw new IllegalArgumentException("messages or stream is required");
+        }
+        if (metadata == null) {
+            metadata = MetadataProvider.empty();
+        }
+    }
 
     public DefaultChatOutput(Builder builder) {
-        this.messages = Objects.requireNonNull(builder.messages, "messages is required");
-        this.thought = builder.thought;
-        this.metadata = builder.metadata != null ? builder.metadata : MetadataProvider.empty();
+        this(builder.messages, builder.thought, builder.stream, builder.metadata);
     }
 
     public DefaultChatOutput(List<Message> messages) {
-        this.messages = Objects.requireNonNull(messages, "messages is required");
-        this.thought = null;
-        this.metadata = MetadataProvider.empty();
+        this(Objects.requireNonNull(messages, "messages is required"), null, null, null);
     }
 
     public static Builder builder() {
         return new Builder();
     }
 
-    public List<Message> messages() {
-        return messages;
-    }
-
-    public String thought() {
-        return thought;
+    public static Builder builder(ChatOutput chatOutput) {
+        return new Builder(chatOutput);
     }
 
     @Override
-    public MetadataProvider metadata() {
-        return metadata;
+    public Flux<Message> stream() {
+        return stream;
     }
 
     @Override
     public String toString() {
-        return messages().stream().map(Message::toString).collect(Collectors.joining("\n"));
+        StringBuilder sb = new StringBuilder("DefaultChatOutput{");
+        if (stream != null) {
+            return sb.append("stream=true").append("}").toString();
+        }
+        if (thought != null) {
+            sb.append("\nthought: ").append(thought);
+        }
+        String messages = messages().stream().map(m -> m + "- " + m).collect(Collectors.joining("\n"));
+        sb.append("\nmessages:\n").append(messages);
+        return sb.append("\n}").toString();
     }
 
-    public static class Builder {
+    public static class Builder implements ChatOutput.Builder {
         private List<Message> messages;
         private String thought;
+        private Flux<Message> stream;
         private MetadataProvider metadata;
 
         private Builder() {
         }
 
+        private Builder(ChatOutput chatOutput) {
+            this.messages = chatOutput.messages();
+            this.thought = chatOutput.thought();
+            this.stream = chatOutput.stream();
+            this.metadata = chatOutput.metadata();
+        }
+
+        @Override
         public Builder messages(List<Message> messages) {
             this.messages = messages;
             return this;
         }
 
+        @Override
         public Builder thought(String thought) {
             this.thought = thought;
             return this;
         }
 
+        @Override
+        public Builder stream(Flux<Message> stream) {
+            this.stream = stream;
+            return this;
+        }
+
+        @Override
         public Builder metadata(MetadataProvider metadata) {
             this.metadata = metadata;
             return this;
         }
 
+        @Override
         public DefaultChatOutput build() {
             return new DefaultChatOutput(this);
         }

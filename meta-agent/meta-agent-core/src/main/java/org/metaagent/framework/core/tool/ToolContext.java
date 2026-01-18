@@ -25,10 +25,14 @@
 package org.metaagent.framework.core.tool;
 
 import org.metaagent.framework.common.abort.AbortSignal;
+import org.metaagent.framework.core.agent.Agent;
 import org.metaagent.framework.core.security.SecurityLevel;
+import org.metaagent.framework.core.security.approval.PermissionApproval;
 import org.metaagent.framework.core.security.approval.PermissionApprovalManager;
 import org.metaagent.framework.core.tool.approval.ToolApprovalRequest;
-import org.metaagent.framework.core.tool.config.ToolConfig;
+import org.metaagent.framework.core.tool.config.ToolExecutionConfig;
+
+import java.nio.file.Path;
 
 /**
  * ToolContext provides the context for tool execution,
@@ -55,11 +59,27 @@ public interface ToolContext {
     }
 
     /**
-     * Gets the tool configuration.
+     * Gets the agent for the tool context.
+     *
+     * @return the agent
+     */
+    <I, O> Agent<I, O> getAgent();
+
+    /**
+     * Gets the tool execution configuration.
      *
      * @return the tool configuration
      */
-    ToolConfig getToolConfig();
+    ToolExecutionConfig getToolExecutionConfig();
+
+    /**
+     * Gets the working directory for executing tools.
+     *
+     * @return the working directory
+     */
+    default Path getWorkingDirectory() {
+        return getToolExecutionConfig().configPaths().currentWorkingDirectory();
+    }
 
     /**
      * Gets the security level for the tool execution.
@@ -76,11 +96,33 @@ public interface ToolContext {
     PermissionApprovalManager<ToolApprovalRequest> getApprovalManager();
 
     /**
+     * Initiates a tool permission approval request and wait for approval, it will block until the request is approved or rejected.
+     *
+     * @param approvalRequest the permission approval request
+     * @return the permission approval
+     */
+    PermissionApproval requestApproval(ToolApprovalRequest approvalRequest);
+
+    /**
      * Gets the abort signal for managing tool execution aborts.
      *
      * @return the abort signal
      */
     AbortSignal getAbortSignal();
+
+    /**
+     * Gets the execution id for the current tool call.
+     *
+     * @return the execution id
+     */
+    String getExecutionId();
+
+    /**
+     * Sets the execution id for the current tool call.
+     *
+     * @param executionId the execution id
+     */
+    void setExecutionId(String executionId);
 
 
     /**
@@ -88,12 +130,20 @@ public interface ToolContext {
      */
     interface Builder {
         /**
-         * Sets the tool configuration for the tool context.
+         * Sets the agent for the tool context.
          *
-         * @param toolConfig the tool configuration
+         * @param agent the agent
          * @return the builder instance
          */
-        Builder toolConfig(ToolConfig toolConfig);
+        Builder agent(Agent<?, ?> agent);
+
+        /**
+         * Sets the tool execution configuration for the tool context.
+         *
+         * @param toolExecutionConfig the tool configuration
+         * @return the builder instance
+         */
+        Builder toolExecutionConfig(ToolExecutionConfig toolExecutionConfig);
 
         /**
          * Sets the security level for the tool context.

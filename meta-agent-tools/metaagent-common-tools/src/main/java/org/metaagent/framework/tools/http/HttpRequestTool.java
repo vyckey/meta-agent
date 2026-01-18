@@ -31,16 +31,23 @@ import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.RequestBody;
 import okhttp3.Response;
+import org.apache.commons.lang3.StringUtils;
 import org.metaagent.framework.common.abort.AbortException;
+import org.metaagent.framework.core.security.approval.ApprovalStatus;
+import org.metaagent.framework.core.security.approval.PermissionApproval;
 import org.metaagent.framework.core.tool.Tool;
 import org.metaagent.framework.core.tool.ToolContext;
+import org.metaagent.framework.core.tool.approval.ToolApprovalRequest;
+import org.metaagent.framework.core.tool.config.ToolPattern;
 import org.metaagent.framework.core.tool.converter.ToolConverter;
 import org.metaagent.framework.core.tool.converter.ToolConverters;
 import org.metaagent.framework.core.tool.definition.ToolDefinition;
 import org.metaagent.framework.core.tool.exception.ToolExecutionException;
+import org.metaagent.framework.core.tool.exception.ToolRejectException;
+import org.metaagent.framework.core.tool.schema.ToolArgsValidator;
 
 import java.io.IOException;
-import java.util.List;
+import java.util.Arrays;
 import java.util.Map;
 import java.util.Objects;
 
@@ -52,7 +59,8 @@ import java.util.Objects;
 @Slf4j
 @Setter
 public class HttpRequestTool implements Tool<HttpRequest, HttpResponse> {
-    private static final ToolDefinition TOOL_DEFINITION = ToolDefinition.builder("http_request")
+    public static final String TOOL_NAME = "http_request";
+    private static final ToolDefinition TOOL_DEFINITION = ToolDefinition.builder(TOOL_NAME)
             .description("Sends a HTTP request and returns the response.")
             .inputSchema(HttpRequest.class)
             .outputSchema(HttpResponse.class)
@@ -61,7 +69,6 @@ public class HttpRequestTool implements Tool<HttpRequest, HttpResponse> {
             .build();
     private static final ToolConverter<HttpRequest, HttpResponse> TOOL_CONVERTER =
             ToolConverters.jsonConverter(HttpRequest.class);
-    private static final List<String> SKIP_APPROVAL_METHODS = List.of("get", "head", "options");
 
     private final OkHttpClient httpClient;
 
@@ -81,6 +88,64 @@ public class HttpRequestTool implements Tool<HttpRequest, HttpResponse> {
     @Override
     public ToolConverter<HttpRequest, HttpResponse> getConverter() {
         return TOOL_CONVERTER;
+    }
+
+    private void validateInput(ToolContext toolContext, HttpRequest request) {
+        ToolArgsValidator.validate(request);
+        for (ToolPattern disallowedTool : toolContext.getToolExecutionConfig().disallowedTools(getName())) {
+            if (matchPattern(request, disallowedTool.pattern())) {
+                throw new ToolRejectException(disallowedTool.toolName(),
+                        "disallowed execution by rule: " + disallowedTool.pattern());
+            }
+        }
+        for (ToolPattern allowedTool : toolContext.getToolExecutionConfig().allowedTools(getName())) {
+            if (matchPattern(request, allowedTool.pattern())) {
+                return;
+            }
+        }
+
+        ToolApprovalRequest approvalRequest = ToolApprovalRequest.builder()
+                .id(toolContext.getExecutionId())
+                .toolName(getName())
+                .input(request)
+                .build();
+        PermissionApproval approvalResult = toolContext.requestApproval(approvalRequest);
+        if (approvalResult.getApprovalStatus() == ApprovalStatus.REJECTED) {
+            throw new ToolRejectException(getName(), "http request was rejected by approval: " + approvalResult.getContent());
+        }
+    }
+
+    /**
+     * Checks if the request matches the given pattern.
+     *
+     * <p>
+     * For example:
+     * <ul>
+     *     <li>http_request(get|head|options)</li>
+     *     <li>http_request(get|head|options https://google\.com/.*)</li>
+     *     <li>http_request(get|head|options https://.*\/github\.com/.*)</li>
+     * </ul>
+     *
+     * @param request the request to check
+     * @param pattern the pattern to match
+     * @return true if the request matches the pattern, false otherwise
+     */
+    private boolean matchPattern(HttpRequest request, String pattern) {
+        if (StringUtils.isEmpty(pattern)) {
+            return true;
+        }
+        pattern = pattern.trim();
+        int whitespaceIndex = pattern.indexOf(' ');
+        if (whitespaceIndex < 0) {
+            return false;
+        }
+        boolean methodMatched = Arrays.stream(pattern.substring(0, whitespaceIndex).trim().split("\\|"))
+                .map(String::trim).anyMatch(method -> method.equalsIgnoreCase(request.method()));
+        if (!methodMatched) {
+            return false;
+        }
+        String urlRegex = pattern.substring(whitespaceIndex + 1).trim();
+        return urlRegex.isEmpty() || request.url().matches(urlRegex);
     }
 
     private Request buildRequest(HttpRequest request) {
@@ -119,6 +184,7 @@ public class HttpRequestTool implements Tool<HttpRequest, HttpResponse> {
 
     @Override
     public HttpResponse run(ToolContext toolContext, HttpRequest request) throws ToolExecutionException {
+        validateInput(toolContext, request);
         Request realRequest = buildRequest(request);
         if (toolContext.getAbortSignal().isAborted()) {
             throw new AbortException("Tool " + getName() + " is cancelled");

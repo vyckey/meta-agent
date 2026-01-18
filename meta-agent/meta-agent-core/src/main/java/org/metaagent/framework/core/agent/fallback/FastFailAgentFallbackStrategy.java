@@ -38,7 +38,7 @@ public class FastFailAgentFallbackStrategy<I, O> implements AgentFallbackStrateg
 
     @Override
     public AgentOutput<O> fallback(MetaAgent<I, O> agent, AgentInput<I> input, Exception exception) {
-        agent.getAgentState().setLastException(exception);
+        agent.getAgentState().getStepState().setLastException(exception);
         if (exception instanceof AgentExecutionException) {
             throw (AgentExecutionException) exception;
         }

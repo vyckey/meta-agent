@@ -26,6 +26,7 @@ package org.metaagent.framework.tools.http;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
+import jakarta.validation.constraints.NotBlank;
 import lombok.Builder;
 import org.metaagent.framework.core.tool.schema.ToolDisplayable;
 
@@ -38,6 +39,7 @@ import java.util.Map;
  */
 @Builder
 public record HttpRequest(
+        @NotBlank(message = "url cannot be blank")
         @JsonProperty(required = true)
         @JsonPropertyDescription("The request URL")
         String url,

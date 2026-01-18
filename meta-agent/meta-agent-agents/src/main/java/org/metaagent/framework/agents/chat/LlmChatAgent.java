@@ -25,9 +25,12 @@
 package org.metaagent.framework.agents.chat;
 
 import com.google.common.collect.Lists;
+import org.apache.commons.lang3.BooleanUtils;
 import org.metaagent.framework.common.metadata.MetadataProvider;
 import org.metaagent.framework.core.agent.AbstractAgentBuilder;
 import org.metaagent.framework.core.agent.AbstractStreamAgent;
+import org.metaagent.framework.core.agent.AgentExecutionException;
+import org.metaagent.framework.core.agent.AgentInterruptedException;
 import org.metaagent.framework.core.agent.chat.conversation.ConversationInMemoryStorage;
 import org.metaagent.framework.core.agent.chat.conversation.ConversationStorage;
 import org.metaagent.framework.core.agent.chat.conversation.DefaultMessageTurn;
@@ -39,13 +42,14 @@ import org.metaagent.framework.core.agent.chat.message.MessageId;
 import org.metaagent.framework.core.agent.chat.message.RoleMessage;
 import org.metaagent.framework.core.agent.input.AgentInput;
 import org.metaagent.framework.core.agent.output.AgentOutput;
-import org.metaagent.framework.core.agent.output.AgentStreamOutput;
+import org.metaagent.framework.core.agent.output.StreamOutput;
 import org.metaagent.framework.core.agent.profile.AgentProfile;
 import org.metaagent.framework.core.agents.chat.ChatAgent;
+import org.metaagent.framework.core.agents.chat.ChatAgentTask;
+import org.metaagent.framework.core.agents.chat.DefaultChatAgentTask;
 import org.metaagent.framework.core.agents.chat.input.ChatInput;
 import org.metaagent.framework.core.agents.chat.input.DefaultChatInput;
 import org.metaagent.framework.core.agents.chat.output.ChatOutput;
-import org.metaagent.framework.core.agents.chat.output.ChatStreamOutput;
 import org.metaagent.framework.core.agents.chat.output.DefaultChatOutput;
 import org.metaagent.framework.core.agents.chat.output.DefaultChatStreamOutput;
 import org.metaagent.framework.core.model.chat.ChatModelClient;
@@ -78,6 +82,13 @@ import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 import java.util.stream.IntStream;
 
@@ -86,12 +97,35 @@ import java.util.stream.IntStream;
  *
  * @author vyckey
  */
-public class LlmChatAgent extends AbstractStreamAgent<ChatInput, ChatOutput, ChatStreamOutput>
-        implements ChatAgent<ChatInput, ChatOutput, ChatStreamOutput> {
+public class LlmChatAgent extends AbstractStreamAgent<ChatInput, ChatOutput, Message>
+        implements ChatAgent<ChatInput, ChatOutput> {
     public static final String DEFAULT_SYSTEM_PROMPT_ID = "framework:chat_agent_system_prompt";
     public static final String DEFAULT_CONTEXT_COMPRESSION_SYSTEM_PROMPT_ID = "framework:chat_agent_context_compression_system_prompt";
     public static final float DEFAULT_CONTEXT_COMPRESSION_RATIO = 0.8f;
     public static final int DEFAULT_COMPRESSION_RESERVED_MESSAGES_COUNT = 5;
+    protected static final ChatAgentTask EXIT_TASK = new DefaultChatAgentTask(
+            AgentInput.create(ChatInput.builder().messages().build())
+    );
+
+    /**
+     * The flag {@code exit} indicates whether the agent should exit.
+     */
+    protected volatile boolean exit = false;
+
+    /**
+     * The flag {@code streaming} indicates whether the agent is currently streaming.
+     * If the agent is currently streaming, we shouldn't process the next input.
+     */
+    protected final Object streamingLock = new Object();
+    protected boolean streaming = false;
+
+    /**
+     * The queue of pending inputs which are waiting to be processed.
+     * The {@code processExecutor} must have only one thread to process
+     * the inputs ensuring the agent only processes one input at a time.
+     */
+    protected BlockingQueue<ChatAgentTask> pendingInputs = new LinkedBlockingQueue<>();
+    protected ExecutorService taskExecutor = Executors.newSingleThreadExecutor();
 
     protected ChatModelProvider modelProvider;
     protected ChatModelClient chatModelClient;
@@ -159,23 +193,161 @@ public class LlmChatAgent extends AbstractStreamAgent<ChatInput, ChatOutput, Cha
 
     @Override
     public void initialize() {
+        if (initialized) {
+            return;
+        }
+
         super.initialize();
-
         conversationStorage.load(conversation);
+        taskExecutor.submit(this::processPendingInputs);
+    }
+
+    private void ensureInitialized() {
+        if (!initialized) {
+            initialize();
+        }
+    }
+
+    /**
+     * Creates a {@link ChatAgentTask} offered to pending queue and waits for the result synchronously.
+     *
+     * @param agentInput the agent input
+     * @return the agent output
+     */
+    @Override
+    public AgentOutput<ChatOutput> run(AgentInput<ChatInput> agentInput) {
+        ensureInitialized();
+
+        ChatAgentTask agentTask = createChatTask(agentInput);
+        try {
+            return agentTask.outputFuture().get();
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            throw new AgentInterruptedException("agent interrupted", e);
+        } catch (ExecutionException e) {
+            Throwable cause = e.getCause() != null ? e.getCause() : e;
+            throw new AgentExecutionException("agent execution failed", cause);
+        }
+    }
+
+    /**
+     * Creates a {@link ChatAgentTask} offered to pending queue and returns a {@link CompletableFuture}
+     * to get the result asynchronously.
+     *
+     * @param agentInput the agent input
+     * @return the agent output
+     */
+    @Override
+    public CompletableFuture<AgentOutput<ChatOutput>> runAsync(AgentInput<ChatInput> agentInput) {
+        ensureInitialized();
+
+        ChatAgentTask agentTask = createChatTask(agentInput);
+        return agentTask.outputFuture();
+    }
+
+    /**
+     * Creates a {@link ChatAgentTask} offered to pending queue and waits for the streaming result synchronously.
+     *
+     * @param agentInput the agent input
+     * @return the agent output
+     */
+    @Override
+    public AgentOutput<ChatOutput> runStream(AgentInput<ChatInput> agentInput) {
+        ensureInitialized();
+
+        ChatInput chatInput = agentInput.input();
+        if (BooleanUtils.isFalse(chatInput.isStreamingEnabled())) {
+            throw new IllegalArgumentException("Streaming is not enabled.");
+        }
+
+        if (BooleanUtils.isTrue(chatInput.isStreamingEnabled())) {
+            return run(agentInput);
+        } else {
+            // Enable streaming for the current input
+            ChatInput newChatInput = DefaultChatInput.builder(chatInput).isStreamingEnabled(true).build();
+            return run(newChatInput);
+        }
+    }
+
+    protected ChatAgentTask createChatTask(AgentInput<ChatInput> agentInput) {
+        ChatAgentTask agentTask = new DefaultChatAgentTask(agentInput);
+        if (!pendingInputs.offer(agentTask)) {
+            throw new AgentExecutionException("Too many pending input task to process.");
+        }
+        return agentTask;
+    }
+
+    protected void processPendingInputs() {
+        while (!exit) {
+            try {
+                // If agent is streaming, we need to wait for the previous task to finish
+                synchronized (streamingLock) {
+                    while (streaming && !exit) {
+                        try {
+                            streamingLock.wait();
+                        } catch (InterruptedException e) {
+                            Thread.currentThread().interrupt();
+                            break;
+                        }
+                    }
+                }
+
+                if (Thread.currentThread().isInterrupted()) {
+                    break;
+                }
+
+                ChatAgentTask agentTask = pendingInputs.take();
+                if (EXIT_TASK.equals(agentTask) || exit) {
+                    break;
+                }
+
+                processChatTask(agentTask);
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+                break;
+            } catch (Exception e) {
+                logger.error("Error processing agent task", e);
+            }
+        }
+    }
+
+    /**
+     * Process a single input task.
+     */
+    protected void processChatTask(ChatAgentTask chatTask) {
+        AgentInput<ChatInput> agentInput = chatTask.input();
+        ChatInput chatInput = agentInput.input();
+        boolean streamingEnabled = BooleanUtils.isTrue(chatInput.isStreamingEnabled());
+        if (streamingEnabled) {
+            try {
+                synchronized (streamingLock) {
+                    streaming = true;
+                }
+                AgentOutput<ChatOutput> agentStreamOutput = super.runStream(agentInput);
+                chatTask.outputFuture().complete(agentStreamOutput);
+            } catch (Exception e) {
+                setStreamingFinished();
+                chatTask.outputFuture().completeExceptionally(e);
+            }
+        } else {
+            try {
+                AgentOutput<ChatOutput> agentOutput = super.run(agentInput);
+                chatTask.outputFuture().complete(agentOutput);
+            } catch (Exception e) {
+                chatTask.outputFuture().completeExceptionally(e);
+            }
+        }
+    }
+
+    protected void setStreamingFinished() {
+        synchronized (streamingLock) {
+            streaming = false;
+            streamingLock.notify();
+        }
     }
 
     @Override
-    public AgentOutput<ChatOutput> run(Message... messages) {
-        return run(DefaultChatInput.builder().messages(messages).build());
-    }
-
-    @Override
-    public AgentStreamOutput<ChatOutput, ChatStreamOutput> runStream(Message... messages) {
-        return runStream(DefaultChatInput.builder().messages(messages).build());
-    }
-
-    @Override
-    protected void beforeRun(AgentInput<ChatInput> agentInput) {
+    protected AgentInput<ChatInput> preprocess(AgentInput<ChatInput> agentInput) {
         // set system prompt
         ChatModelMetadata modelMetadata = modelProvider.getModelMetadata();
         String modelCutoffDate = "Unknown";
@@ -193,6 +365,7 @@ public class LlmChatAgent extends AbstractStreamAgent<ChatInput, ChatOutput, Cha
 
         conversation.newTurn();
         agentInput.input().messages().forEach(conversation::appendMessage);
+        return agentInput;
     }
 
     protected void compressContextIfNeeded(AgentInput<ChatInput> input) {
@@ -267,12 +440,12 @@ public class LlmChatAgent extends AbstractStreamAgent<ChatInput, ChatOutput, Cha
         List<Message> outputMessages = chatModelClient.lastTurnOutputMessages().stream().map(messageConverter::convertTo).toList();
         outputMessages.forEach(conversation::appendMessage);
 
-        DefaultChatOutput agentOutput = DefaultChatOutput.builder().messages(outputMessages).build();
+        ChatOutput agentOutput = ChatOutput.builder().messages(outputMessages).build();
         return AgentOutput.create(agentOutput, ChatModelUtils.getMetadata(chatResponse));
     }
 
     @Override
-    protected AgentStreamOutput<ChatOutput, ChatStreamOutput> stepStream(AgentInput<ChatInput> input, Consumer<AgentOutput<ChatOutput>> onStreamComplete) {
+    protected AgentOutput<ChatOutput> stepStream(AgentInput<ChatInput> input, Consumer<AgentOutput<ChatOutput>> onStreamComplete) {
         compressContextIfNeeded(input);
 
         return super.stepStream(input, agentOutput -> {
@@ -283,19 +456,33 @@ public class LlmChatAgent extends AbstractStreamAgent<ChatInput, ChatOutput, Cha
     }
 
     @Override
-    protected AgentStreamOutput<ChatOutput, ChatStreamOutput> doStepStream(AgentInput<ChatInput> agentInput) {
-        ChatInput input = agentInput.input();
-        Flux<ChatModelResponse> messageFlux = chatModelClient.sendMessageStream(input.messages().stream().map(messageConverter::convert).toList());
-        Flux<ChatStreamOutput> stream = messageFlux.map(chatModelResponse -> {
-            Message message = messageConverter.convertTo(chatModelResponse.getOutput());
-            return new DefaultChatStreamOutput(message, MetadataProvider.empty());
-        });
-        return AgentStreamOutput.create(stream);
+    protected Flux<Message> doRunStreamComplete(Flux<Message> stream) {
+        // Set streaming finished to allow processing next input
+        return super.doRunStreamComplete(stream)
+                .doOnComplete(this::setStreamingFinished)
+                .doOnError(e -> setStreamingFinished());
     }
 
     @Override
-    public AgentStreamOutput.Aggregator<ChatStreamOutput, ChatOutput> getStreamOutputAggregator() {
+    protected AgentOutput<ChatOutput> doStepStream(AgentInput<ChatInput> agentInput) {
+        ChatInput input = agentInput.input();
+        Flux<ChatModelResponse> messageFlux = chatModelClient.sendMessageStream(input.messages().stream().map(messageConverter::convert).toList());
+        Flux<Message> stream = messageFlux.map(chatModelResponse -> {
+            return messageConverter.convertTo(chatModelResponse.getOutput());
+        });
+        ChatOutput chatOutput = ChatOutput.builder().stream(stream).build();
+        return AgentOutput.create(chatOutput);
+    }
+
+    @Override
+    public StreamOutput.Aggregator<Message, ChatOutput> getStreamOutputAggregator() {
         return DefaultChatStreamOutput.aggregator();
+    }
+
+    @Override
+    protected AgentOutput<ChatOutput> rebuildOutput(AgentInput<ChatInput> input, AgentOutput<ChatOutput> agentOutput, Flux<Message> stream) {
+        ChatOutput chatOutput = DefaultChatOutput.builder(agentOutput.result()).stream(stream).build();
+        return AgentOutput.create(chatOutput, agentOutput.metadata());
     }
 
     @Override
@@ -307,12 +494,26 @@ public class LlmChatAgent extends AbstractStreamAgent<ChatInput, ChatOutput, Cha
 
     @Override
     public void close() {
+        exit = true;
+        pendingInputs.clear();
+        pendingInputs.offer(EXIT_TASK);
+
         this.conversationStorage.store(conversation);
         try {
             this.conversationStorage.close();
             this.compressedConversationStorage.close();
         } catch (IOException e) {
             logger.error("Failed to close conversation storage", e);
+        }
+
+        taskExecutor.shutdown();
+        try {
+            if (!taskExecutor.awaitTermination(10, TimeUnit.SECONDS)) {
+                taskExecutor.shutdownNow();
+            }
+        } catch (InterruptedException e) {
+            logger.error("Failed to shutdown process executor", e);
+            Thread.currentThread().interrupt();
         }
     }
 

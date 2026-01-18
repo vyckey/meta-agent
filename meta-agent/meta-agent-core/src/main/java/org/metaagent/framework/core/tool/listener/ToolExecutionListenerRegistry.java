@@ -24,43 +24,48 @@
 
 package org.metaagent.framework.core.tool.listener;
 
-import org.metaagent.framework.core.tool.Tool;
-import org.metaagent.framework.core.tool.exception.ToolExecutionException;
+import java.util.List;
 
 /**
- * Listener interface for tool execution events.
- * Provides methods to handle input, output, and exceptions during tool execution.
+ * Registry for managing ToolExecuteListener instances.
  *
  * @author vyckey
  */
-public interface ToolExecuteListener {
+public interface ToolExecutionListenerRegistry {
     /**
-     * Called when a tool receives input.
+     * Creates a new ToolExecutionListenerRegistry instance.
      *
-     * @param tool  the tool that received the input
-     * @param input the input provided to the tool
-     * @param <I>   the type of the input
+     * @return a new ToolExecutionListenerRegistry instance
      */
-    <I> void onToolInput(Tool<I, ?> tool, I input);
+    static ToolExecutionListenerRegistry create() {
+        DefaultToolExecutionListenerRegistry registry = new DefaultToolExecutionListenerRegistry();
+        registry.registerDefaultListeners();
+        return registry;
+    }
 
     /**
-     * Called when a tool produces output.
+     * Retrieves the list of registered ToolExecuteListener instances.
      *
-     * @param tool   the tool that produced the output
-     * @param input  the input provided to the tool
-     * @param output the output produced by the tool
-     * @param <I>    the type of the input
-     * @param <O>    the type of the output
+     * @return List of ToolExecuteListener
      */
-    <I, O> void onToolOutput(Tool<I, O> tool, I input, O output);
+    List<ToolExecutionListener> getListeners();
 
     /**
-     * Called when a tool execution results in an exception.
+     * Registers a ToolExecuteListener instance.
      *
-     * @param tool      the tool that encountered the exception
-     * @param input     the input provided to the tool
-     * @param exception the exception thrown during tool execution
-     * @param <I>       the type of the input
+     * @param listener the ToolExecuteListener to register
      */
-    <I> void onToolException(Tool<I, ?> tool, I input, ToolExecutionException exception);
+    void registerListener(ToolExecutionListener listener);
+
+    /**
+     * Unregisters a ToolExecuteListener instance.
+     *
+     * @param listener the ToolExecuteListener to unregister
+     */
+    void unregisterListener(ToolExecutionListener listener);
+
+    /**
+     * Unregisters all ToolExecuteListener instances.
+     */
+    void removeAllListeners();
 }

@@ -44,11 +44,26 @@ public abstract class FileUtils {
         }
     }
 
+    public static Path toNormalizedAbsolutePath(Path path) {
+        if (path.isAbsolute()) {
+            return path.normalize();
+        }
+        return path.toAbsolutePath().normalize();
+    }
+
+    public static boolean inFileDirectory(Path filePath, Path directory) {
+        Path normalizedDirectory = toNormalizedAbsolutePath(directory);
+        if (!normalizedDirectory.toFile().isDirectory()) {
+            throw new IllegalArgumentException("parameter `directory` must be a directory");
+        }
+        return toNormalizedAbsolutePath(filePath).startsWith(normalizedDirectory);
+    }
+
     public static Path resolvePath(Path workingDirectory, Path filePath) {
         if (filePath.isAbsolute()) {
-            return filePath.normalize().toAbsolutePath();
+            return filePath.normalize();
         }
-        return workingDirectory.resolve(filePath).normalize().toAbsolutePath();
+        return toNormalizedAbsolutePath(workingDirectory.resolve(filePath));
     }
 
     public static List<Path> resolvePaths(Path directory, List<String> paths, boolean allowNotFound)
@@ -58,8 +73,7 @@ public abstract class FileUtils {
         }
         List<Path> filePaths = new ArrayList<>(paths.size());
         for (String path : paths) {
-            Path filePath = Path.of(path);
-            filePath = filePath.isAbsolute() ? filePath : directory.resolve(filePath);
+            Path filePath = resolvePath(directory, Path.of(path));
             if (filePath.toFile().exists()) {
                 filePaths.add(filePath);
             } else if (allowNotFound) {
@@ -67,6 +81,21 @@ public abstract class FileUtils {
             }
         }
         return filePaths;
+    }
+
+    public static boolean matchPath(Path path, String pattern) {
+        String sepPath = path.toString().replace('\\', '/');
+
+        String regex = pattern
+                .replace('\\', '/')
+                .replace(".", "\\.")
+                .replace("**", "{DOUBLE_STAR}")
+                .replace("*", "[^/]*")
+                .replace("{DOUBLE_STAR}/", "(?:.*/)?")
+                .replace("{DOUBLE_STAR}", ".*");
+        regex = "^" + regex + "$";
+
+        return sepPath.matches(regex);
     }
 
     public static String formatFileSize(long byteSize) {

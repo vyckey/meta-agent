@@ -28,13 +28,19 @@ import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import org.jetbrains.annotations.NotNull;
 import org.metaagent.framework.common.abort.AbortException;
+import org.metaagent.framework.core.security.approval.ApprovalStatus;
+import org.metaagent.framework.core.security.approval.PermissionApproval;
 import org.metaagent.framework.core.tool.Tool;
 import org.metaagent.framework.core.tool.ToolContext;
+import org.metaagent.framework.core.tool.approval.ToolApprovalRequest;
 import org.metaagent.framework.core.tool.converter.ToolConverter;
 import org.metaagent.framework.core.tool.converter.ToolConverters;
 import org.metaagent.framework.core.tool.definition.ToolDefinition;
+import org.metaagent.framework.core.tool.exception.ToolArgumentException;
 import org.metaagent.framework.core.tool.exception.ToolExecutionException;
-import org.metaagent.framework.core.tool.exception.ToolParameterException;
+import org.metaagent.framework.core.tool.exception.ToolRejectException;
+import org.metaagent.framework.core.tool.schema.ToolArgsValidator;
+import org.metaagent.framework.tools.file.AbstractFileTool;
 import org.metaagent.framework.tools.file.util.FileUtils;
 
 import java.io.File;
@@ -49,7 +55,9 @@ import java.nio.file.Path;
  */
 @Slf4j
 @Setter
-public class WriteTextFileTool implements Tool<WriteTextFileInput, WriteTextFileOutput> {
+public class WriteTextFileTool extends AbstractFileTool<WriteTextFileInput, WriteTextFileOutput>
+        implements Tool<WriteTextFileInput, WriteTextFileOutput> {
+    public static final String TOOL_NAME = "write_text_file";
     private static final ToolDefinition TOOL_DEFINITION = ToolDefinition
             .builder("write_text_file")
             .description("Write text content to a specified file")
@@ -71,24 +79,43 @@ public class WriteTextFileTool implements Tool<WriteTextFileInput, WriteTextFile
         return TOOL_CONVERTER;
     }
 
+    private Path validateInput(ToolContext toolContext, WriteTextFileInput input) {
+        ToolArgsValidator.validate(input);
+
+        Path filePath = FileUtils.resolvePath(toolContext.getWorkingDirectory(), Path.of(input.getFilePath()));
+        if (filePath.toFile().isDirectory()) {
+            throw new ToolArgumentException("filePath cannot be a directory");
+        }
+
+        if (!checkFileAccessible(toolContext, filePath)) {
+            ToolApprovalRequest approvalRequest = ToolApprovalRequest.builder()
+                    .id(toolContext.getExecutionId())
+                    .toolName(getName())
+                    .approvalContent("Request write file: " + filePath)
+                    .input(input)
+                    .build();
+            PermissionApproval approvalResult = toolContext.requestApproval(approvalRequest);
+            if (approvalResult.getApprovalStatus() == ApprovalStatus.REJECTED) {
+                throw new ToolRejectException(getName(), "user rejected to write file '" + filePath + "'");
+            }
+        }
+        return filePath;
+    }
+
     @Override
     public WriteTextFileOutput run(ToolContext toolContext, WriteTextFileInput input) throws ToolExecutionException {
         if (toolContext.getAbortSignal().isAborted()) {
             throw new AbortException("Tool " + getName() + " is cancelled");
         }
 
+        Path filePath = validateInput(toolContext, input);
         final String content = input.getContent() == null ? "" : input.getContent();
-        Path filePath = FileUtils.resolvePath(toolContext.getToolConfig().workingDirectory(), Path.of(input.getFilePath()));
 
         if (toolContext.getAbortSignal().isAborted()) {
             throw new AbortException("Tool " + getName() + " is cancelled");
         }
 
         try {
-            if (!filePath.isAbsolute()) {
-                throw new IOException("File path is not absolute: " + input.getFilePath());
-            }
-
             File file = createFileIfNotExists(filePath);
             try (FileWriter writer = new FileWriter(file, input.isAppend())) {
                 writer.write(content);
@@ -106,7 +133,7 @@ public class WriteTextFileTool implements Tool<WriteTextFileInput, WriteTextFile
         File file = new File(filePath.toString());
         if (file.exists()) {
             if (!file.isFile()) {
-                throw new ToolParameterException("File is a directory");
+                throw new ToolArgumentException("File is a directory");
             }
         } else {
             if (!file.getParentFile().mkdirs()) {

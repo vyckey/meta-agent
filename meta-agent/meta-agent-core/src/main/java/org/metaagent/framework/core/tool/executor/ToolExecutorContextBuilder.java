@@ -25,7 +25,7 @@
 package org.metaagent.framework.core.tool.executor;
 
 import org.metaagent.framework.core.tool.ToolContext;
-import org.metaagent.framework.core.tool.listener.ToolExecuteListenerRegistry;
+import org.metaagent.framework.core.tool.listener.ToolExecutionListenerRegistry;
 import org.metaagent.framework.core.tool.manager.ToolManager;
 import org.metaagent.framework.core.tool.tracker.ToolCallTracker;
 
@@ -49,7 +49,7 @@ public interface ToolExecutorContextBuilder {
      * @param toolListenerRegistry the execution listener registry to use
      * @return this builder
      */
-    ToolExecutorContextBuilder toolListenerRegistry(ToolExecuteListenerRegistry toolListenerRegistry);
+    ToolExecutorContextBuilder toolListenerRegistry(ToolExecutionListenerRegistry toolListenerRegistry);
 
     /**
      * Set the {@link ToolCallTracker} to use.
