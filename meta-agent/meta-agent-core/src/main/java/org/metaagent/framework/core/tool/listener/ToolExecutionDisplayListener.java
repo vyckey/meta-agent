@@ -31,11 +31,11 @@ import org.metaagent.framework.core.tool.schema.ToolDisplayable;
 import org.slf4j.Logger;
 
 @Slf4j
-public class ToolExecuteDisplayListener implements ToolExecuteListener {
+public class ToolExecutionDisplayListener implements ToolExecutionListener {
     private static final Logger logger = Tool.logger;
-    public static final ToolExecuteDisplayListener INSTANCE = new ToolExecuteDisplayListener();
+    public static final ToolExecutionDisplayListener INSTANCE = new ToolExecutionDisplayListener();
 
-    private ToolExecuteDisplayListener() {
+    private ToolExecutionDisplayListener() {
     }
 
     @Override

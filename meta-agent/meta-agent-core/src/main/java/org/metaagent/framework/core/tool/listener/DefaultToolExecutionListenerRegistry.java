@@ -36,23 +36,23 @@ import java.util.Objects;
  *
  * @author vyckey
  */
-public class DefaultToolExecuteListenerRegistry implements ToolExecuteListenerRegistry {
-    public static volatile DefaultToolExecuteListenerRegistry instance;
-    private final List<ToolExecuteListener> listeners;
+public class DefaultToolExecutionListenerRegistry implements ToolExecutionListenerRegistry {
+    public static volatile DefaultToolExecutionListenerRegistry instance;
+    private final List<ToolExecutionListener> listeners;
 
-    public DefaultToolExecuteListenerRegistry(List<ToolExecuteListener> listeners) {
+    public DefaultToolExecutionListenerRegistry(List<ToolExecutionListener> listeners) {
         this.listeners = Objects.requireNonNull(listeners, "listeners cannot be null");
     }
 
-    public DefaultToolExecuteListenerRegistry() {
+    public DefaultToolExecutionListenerRegistry() {
         this.listeners = Lists.newArrayList();
     }
 
-    public static DefaultToolExecuteListenerRegistry getInstance() {
+    public static DefaultToolExecutionListenerRegistry getInstance() {
         if (instance == null) {
-            synchronized (DefaultToolExecuteListenerRegistry.class) {
+            synchronized (DefaultToolExecutionListenerRegistry.class) {
                 if (instance == null) {
-                    instance = new DefaultToolExecuteListenerRegistry();
+                    instance = new DefaultToolExecutionListenerRegistry();
                     instance.registerDefaultListeners();
                 }
             }
@@ -61,21 +61,21 @@ public class DefaultToolExecuteListenerRegistry implements ToolExecuteListenerRe
     }
 
     public void registerDefaultListeners() {
-        registerListener(ToolExecuteDisplayListener.INSTANCE);
+        registerListener(ToolExecutionDisplayListener.INSTANCE);
     }
 
     @Override
-    public List<ToolExecuteListener> getListeners() {
+    public List<ToolExecutionListener> getListeners() {
         return listeners;
     }
 
     @Override
-    public void registerListener(ToolExecuteListener listener) {
+    public void registerListener(ToolExecutionListener listener) {
         listeners.add(listener);
     }
 
     @Override
-    public void unregisterListener(ToolExecuteListener listener) {
+    public void unregisterListener(ToolExecutionListener listener) {
         listeners.remove(listener);
     }
 

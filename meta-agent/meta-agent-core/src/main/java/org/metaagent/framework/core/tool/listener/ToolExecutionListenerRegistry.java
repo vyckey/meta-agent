@@ -31,33 +31,33 @@ import java.util.List;
  *
  * @author vyckey
  */
-public interface ToolExecuteListenerRegistry {
+public interface ToolExecutionListenerRegistry {
     /**
      * Default instance of ToolExecuteListenerRegistry.
      * This is a singleton instance that can be used throughout the application.
      */
-    ToolExecuteListenerRegistry DEFAULT = DefaultToolExecuteListenerRegistry.getInstance();
+    ToolExecutionListenerRegistry DEFAULT = DefaultToolExecutionListenerRegistry.getInstance();
 
     /**
      * Retrieves the list of registered ToolExecuteListener instances.
      *
      * @return List of ToolExecuteListener
      */
-    List<ToolExecuteListener> getListeners();
+    List<ToolExecutionListener> getListeners();
 
     /**
      * Registers a ToolExecuteListener instance.
      *
      * @param listener the ToolExecuteListener to register
      */
-    void registerListener(ToolExecuteListener listener);
+    void registerListener(ToolExecutionListener listener);
 
     /**
      * Unregisters a ToolExecuteListener instance.
      *
      * @param listener the ToolExecuteListener to unregister
      */
-    void unregisterListener(ToolExecuteListener listener);
+    void unregisterListener(ToolExecutionListener listener);
 
     /**
      * Unregisters all ToolExecuteListener instances.

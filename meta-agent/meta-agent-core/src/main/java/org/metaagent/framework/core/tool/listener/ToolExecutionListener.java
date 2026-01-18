@@ -33,7 +33,7 @@ import org.metaagent.framework.core.tool.exception.ToolExecutionException;
  *
  * @author vyckey
  */
-public interface ToolExecuteListener {
+public interface ToolExecutionListener {
     /**
      * Called when a tool receives call.
      *

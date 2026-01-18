@@ -28,7 +28,7 @@ import org.metaagent.framework.common.abort.AbortSignal;
 import org.metaagent.framework.core.agent.action.executor.ActionExecutor;
 import org.metaagent.framework.core.environment.Environment;
 import org.metaagent.framework.core.tool.executor.ToolExecutor;
-import org.metaagent.framework.core.tool.listener.ToolExecuteListenerRegistry;
+import org.metaagent.framework.core.tool.listener.ToolExecutionListenerRegistry;
 
 import java.util.concurrent.Executor;
 
@@ -58,10 +58,10 @@ public interface AgentExecutionContextBuilder {
     /**
      * Sets the tool execute listener registry for the agent execution context
      *
-     * @param toolExecuteListenerRegistry the registry for tool execute listeners
+     * @param toolExecutionListenerRegistry the registry for tool execute listeners
      * @return this builder instance for method chaining
      */
-    AgentExecutionContextBuilder toolListenerRegistry(ToolExecuteListenerRegistry toolExecuteListenerRegistry);
+    AgentExecutionContextBuilder toolListenerRegistry(ToolExecutionListenerRegistry toolExecutionListenerRegistry);
 
     /**
      * Sets the action executor for the agent execution context

@@ -32,7 +32,7 @@ import org.metaagent.framework.core.agent.action.executor.SyncActionExecutor;
 import org.metaagent.framework.core.environment.Environment;
 import org.metaagent.framework.core.tool.executor.DefaultToolExecutor;
 import org.metaagent.framework.core.tool.executor.ToolExecutor;
-import org.metaagent.framework.core.tool.listener.ToolExecuteListenerRegistry;
+import org.metaagent.framework.core.tool.listener.ToolExecutionListenerRegistry;
 
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
@@ -46,7 +46,7 @@ import java.util.concurrent.Executors;
 public class DefaultAgentExecutionContext implements AgentExecutionContext {
     private final Environment environment;
     private final ToolExecutor toolExecutor;
-    private final ToolExecuteListenerRegistry toolListenerRegistry;
+    private final ToolExecutionListenerRegistry toolListenerRegistry;
     private final ActionExecutor actionExecutor;
     private final AbortSignal abortSignal;
     private final Executor executor;
@@ -71,7 +71,7 @@ public class DefaultAgentExecutionContext implements AgentExecutionContext {
     public static final class Builder implements AgentExecutionContextBuilder {
         private Environment environment;
         private ToolExecutor toolExecutor;
-        private ToolExecuteListenerRegistry toolListenerRegistry;
+        private ToolExecutionListenerRegistry toolListenerRegistry;
         private ActionExecutor actionExecutor;
         private AbortSignal abortSignal;
         private Executor executor;
@@ -101,8 +101,8 @@ public class DefaultAgentExecutionContext implements AgentExecutionContext {
         }
 
         @Override
-        public Builder toolListenerRegistry(ToolExecuteListenerRegistry toolExecuteListenerRegistry) {
-            this.toolListenerRegistry = toolExecuteListenerRegistry;
+        public Builder toolListenerRegistry(ToolExecutionListenerRegistry toolExecutionListenerRegistry) {
+            this.toolListenerRegistry = toolExecutionListenerRegistry;
             return this;
         }
 
@@ -129,7 +129,7 @@ public class DefaultAgentExecutionContext implements AgentExecutionContext {
                 this.toolExecutor = DefaultToolExecutor.INSTANCE;
             }
             if (toolListenerRegistry == null) {
-                this.toolListenerRegistry = ToolExecuteListenerRegistry.DEFAULT;
+                this.toolListenerRegistry = ToolExecutionListenerRegistry.DEFAULT;
             }
             if (actionExecutor == null) {
                 actionExecutor = SyncActionExecutor.INSTANCE;

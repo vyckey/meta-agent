@@ -31,8 +31,8 @@ import org.metaagent.framework.core.tool.ToolDelegate;
 import org.metaagent.framework.core.tool.exception.ToolArgumentException;
 import org.metaagent.framework.core.tool.exception.ToolExecutionError;
 import org.metaagent.framework.core.tool.exception.ToolExecutionException;
-import org.metaagent.framework.core.tool.listener.ToolExecuteListener;
-import org.metaagent.framework.core.tool.listener.ToolExecuteListenerRegistry;
+import org.metaagent.framework.core.tool.listener.ToolExecutionListener;
+import org.metaagent.framework.core.tool.listener.ToolExecutionListenerRegistry;
 import org.metaagent.framework.core.tool.tracker.DefaultToolCallRecord;
 import org.metaagent.framework.core.tool.tracker.ToolCallRecord;
 
@@ -55,9 +55,9 @@ public class ToolExecuteDelegate<I, O> extends ToolDelegate<I, O> {
         this.executorContext = Objects.requireNonNull(executorContext, "executorContext is required");
     }
 
-    protected void notifyListeners(ToolExecuteListenerRegistry listenerRegistry,
-                                   Consumer<ToolExecuteListener> consumer) {
-        for (ToolExecuteListener listener : listenerRegistry.getListeners()) {
+    protected void notifyListeners(ToolExecutionListenerRegistry listenerRegistry,
+                                   Consumer<ToolExecutionListener> consumer) {
+        for (ToolExecutionListener listener : listenerRegistry.getListeners()) {
             try {
                 consumer.accept(listener);
             } catch (Exception e) {
@@ -69,7 +69,7 @@ public class ToolExecuteDelegate<I, O> extends ToolDelegate<I, O> {
     @Override
     public O run(ToolContext context, I input) throws ToolExecutionException {
         Tool<I, O> tool = getDelegateTool();
-        ToolExecuteListenerRegistry listenerRegistry = executorContext.getToolListenerRegistry();
+        ToolExecutionListenerRegistry listenerRegistry = executorContext.getToolListenerRegistry();
         try {
             notifyListeners(listenerRegistry, listener -> listener.onToolInput(tool, input));
 
@@ -91,7 +91,7 @@ public class ToolExecuteDelegate<I, O> extends ToolDelegate<I, O> {
     public String call(ToolContext context, String input) throws ToolExecutionException {
         String toolName = getDefinition().name();
         Tool<I, O> tool = getDelegateTool();
-        ToolExecuteListenerRegistry listenerRegistry = executorContext.getToolListenerRegistry();
+        ToolExecutionListenerRegistry listenerRegistry = executorContext.getToolListenerRegistry();
 
         DefaultToolCallRecord.Builder builder = DefaultToolCallRecord.builder()
                 .id(context.getExecutionId())
