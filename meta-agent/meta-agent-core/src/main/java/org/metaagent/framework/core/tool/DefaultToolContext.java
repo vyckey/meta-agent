@@ -27,6 +27,7 @@ package org.metaagent.framework.core.tool;
 import lombok.Getter;
 import org.metaagent.framework.common.abort.AbortController;
 import org.metaagent.framework.common.abort.AbortSignal;
+import org.metaagent.framework.core.agent.Agent;
 import org.metaagent.framework.core.security.SecurityLevel;
 import org.metaagent.framework.core.security.approval.AsyncEventPermissionApprovalManager;
 import org.metaagent.framework.core.security.approval.PermissionApproval;
@@ -51,6 +52,7 @@ import java.util.concurrent.ForkJoinPool;
  */
 @Getter
 public class DefaultToolContext implements ToolContext {
+    private final Agent<?, ?> agent;
     private final ToolExecutionConfig toolExecutionConfig;
     private final Path workingDirectory;
     private final SecurityLevel securityLevel;
@@ -59,6 +61,7 @@ public class DefaultToolContext implements ToolContext {
     private String executionId;
 
     protected DefaultToolContext(Builder builder) {
+        this.agent = builder.agent;
         this.toolExecutionConfig = Objects.requireNonNull(builder.toolExecutionConfig, "ToolExecutionConfig must not be null");
         this.workingDirectory = Optional.ofNullable(builder.workingDirectory).orElse(defaultWorkingDirectory());
         this.securityLevel = Objects.requireNonNull(builder.securityLevel, "SecurityLevel must not be null");
@@ -76,6 +79,11 @@ public class DefaultToolContext implements ToolContext {
 
     public static Builder builder() {
         return new Builder();
+    }
+
+    public <I, O> Agent<I, O> getAgent() {
+        //noinspection unchecked
+        return (Agent<I, O>) agent;
     }
 
     @Override
@@ -98,11 +106,18 @@ public class DefaultToolContext implements ToolContext {
     }
 
     public static class Builder implements ToolContext.Builder {
+        private Agent<?, ?> agent;
         private ToolExecutionConfig toolExecutionConfig;
         private Path workingDirectory;
         private SecurityLevel securityLevel;
         private PermissionApprovalManager<ToolApprovalRequest> approvalManager;
         private AbortSignal abortSignal;
+
+        @Override
+        public ToolContext.Builder agent(Agent<?, ?> agent) {
+            this.agent = agent;
+            return this;
+        }
 
         @Override
         public ToolContext.Builder toolExecutionConfig(ToolExecutionConfig toolExecutionConfig) {

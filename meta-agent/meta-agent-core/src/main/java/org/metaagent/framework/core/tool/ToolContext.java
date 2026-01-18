@@ -25,6 +25,7 @@
 package org.metaagent.framework.core.tool;
 
 import org.metaagent.framework.common.abort.AbortSignal;
+import org.metaagent.framework.core.agent.Agent;
 import org.metaagent.framework.core.security.SecurityLevel;
 import org.metaagent.framework.core.security.approval.PermissionApproval;
 import org.metaagent.framework.core.security.approval.PermissionApprovalManager;
@@ -56,6 +57,13 @@ public interface ToolContext {
     static Builder builder() {
         return DefaultToolContext.builder();
     }
+
+    /**
+     * Gets the agent for the tool context.
+     *
+     * @return the agent
+     */
+    <I, O> Agent<I, O> getAgent();
 
     /**
      * Gets the tool execution configuration.
@@ -125,6 +133,14 @@ public interface ToolContext {
      * Builder interface for constructing ToolContext instances.
      */
     interface Builder {
+        /**
+         * Sets the agent for the tool context.
+         *
+         * @param agent the agent
+         * @return the builder instance
+         */
+        Builder agent(Agent<?, ?> agent);
+
         /**
          * Sets the tool execution configuration for the tool context.
          *

@@ -33,10 +33,15 @@ import java.util.List;
  */
 public interface ToolExecutionListenerRegistry {
     /**
-     * Default instance of ToolExecuteListenerRegistry.
-     * This is a singleton instance that can be used throughout the application.
+     * Creates a new ToolExecutionListenerRegistry instance.
+     *
+     * @return a new ToolExecutionListenerRegistry instance
      */
-    ToolExecutionListenerRegistry DEFAULT = DefaultToolExecutionListenerRegistry.getInstance();
+    static ToolExecutionListenerRegistry create() {
+        DefaultToolExecutionListenerRegistry registry = new DefaultToolExecutionListenerRegistry();
+        registry.registerDefaultListeners();
+        return registry;
+    }
 
     /**
      * Retrieves the list of registered ToolExecuteListener instances.

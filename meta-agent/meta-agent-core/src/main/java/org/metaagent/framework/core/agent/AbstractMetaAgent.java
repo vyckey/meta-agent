@@ -24,14 +24,12 @@
 
 package org.metaagent.framework.core.agent;
 
-import com.google.common.collect.Lists;
 import org.metaagent.framework.core.agent.fallback.AgentFallbackStrategy;
 import org.metaagent.framework.core.agent.fallback.FastFailAgentFallbackStrategy;
 import org.metaagent.framework.core.agent.input.AgentInput;
 import org.metaagent.framework.core.agent.memory.EmptyMemory;
 import org.metaagent.framework.core.agent.memory.Memory;
 import org.metaagent.framework.core.agent.observability.AgentEventBus;
-import org.metaagent.framework.core.agent.observability.AgentEventListener;
 import org.metaagent.framework.core.agent.observability.AgentListenerRegistry;
 import org.metaagent.framework.core.agent.observability.AgentLogListener;
 import org.metaagent.framework.core.agent.observability.AgentLogger;
@@ -60,18 +58,18 @@ import java.util.function.Consumer;
  * @param <O> the type of agent output
  * @author vyckey
  */
-public abstract class AbstractMetaAgent<I, O> implements AgentListenerRegistry<I, O>, MetaAgent<I, O> {
+public abstract class AbstractMetaAgent<I, O> implements MetaAgent<I, O> {
 
     protected String agentName;
     protected AgentProfile profile;
     protected AgentState agentState;
     protected Memory memory;
     protected AgentEventBus<AgentEvent> eventBus;
-    protected final List<AgentRunListener<I, O>> runListeners = Lists.newCopyOnWriteArrayList();
-    protected final List<AgentStepListener<I, O>> stepListeners = Lists.newCopyOnWriteArrayList();
     protected boolean initialized = false;
     protected AgentLogger agentLogger;
     protected Logger logger = LoggerFactory.getLogger(getClass());
+    protected AgentLogListener<I, O> logListener;
+    protected AgentRunListener<I, O> runEventPublisher;
 
     protected AbstractMetaAgent(String name) {
         this.agentName = name;
@@ -121,58 +119,20 @@ public abstract class AbstractMetaAgent<I, O> implements AgentListenerRegistry<I
             return;
         }
 
-        // Register log listener to capture agent logs
-        AgentLogListener<I, O> logListener = new AgentLogListener<>(agentState, agentLogger);
-        registerRunListener(logListener);
-        registerStepListener(logListener);
-        // Register agent run event publisher
-        registerRunListener(new AgentRunEventPublisher<>(eventBus));
+        this.logListener = new AgentLogListener<>(agentState, agentLogger);
+        this.runEventPublisher = new AgentRunEventPublisher<>(eventBus);
+
         initialized = true;
     }
 
-    @Override
-    public void registerRunListener(AgentRunListener<I, O> listener) {
-        runListeners.add(listener);
+    protected List<AgentRunListener<I, O>> getRunListeners(AgentInput<I> agentInput) {
+        AgentListenerRegistry<I, O> listenerRegistry = agentInput.context().getAgentListenerRegistry();
+        return listenerRegistry.getRunListeners();
     }
 
-    @Override
-    public void unregisterRunListener(AgentRunListener<I, O> listener) {
-        runListeners.remove(listener);
-    }
-
-    @Override
-    public void unregisterRunListeners() {
-        runListeners.clear();
-    }
-
-    @Override
-    public void registerStepListener(AgentStepListener<I, O> listener) {
-        stepListeners.add(listener);
-    }
-
-    @Override
-    public void unregisterStepListener(AgentStepListener<I, O> listener) {
-        stepListeners.remove(listener);
-    }
-
-    @Override
-    public void unregisterStepListeners() {
-        stepListeners.clear();
-    }
-
-    @Override
-    public void registerEventListener(AgentEventListener<AgentEvent> listener) {
-        eventBus.subscribe(listener);
-    }
-
-    @Override
-    public void unregisterEventListener(AgentEventListener<AgentEvent> listener) {
-        eventBus.unsubscribe(listener);
-    }
-
-    @Override
-    public void unregisterEventListeners() {
-        eventBus.unsubscribeAll();
+    protected List<AgentStepListener<I, O>> getStepListeners(AgentInput<I> agentInput) {
+        AgentListenerRegistry<I, O> listenerRegistry = agentInput.context().getAgentListenerRegistry();
+        return listenerRegistry.getStepListeners();
     }
 
     protected <T> void notifyListeners(Iterable<T> listeners, Consumer<T> consumer) {
@@ -236,6 +196,16 @@ public abstract class AbstractMetaAgent<I, O> implements AgentListenerRegistry<I
         if (!initialized) {
             initialize();
         }
+        AgentListenerRegistry<I, O> listenerRegistry = input.context().getAgentListenerRegistry();
+        if (!listenerRegistry.getRunListeners().contains(logListener)) {
+            listenerRegistry.registerRunListener(logListener);
+        }
+        if (!listenerRegistry.getStepListeners().contains(logListener)) {
+            listenerRegistry.registerStepListener(logListener);
+        }
+        if (!listenerRegistry.getRunListeners().contains(runEventPublisher)) {
+            listenerRegistry.registerRunListener(runEventPublisher);
+        }
         return input;
     }
 
@@ -243,6 +213,7 @@ public abstract class AbstractMetaAgent<I, O> implements AgentListenerRegistry<I
     public AgentOutput<O> run(AgentInput<I> agentInput) {
         return performRun(() -> {
             AgentInput<I> input = preprocess(agentInput);
+            List<AgentRunListener<I, O>> runListeners = getRunListeners(input);
             try {
                 notifyListeners(runListeners, listener -> listener.onAgentStart(this, input));
 
@@ -267,6 +238,7 @@ public abstract class AbstractMetaAgent<I, O> implements AgentListenerRegistry<I
 
     @Override
     public AgentOutput<O> step(AgentInput<I> input) {
+        List<AgentStepListener<I, O>> stepListeners = getStepListeners(input);
         try {
             notifyListeners(stepListeners, listener -> listener.onAgentStepStart(this, input));
             AgentOutput<O> output = doStep(input);
@@ -285,6 +257,7 @@ public abstract class AbstractMetaAgent<I, O> implements AgentListenerRegistry<I
     public void reset() {
         this.agentState.reset();
         this.memory.clear();
+        this.initialized = false;
     }
 
     @Override

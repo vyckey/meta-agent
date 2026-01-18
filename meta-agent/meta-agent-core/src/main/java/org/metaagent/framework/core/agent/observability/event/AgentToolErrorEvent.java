@@ -52,4 +52,8 @@ public record AgentToolErrorEvent(
             occurredTime = Instant.now();
         }
     }
+
+    public AgentToolErrorEvent(MetaAgent<?, ?> agent, Tool<?, ?> tool, String request, ToolExecutionException error) {
+        this(agent, tool, request, error, Instant.now());
+    }
 }

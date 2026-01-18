@@ -71,18 +71,18 @@ public class ToolExecuteDelegate<I, O> extends ToolDelegate<I, O> {
         Tool<I, O> tool = getDelegateTool();
         ToolExecutionListenerRegistry listenerRegistry = executorContext.getToolListenerRegistry();
         try {
-            notifyListeners(listenerRegistry, listener -> listener.onToolInput(tool, input));
+            notifyListeners(listenerRegistry, listener -> listener.onToolInput(tool, context, input));
 
             O output = getDelegateTool().run(executorContext.getToolContext(), input);
 
-            notifyListeners(listenerRegistry, listener -> listener.onToolOutput(tool, input, output));
+            notifyListeners(listenerRegistry, listener -> listener.onToolOutput(tool, context, input, output));
             return output;
         } catch (ToolExecutionException e) {
-            notifyListeners(listenerRegistry, listener -> listener.onToolException(tool, input, e));
+            notifyListeners(listenerRegistry, listener -> listener.onToolException(tool, context, input, e));
             throw e;
         } catch (Exception e) {
             ToolExecutionError ex = new ToolExecutionError("Call tool " + tool.getName() + " error", e);
-            notifyListeners(listenerRegistry, listener -> listener.onToolException(tool, input, ex));
+            notifyListeners(listenerRegistry, listener -> listener.onToolException(tool, context, input, ex));
             throw ex;
         }
     }
@@ -101,30 +101,40 @@ public class ToolExecuteDelegate<I, O> extends ToolDelegate<I, O> {
         @SuppressWarnings("unchecked") I[] toolInputHolder = (I[]) new Object[1];
         String output = null;
         try {
-            notifyListeners(listenerRegistry, listener -> listener.onToolInputRequest(tool, input));
+            notifyListeners(listenerRegistry, listener ->
+                    listener.onToolInputRequest(tool, context, input)
+            );
 
             I toolInput = getConverter().inputConverter().convert(input);
             toolInputHolder[0] = toolInput;
             O toolOutput = run(context, toolInput);
 
-            notifyListeners(listenerRegistry, listener -> listener.onToolOutput(tool, toolInputHolder[0], toolOutput));
+            notifyListeners(listenerRegistry, listener ->
+                    listener.onToolOutput(tool, context, toolInputHolder[0], toolOutput)
+            );
             output = getConverter().outputConverter().convert(toolOutput);
             builder.toolOutput(output);
         } catch (ToolExecutionException ex) {
-            notifyListeners(listenerRegistry, listener -> listener.onToolException(tool, toolInputHolder[0], ex));
+            notifyListeners(listenerRegistry, listener ->
+                    listener.onToolException(tool, context, toolInputHolder[0], ex)
+            );
             builder.exception(ex);
 
             output = processException(context, input, ex);
         } catch (Exception e) {
             ToolExecutionException ex = new ToolExecutionError("Call tool " + toolName + " fail", e);
-            notifyListeners(listenerRegistry, listener -> listener.onToolException(tool, toolInputHolder[0], ex));
+            notifyListeners(listenerRegistry, listener ->
+                    listener.onToolException(tool, context, toolInputHolder[0], ex)
+            );
             builder.exception(ex);
 
             output = processException(context, input, ex);
         } finally {
             if (output != null) {
                 String finalOutput = output;
-                notifyListeners(listenerRegistry, listener -> listener.onToolResponse(tool, input, finalOutput));
+                notifyListeners(listenerRegistry, listener ->
+                        listener.onToolResponse(tool, context, input, finalOutput)
+                );
             }
 
             ToolCallRecord callRecord = builder.toolOutput(output).build();

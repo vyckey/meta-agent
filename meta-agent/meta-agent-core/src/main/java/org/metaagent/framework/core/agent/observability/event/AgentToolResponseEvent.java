@@ -51,4 +51,8 @@ public record AgentToolResponseEvent(
             occurredTime = Instant.now();
         }
     }
+
+    public AgentToolResponseEvent(MetaAgent<?, ?> agent, Tool<?, ?> tool, String request, String response) {
+        this(agent, tool, request, response, Instant.now());
+    }
 }

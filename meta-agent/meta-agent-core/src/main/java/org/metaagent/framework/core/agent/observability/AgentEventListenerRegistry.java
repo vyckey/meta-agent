@@ -22,35 +22,41 @@
  * SOFTWARE.
  */
 
-package org.metaagent.framework.core.agent.observability.event;
+package org.metaagent.framework.core.agent.observability;
 
-import org.metaagent.framework.core.agent.MetaAgent;
-import org.metaagent.framework.core.tool.Tool;
+import org.metaagent.framework.core.agent.observability.event.AgentEvent;
 
-import java.time.Instant;
-import java.util.Objects;
+import java.util.List;
 
 /**
- * AgentToolRequestEvent is an event that occurs when an agent requests a tool.
+ * Agent event listener registry.
  *
  * @author vyckey
  */
-public record AgentToolRequestEvent(
-        MetaAgent<?, ?> agent,
-        Tool<?, ?> tool,
-        String request,
-        Instant occurredTime
-) implements AgentToolEvent {
-    public AgentToolRequestEvent {
-        Objects.requireNonNull(agent, "agent is required");
-        Objects.requireNonNull(tool, "tool is required");
-        Objects.requireNonNull(request, "request is required");
-        if (occurredTime == null) {
-            occurredTime = Instant.now();
-        }
-    }
+public interface AgentEventListenerRegistry<E extends AgentEvent> {
+    /**
+     * Returns the list of event listeners.
+     *
+     * @return the list of event listeners
+     */
+    List<AgentEventListener<E>> getEventListener();
 
-    public AgentToolRequestEvent(MetaAgent<?, ?> agent, Tool<?, ?> tool, String request) {
-        this(agent, tool, request, Instant.now());
-    }
+    /**
+     * Registers an event listener.
+     *
+     * @param listener the listener to register
+     */
+    void registerEventListener(AgentEventListener<E> listener);
+
+    /**
+     * Unregisters an event listener.
+     *
+     * @param listener the listener to unregister
+     */
+    void unregisterEventListener(AgentEventListener<E> listener);
+
+    /**
+     * Unregisters all event listeners.
+     */
+    void unregisterEventListeners();
 }

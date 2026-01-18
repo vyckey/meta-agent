@@ -98,7 +98,7 @@ public class DefaultToolExecutorContext implements ToolExecutorContext {
                 this.toolCallTracker = ToolCallTracker.empty();
             }
             if (toolListenerRegistry == null) {
-                this.toolListenerRegistry = ToolExecutionListenerRegistry.DEFAULT;
+                this.toolListenerRegistry = ToolExecutionListenerRegistry.create();
             }
             if (toolContext == null) {
                 this.toolContext = ToolContext.create();

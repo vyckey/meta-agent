@@ -26,6 +26,8 @@ package org.metaagent.framework.core.agent;
 
 import com.google.common.collect.Lists;
 import org.metaagent.framework.core.agent.input.AgentInput;
+import org.metaagent.framework.core.agent.observability.AgentRunListener;
+import org.metaagent.framework.core.agent.observability.AgentStepListener;
 import org.metaagent.framework.core.agent.output.AgentOutput;
 import org.metaagent.framework.core.agent.output.StreamOutput;
 import org.metaagent.framework.core.agent.profile.AgentProfile;
@@ -93,6 +95,8 @@ public abstract class AbstractStreamAgent<I, O extends StreamOutput<S>, S>
         AtomicReference<AgentOutput<O>> fullOutputRef = new AtomicReference<>();
 
         AgentInput<I> input = preprocess(agentInput);
+        List<AgentRunListener<I, O>> runListeners = getRunListeners(input);
+
         AgentOutput<O> agentOutput = doRunStream(input, fullOutputRef::set);
         Flux<S> stream = agentOutput.result().stream()
                 .doOnSubscribe(sub -> {
@@ -187,6 +191,8 @@ public abstract class AbstractStreamAgent<I, O extends StreamOutput<S>, S>
         AtomicReference<O> fullOutputRef = new AtomicReference<>();
 
         StreamOutput.Aggregator<S, O> aggregator = getStreamOutputAggregator();
+        List<AgentStepListener<I, O>> stepListeners = getStepListeners(input);
+
         AgentOutput<O> agentOutput = doStepStream(input);
         Flux<S> stream = agentOutput.result().stream()
                 .doOnSubscribe(sub -> notifyListeners(stepListeners, listener -> listener.onAgentStepStart(agent, input)))

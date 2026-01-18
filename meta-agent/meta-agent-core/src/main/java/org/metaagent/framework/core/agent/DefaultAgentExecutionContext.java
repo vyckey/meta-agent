@@ -29,6 +29,7 @@ import org.metaagent.framework.common.abort.AbortController;
 import org.metaagent.framework.common.abort.AbortSignal;
 import org.metaagent.framework.core.agent.action.executor.ActionExecutor;
 import org.metaagent.framework.core.agent.action.executor.SyncActionExecutor;
+import org.metaagent.framework.core.agent.observability.AgentListenerRegistry;
 import org.metaagent.framework.core.environment.Environment;
 import org.metaagent.framework.core.tool.executor.DefaultToolExecutor;
 import org.metaagent.framework.core.tool.executor.ToolExecutor;
@@ -45,6 +46,7 @@ import java.util.concurrent.Executors;
 @Getter
 public class DefaultAgentExecutionContext implements AgentExecutionContext {
     private final Environment environment;
+    private final AgentListenerRegistry<?, ?> agentListenerRegistry;
     private final ToolExecutor toolExecutor;
     private final ToolExecutionListenerRegistry toolListenerRegistry;
     private final ActionExecutor actionExecutor;
@@ -53,6 +55,7 @@ public class DefaultAgentExecutionContext implements AgentExecutionContext {
 
     protected DefaultAgentExecutionContext(Builder builder) {
         this.environment = builder.environment;
+        this.agentListenerRegistry = builder.agentListenerRegistry;
         this.toolExecutor = builder.toolExecutor;
         this.toolListenerRegistry = builder.toolListenerRegistry;
         this.actionExecutor = builder.actionExecutor;
@@ -70,6 +73,7 @@ public class DefaultAgentExecutionContext implements AgentExecutionContext {
 
     public static final class Builder implements AgentExecutionContextBuilder {
         private Environment environment;
+        private AgentListenerRegistry<?, ?> agentListenerRegistry;
         private ToolExecutor toolExecutor;
         private ToolExecutionListenerRegistry toolListenerRegistry;
         private ActionExecutor actionExecutor;
@@ -91,6 +95,12 @@ public class DefaultAgentExecutionContext implements AgentExecutionContext {
         @Override
         public Builder environment(Environment environment) {
             this.environment = environment;
+            return this;
+        }
+
+        @Override
+        public AgentExecutionContextBuilder agentListenerRegistry(AgentListenerRegistry<?, ?> listenerRegistry) {
+            this.agentListenerRegistry = listenerRegistry;
             return this;
         }
 
@@ -125,11 +135,14 @@ public class DefaultAgentExecutionContext implements AgentExecutionContext {
         }
 
         private void setDefault() {
+            if (agentListenerRegistry == null) {
+                agentListenerRegistry = AgentListenerRegistry.create();
+            }
             if (toolExecutor == null) {
                 this.toolExecutor = DefaultToolExecutor.INSTANCE;
             }
             if (toolListenerRegistry == null) {
-                this.toolListenerRegistry = ToolExecutionListenerRegistry.DEFAULT;
+                this.toolListenerRegistry = ToolExecutionListenerRegistry.create();
             }
             if (actionExecutor == null) {
                 actionExecutor = SyncActionExecutor.INSTANCE;

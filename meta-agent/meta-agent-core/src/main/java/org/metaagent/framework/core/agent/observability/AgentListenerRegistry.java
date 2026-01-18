@@ -31,61 +31,18 @@ import org.metaagent.framework.core.agent.observability.event.AgentEvent;
  *
  * @author vyckey
  */
-public interface AgentListenerRegistry<I, O> {
+public interface AgentListenerRegistry<I, O> extends
+        AgentRunListenerRegistry<I, O>,
+        AgentStepListenerRegistry<I, O>,
+        AgentEventListenerRegistry<AgentEvent> {
+
     /**
-     * Registers a run listener.
+     * Create an AgentListenerRegistry instance.
      *
-     * @param listener the listener to register
+     * @return an AgentListenerRegistry instance
      */
-    void registerRunListener(AgentRunListener<I, O> listener);
+    static <I, O> AgentListenerRegistry<I, O> create() {
+        return new DefaultAgentListenerRegistry<>();
+    }
 
-    /**
-     * Unregisters a run listener.
-     *
-     * @param listener the listener to unregister
-     */
-    void unregisterRunListener(AgentRunListener<I, O> listener);
-
-    /**
-     * Unregisters all run listeners.
-     */
-    void unregisterRunListeners();
-
-    /**
-     * Registers a step listener.
-     *
-     * @param listener the listener to register
-     */
-    void registerStepListener(AgentStepListener<I, O> listener);
-
-    /**
-     * Unregisters a step listener.
-     *
-     * @param listener the listener to unregister
-     */
-    void unregisterStepListener(AgentStepListener<I, O> listener);
-
-    /**
-     * Unregisters all step listeners.
-     */
-    void unregisterStepListeners();
-
-    /**
-     * Registers an event listener.
-     *
-     * @param listener the listener to register
-     */
-    void registerEventListener(AgentEventListener<AgentEvent> listener);
-
-    /**
-     * Unregisters an event listener.
-     *
-     * @param listener the listener to unregister
-     */
-    void unregisterEventListener(AgentEventListener<AgentEvent> listener);
-
-    /**
-     * Unregisters all event listeners.
-     */
-    void unregisterEventListeners();
 }

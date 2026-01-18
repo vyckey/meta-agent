@@ -22,35 +22,39 @@
  * SOFTWARE.
  */
 
-package org.metaagent.framework.core.agent.observability.event;
+package org.metaagent.framework.core.agent.observability;
 
-import org.metaagent.framework.core.agent.MetaAgent;
-import org.metaagent.framework.core.tool.Tool;
-
-import java.time.Instant;
-import java.util.Objects;
+import java.util.List;
 
 /**
- * AgentToolRequestEvent is an event that occurs when an agent requests a tool.
+ * AgentStepListenerRegistry is a registry for agent step listeners.
  *
  * @author vyckey
  */
-public record AgentToolRequestEvent(
-        MetaAgent<?, ?> agent,
-        Tool<?, ?> tool,
-        String request,
-        Instant occurredTime
-) implements AgentToolEvent {
-    public AgentToolRequestEvent {
-        Objects.requireNonNull(agent, "agent is required");
-        Objects.requireNonNull(tool, "tool is required");
-        Objects.requireNonNull(request, "request is required");
-        if (occurredTime == null) {
-            occurredTime = Instant.now();
-        }
-    }
+public interface AgentStepListenerRegistry<I, O> {
+    /**
+     * Returns the list of step listeners.
+     *
+     * @return the list of step listeners
+     */
+    List<AgentStepListener<I, O>> getStepListeners();
 
-    public AgentToolRequestEvent(MetaAgent<?, ?> agent, Tool<?, ?> tool, String request) {
-        this(agent, tool, request, Instant.now());
-    }
+    /**
+     * Registers a step listener.
+     *
+     * @param listener the listener to register
+     */
+    void registerStepListener(AgentStepListener<I, O> listener);
+
+    /**
+     * Unregisters a step listener.
+     *
+     * @param listener the listener to unregister
+     */
+    void unregisterStepListener(AgentStepListener<I, O> listener);
+
+    /**
+     * Unregisters all step listeners.
+     */
+    void unregisterStepListeners();
 }

@@ -26,6 +26,7 @@ package org.metaagent.framework.core.agent;
 
 import org.metaagent.framework.common.abort.AbortSignal;
 import org.metaagent.framework.core.agent.action.executor.ActionExecutor;
+import org.metaagent.framework.core.agent.observability.AgentListenerRegistry;
 import org.metaagent.framework.core.environment.Environment;
 import org.metaagent.framework.core.tool.executor.ToolExecutor;
 import org.metaagent.framework.core.tool.listener.ToolExecutionListenerRegistry;
@@ -62,6 +63,13 @@ public interface AgentExecutionContext {
      * @return the environment
      */
     Environment getEnvironment();
+
+    /**
+     * Get the agent listener registry associated with this agent execution context.
+     *
+     * @return the agent listener registry
+     */
+    <I, O> AgentListenerRegistry<I, O> getAgentListenerRegistry();
 
     /**
      * Get the tool executor associated with this agent execution context.
