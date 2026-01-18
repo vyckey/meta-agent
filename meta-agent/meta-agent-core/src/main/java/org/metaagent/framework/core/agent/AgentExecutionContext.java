@@ -27,6 +27,7 @@ package org.metaagent.framework.core.agent;
 import org.metaagent.framework.common.abort.AbortSignal;
 import org.metaagent.framework.core.agent.action.executor.ActionExecutor;
 import org.metaagent.framework.core.agent.observability.AgentListenerRegistry;
+import org.metaagent.framework.core.config.ConfigPaths;
 import org.metaagent.framework.core.environment.Environment;
 import org.metaagent.framework.core.tool.executor.ToolExecutor;
 import org.metaagent.framework.core.tool.listener.ToolExecutionListenerRegistry;
@@ -105,5 +106,12 @@ public interface AgentExecutionContext {
      * @return the executor
      */
     Executor getExecutor();
+
+    /**
+     * Get the agent path config associated with this agent execution context.
+     *
+     * @return the agent path config
+     */
+    ConfigPaths getConfigPaths();
 
 }

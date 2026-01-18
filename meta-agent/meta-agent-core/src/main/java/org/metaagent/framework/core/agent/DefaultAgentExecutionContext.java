@@ -30,6 +30,7 @@ import org.metaagent.framework.common.abort.AbortSignal;
 import org.metaagent.framework.core.agent.action.executor.ActionExecutor;
 import org.metaagent.framework.core.agent.action.executor.SyncActionExecutor;
 import org.metaagent.framework.core.agent.observability.AgentListenerRegistry;
+import org.metaagent.framework.core.config.ConfigPaths;
 import org.metaagent.framework.core.environment.Environment;
 import org.metaagent.framework.core.tool.executor.DefaultToolExecutor;
 import org.metaagent.framework.core.tool.executor.ToolExecutor;
@@ -52,6 +53,7 @@ public class DefaultAgentExecutionContext implements AgentExecutionContext {
     private final ActionExecutor actionExecutor;
     private final AbortSignal abortSignal;
     private final Executor executor;
+    private final ConfigPaths configPaths;
 
     protected DefaultAgentExecutionContext(Builder builder) {
         this.environment = builder.environment;
@@ -61,6 +63,7 @@ public class DefaultAgentExecutionContext implements AgentExecutionContext {
         this.actionExecutor = builder.actionExecutor;
         this.abortSignal = builder.abortSignal;
         this.executor = builder.executor;
+        this.configPaths = builder.configPaths;
     }
 
     public static Builder builder() {
@@ -79,6 +82,7 @@ public class DefaultAgentExecutionContext implements AgentExecutionContext {
         private ActionExecutor actionExecutor;
         private AbortSignal abortSignal;
         private Executor executor;
+        private ConfigPaths configPaths;
 
         private Builder() {
         }
@@ -134,6 +138,12 @@ public class DefaultAgentExecutionContext implements AgentExecutionContext {
             return this;
         }
 
+        @Override
+        public AgentExecutionContextBuilder configPaths(ConfigPaths configPaths) {
+            this.configPaths = configPaths;
+            return this;
+        }
+
         private void setDefault() {
             if (agentListenerRegistry == null) {
                 agentListenerRegistry = AgentListenerRegistry.create();
@@ -152,6 +162,9 @@ public class DefaultAgentExecutionContext implements AgentExecutionContext {
             }
             if (executor == null) {
                 executor = Executors.newSingleThreadExecutor();
+            }
+            if (configPaths == null) {
+                configPaths = ConfigPaths.newDefault();
             }
         }
 

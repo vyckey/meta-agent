@@ -27,6 +27,7 @@ package org.metaagent.framework.core.agent;
 import org.metaagent.framework.common.abort.AbortSignal;
 import org.metaagent.framework.core.agent.action.executor.ActionExecutor;
 import org.metaagent.framework.core.agent.observability.AgentListenerRegistry;
+import org.metaagent.framework.core.config.ConfigPaths;
 import org.metaagent.framework.core.environment.Environment;
 import org.metaagent.framework.core.tool.executor.ToolExecutor;
 import org.metaagent.framework.core.tool.listener.ToolExecutionListenerRegistry;
@@ -95,6 +96,14 @@ public interface AgentExecutionContextBuilder {
      * @return this builder instance for method chaining
      */
     AgentExecutionContextBuilder executor(Executor executor);
+
+    /**
+     * Sets the agent config paths for the agent execution context
+     *
+     * @param configPaths the agent config paths
+     * @return this builder instance for method chaining
+     */
+    AgentExecutionContextBuilder configPaths(ConfigPaths configPaths);
 
     /**
      * Builds and returns the {@link AgentExecutionContext} instance
