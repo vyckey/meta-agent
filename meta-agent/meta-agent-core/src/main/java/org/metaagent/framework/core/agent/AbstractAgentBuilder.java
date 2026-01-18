@@ -25,6 +25,8 @@
 package org.metaagent.framework.core.agent;
 
 import org.metaagent.framework.core.agent.memory.Memory;
+import org.metaagent.framework.core.agent.observability.AgentEventBus;
+import org.metaagent.framework.core.agent.observability.event.AgentEvent;
 import org.metaagent.framework.core.agent.profile.AgentProfile;
 import org.metaagent.framework.core.agent.state.AgentState;
 import org.metaagent.framework.core.tool.manager.ToolManager;
@@ -43,6 +45,7 @@ public abstract class AbstractAgentBuilder<A extends MetaAgent<I, O>, B, I, O> {
     protected AgentState agentState;
     protected Memory memory;
     protected ToolManager toolManager;
+    protected AgentEventBus<AgentEvent> agentEventBus;
 
     public B agentProfile(AgentProfile profile) {
         this.profile = profile;
@@ -61,6 +64,11 @@ public abstract class AbstractAgentBuilder<A extends MetaAgent<I, O>, B, I, O> {
 
     public B toolManager(ToolManager toolManager) {
         this.toolManager = toolManager;
+        return self();
+    }
+
+    public B agentEventBus(AgentEventBus<AgentEvent> agentEventBus) {
+        this.agentEventBus = agentEventBus;
         return self();
     }
 

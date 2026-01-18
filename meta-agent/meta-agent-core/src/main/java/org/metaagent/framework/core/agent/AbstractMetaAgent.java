@@ -30,10 +30,15 @@ import org.metaagent.framework.core.agent.fallback.FastFailAgentFallbackStrategy
 import org.metaagent.framework.core.agent.input.AgentInput;
 import org.metaagent.framework.core.agent.memory.EmptyMemory;
 import org.metaagent.framework.core.agent.memory.Memory;
+import org.metaagent.framework.core.agent.observability.AgentEventBus;
+import org.metaagent.framework.core.agent.observability.AgentEventListener;
+import org.metaagent.framework.core.agent.observability.AgentListenerRegistry;
 import org.metaagent.framework.core.agent.observability.AgentLogListener;
 import org.metaagent.framework.core.agent.observability.AgentLogger;
+import org.metaagent.framework.core.agent.observability.AgentRunEventPublisher;
 import org.metaagent.framework.core.agent.observability.AgentRunListener;
 import org.metaagent.framework.core.agent.observability.AgentStepListener;
+import org.metaagent.framework.core.agent.observability.event.AgentEvent;
 import org.metaagent.framework.core.agent.output.AgentOutput;
 import org.metaagent.framework.core.agent.profile.AgentProfile;
 import org.metaagent.framework.core.agent.state.AgentRunStatus;
@@ -55,14 +60,15 @@ import java.util.function.Consumer;
  * @param <O> the type of agent output
  * @author vyckey
  */
-public abstract class AbstractMetaAgent<I, O> implements MetaAgent<I, O> {
+public abstract class AbstractMetaAgent<I, O> implements AgentListenerRegistry<I, O>, MetaAgent<I, O> {
 
     protected String agentName;
     protected AgentProfile profile;
     protected AgentState agentState;
     protected Memory memory;
-    protected final List<AgentRunListener<I, O>> runListeners = Lists.newArrayList();
-    protected final List<AgentStepListener<I, O>> stepListeners = Lists.newArrayList();
+    protected AgentEventBus<AgentEvent> eventBus;
+    protected final List<AgentRunListener<I, O>> runListeners = Lists.newCopyOnWriteArrayList();
+    protected final List<AgentStepListener<I, O>> stepListeners = Lists.newCopyOnWriteArrayList();
     protected boolean initialized = false;
     protected AgentLogger agentLogger;
     protected Logger logger = LoggerFactory.getLogger(getClass());
@@ -71,12 +77,14 @@ public abstract class AbstractMetaAgent<I, O> implements MetaAgent<I, O> {
         this.agentName = name;
         this.agentState = DefaultAgentState.builder().build();
         this.memory = EmptyMemory.INSTANCE;
+        this.eventBus = AgentEventBus.global();
         this.agentLogger = AgentLogger.getLogger(name);
     }
 
     protected AbstractMetaAgent(AgentProfile profile) {
         this(profile.getName());
         this.profile = profile;
+        this.eventBus = AgentEventBus.global();
     }
 
     protected AbstractMetaAgent(AbstractAgentBuilder<?, ?, I, O> builder) {
@@ -85,6 +93,7 @@ public abstract class AbstractMetaAgent<I, O> implements MetaAgent<I, O> {
         this.agentLogger = AgentLogger.getLogger(this.agentName);
         this.agentState = builder.agentState != null ? builder.agentState : DefaultAgentState.builder().build();
         this.memory = builder.memory != null ? builder.memory : EmptyMemory.INSTANCE;
+        this.eventBus = builder.agentEventBus != null ? builder.agentEventBus : AgentEventBus.global();
     }
 
     @Override
@@ -116,23 +125,54 @@ public abstract class AbstractMetaAgent<I, O> implements MetaAgent<I, O> {
         AgentLogListener<I, O> logListener = new AgentLogListener<>(agentState, agentLogger);
         registerRunListener(logListener);
         registerStepListener(logListener);
+        // Register agent run event publisher
+        registerRunListener(new AgentRunEventPublisher<>(eventBus));
         initialized = true;
     }
 
+    @Override
     public void registerRunListener(AgentRunListener<I, O> listener) {
         runListeners.add(listener);
     }
 
+    @Override
     public void unregisterRunListener(AgentRunListener<I, O> listener) {
         runListeners.remove(listener);
     }
 
+    @Override
+    public void unregisterRunListeners() {
+        runListeners.clear();
+    }
+
+    @Override
     public void registerStepListener(AgentStepListener<I, O> listener) {
         stepListeners.add(listener);
     }
 
+    @Override
     public void unregisterStepListener(AgentStepListener<I, O> listener) {
         stepListeners.remove(listener);
+    }
+
+    @Override
+    public void unregisterStepListeners() {
+        stepListeners.clear();
+    }
+
+    @Override
+    public void registerEventListener(AgentEventListener<AgentEvent> listener) {
+        eventBus.subscribe(listener);
+    }
+
+    @Override
+    public void unregisterEventListener(AgentEventListener<AgentEvent> listener) {
+        eventBus.unsubscribe(listener);
+    }
+
+    @Override
+    public void unregisterEventListeners() {
+        eventBus.unsubscribeAll();
     }
 
     protected <T> void notifyListeners(Iterable<T> listeners, Consumer<T> consumer) {
