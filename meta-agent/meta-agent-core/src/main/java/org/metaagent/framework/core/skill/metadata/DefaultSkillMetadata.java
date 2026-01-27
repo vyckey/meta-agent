@@ -1,7 +1,7 @@
 /*
  * MIT License
  *
- * Copyright (c) 2025 MetaAgent
+ * Copyright (c) 2026 MetaAgent
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -22,13 +22,16 @@
  * SOFTWARE.
  */
 
-package org.metaagent.framework.core.tool.skill;
+package org.metaagent.framework.core.skill.metadata;
 
 import org.apache.commons.lang3.StringUtils;
 import org.metaagent.framework.common.metadata.ClassMetadataProvider;
 
+import java.net.MalformedURLException;
+import java.net.URL;
 import java.nio.file.Path;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -40,7 +43,8 @@ public class DefaultSkillMetadata extends ClassMetadataProvider implements Skill
     private final String name;
     private final String description;
     private String version;
-    private Path filePath;
+    private URL location;
+    private List<String> allowedTools;
 
     public DefaultSkillMetadata(String name, String description) {
         if (StringUtils.isEmpty(name)) {
@@ -53,7 +57,8 @@ public class DefaultSkillMetadata extends ClassMetadataProvider implements Skill
     private DefaultSkillMetadata(Builder builder) {
         this(builder.name, builder.description);
         this.version = builder.version;
-        this.filePath = builder.filePath;
+        this.location = builder.location;
+        this.allowedTools = builder.allowedTools;
         this.extendProperties.putAll(builder.extendProperties);
     }
 
@@ -77,20 +82,33 @@ public class DefaultSkillMetadata extends ClassMetadataProvider implements Skill
     }
 
     @Override
-    public Path filePath() {
-        return filePath;
+    public URL location() {
+        return location;
+    }
+
+    @Override
+    public List<String> allowedTools() {
+        return allowedTools;
     }
 
     @Override
     public String toString() {
-        return "SKILL - " + name + "\n" + description;
+        return "SkillMetadata{" +
+                "name='" + name + '\'' +
+                ", description='" + description + '\'' +
+                ", version='" + version + '\'' +
+                ", location=" + location +
+                ", allowedTools=" + allowedTools +
+                ", extendProperties=" + extendProperties +
+                '}';
     }
 
     public static class Builder {
         private String name;
         private String description;
-        private Path filePath;
+        private URL location;
         private String version;
+        private List<String> allowedTools;
         private final Map<String, Object> extendProperties = new HashMap<>(0);
 
         public Builder name(String name) {
@@ -103,13 +121,37 @@ public class DefaultSkillMetadata extends ClassMetadataProvider implements Skill
             return this;
         }
 
+        public Builder location(URL location) {
+            this.location = location;
+            return this;
+        }
+
         public Builder filePath(Path filePath) {
-            this.filePath = filePath;
+            Path normalizedPath = filePath.toAbsolutePath().normalize();
+            try {
+                this.location = normalizedPath.toUri().toURL();
+            } catch (MalformedURLException e) {
+                throw new IllegalArgumentException("Invalid file path: " + normalizedPath);
+            }
+            return this;
+        }
+
+        public Builder remoteUrl(String url) {
+            try {
+                this.location = new URL(url);
+            } catch (MalformedURLException e) {
+                throw new IllegalArgumentException("Invalid URL: " + url);
+            }
             return this;
         }
 
         public Builder version(String version) {
             this.version = version;
+            return this;
+        }
+
+        public Builder allowedTools(List<String> allowedTools) {
+            this.allowedTools = allowedTools;
             return this;
         }
 

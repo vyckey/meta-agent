@@ -1,7 +1,7 @@
 /*
  * MIT License
  *
- * Copyright (c) 2025 MetaAgent
+ * Copyright (c) 2026 MetaAgent
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -22,15 +22,23 @@
  * SOFTWARE.
  */
 
-package org.metaagent.framework.core.tool.skill;
+package org.metaagent.framework.core.skill.loader;
 
 import com.fasterxml.jackson.annotation.JsonAnySetter;
+import com.fasterxml.jackson.annotation.JsonProperty;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.metaagent.framework.common.io.MarkdownUtils;
+import org.metaagent.framework.core.skill.DefaultSkill;
+import org.metaagent.framework.core.skill.Skill;
+import org.metaagent.framework.core.skill.exception.SkillParseException;
+import org.metaagent.framework.core.skill.metadata.DefaultSkillMetadata;
+import org.metaagent.framework.core.skill.metadata.SkillMetadata;
 
 import javax.validation.constraints.NotNull;
 import java.io.File;
 import java.io.IOException;
+import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
@@ -38,45 +46,43 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-
-import static org.metaagent.framework.core.tool.skill.SkillMetadata.SKILLS_FILENAME;
+import java.util.stream.Stream;
 
 /**
- * Skill loader
+ * FileBasedSkillLoader is a SkillLoader that loads skills from files.
  *
  * @author vyckey
  */
-public class SkillLoader {
-    private static final SkillLoader instance = new SkillLoader();
+@Slf4j
+public class FileBasedSkillLoader implements SkillLoader {
 
-    public static SkillLoader getInstance() {
-        return instance;
+    @Override
+    public boolean supports(URL location) {
+        return location.getProtocol().equalsIgnoreCase("file");
     }
 
-    public record SkillLoadError(
-            Path filePath,
-            IOException exception) {
-    }
-
-    public List<SkillMetadata> loadSkillMetadata(List<Path> filePaths, List<SkillLoadError> errors) {
-        List<SkillMetadata> skillMetadataList = new ArrayList<>();
-        for (Path filePath : filePaths) {
-            skillMetadataList.addAll(loadSkillMetadata(filePath, errors));
-        }
-        return skillMetadataList;
+    @Override
+    public List<Skill> load(URL location, List<SkillLoadError> errors) throws SkillParseException {
+        Path filePath = Path.of(location.getPath());
+        List<SkillMetadata> skillMetadataList = loadSkillMetadata(filePath, errors);
+        return skillMetadataList.stream()
+                .map(DefaultSkill::new)
+                .map(skill -> (Skill) skill)
+                .toList();
     }
 
     public List<SkillMetadata> loadSkillMetadata(Path filePath, List<SkillLoadError> errors) {
         Path rootPath = filePath.toAbsolutePath().normalize();
         List<File> skillFiles;
-        try {
-            skillFiles = Files.walk(rootPath)
+        try (Stream<Path> pathStream = Files.walk(rootPath)) {
+            skillFiles = pathStream
+                    .filter(Files::isRegularFile)
+                    .filter(path -> SKILL_FILENAME.equalsIgnoreCase(path.getFileName().toString()))
                     .map(Path::toFile)
-                    .filter(File::isFile)
-                    .filter(file -> file.getName().equalsIgnoreCase(SKILLS_FILENAME))
                     .toList();
         } catch (IOException e) {
-            errors.add(new SkillLoadError(rootPath, e));
+            SkillParseException pe = new SkillParseException("Failed to read the skills file: " + filePath);
+            errors.add(SkillLoadError.from(filePath, pe));
             return Collections.emptyList();
         }
 
@@ -86,7 +92,10 @@ public class SkillLoader {
                 SkillMetadata skillMetadata = readSkillMetadata(skillFile.toPath());
                 skillMetadataList.add(skillMetadata);
             } catch (IOException e) {
-                errors.add(new SkillLoadError(rootPath, e));
+                SkillParseException pe = new SkillParseException("Failed to read the skill metadata from file: " + filePath);
+                errors.add(SkillLoadError.from(filePath, pe));
+            } catch (SkillParseException e) {
+                errors.add(SkillLoadError.from(filePath, e));
             }
         }
         return skillMetadataList;
@@ -103,10 +112,11 @@ public class SkillLoader {
         }
 
         return DefaultSkillMetadata.builder()
-                .name(skillMetadataDO.name())
-                .description(skillMetadataDO.description())
-                .version(skillMetadataDO.version())
-                .filePath(skillFilePath.toAbsolutePath().normalize())
+                .name(skillMetadataDO.name().trim())
+                .description(skillMetadataDO.description().trim())
+                .version(StringUtils.isNotBlank(skillMetadataDO.version()) ? skillMetadataDO.version().trim() : "1.0.0")
+                .allowedTools(skillMetadataDO.allowedTools())
+                .filePath(skillFilePath.getParent().toAbsolutePath().normalize())
                 .setExtendProperties(skillMetadataDO.extendProperties())
                 .build();
     }
@@ -120,13 +130,17 @@ public class SkillLoader {
 
             String version,
 
+            @JsonProperty("allowedTools")
+            List<String> allowedTools,
+
             Map<String, Object> extendProperties) {
 
 
-        SkillMetadataDO(String name, String description, String version, Map<String, Object> extendProperties) {
+        SkillMetadataDO(String name, String description, String version, List<String> allowedTools, Map<String, Object> extendProperties) {
             this.name = name;
             this.description = description;
             this.version = version;
+            this.allowedTools = allowedTools;
             this.extendProperties = extendProperties != null ? extendProperties : new HashMap<>();
         }
 

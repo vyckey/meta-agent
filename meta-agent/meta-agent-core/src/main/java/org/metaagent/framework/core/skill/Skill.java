@@ -1,7 +1,7 @@
 /*
  * MIT License
  *
- * Copyright (c) 2025 MetaAgent
+ * Copyright (c) 2026 MetaAgent
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -22,46 +22,36 @@
  * SOFTWARE.
  */
 
-package org.metaagent.framework.core.tool.skill;
+package org.metaagent.framework.core.skill;
 
-import org.metaagent.framework.common.metadata.MetadataProvider;
-
-import java.nio.file.Path;
+import org.metaagent.framework.core.skill.metadata.SkillMetadata;
 
 /**
- * Skill metadata
+ * Skill is a capability that an agent can perform.
  *
  * @author vyckey
  */
-public interface SkillMetadata extends MetadataProvider {
-    String SKILLS_DIRNAME = "skills";
-    String SKILLS_FILENAME = "SKILL.md";
+public interface Skill {
+    /**
+     * Get skill name
+     *
+     * @return skill name
+     */
+    default String getName() {
+        return getMetadata().name();
+    }
 
     /**
-     * Gets skill name
+     * Get skill metadata
      *
-     * @return the skill name
+     * @return skill metadata
      */
-    String name();
+    SkillMetadata getMetadata();
 
     /**
-     * Gets skill description
+     * Get skill instruction
      *
-     * @return the skill description
+     * @return skill instruction
      */
-    String description();
-
-    /**
-     * Gets skill version
-     *
-     * @return the skill version
-     */
-    String version();
-
-    /**
-     * Gets the skill file path
-     *
-     * @return the file path of skill
-     */
-    Path filePath();
+    String getInstruction();
 }
