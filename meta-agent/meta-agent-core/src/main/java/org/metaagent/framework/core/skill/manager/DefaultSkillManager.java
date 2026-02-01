@@ -61,10 +61,16 @@ public class DefaultSkillManager implements SkillManager {
     private final List<SkillWatcher> skillWatchers = Lists.newCopyOnWriteArrayList();
     private final List<SkillChangeListener> listeners = Lists.newCopyOnWriteArrayList();
     private final SkillChangeListener watcherListener = new SkillWatcherListener();
+    private final List<URL> loadedSkillLocations = Lists.newCopyOnWriteArrayList();
 
     @Override
     public void registerSkillLoader(SkillLoader skillLoader) {
         skillLoaders.add(Objects.requireNonNull(skillLoader, "Skill loader cannot be null"));
+    }
+
+    @Override
+    public List<SkillLoader> getSkillLoaders() {
+        return List.copyOf(skillLoaders);
     }
 
     @Override
@@ -75,6 +81,11 @@ public class DefaultSkillManager implements SkillManager {
     }
 
     @Override
+    public List<SkillWatcher> getSkillWatchers() {
+        return List.copyOf(skillWatchers);
+    }
+
+    @Override
     public void loadSkillsFrom(URL skillLocation) throws SkillLoadException {
         SkillLoader selectedLoader = null;
         for (SkillLoader skillLoader : skillLoaders) {
@@ -82,12 +93,18 @@ public class DefaultSkillManager implements SkillManager {
                 selectedLoader = skillLoader;
                 List<Skill> loadedSkills = skillLoader.load(skillLocation);
                 addSkills(loadedSkills);
+                loadedSkillLocations.add(skillLocation);
                 break;
             }
         }
         if (selectedLoader == null) {
             throw new SkillLoadException("No skill loader found for skill location: " + skillLocation);
         }
+    }
+
+    @Override
+    public boolean isSkillLoaded(URL skillLocation) {
+        return loadedSkillLocations.contains(skillLocation);
     }
 
     @Override

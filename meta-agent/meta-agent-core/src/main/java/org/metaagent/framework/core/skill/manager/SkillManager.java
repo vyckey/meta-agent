@@ -104,11 +104,25 @@ public interface SkillManager extends AutoCloseable {
     void registerSkillLoader(SkillLoader skillLoader);
 
     /**
+     * Get all skill loaders.
+     *
+     * @return skill loaders
+     */
+    List<SkillLoader> getSkillLoaders();
+
+    /**
      * Register a skill watcher.
      *
      * @param skillWatcher skill watcher
      */
     void registerSkillWatcher(SkillWatcher skillWatcher);
+
+    /**
+     * Get all skill watchers.
+     *
+     * @return skill watchers
+     */
+    List<SkillWatcher> getSkillWatchers();
 
     /**
      * Load skills from a location.
@@ -117,6 +131,14 @@ public interface SkillManager extends AutoCloseable {
      * @throws SkillLoadException skill load exception
      */
     void loadSkillsFrom(URL skillLocation) throws SkillLoadException;
+
+    /**
+     * Check if a skill is loaded.
+     *
+     * @param skillLocation skill location
+     * @return true if the skill is loaded, false otherwise
+     */
+    boolean isSkillLoaded(URL skillLocation);
 
     /**
      * List all skills.

@@ -25,7 +25,9 @@
 package org.metaagent.framework.core.skill.loader;
 
 import org.apache.commons.lang3.NotImplementedException;
+import org.metaagent.framework.core.config.ConfigPaths;
 import org.metaagent.framework.core.skill.exception.SkillLoadException;
+import org.metaagent.framework.core.skill.manager.SkillManager;
 
 import java.net.MalformedURLException;
 import java.net.URI;
@@ -40,6 +42,14 @@ import java.nio.file.Paths;
  * @author vyckey
  */
 public class SkillLoaders {
+    public static URL resolveLocation(Path filePath) {
+        try {
+            return filePath.toUri().toURL();
+        } catch (MalformedURLException e) {
+            throw new SkillLoadException("Invalid skill location " + filePath, e);
+        }
+    }
+
     public static URL resolveLocation(URL location, String relativePath) {
         String protocol = location.getProtocol();
         return switch (protocol) {
@@ -81,5 +91,25 @@ public class SkillLoaders {
 
     public static SkillLoader remoteSkillLoader() {
         throw new NotImplementedException("Not implemented");
+    }
+
+    public static void loadSkillsIfNotLoaded(SkillManager skillManager, ConfigPaths configPaths) {
+        String skillsDir = SkillLoader.SKILLS_DIRNAME + "/";
+        URL globalSkillUrl = resolveLocation(configPaths.globalConfigPath().resolve(skillsDir));
+        if (!skillManager.isSkillLoaded(globalSkillUrl)) {
+            skillManager.loadSkillsFrom(globalSkillUrl);
+        }
+
+        URL userSkillsUrl = resolveLocation(configPaths.userConfigPath().resolve(skillsDir));
+        if (!skillManager.isSkillLoaded(userSkillsUrl)) {
+            skillManager.loadSkillsFrom(userSkillsUrl);
+        }
+
+        if (configPaths.projectConfigPath() != null) {
+            URL projectSkillsUrl = resolveLocation(configPaths.projectConfigPath().resolve(skillsDir));
+            if (!skillManager.isSkillLoaded(projectSkillsUrl)) {
+                skillManager.loadSkillsFrom(projectSkillsUrl);
+            }
+        }
     }
 }

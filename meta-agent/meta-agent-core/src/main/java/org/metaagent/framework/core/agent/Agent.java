@@ -31,6 +31,7 @@ import org.metaagent.framework.core.agent.output.AgentOutput;
 import org.metaagent.framework.core.agent.state.AgentRunStatus;
 import org.metaagent.framework.core.agent.state.AgentState;
 import org.metaagent.framework.core.agent.state.AgentStepState;
+import org.metaagent.framework.core.skill.manager.SkillManager;
 import org.metaagent.framework.core.tool.manager.ToolManager;
 
 /**
@@ -48,6 +49,13 @@ public interface Agent<I, O> extends MetaAgent<I, O> {
      * @return the tool manager.
      */
     ToolManager getToolManager();
+
+    /**
+     * Gets skill manager.
+     *
+     * @return the skill manager.
+     */
+    SkillManager getSkillManager();
 
     /**
      * Gets loop control strategy which controls if the agent will continue to do next loop.

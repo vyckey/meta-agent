@@ -192,12 +192,8 @@ public class LlmChatAgent extends AbstractStreamAgent<ChatInput, ChatOutput, Mes
     }
 
     @Override
-    public void initialize() {
-        if (initialized) {
-            return;
-        }
-
-        super.initialize();
+    public void doInitialize() {
+        super.doInitialize();
         conversationStorage.load(conversation);
         taskExecutor.submit(this::processPendingInputs);
     }
@@ -348,6 +344,7 @@ public class LlmChatAgent extends AbstractStreamAgent<ChatInput, ChatOutput, Mes
 
     @Override
     protected AgentInput<ChatInput> preprocess(AgentInput<ChatInput> agentInput) {
+        agentInput = super.preprocess(agentInput);
         // set system prompt
         ChatModelMetadata modelMetadata = modelProvider.getModelMetadata();
         String modelCutoffDate = "Unknown";

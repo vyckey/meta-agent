@@ -108,6 +108,9 @@ public class FileBasedSkillLoader implements SkillLoader {
             }
         }
         Path rootPath = filePath.toAbsolutePath().normalize();
+        if (!Files.exists(rootPath)) {
+            return Collections.emptyList();
+        }
 
         List<File> skillFiles;
         try (Stream<Path> pathStream = Files.walk(rootPath)) {
@@ -117,7 +120,7 @@ public class FileBasedSkillLoader implements SkillLoader {
                     .map(Path::toFile)
                     .toList();
         } catch (IOException e) {
-            SkillLoadException pe = new SkillLoadException("Failed to walk directory tree: " + filePath + ", reason: " + e.getMessage(), e);
+            SkillLoadException pe = new SkillLoadException("Failed to walk directory tree: " + filePath + ", reason: " + e, e);
             errors.add(SkillLoadError.from(filePath, pe));
             return Collections.emptyList();
         }
