@@ -27,13 +27,17 @@ package org.metaagent.framework.core.skill;
 import org.apache.commons.lang3.StringUtils;
 import org.metaagent.framework.common.io.IOUtils;
 import org.metaagent.framework.common.io.MarkdownUtils;
-import org.metaagent.framework.core.skill.exception.SkillParseException;
+import org.metaagent.framework.core.skill.exception.SkillLoadException;
 import org.metaagent.framework.core.skill.loader.SkillLoaders;
 import org.metaagent.framework.core.skill.metadata.SkillMetadata;
 
 import java.io.IOException;
+import java.net.URISyntaxException;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.Objects;
 
 import static org.metaagent.framework.core.skill.loader.SkillLoader.SKILL_FILENAME;
@@ -62,17 +66,33 @@ public class DefaultSkill implements Skill {
     }
 
     @Override
-    public String getInstruction() {
+    public String loadInstruction() throws SkillLoadException {
         if (StringUtils.isNotEmpty(instruction)) {
             return instruction;
         }
-        URL skillUrl = SkillLoaders.resolveLocation(metadata.location(), SKILL_FILENAME);
+        String content = loadContent(SKILL_FILENAME);
+        this.instruction = MarkdownUtils.parseFrontMatterAndMainText(content).getRight();
+        return this.instruction;
+    }
+
+    @Override
+    public String loadContent(String relativePath) throws SkillLoadException {
+        URL location = SkillLoaders.resolveLocation(metadata.location(), relativePath);
         try {
-            String text = IOUtils.toString(skillUrl, StandardCharsets.UTF_8);
-            this.instruction = MarkdownUtils.parseFrontMatterAndMainText(text).getRight();
-            return this.instruction;
+            if ("file".equalsIgnoreCase(location.getProtocol())) {
+                Path filePath = Paths.get(location.toURI()).toAbsolutePath().normalize();
+                if (!Files.exists(filePath)) {
+                    throw new SkillLoadException("File " + filePath + " not exists");
+                }
+                if (!Files.isReadable(filePath)) {
+                    throw new SkillLoadException("File " + filePath + " is not readable");
+                }
+            }
+            return IOUtils.toString(location, StandardCharsets.UTF_8);
         } catch (IOException e) {
-            throw new SkillParseException("Read " + SKILL_FILENAME + " fail", e);
+            throw new SkillLoadException("Failed to read content from URL: " + location, e);
+        } catch (URISyntaxException e) {
+            throw new SkillLoadException("Invalid file URL: " + location, e);
         }
     }
 

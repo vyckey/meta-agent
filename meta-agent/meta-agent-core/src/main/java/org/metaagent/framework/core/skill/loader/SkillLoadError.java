@@ -24,7 +24,7 @@
 
 package org.metaagent.framework.core.skill.loader;
 
-import org.metaagent.framework.core.skill.exception.SkillParseException;
+import org.metaagent.framework.core.skill.exception.SkillLoadException;
 
 import java.net.MalformedURLException;
 import java.net.URL;
@@ -35,8 +35,8 @@ import java.nio.file.Path;
  *
  * @author vyckey
  */
-public record SkillLoadError(URL location, SkillParseException exception) {
-    public static SkillLoadError from(Path filePath, SkillParseException exception) {
+public record SkillLoadError(URL location, SkillLoadException exception) {
+    public static SkillLoadError from(Path filePath, SkillLoadException exception) {
         try {
             return new SkillLoadError(filePath.toUri().toURL(), exception);
         } catch (MalformedURLException e) {

@@ -25,16 +25,16 @@
 package org.metaagent.framework.core.skill.exception;
 
 /**
- * Skill parse exception
+ * Skill load exception
  *
  * @author vyckey
  */
-public class SkillParseException extends SkillException {
-    public SkillParseException(String message) {
+public class SkillLoadException extends SkillException {
+    public SkillLoadException(String message) {
         super(message);
     }
 
-    public SkillParseException(String message, Throwable cause) {
+    public SkillLoadException(String message, Throwable cause) {
         super(message, cause);
     }
 }

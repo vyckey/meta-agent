@@ -25,8 +25,10 @@
 package org.metaagent.framework.core.skill.loader;
 
 import org.metaagent.framework.core.skill.Skill;
+import org.metaagent.framework.core.skill.exception.SkillLoadException;
 
 import java.net.URL;
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -71,5 +73,21 @@ public interface SkillLoader {
      * @return A list of loaded skills.
      */
     List<Skill> load(URL location, List<SkillLoadError> errors);
+
+    /**
+     * Loads skills from the specified location.
+     *
+     * @param location The location to load skills from.
+     * @return A list of loaded skills.
+     * @throws SkillLoadException If an error occurs during loading.
+     */
+    default List<Skill> load(URL location) throws SkillLoadException {
+        List<SkillLoadError> errors = new ArrayList<>();
+        List<Skill> skills = load(location, errors);
+        if (!errors.isEmpty()) {
+            throw errors.get(0).exception();
+        }
+        return skills;
+    }
 
 }

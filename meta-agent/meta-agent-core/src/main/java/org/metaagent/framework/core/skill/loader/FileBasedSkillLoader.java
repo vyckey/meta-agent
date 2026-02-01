@@ -26,26 +26,36 @@ package org.metaagent.framework.core.skill.loader;
 
 import com.fasterxml.jackson.annotation.JsonAnySetter;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import jakarta.validation.ConstraintViolation;
+import jakarta.validation.Validation;
+import jakarta.validation.Validator;
+import jakarta.validation.ValidatorFactory;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotEmpty;
+import jakarta.validation.constraints.Pattern;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
+import org.hibernate.validator.messageinterpolation.ParameterMessageInterpolator;
 import org.metaagent.framework.common.io.MarkdownUtils;
 import org.metaagent.framework.core.skill.DefaultSkill;
 import org.metaagent.framework.core.skill.Skill;
-import org.metaagent.framework.core.skill.exception.SkillParseException;
+import org.metaagent.framework.core.skill.exception.SkillLoadException;
 import org.metaagent.framework.core.skill.metadata.DefaultSkillMetadata;
 import org.metaagent.framework.core.skill.metadata.SkillMetadata;
 
-import javax.validation.constraints.NotNull;
 import java.io.File;
 import java.io.IOException;
+import java.net.URISyntaxException;
 import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.stream.Stream;
 
 /**
@@ -55,6 +65,16 @@ import java.util.stream.Stream;
  */
 @Slf4j
 public class FileBasedSkillLoader implements SkillLoader {
+    static final Validator VALIDATOR;
+
+    static {
+        try (ValidatorFactory factory = Validation.byDefaultProvider()
+                .configure()
+                .messageInterpolator(new ParameterMessageInterpolator())
+                .buildValidatorFactory()) {
+            VALIDATOR = factory.getValidator();
+        }
+    }
 
     @Override
     public boolean supports(URL location) {
@@ -62,8 +82,15 @@ public class FileBasedSkillLoader implements SkillLoader {
     }
 
     @Override
-    public List<Skill> load(URL location, List<SkillLoadError> errors) throws SkillParseException {
-        Path filePath = Path.of(location.getPath());
+    public List<Skill> load(URL location, List<SkillLoadError> errors) {
+        Path filePath;
+        try {
+            filePath = Paths.get(location.toURI()).toAbsolutePath().normalize();
+        } catch (URISyntaxException e) {
+            errors.add(new SkillLoadError(location, new SkillLoadException("Invalid file URL: " + location, e)));
+            return Collections.emptyList();
+        }
+
         List<SkillMetadata> skillMetadataList = loadSkillMetadata(filePath, errors);
         return skillMetadataList.stream()
                 .map(DefaultSkill::new)
@@ -72,16 +99,25 @@ public class FileBasedSkillLoader implements SkillLoader {
     }
 
     public List<SkillMetadata> loadSkillMetadata(Path filePath, List<SkillLoadError> errors) {
+        if (Files.isSymbolicLink(filePath)) {
+            try {
+                filePath = filePath.toRealPath();
+            } catch (IOException e) {
+                errors.add(SkillLoadError.from(filePath, new SkillLoadException("Cannot convert symbolic link path: " + filePath, e)));
+                return Collections.emptyList();
+            }
+        }
         Path rootPath = filePath.toAbsolutePath().normalize();
+
         List<File> skillFiles;
         try (Stream<Path> pathStream = Files.walk(rootPath)) {
             skillFiles = pathStream
                     .filter(Files::isRegularFile)
-                    .filter(path -> SKILL_FILENAME.equalsIgnoreCase(path.getFileName().toString()))
+                    .filter(path -> SKILL_FILENAME.equals(path.getFileName().toString()))
                     .map(Path::toFile)
                     .toList();
         } catch (IOException e) {
-            SkillParseException pe = new SkillParseException("Failed to read the skills file: " + filePath);
+            SkillLoadException pe = new SkillLoadException("Failed to walk directory tree: " + filePath + ", reason: " + e.getMessage(), e);
             errors.add(SkillLoadError.from(filePath, pe));
             return Collections.emptyList();
         }
@@ -92,9 +128,9 @@ public class FileBasedSkillLoader implements SkillLoader {
                 SkillMetadata skillMetadata = readSkillMetadata(skillFile.toPath());
                 skillMetadataList.add(skillMetadata);
             } catch (IOException e) {
-                SkillParseException pe = new SkillParseException("Failed to read the skill metadata from file: " + filePath);
+                SkillLoadException pe = new SkillLoadException("Failed to read the skill metadata from file: " + filePath);
                 errors.add(SkillLoadError.from(filePath, pe));
-            } catch (SkillParseException e) {
+            } catch (SkillLoadException e) {
                 errors.add(SkillLoadError.from(filePath, e));
             }
         }
@@ -102,13 +138,21 @@ public class FileBasedSkillLoader implements SkillLoader {
     }
 
     public SkillMetadata readSkillMetadata(Path skillFilePath) throws IOException {
+        if (!Files.isReadable(skillFilePath)) {
+            throw new SkillLoadException("The file " + skillFilePath + " is not readable");
+        }
         String frontMatter = MarkdownUtils.readFrontMatter(skillFilePath);
         if (StringUtils.isEmpty(frontMatter)) {
-            throw new SkillParseException("The front-matter content isn't exists in file " + skillFilePath);
+            throw new SkillLoadException("The front-matter content isn't exists in file " + skillFilePath);
         }
         SkillMetadataDO skillMetadataDO = MarkdownUtils.parseFrontMatter(frontMatter, SkillMetadataDO.class);
-        if (StringUtils.isEmpty(skillMetadataDO.name()) || StringUtils.isEmpty(skillMetadataDO.description())) {
-            throw new SkillParseException("The name or description of skill is missing in file " + skillFilePath);
+        Set<ConstraintViolation<SkillMetadataDO>> violations = VALIDATOR.validate(skillMetadataDO);
+        if (!violations.isEmpty()) {
+            StringBuilder errorMessage = new StringBuilder();
+            for (ConstraintViolation<SkillMetadataDO> violation : violations) {
+                errorMessage.append(violation.getMessage()).append("\n");
+            }
+            throw new SkillLoadException("Skill metadata validation failed for file " + skillFilePath + ": " + errorMessage.toString().trim());
         }
 
         return DefaultSkillMetadata.builder()
@@ -122,12 +166,15 @@ public class FileBasedSkillLoader implements SkillLoader {
     }
 
     record SkillMetadataDO(
-            @NotNull(message = "name is required")
+            @NotBlank(message = "name is required")
+            @JsonProperty(required = true)
             String name,
 
-            @NotNull(message = "description is required")
+            @NotEmpty(message = "description is required")
+            @JsonProperty(required = true)
             String description,
 
+            @Pattern(regexp = "^\\d+\\.\\d+\\.\\d+$", message = "version must follow semantic versioning (x.y.z)")
             String version,
 
             @JsonProperty("allowedTools")

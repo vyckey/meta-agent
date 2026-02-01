@@ -24,7 +24,8 @@
 
 package org.metaagent.framework.core.skill.loader;
 
-import org.metaagent.framework.core.skill.exception.SkillParseException;
+import org.apache.commons.lang3.NotImplementedException;
+import org.metaagent.framework.core.skill.exception.SkillLoadException;
 
 import java.net.MalformedURLException;
 import java.net.URI;
@@ -33,13 +34,18 @@ import java.net.URL;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 
+/**
+ * SkillLoaders
+ *
+ * @author vyckey
+ */
 public class SkillLoaders {
     public static URL resolveLocation(URL location, String relativePath) {
         String protocol = location.getProtocol();
         return switch (protocol) {
             case "file" -> resolveFileLocation(location, relativePath);
             case "http", "https" -> resolveRemoteLocation(location, relativePath);
-            default -> throw new SkillParseException("Unsupported protocol: " + protocol);
+            default -> throw new SkillLoadException("Unsupported protocol: " + protocol);
         };
     }
 
@@ -52,7 +58,7 @@ public class SkillLoaders {
             }
             return resolvedPath.normalize().toUri().toURL();
         } catch (URISyntaxException | MalformedURLException e) {
-            throw new SkillParseException("Cannot concat file path '" + fileUrl + "' and '" + relativePath + "'", e);
+            throw new SkillLoadException("Cannot concat file path '" + fileUrl + "' and '" + relativePath + "'", e);
         }
     }
 
@@ -65,12 +71,15 @@ public class SkillLoaders {
             String remotePath = remoteUrl.getPath();
             return new URL(remoteUrl, relPath.toString());
         } catch (MalformedURLException e) {
-            throw new SkillParseException("Cannot concat remote path '" + remoteUrl + "' and '" + relativePath + "'", e);
+            throw new SkillLoadException("Cannot concat remote path '" + remoteUrl + "' and '" + relativePath + "'", e);
         }
     }
 
-    public static SkillLoader fileBasedSkillLoader() {
+    public static SkillLoader fileSkillLoader() {
         return new FileBasedSkillLoader();
     }
 
+    public static SkillLoader remoteSkillLoader() {
+        throw new NotImplementedException("Not implemented");
+    }
 }
