@@ -51,5 +51,5 @@ public interface ConversationStorage extends Closeable {
      *
      * @param conversationId the conversation ID to clear
      */
-    void clear(String conversationId);
+    void clear(ConversationId conversationId);
 }

@@ -1,7 +1,7 @@
 /*
  * MIT License
  *
- * Copyright (c) 2025 MetaAgent
+ * Copyright (c) 2026 MetaAgent
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -22,49 +22,18 @@
  * SOFTWARE.
  */
 
-package org.metaagent.framework.core.agent.chat.message;
+package org.metaagent.framework.tools.skill;
 
-import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
-import org.metaagent.framework.common.metadata.MapMetadataProvider;
-import org.metaagent.framework.common.metadata.MetadataProvider;
-
-import java.time.Instant;
+import org.metaagent.framework.core.tool.schema.ToolDisplayable;
 
 /**
- * The abstract class for the message interface.
+ * List skills input
  *
  * @author vyckey
  */
-public abstract class AbstractMessage implements Message {
-    @JsonDeserialize(as = MessageIdValue.class)
-    protected MessageId id;
-    @JsonDeserialize(as = MapMetadataProvider.class)
-    protected MetadataProvider metadata;
-    protected Instant createdAt = Instant.now();
-
+public record ListSkillsInput() implements ToolDisplayable {
     @Override
-    public MessageId getId() {
-        if (id == null) {
-            id = MessageId.random();
-        }
-        return id;
-    }
-
-    @Override
-    public MetadataProvider getMetadata() {
-        if (metadata == null) {
-            metadata = MetadataProvider.create();
-        }
-        return metadata;
-    }
-
-    @Override
-    public Instant getCreatedAt() {
-        return createdAt;
-    }
-
-    @Override
-    public String toString() {
-        return getRole() + ": " + getContent();
+    public String display() {
+        return "List available skills";
     }
 }

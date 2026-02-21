@@ -35,7 +35,6 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
-import java.util.UUID;
 import java.util.function.Predicate;
 
 /**
@@ -45,28 +44,24 @@ import java.util.function.Predicate;
  */
 public class DefaultConversation implements Conversation {
     public static final DateTimeFormatter TIME_FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ssXXX");
-    protected final String conversationId;
+    protected final ConversationId conversationId;
     protected final List<Message> messages;
 
-    public DefaultConversation(String conversationId, List<Message> messages) {
+    public DefaultConversation(ConversationId conversationId, List<Message> messages) {
         this.conversationId = Objects.requireNonNull(conversationId, "conversationId is required");
         this.messages = Objects.requireNonNull(messages, "messages is required");
     }
 
-    public DefaultConversation(String conversationId) {
+    public DefaultConversation(ConversationId conversationId) {
         this(conversationId, Lists.newArrayList());
     }
 
     public DefaultConversation() {
-        this(generateConversationId());
-    }
-
-    public static String generateConversationId() {
-        return UUID.randomUUID().toString().replaceAll("-", "").substring(0, 16);
+        this(ConversationId.next());
     }
 
     @Override
-    public String id() {
+    public ConversationId id() {
         return conversationId;
     }
 
@@ -121,7 +116,7 @@ public class DefaultConversation implements Conversation {
     public void resetAfter(MessageId messageId, boolean inclusive) {
         int index = -1;
         for (int i = messages.size() - 1; i >= 0; i--) {
-            if (messages.get(i).getId().equals(messageId)) {
+            if (messages.get(i).info().id().equals(messageId)) {
                 index = inclusive ? i - 1 : i;
                 break;
             }
@@ -168,13 +163,13 @@ public class DefaultConversation implements Conversation {
 
     private void appendMessages(StringBuilder sb, List<Message> messages, int maxMessageLength) {
         for (Message message : messages) {
-            String content = message.getContent();
+            String content = message.content();
             if (content.length() > maxMessageLength) {
                 content = content.substring(0, maxMessageLength) + "...(truncated)";
             }
-            ZonedDateTime createdTime = message.getCreatedAt().atZone(ZoneId.systemDefault());
+            ZonedDateTime createdTime = message.info().createdAt().atZone(ZoneId.systemDefault());
             sb.append("[").append(createdTime.format(TIME_FORMATTER)).append("] ");
-            sb.append(message.getRole()).append(": ").append(content);
+            sb.append(message.info().role()).append(": ").append(content);
             sb.append("\n");
         }
     }

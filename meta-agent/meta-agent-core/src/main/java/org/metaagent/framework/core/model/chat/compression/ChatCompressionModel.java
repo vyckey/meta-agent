@@ -27,7 +27,6 @@ package org.metaagent.framework.core.model.chat.compression;
 import com.google.common.collect.Lists;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
-import org.metaagent.framework.core.model.chat.message.ToolCallMessage;
 import org.springframework.ai.chat.messages.AssistantMessage;
 import org.springframework.ai.chat.messages.Message;
 import org.springframework.ai.chat.messages.SystemMessage;
@@ -73,8 +72,8 @@ public class ChatCompressionModel implements CompressionModel {
     public int countTokens(List<Message> messages) {
         int totalTokenCount = 0;
         for (Message message : messages) {
-            if (message instanceof ToolCallMessage toolCallMessage) {
-                for (ToolCallMessage.ToolCall toolCall : toolCallMessage.getToolCalls()) {
+            if (message instanceof AssistantMessage assistantMessage && assistantMessage.hasToolCalls()) {
+                for (AssistantMessage.ToolCall toolCall : assistantMessage.getToolCalls()) {
                     totalTokenCount += toolCall.name().length();
                     totalTokenCount += toolCall.arguments().length();
                 }

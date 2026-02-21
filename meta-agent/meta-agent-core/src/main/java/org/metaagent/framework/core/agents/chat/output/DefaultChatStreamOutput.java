@@ -26,23 +26,30 @@ package org.metaagent.framework.core.agents.chat.output;
 
 import com.google.common.collect.Lists;
 import org.metaagent.framework.common.metadata.MetadataProvider;
-import org.metaagent.framework.core.agent.chat.message.Message;
+import org.metaagent.framework.core.agent.chat.message.MessageInfo;
+import org.metaagent.framework.core.agent.chat.message.RoleMessage;
 import org.metaagent.framework.core.agent.chat.message.StreamMessageAggregator;
+import org.metaagent.framework.core.agent.chat.message.part.MessagePart;
 import org.metaagent.framework.core.agent.output.StreamOutput;
 
 import java.util.List;
 
-public record DefaultChatStreamOutput(Message message, MetadataProvider metadata) implements ChatStreamOutput {
-    public static StreamOutput.Aggregator<Message, ChatOutput> aggregator() {
+public record DefaultChatStreamOutput(MessagePart message, MetadataProvider metadata) implements ChatStreamOutput {
+    public static StreamOutput.Aggregator<MessagePart, ChatOutput> aggregator(MessageInfo messageInfo) {
         return streamOutputs -> {
             MetadataProvider metadata = MetadataProvider.create();
-            List<Message> streamMessages = Lists.newArrayList();
-            for (Message message : streamOutputs) {
-                streamMessages.add(message);
+            List<MessagePart> streamMessages = Lists.newArrayList();
+            for (MessagePart messagePart : streamOutputs) {
+                streamMessages.add(messagePart);
             }
-            List<Message> aggregatedMessages = StreamMessageAggregator.INSTANCE.aggregate(streamMessages);
+
+            List<MessagePart> aggregatedMessages = StreamMessageAggregator.INSTANCE.aggregate(streamMessages);
+            MessageInfo info = messageInfo.toBuilder()
+                    .createdAt(aggregatedMessages.isEmpty() ? messageInfo.createdAt() : aggregatedMessages.get(0).createdAt())
+                    .updatedAt(aggregatedMessages.isEmpty() ? messageInfo.updatedAt() : aggregatedMessages.get(aggregatedMessages.size() - 1).updatedAt())
+                    .build();
             return ChatOutput.builder()
-                    .messages(aggregatedMessages)
+                    .message(new RoleMessage(info, aggregatedMessages))
                     .metadata(metadata)
                     .build();
         };

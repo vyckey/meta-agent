@@ -25,6 +25,7 @@
 package org.metaagent.framework.agents.chat;
 
 import com.google.common.collect.Lists;
+import org.apache.commons.collections.MapUtils;
 import org.apache.commons.lang3.BooleanUtils;
 import org.metaagent.framework.common.metadata.MetadataProvider;
 import org.metaagent.framework.core.agent.AbstractAgentBuilder;
@@ -39,7 +40,9 @@ import org.metaagent.framework.core.agent.chat.conversation.MessageTurn;
 import org.metaagent.framework.core.agent.chat.conversation.TurnBasedConversation;
 import org.metaagent.framework.core.agent.chat.message.Message;
 import org.metaagent.framework.core.agent.chat.message.MessageId;
+import org.metaagent.framework.core.agent.chat.message.MessageInfo;
 import org.metaagent.framework.core.agent.chat.message.RoleMessage;
+import org.metaagent.framework.core.agent.chat.message.part.MessagePart;
 import org.metaagent.framework.core.agent.input.AgentInput;
 import org.metaagent.framework.core.agent.output.AgentOutput;
 import org.metaagent.framework.core.agent.output.StreamOutput;
@@ -70,6 +73,7 @@ import org.metaagent.framework.core.model.prompt.PromptValue;
 import org.metaagent.framework.core.model.prompt.StringPromptTemplate;
 import org.metaagent.framework.core.model.prompt.StringPromptValue;
 import org.metaagent.framework.core.model.prompt.registry.PromptRegistry;
+import org.springframework.ai.chat.messages.AssistantMessage;
 import org.springframework.ai.chat.messages.SystemMessage;
 import org.springframework.ai.chat.model.ChatModel;
 import reactor.core.publisher.Flux;
@@ -79,9 +83,11 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
@@ -92,12 +98,14 @@ import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 import java.util.stream.IntStream;
 
+import static org.metaagent.framework.core.agent.chat.message.MessageMetadataKeys.KEY_MESSAGE_ID;
+
 /**
  * {@link ChatAgent} implementation with Large Language Model (LLM).
  *
  * @author vyckey
  */
-public class LlmChatAgent extends AbstractStreamAgent<ChatInput, ChatOutput, Message>
+public class LlmChatAgent extends AbstractStreamAgent<ChatInput, ChatOutput, MessagePart>
         implements ChatAgent<ChatInput, ChatOutput> {
     public static final String DEFAULT_SYSTEM_PROMPT_ID = "framework:chat_agent_system_prompt";
     public static final String DEFAULT_CONTEXT_COMPRESSION_SYSTEM_PROMPT_ID = "framework:chat_agent_context_compression_system_prompt";
@@ -192,12 +200,8 @@ public class LlmChatAgent extends AbstractStreamAgent<ChatInput, ChatOutput, Mes
     }
 
     @Override
-    public void initialize() {
-        if (initialized) {
-            return;
-        }
-
-        super.initialize();
+    public void doInitialize() {
+        super.doInitialize();
         conversationStorage.load(conversation);
         taskExecutor.submit(this::processPendingInputs);
     }
@@ -348,6 +352,7 @@ public class LlmChatAgent extends AbstractStreamAgent<ChatInput, ChatOutput, Mes
 
     @Override
     protected AgentInput<ChatInput> preprocess(AgentInput<ChatInput> agentInput) {
+        agentInput = super.preprocess(agentInput);
         // set system prompt
         ChatModelMetadata modelMetadata = modelProvider.getModelMetadata();
         String modelCutoffDate = "Unknown";
@@ -369,8 +374,10 @@ public class LlmChatAgent extends AbstractStreamAgent<ChatInput, ChatOutput, Mes
     }
 
     protected void compressContextIfNeeded(AgentInput<ChatInput> input) {
-        List<org.springframework.ai.chat.messages.Message> historyMessages =
-                Lists.newArrayList(conversation).stream().map(messageConverter::convertTo).toList();
+        List<Message> messages = Lists.newArrayList(conversation);
+        List<org.springframework.ai.chat.messages.Message> historyMessages = messages.stream()
+                .map(message -> messageConverter.convert(message))
+                .flatMap(List::stream).toList();
 
         MetadataProvider agentMetadata = getAgentProfile().getMetadata();
         float contextCompressionRatio = agentMetadata.getProperty(ChatAgent.METADATA_KEY_CONTEXT_COMPRESSION_RATIO,
@@ -394,17 +401,26 @@ public class LlmChatAgent extends AbstractStreamAgent<ChatInput, ChatOutput, Mes
     protected void applyCompressionResult(CompressionResult compressionResult) {
         String summaryText = compressionResult.getSummary().getText();
         String finalSummaryText = String.format("<context-summary time=\"%s\">\n%s\n</context-summary>", LocalDateTime.now(), summaryText);
-        RoleMessage summaryMessage = new RoleMessage("system", finalSummaryText, MetadataProvider.empty());
 
-        List<Message> retainedMessages = compressionResult.getRetainedMessages().stream().map(messageConverter::convertTo).toList();
+        List<org.springframework.ai.chat.messages.Message> retainedMessages = compressionResult.getRetainedMessages();
         List<MessageTurn> turnsToReserve = Lists.newArrayList();
         if (!retainedMessages.isEmpty()) {
             // Remove turns before the first reserved message
-            MessageId firstReservedMessageId = retainedMessages.get(0).getId();
+            MessageId firstReservedMessageId = Optional
+                    .ofNullable(MapUtils.getString(retainedMessages.get(0).getMetadata(), KEY_MESSAGE_ID))
+                    .map(MessageId::of).orElse(null);
+            List<MessagePart> firstReservedMessageParts = messageConverter.convert(retainedMessages.get(0));
+
             for (MessageTurn turn : conversation.turns(true)) {
                 List<Message> turnMessages = turn.messages();
                 int matchIndex = IntStream.range(0, turnMessages.size())
-                        .filter(idx -> turnMessages.get(idx).getId().equals(firstReservedMessageId))
+                        .filter(idx -> {
+                            Message message = turnMessages.get(idx);
+                            if (firstReservedMessageId != null && message.info().id().equals(firstReservedMessageId)) {
+                                return true;
+                            }
+                            return !message.parts().isEmpty() && message.parts().get(0).equals(firstReservedMessageParts.get(0));
+                        })
                         .findFirst()
                         .orElse(-1);
                 if (matchIndex >= 0) {
@@ -417,6 +433,7 @@ public class LlmChatAgent extends AbstractStreamAgent<ChatInput, ChatOutput, Mes
             }
             conversation.resetAfter(firstReservedMessageId, false);
         }
+        Collections.reverse(turnsToReserve);
 
         // Store the compressed conversation
         compressedConversationStorage.store(conversation);
@@ -427,20 +444,30 @@ public class LlmChatAgent extends AbstractStreamAgent<ChatInput, ChatOutput, Mes
 
         // Reset the history messages of model client
         List<org.springframework.ai.chat.messages.Message> historyMessages = Lists.newArrayList();
-        historyMessages.add(messageConverter.convertTo(summaryMessage));
-        historyMessages.addAll(compressionResult.getRetainedMessages());
+        historyMessages.add(new AssistantMessage(finalSummaryText));
+        historyMessages.addAll(retainedMessages);
         chatModelClient.setHistoryMessages(historyMessages);
     }
 
     @Override
     protected AgentOutput<ChatOutput> doStep(AgentInput<ChatInput> agentInput) {
         ChatInput input = agentInput.input();
-        ChatModelResponse chatResponse = chatModelClient.sendMessages(input.messages().stream().map(messageConverter::convert).toList());
+        List<org.springframework.ai.chat.messages.Message> inputMessages = input.messages()
+                .stream().map(messageConverter::convert).flatMap(List::stream).toList();
+        ChatModelResponse chatResponse = chatModelClient.sendMessages(inputMessages);
 
-        List<Message> outputMessages = chatModelClient.lastTurnOutputMessages().stream().map(messageConverter::convertTo).toList();
-        outputMessages.forEach(conversation::appendMessage);
+        List<MessagePart> messageParts = messageConverter.convert(chatModelClient.lastTurnOutputMessages());
+        Message outputMessage = RoleMessage.builder()
+                .info(MessageInfo.assistant()
+                        .createdAt(messageParts.get(0).createdAt())
+                        .updatedAt(messageParts.get(messageParts.size() - 1).updatedAt())
+                        .build()
+                )
+                .parts(messageParts)
+                .build();
+        conversation.appendMessage(outputMessage);
 
-        ChatOutput agentOutput = ChatOutput.builder().messages(outputMessages).build();
+        ChatOutput agentOutput = ChatOutput.builder().message(outputMessage).build();
         return AgentOutput.create(agentOutput, ChatModelUtils.getMetadata(chatResponse));
     }
 
@@ -450,13 +477,13 @@ public class LlmChatAgent extends AbstractStreamAgent<ChatInput, ChatOutput, Mes
 
         return super.stepStream(input, agentOutput -> {
             ChatOutput chatOutput = agentOutput.result();
-            chatOutput.messages().forEach(conversation::appendMessage);
+            conversation.appendMessage(chatOutput.message());
             onStreamComplete.accept(agentOutput);
         });
     }
 
     @Override
-    protected Flux<Message> doRunStreamComplete(Flux<Message> stream) {
+    protected Flux<MessagePart> doRunStreamComplete(Flux<MessagePart> stream) {
         // Set streaming finished to allow processing next input
         return super.doRunStreamComplete(stream)
                 .doOnComplete(this::setStreamingFinished)
@@ -466,21 +493,24 @@ public class LlmChatAgent extends AbstractStreamAgent<ChatInput, ChatOutput, Mes
     @Override
     protected AgentOutput<ChatOutput> doStepStream(AgentInput<ChatInput> agentInput) {
         ChatInput input = agentInput.input();
-        Flux<ChatModelResponse> messageFlux = chatModelClient.sendMessageStream(input.messages().stream().map(messageConverter::convert).toList());
-        Flux<Message> stream = messageFlux.map(chatModelResponse -> {
-            return messageConverter.convertTo(chatModelResponse.getOutput());
-        });
+        List<org.springframework.ai.chat.messages.Message> inputMessages = input.messages()
+                .stream().map(messageConverter::convert).flatMap(List::stream).toList();
+        Flux<ChatModelResponse> messageFlux = chatModelClient.sendMessageStream(inputMessages);
+        Flux<MessagePart> stream = messageFlux
+                .map(chatModelResponse -> messageConverter.convert(chatModelResponse.getOutput()))
+                .flatMap(Flux::fromIterable);
         ChatOutput chatOutput = ChatOutput.builder().stream(stream).build();
         return AgentOutput.create(chatOutput);
     }
 
     @Override
-    public StreamOutput.Aggregator<Message, ChatOutput> getStreamOutputAggregator() {
-        return DefaultChatStreamOutput.aggregator();
+    public StreamOutput.Aggregator<MessagePart, ChatOutput> getStreamOutputAggregator() {
+        MessageInfo messageInfo = MessageInfo.assistant().build();
+        return DefaultChatStreamOutput.aggregator(messageInfo);
     }
 
     @Override
-    protected AgentOutput<ChatOutput> rebuildOutput(AgentInput<ChatInput> input, AgentOutput<ChatOutput> agentOutput, Flux<Message> stream) {
+    protected AgentOutput<ChatOutput> rebuildOutput(AgentInput<ChatInput> input, AgentOutput<ChatOutput> agentOutput, Flux<MessagePart> stream) {
         ChatOutput chatOutput = DefaultChatOutput.builder(agentOutput.result()).stream(stream).build();
         return AgentOutput.create(chatOutput, agentOutput.metadata());
     }

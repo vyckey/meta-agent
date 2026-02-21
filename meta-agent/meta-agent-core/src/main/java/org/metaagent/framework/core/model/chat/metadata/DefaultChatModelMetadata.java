@@ -58,6 +58,15 @@ public class DefaultChatModelMetadata extends ClassMetadataProvider implements C
         return maxWindowSize;
     }
 
+    @Override
+    public DefaultChatModelMetadata copy() {
+        return builder()
+                .setExtendProperties(this.extendProperties)
+                .cutOffDay(this.cutOffDay)
+                .maxWindowSize(this.maxWindowSize)
+                .build();
+    }
+
     public static class Builder extends ClassMetadataProvider.Builder<Builder> {
         private Instant cutOffDay;
         private int maxWindowSize = -1;

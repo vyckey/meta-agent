@@ -44,7 +44,7 @@ public interface Conversation extends Iterable<Message> {
      *
      * @return the conversation ID
      */
-    String id();
+    ConversationId id();
 
     /**
      * Returns whether this message conversation is empty.

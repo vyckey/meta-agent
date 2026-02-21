@@ -114,15 +114,17 @@ public abstract class AbstractMetaAgent<I, O> implements MetaAgent<I, O> {
         return memory;
     }
 
-    public void initialize() {
+    public synchronized void initialize() {
         if (initialized) {
             return;
         }
+        doInitialize();
+        initialized = true;
+    }
 
+    protected void doInitialize() {
         this.logListener = new AgentLogListener<>(agentState, agentLogger);
         this.runEventPublisher = new AgentRunEventPublisher<>(eventBus);
-
-        initialized = true;
     }
 
     protected List<AgentRunListener<I, O>> getRunListeners(AgentInput<I> agentInput) {

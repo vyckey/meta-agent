@@ -125,8 +125,8 @@ public class ShellCommandTool implements Tool<ShellCommandInput, ShellCommandOut
             PermissionApproval approvalResult = toolContext.requestApproval(approvalRequest);
             if (approvalResult.getApprovalStatus() == ApprovalStatus.REJECTED) {
                 logger.warn("The execution of tool {} with command \"{}\" is not approved, reason: {} ",
-                        getName(), command, approvalResult.getContent());
-                throw new ToolRejectException(getName(), approvalResult.getContent());
+                        getName(), command, approvalResult.content());
+                throw new ToolRejectException(getName(), approvalResult.content());
             }
         }
     }

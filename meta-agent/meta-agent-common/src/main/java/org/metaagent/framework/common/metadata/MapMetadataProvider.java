@@ -29,6 +29,7 @@ import com.fasterxml.jackson.annotation.JsonValue;
 import com.google.common.collect.Maps;
 import lombok.EqualsAndHashCode;
 
+import java.util.Collections;
 import java.util.Map;
 import java.util.Objects;
 
@@ -58,7 +59,7 @@ public class MapMetadataProvider implements MetadataProvider {
     @JsonValue
     @Override
     public Map<String, Object> getProperties() {
-        return properties;
+        return Collections.unmodifiableMap(properties);
     }
 
     @Override
@@ -103,6 +104,11 @@ public class MapMetadataProvider implements MetadataProvider {
                 .build();
     }
 
+    @Override
+    public MapMetadataProvider copy() {
+        return new MapMetadataProvider(getProperties());
+    }
+
     public ImmutableMetadataProvider immutable() {
         return new ImmutableMetadataWrapper(this);
     }
@@ -118,7 +124,7 @@ public class MapMetadataProvider implements MetadataProvider {
         }
 
         public Builder setProperties(Map<String, Object> metadata) {
-            metadata.putAll(metadata);
+            this.metadata.putAll(metadata);
             return this;
         }
 

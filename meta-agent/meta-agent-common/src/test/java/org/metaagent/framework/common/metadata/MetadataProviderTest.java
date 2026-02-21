@@ -87,5 +87,13 @@ class MetadataProviderTest {
         void setDescription(String description) {
             this.description = description != null ? description.trim() : "";
         }
+
+        @Override
+        public TestClassMetadataProvider copy() {
+            TestClassMetadataProvider metadata = new TestClassMetadataProvider(name);
+            metadata.setDescription(description);
+            metadata.setProperty("version", version);
+            return metadata;
+        }
     }
 }

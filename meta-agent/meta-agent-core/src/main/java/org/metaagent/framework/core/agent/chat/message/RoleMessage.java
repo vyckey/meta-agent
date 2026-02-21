@@ -24,72 +24,104 @@
 
 package org.metaagent.framework.core.agent.chat.message;
 
-import com.fasterxml.jackson.annotation.JsonCreator;
-import com.fasterxml.jackson.annotation.JsonProperty;
-import lombok.EqualsAndHashCode;
-import lombok.Getter;
-import org.metaagent.framework.common.content.MediaResource;
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import org.metaagent.framework.common.metadata.MetadataProvider;
+import org.metaagent.framework.core.agent.chat.message.part.MessagePart;
+import org.metaagent.framework.core.agent.chat.message.part.TextMessagePart;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
+import java.util.stream.Collectors;
 
 /**
  * RoleMessage is a message that contains role, content and media resources.
  *
  * @author vyckey
  */
-@Getter
-@EqualsAndHashCode(callSuper = true)
-public class RoleMessage extends AbstractMessage implements Message {
-    public static final String ROLE_USER = "user";
-    public static final String ROLE_ASSISTANT = "assistant";
+public record RoleMessage(
+        @JsonDeserialize(as = RoleMessageInfo.class)
+        MessageInfo info,
 
-    private final String role;
-    private final String content;
-    private final List<MediaResource> media;
+        List<MessagePart> parts
+) implements Message {
 
-    @JsonCreator
-    public RoleMessage(@JsonProperty("role") String role,
-                       @JsonProperty("content") String content,
-                       @JsonProperty("media") List<MediaResource> media,
-                       @JsonProperty("metadata") MetadataProvider metadata) {
-        this.role = Objects.requireNonNull(role, "role is required");
-        this.content = Objects.requireNonNull(content, "content is required");
-        this.media = Objects.requireNonNull(media, "media is required");
-        this.metadata = metadata;
+    public RoleMessage {
+        Objects.requireNonNull(info, "info is required");
+        Objects.requireNonNull(parts, "parts is required");
     }
 
-    public RoleMessage(String role, String content, MetadataProvider metadata) {
-        this(role, content, List.of(), metadata);
+    public RoleMessage(MessageInfo info, MessagePart... parts) {
+        this(info, List.of(parts));
+    }
+
+    public static Builder builder() {
+        return new Builder();
+    }
+
+    public static RoleMessage of(String role, List<MessagePart> messageParts, MetadataProvider metadata) {
+        return RoleMessage.builder()
+                .info(RoleMessageInfo.builder().role(role).metadata(metadata).build())
+                .parts(messageParts)
+                .build();
+    }
+
+    public static RoleMessage of(String role, List<MessagePart> messageParts) {
+        return of(role, messageParts, MetadataProvider.empty());
+    }
+
+    public static RoleMessage user(MessagePart... messageParts) {
+        return of(MessageInfo.ROLE_USER, List.of(messageParts));
     }
 
     public static RoleMessage user(String content) {
-        return new RoleMessage(ROLE_USER, content, MetadataProvider.empty());
+        return user(new TextMessagePart(content));
     }
 
-    public static RoleMessage user(String content, MetadataProvider metadata) {
-        return new RoleMessage(ROLE_USER, content, metadata);
-    }
-
-    public static RoleMessage user(String content, List<MediaResource> media, MetadataProvider metadata) {
-        return new RoleMessage(ROLE_USER, content, media, metadata);
+    public static RoleMessage assistant(MessagePart... messageParts) {
+        return of(MessageInfo.ROLE_ASSISTANT, List.of(messageParts));
     }
 
     public static RoleMessage assistant(String content) {
-        return new RoleMessage(ROLE_ASSISTANT, content, MetadataProvider.empty());
-    }
-
-    public static RoleMessage assistant(String content, MetadataProvider metadata) {
-        return new RoleMessage(ROLE_ASSISTANT, content, metadata);
-    }
-
-    public static RoleMessage assistant(String content, List<MediaResource> media, MetadataProvider metadata) {
-        return new RoleMessage(ROLE_ASSISTANT, content, media, metadata);
+        return assistant(new TextMessagePart(content));
     }
 
     @Override
-    public String toString() {
-        return getRole() + ": " + getContent();
+    public String content() {
+        return parts().stream().map(MessagePart::content).collect(Collectors.joining("\n"));
+    }
+
+
+    public static class Builder implements Message.Builder {
+        private MessageInfo info;
+        private List<MessagePart> parts;
+
+        public Builder() {
+        }
+
+        @Override
+        public Builder info(MessageInfo info) {
+            this.info = info;
+            return this;
+        }
+
+        @Override
+        public Builder parts(List<MessagePart> parts) {
+            this.parts = parts;
+            return this;
+        }
+
+        @Override
+        public Builder addPart(MessagePart contentPart) {
+            if (this.parts == null) {
+                this.parts = new ArrayList<>();
+            }
+            this.parts.add(contentPart);
+            return this;
+        }
+
+        public RoleMessage build() {
+            return new RoleMessage(info, parts);
+        }
     }
 }

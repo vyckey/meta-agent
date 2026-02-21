@@ -49,16 +49,6 @@ public record PermissionApprovalResult(
     }
 
     @Override
-    public String getContent() {
-        return content;
-    }
-
-    @Override
-    public MetadataProvider getMetadata() {
-        return metadata;
-    }
-
-    @Override
     public String toString() {
         if (StringUtils.isNotEmpty(content)) {
             return approvalStatus.name() + ": " + content;

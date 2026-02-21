@@ -26,24 +26,28 @@ package org.metaagent.framework.core.agent.chat.message;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonValue;
-import lombok.EqualsAndHashCode;
+import org.apache.commons.lang3.StringUtils;
 
 import java.util.UUID;
 
-@EqualsAndHashCode
-public class MessageIdValue implements MessageId {
-    private final String value;
-
-    private MessageIdValue(String value) {
-        this.value = value;
+/**
+ * Message ID value object.
+ *
+ * @author vyckey
+ */
+public record MessageIdValue(String value) implements MessageId {
+    public MessageIdValue {
+        if (StringUtils.isEmpty(value)) {
+            throw new IllegalArgumentException("Message ID cannot be empty");
+        }
     }
 
     @JsonCreator
-    public static MessageIdValue valueOf(String value) {
+    public static MessageIdValue of(String value) {
         return new MessageIdValue(value);
     }
 
-    public static MessageIdValue random() {
+    public static MessageIdValue next() {
         String uuid = UUID.randomUUID().toString();
         return new MessageIdValue(uuid.replace("-", "").substring(0, 16));
     }
@@ -56,6 +60,6 @@ public class MessageIdValue implements MessageId {
 
     @Override
     public String toString() {
-        return value;
+        return "MessageId{value='" + value + "'}";
     }
 }

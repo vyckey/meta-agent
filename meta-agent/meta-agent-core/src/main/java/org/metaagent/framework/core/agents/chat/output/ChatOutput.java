@@ -26,18 +26,17 @@ package org.metaagent.framework.core.agents.chat.output;
 
 import org.metaagent.framework.common.metadata.MetadataProvider;
 import org.metaagent.framework.core.agent.chat.message.Message;
+import org.metaagent.framework.core.agent.chat.message.part.MessagePart;
 import org.metaagent.framework.core.agent.output.StreamOutput;
 import org.metaagent.framework.core.agents.chat.ChatAgent;
 import reactor.core.publisher.Flux;
-
-import java.util.List;
 
 /**
  * {@link ChatAgent} output.
  *
  * @author vyckey
  */
-public interface ChatOutput extends StreamOutput<Message> {
+public interface ChatOutput extends StreamOutput<MessagePart> {
     /**
      * Get a builder for {@link ChatOutput}.
      *
@@ -48,18 +47,11 @@ public interface ChatOutput extends StreamOutput<Message> {
     }
 
     /**
-     * Get the thought process of this agent.
+     * Get the output message of this agent.
      *
-     * @return the thought process of this agent
+     * @return the output message of this agent
      */
-    String thought();
-
-    /**
-     * Get the output messages of this agent.
-     *
-     * @return the output messages of this agent
-     */
-    List<Message> messages();
+    Message message();
 
     /**
      * Get the stream of output messages of this agent.
@@ -67,7 +59,7 @@ public interface ChatOutput extends StreamOutput<Message> {
      * @return the stream of output messages of this agent
      */
     @Override
-    Flux<Message> stream();
+    Flux<MessagePart> stream();
 
     /**
      * Get the output metadata of this agent.
@@ -82,21 +74,14 @@ public interface ChatOutput extends StreamOutput<Message> {
      * Builder for {@link ChatOutput}.
      */
     interface Builder {
-        /**
-         * Set the thought process of this agent.
-         *
-         * @param thought the thought process of this agent
-         * @return this builder
-         */
-        Builder thought(String thought);
 
         /**
-         * Set the output messages of this agent.
+         * Set the output message of this agent.
          *
-         * @param messages the output messages of this agent
+         * @param message the output message of this agent
          * @return this builder
          */
-        Builder messages(List<Message> messages);
+        Builder message(Message message);
 
         /**
          * Set the stream of output messages of this agent.
@@ -104,7 +89,7 @@ public interface ChatOutput extends StreamOutput<Message> {
          * @param stream the stream of output messages of this agent
          * @return this builder
          */
-        Builder stream(Flux<Message> stream);
+        Builder stream(Flux<MessagePart> stream);
 
         /**
          * Set the output metadata of this agent.

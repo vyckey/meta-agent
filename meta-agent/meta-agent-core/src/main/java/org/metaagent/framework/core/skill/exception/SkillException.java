@@ -1,7 +1,7 @@
 /*
  * MIT License
  *
- * Copyright (c) 2025 MetaAgent
+ * Copyright (c) 2026 MetaAgent
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -22,21 +22,23 @@
  * SOFTWARE.
  */
 
-package org.metaagent.framework.core.tool.skill;
-
-import java.io.IOException;
+package org.metaagent.framework.core.skill.exception;
 
 /**
- * Skill parse exception
+ * SkillException for general skill-related errors
  *
  * @author vyckey
  */
-public class SkillParseException extends IOException {
-    public SkillParseException(String message) {
+public class SkillException extends RuntimeException {
+    public SkillException(String message) {
         super(message);
     }
 
-    public SkillParseException(String message, Throwable cause) {
+    public SkillException(String message, Throwable cause) {
         super(message, cause);
+    }
+
+    public SkillException(Throwable cause) {
+        super(cause);
     }
 }

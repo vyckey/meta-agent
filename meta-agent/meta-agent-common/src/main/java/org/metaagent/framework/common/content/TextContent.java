@@ -37,14 +37,14 @@ public interface TextContent {
      *
      * @return the text content
      */
-    String getContent();
+    String content();
 
     /**
      * Get the metadata associated with the content.
      *
      * @return the metadata associated with the content
      */
-    default MetadataProvider getMetadata() {
+    default MetadataProvider metadata() {
         return MetadataProvider.empty();
     }
 }

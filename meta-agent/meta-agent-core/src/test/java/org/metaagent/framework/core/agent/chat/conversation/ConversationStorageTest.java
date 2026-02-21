@@ -27,7 +27,9 @@ package org.metaagent.framework.core.agent.chat.conversation;
 import org.junit.jupiter.api.Test;
 import org.metaagent.framework.common.content.MediaResource;
 import org.metaagent.framework.common.metadata.MetadataProvider;
+import org.metaagent.framework.core.agent.chat.message.MessageInfo;
 import org.metaagent.framework.core.agent.chat.message.RoleMessage;
+import org.metaagent.framework.core.agent.chat.message.part.TextMessagePart;
 import org.springframework.util.MimeType;
 
 import java.net.URI;
@@ -49,7 +51,7 @@ class ConversationStorageTest {
         conversation.appendMessage(RoleMessage.assistant("I am your assistant."));
 
         MediaResource media = MediaResource.builder().mimeType(MimeType.valueOf("image/*")).name("img").uri(URI.create("images/hello.jpg")).build();
-        RoleMessage message = RoleMessage.user("How is today?", List.of(), MetadataProvider.from(Map.of(
+        RoleMessage message = RoleMessage.of(MessageInfo.ROLE_USER, List.of(new TextMessagePart("How is today?")), MetadataProvider.from(Map.of(
                 "k1", 1,
                 "k2", "v2"
         )));

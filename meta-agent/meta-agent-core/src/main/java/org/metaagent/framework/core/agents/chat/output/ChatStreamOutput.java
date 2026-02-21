@@ -25,7 +25,7 @@
 package org.metaagent.framework.core.agents.chat.output;
 
 import org.metaagent.framework.common.metadata.MetadataProvider;
-import org.metaagent.framework.core.agent.chat.message.Message;
+import org.metaagent.framework.core.agent.chat.message.part.MessagePart;
 import org.metaagent.framework.core.agents.chat.ChatAgent;
 
 /**
@@ -39,7 +39,7 @@ public interface ChatStreamOutput {
      *
      * @return the streaming message of this agent
      */
-    Message message();
+    MessagePart message();
 
     /**
      * Get streaming output metadata.

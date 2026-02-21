@@ -29,6 +29,9 @@ import org.metaagent.framework.core.agent.loop.AgentLoopControlStrategy;
 import org.metaagent.framework.core.agent.loop.MaxLoopCountAgentLoopControl;
 import org.metaagent.framework.core.agent.output.AgentOutput;
 import org.metaagent.framework.core.agent.profile.AgentProfile;
+import org.metaagent.framework.core.config.ConfigPaths;
+import org.metaagent.framework.core.skill.loader.SkillLoaders;
+import org.metaagent.framework.core.skill.manager.SkillManager;
 import org.metaagent.framework.core.tool.ToolContext;
 import org.metaagent.framework.core.tool.executor.ToolExecutorContext;
 import org.metaagent.framework.core.tool.manager.ToolManager;
@@ -42,19 +45,30 @@ import org.metaagent.framework.core.tool.manager.ToolManager;
  */
 public abstract class AbstractAgent<I, O>
         extends AbstractMetaAgent<I, O> implements Agent<I, O> {
-    protected ToolManager toolManager = ToolManager.create();
+    protected ToolManager toolManager;
+    protected SkillManager skillManager;
 
     protected AbstractAgent(String name) {
         super(name);
+        this.toolManager = ToolManager.create();
+        this.skillManager = SkillManager.create();
+        this.skillManager.registerSkillLoader(SkillLoaders.fileSkillLoader());
     }
 
     protected AbstractAgent(AgentProfile profile) {
-        super(profile);
+        this(profile.getName());
+        this.profile = profile;
     }
 
     protected AbstractAgent(AbstractAgentBuilder<?, ?, I, O> builder) {
         super(builder);
         this.toolManager = builder.toolManager != null ? builder.toolManager : ToolManager.create();
+        if (builder.skillManager != null) {
+            this.skillManager = builder.skillManager;
+        } else {
+            this.skillManager = SkillManager.create();
+            this.skillManager.registerSkillLoader(SkillLoaders.fileSkillLoader());
+        }
     }
 
     @Override
@@ -63,8 +77,22 @@ public abstract class AbstractAgent<I, O>
     }
 
     @Override
+    public SkillManager getSkillManager() {
+        return skillManager;
+    }
+
+    @Override
     public AgentLoopControlStrategy<I, O> getLoopControlStrategy() {
         return new MaxLoopCountAgentLoopControl<>(1);
+    }
+
+    @Override
+    protected AgentInput<I> preprocess(AgentInput<I> input) {
+        AgentInput<I> agentInput = super.preprocess(input);
+
+        ConfigPaths configPaths = input.context().getConfigPaths();
+        SkillLoaders.loadSkillsIfNotLoaded(skillManager, configPaths);
+        return agentInput;
     }
 
     @Override

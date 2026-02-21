@@ -1,7 +1,7 @@
 /*
  * MIT License
  *
- * Copyright (c) 2025 MetaAgent
+ * Copyright (c) 2026 MetaAgent
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -22,46 +22,17 @@
  * SOFTWARE.
  */
 
-package org.metaagent.framework.core.tool.skill;
-
-import org.metaagent.framework.common.metadata.MetadataProvider;
-
-import java.nio.file.Path;
+package org.metaagent.framework.core.agent.chat.message;
 
 /**
- * Skill metadata
+ * Message metadata keys
  *
  * @author vyckey
  */
-public interface SkillMetadata extends MetadataProvider {
-    String SKILLS_DIRNAME = "skills";
-    String SKILLS_FILENAME = "SKILL.md";
-
-    /**
-     * Gets skill name
-     *
-     * @return the skill name
-     */
-    String name();
-
-    /**
-     * Gets skill description
-     *
-     * @return the skill description
-     */
-    String description();
-
-    /**
-     * Gets skill version
-     *
-     * @return the skill version
-     */
-    String version();
-
-    /**
-     * Gets the skill file path
-     *
-     * @return the file path of skill
-     */
-    Path filePath();
+public interface MessageMetadataKeys {
+    String KEY_MESSAGE_ID = "msgId";
+    String KEY_MESSAGE_PART_ID = "msgPartId";
+    String KEY_ROLE = "role";
+    String KEY_CREATED_AT = "createdAt";
+    String KEY_UPDATED_AT = "updatedAt";
 }
