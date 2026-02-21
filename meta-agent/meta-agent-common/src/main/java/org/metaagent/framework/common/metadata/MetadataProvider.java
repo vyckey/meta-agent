@@ -147,4 +147,11 @@ public interface MetadataProvider {
      * @return a new merged MetadataProvider instance.
      */
     MetadataProvider union(MetadataProvider other);
+
+    /**
+     * Creates a copy of this MetadataProvider.
+     *
+     * @return a copy of this MetadataProvider.
+     */
+    MetadataProvider copy();
 }

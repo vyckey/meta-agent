@@ -70,12 +70,12 @@ public record ToolApprovalRequest(
     }
 
     @Override
-    public String getContent() {
+    public String content() {
         return approvalContent;
     }
 
     @Override
-    public MetadataProvider getMetadata() {
+    public MetadataProvider metadata() {
         return metadata;
     }
 

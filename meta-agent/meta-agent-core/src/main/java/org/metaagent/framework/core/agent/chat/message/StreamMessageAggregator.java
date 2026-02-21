@@ -25,8 +25,12 @@
 package org.metaagent.framework.core.agent.chat.message;
 
 import com.google.common.collect.Lists;
-import org.metaagent.framework.common.content.MediaResource;
+import org.apache.commons.lang3.StringUtils;
 import org.metaagent.framework.common.metadata.MetadataProvider;
+import org.metaagent.framework.core.agent.chat.message.part.MessagePart;
+import org.metaagent.framework.core.agent.chat.message.part.TextMessagePart;
+import org.metaagent.framework.core.agent.chat.message.part.ToolCallMessagePart;
+import org.metaagent.framework.core.agent.chat.message.part.ToolResponseMessagePart;
 
 import java.util.List;
 
@@ -38,45 +42,103 @@ import java.util.List;
 public class StreamMessageAggregator {
     public static final StreamMessageAggregator INSTANCE = new StreamMessageAggregator();
 
-    public List<Message> aggregate(Iterable<Message> streamMessages) {
-        List<List<Message>> streamMessageGroup = Lists.newArrayList();
-        for (Message streamMessage : streamMessages) {
-            if (streamMessageGroup.isEmpty()) {
-                streamMessageGroup.add(Lists.newArrayList(streamMessage));
-            } else {
-                List<Message> lastGroup = streamMessageGroup.get(streamMessageGroup.size() - 1);
-                Message lastMessage = lastGroup.get(lastGroup.size() - 1);
-                if (streamMessage instanceof RoleMessage && lastMessage instanceof RoleMessage
-                        && streamMessage.getRole().equals(lastMessage.getRole())
-                        && streamMessage.getClass().equals(lastMessage.getClass())) {
-                    lastGroup.add(streamMessage);
-                } else {
-                    streamMessageGroup.add(Lists.newArrayList(streamMessage));
+    public List<MessagePart> aggregate(Iterable<MessagePart> streamMessages) {
+        List<List<MessagePart>> streamMessageGroup = Lists.newArrayList();
+        for (MessagePart streamMessage : streamMessages) {
+            boolean appendToLastGroup = false;
+            if (!streamMessageGroup.isEmpty()) {
+                List<MessagePart> lastGroup = streamMessageGroup.get(streamMessageGroup.size() - 1);
+                MessagePart lastMessagePart = lastGroup.get(lastGroup.size() - 1);
+                if (lastMessagePart.getClass().equals(streamMessage.getClass())) {
+                    if (streamMessage instanceof TextMessagePart) {
+                        appendToLastGroup = true;
+                    } else if (streamMessage instanceof ToolCallMessagePart toolCallMessagePart
+                            && ((ToolCallMessagePart) lastMessagePart).toolCall().name().equals(toolCallMessagePart.toolCall().name())) {
+                        appendToLastGroup = true;
+                    } else if (streamMessage instanceof ToolResponseMessagePart toolRespMessagePart
+                            && ((ToolResponseMessagePart) lastMessagePart).toolResponse().name().equals(toolRespMessagePart.toolResponse().name())) {
+                        appendToLastGroup = true;
+                    }
                 }
+            }
+            if (appendToLastGroup) {
+                streamMessageGroup.get(streamMessageGroup.size() - 1).add(streamMessage);
+            } else {
+                streamMessageGroup.add(Lists.newArrayList(streamMessage));
             }
         }
 
-        List<Message> aggregatedMessages = Lists.newArrayList();
-        for (List<Message> messageGroup : streamMessageGroup) {
-            aggregate(aggregatedMessages, messageGroup);
+        List<MessagePart> aggregatedMessages = Lists.newArrayList();
+        for (List<MessagePart> messageParts : streamMessageGroup) {
+            aggregatedMessages.add(aggregate(messageParts));
         }
         return aggregatedMessages;
     }
 
-    protected void aggregate(List<Message> aggregatedMessages, List<Message> messageGroup) {
-        if (messageGroup.get(0) instanceof RoleMessage) {
-            String role = messageGroup.get(0).getRole();
-            StringBuilder sb = new StringBuilder();
-            List<MediaResource> media = Lists.newArrayList();
-            MetadataProvider metadata = MetadataProvider.create();
-            for (Message message : messageGroup) {
-                sb.append(message.getContent());
-                media.addAll(message.getMedia());
-                metadata.merge(message.getMetadata());
-            }
-            aggregatedMessages.add(new RoleMessage(role, sb.toString(), media, metadata));
-        } else {
-            aggregatedMessages.addAll(messageGroup);
+    protected MessagePart aggregate(List<MessagePart> messageParts) {
+        if (messageParts.isEmpty()) {
+            throw new IllegalStateException("No message part to aggregate");
         }
+        if (messageParts.size() == 1) {
+            return messageParts.get(0);
+        }
+
+        final MessagePart firstMessagePart = messageParts.get(0);
+        final MessagePart lastMessagePart = messageParts.get(messageParts.size() - 1);
+        MetadataProvider metadata = MetadataProvider.builder()
+                .setProperties(firstMessagePart.metadata().getProperties()).build();
+        for (int i = 1; i < messageParts.size(); i++) {
+            metadata.merge(messageParts.get(i).metadata());
+        }
+
+        MessagePart.Builder builder;
+        if (firstMessagePart instanceof TextMessagePart) {
+            StringBuilder sb = new StringBuilder();
+            for (MessagePart messagePart : messageParts) {
+                TextMessagePart textMessagePart = (TextMessagePart) messagePart;
+                sb.append(textMessagePart.text());
+            }
+            builder = TextMessagePart.builder().text(sb.toString());
+        } else if (firstMessagePart instanceof ToolCallMessagePart toolCallMessagePart) {
+            StringBuilder arguments = new StringBuilder();
+            for (MessagePart messagePart : messageParts) {
+                ToolCallMessagePart toolCallPart = (ToolCallMessagePart) messagePart;
+                String args = toolCallPart.toolCall().arguments();
+                arguments.append(StringUtils.isEmpty(args) ? "" : args);
+            }
+
+            ToolCallMessagePart.ToolCall toolCall = new ToolCallMessagePart.ToolCall(
+                    toolCallMessagePart.toolCall().id(),
+                    toolCallMessagePart.toolCall().type(),
+                    toolCallMessagePart.toolCall().name(),
+                    arguments.toString()
+            );
+            builder = ToolCallMessagePart.builder()
+                    .toolCall(toolCall);
+        } else if (firstMessagePart instanceof ToolResponseMessagePart toolResponseMessagePart) {
+            StringBuilder responseData = new StringBuilder();
+            for (MessagePart messagePart : messageParts) {
+                ToolResponseMessagePart toolRespPart = (ToolResponseMessagePart) messagePart;
+                String respData = toolRespPart.toolResponse().responseData();
+                responseData.append(StringUtils.isEmpty(respData) ? "" : respData);
+            }
+
+            ToolResponseMessagePart.ToolResponse toolResponse = new ToolResponseMessagePart.ToolResponse(
+                    toolResponseMessagePart.toolResponse().id(),
+                    toolResponseMessagePart.toolResponse().name(),
+                    responseData.toString()
+            );
+            builder = ToolResponseMessagePart.builder()
+                    .toolResponse(toolResponse);
+        } else {
+            throw new IllegalStateException("Not support to aggregate message part type: "
+                    + firstMessagePart.getClass().getName());
+        }
+        return builder
+                .id(firstMessagePart.id())
+                .createdAt(firstMessagePart.createdAt())
+                .updatedAt(lastMessagePart.updatedAt())
+                .metadata(metadata)
+                .build();
     }
 }

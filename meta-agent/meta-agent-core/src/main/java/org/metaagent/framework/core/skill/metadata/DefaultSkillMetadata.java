@@ -92,6 +92,18 @@ public class DefaultSkillMetadata extends ClassMetadataProvider implements Skill
     }
 
     @Override
+    public DefaultSkillMetadata copy() {
+        return DefaultSkillMetadata.builder()
+                .name(name)
+                .description(description)
+                .version(version)
+                .location(location)
+                .allowedTools(allowedTools)
+                .setExtendProperties(extendProperties)
+                .build();
+    }
+
+    @Override
     public String toString() {
         return "SkillMetadata{" +
                 "name='" + name + '\'' +

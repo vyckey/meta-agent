@@ -24,32 +24,42 @@
 
 package org.metaagent.framework.core.agent.chat.conversation;
 
-import java.io.Closeable;
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonValue;
+import org.apache.commons.lang3.StringUtils;
+
+import java.util.UUID;
 
 /**
- * Conversation storage interface for storing and retrieving messages.
+ * Default implementation of {@link ConversationId}
  *
  * @author vyckey
  */
-public interface ConversationStorage extends Closeable {
-    /**
-     * Store the conversation.
-     *
-     * @param conversation the conversation to save
-     */
-    void store(Conversation conversation);
+public record ConversationIdValue(String value) implements ConversationId {
+    public ConversationIdValue {
+        if (StringUtils.isEmpty(value)) {
+            throw new IllegalArgumentException("Conversation ID cannot be empty");
+        }
+    }
 
-    /**
-     * Load the conversation.
-     *
-     * @param conversation the conversation to load
-     */
-    void load(Conversation conversation);
+    @JsonCreator
+    public static ConversationIdValue of(String value) {
+        return new ConversationIdValue(value);
+    }
 
-    /**
-     * Clear the conversation.
-     *
-     * @param conversationId the conversation ID to clear
-     */
-    void clear(ConversationId conversationId);
+    public static ConversationIdValue next() {
+        String value = UUID.randomUUID().toString();
+        return new ConversationIdValue(value);
+    }
+
+    @JsonValue
+    @Override
+    public String value() {
+        return value;
+    }
+
+    @Override
+    public String toString() {
+        return "ConversationId{value='" + value + "'}";
+    }
 }

@@ -70,4 +70,9 @@ public class ImmutableMetadataWrapper implements ImmutableMetadataProvider {
     public MetadataProvider union(MetadataProvider other) {
         return metadata.union(other);
     }
+
+    @Override
+    public MetadataProvider copy() {
+        return metadata.copy();
+    }
 }

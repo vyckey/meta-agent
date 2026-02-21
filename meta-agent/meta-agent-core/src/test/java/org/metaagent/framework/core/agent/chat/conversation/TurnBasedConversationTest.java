@@ -26,12 +26,9 @@ package org.metaagent.framework.core.agent.chat.conversation;
 
 import com.google.common.collect.Lists;
 import org.junit.jupiter.api.Test;
-import org.metaagent.framework.core.agent.chat.conversation.DefaultMessageTurn;
-import org.metaagent.framework.core.agent.chat.conversation.DefaultTurnBasedConversation;
-import org.metaagent.framework.core.agent.chat.conversation.MessageTurn;
-import org.metaagent.framework.core.agent.chat.conversation.TurnBasedConversation;
 import org.metaagent.framework.core.agent.chat.message.Message;
 import org.metaagent.framework.core.agent.chat.message.MessageId;
+import org.metaagent.framework.core.agent.chat.message.MessageInfo;
 import org.metaagent.framework.core.agent.chat.message.RoleMessage;
 
 import java.util.ArrayList;
@@ -48,7 +45,7 @@ class TurnBasedConversationTest {
 
     @Test
     void testConversationId() {
-        String id = "test-id";
+        ConversationId id = ConversationId.next();
         TurnBasedConversation conversation = new DefaultTurnBasedConversation(id);
         assertEquals(id, conversation.id());
     }
@@ -57,7 +54,7 @@ class TurnBasedConversationTest {
     void testDefaultConversationId() {
         TurnBasedConversation conversation = new DefaultTurnBasedConversation();
         assertNotNull(conversation.id());
-        assertFalse(conversation.id().isEmpty());
+        assertFalse(conversation.id().value().isEmpty());
     }
 
     @Test
@@ -115,10 +112,10 @@ class TurnBasedConversationTest {
         conversation.appendMessage(RoleMessage.assistant("The weather is sunny with a high of 75°F."));
         conversation.appendMessage(RoleMessage.user("Thanks for the info"));
 
-        List<Message> found = conversation.findMessages(m -> m.getContent().contains("weather"), false);
+        List<Message> found = conversation.findMessages(m -> m.content().contains("weather"), false);
         assertEquals(2, found.size());
-        assertTrue(found.stream().anyMatch(m -> Objects.equals(m.getRole(), RoleMessage.ROLE_USER) && m.getContent().contains("weather")));
-        assertTrue(found.stream().anyMatch(m -> Objects.equals(m.getRole(), RoleMessage.ROLE_ASSISTANT) && m.getContent().contains("weather")));
+        assertTrue(found.stream().anyMatch(m -> Objects.equals(m.info().role(), MessageInfo.ROLE_USER) && m.content().contains("weather")));
+        assertTrue(found.stream().anyMatch(m -> Objects.equals(m.info().role(), MessageInfo.ROLE_ASSISTANT) && m.content().contains("weather")));
     }
 
     @Test
@@ -126,8 +123,8 @@ class TurnBasedConversationTest {
         TurnBasedConversation conversation = new DefaultTurnBasedConversation();
         conversation.appendMessage(RoleMessage.user("How do I reset my password?"));
         conversation.appendMessage(RoleMessage.assistant("You can reset your password by clicking the 'Forgot Password' link on the login page."));
-        assertEquals("You can reset your password by clicking the 'Forgot Password' link on the login page.", conversation.lastMessage().get().getContent());
-        assertEquals(RoleMessage.ROLE_ASSISTANT, conversation.lastMessage().get().getRole());
+        assertEquals("You can reset your password by clicking the 'Forgot Password' link on the login page.", conversation.lastMessage().get().content());
+        assertEquals(MessageInfo.ROLE_ASSISTANT, conversation.lastMessage().get().info().role());
     }
 
     @Test
@@ -139,10 +136,10 @@ class TurnBasedConversationTest {
 
         List<Message> lastTwo = conversation.lastMessages(2);
         assertEquals(2, lastTwo.size());
-        assertEquals("The store opens at 9 AM.", lastTwo.get(0).getContent());
-        assertEquals(RoleMessage.ROLE_ASSISTANT, lastTwo.get(0).getRole());
-        assertEquals("Is it open on Sundays?", lastTwo.get(1).getContent());
-        assertEquals(RoleMessage.ROLE_USER, lastTwo.get(1).getRole());
+        assertEquals("The store opens at 9 AM.", lastTwo.get(0).content());
+        assertEquals(MessageInfo.ROLE_ASSISTANT, lastTwo.get(0).info().role());
+        assertEquals("Is it open on Sundays?", lastTwo.get(1).content());
+        assertEquals(MessageInfo.ROLE_USER, lastTwo.get(1).info().role());
     }
 
     @Test
@@ -150,7 +147,7 @@ class TurnBasedConversationTest {
         TurnBasedConversation conversation = new DefaultTurnBasedConversation();
         conversation.appendMessage(RoleMessage.user("Can you help me with my order?"));
         conversation.appendMessage(RoleMessage.assistant("Sure, what's your order number?"));
-        MessageId targetId = conversation.lastMessage().get().getId();
+        MessageId targetId = conversation.lastMessage().get().info().id();
         conversation.appendMessage(RoleMessage.user("My order number is #12345"));
         conversation.appendMessage(RoleMessage.assistant("Let me check the status for you..."));
 
@@ -158,8 +155,8 @@ class TurnBasedConversationTest {
 
         List<Message> messages = conversation.lastMessages(10);
         assertEquals(2, messages.size());
-        assertEquals("Can you help me with my order?", messages.get(0).getContent());
-        assertEquals("Sure, what's your order number?", messages.get(1).getContent());
+        assertEquals("Can you help me with my order?", messages.get(0).content());
+        assertEquals("Sure, what's your order number?", messages.get(1).content());
     }
 
     @Test
@@ -167,7 +164,7 @@ class TurnBasedConversationTest {
         TurnBasedConversation conversation = new DefaultTurnBasedConversation();
         conversation.appendMessage(RoleMessage.user("Can you help me with my order?"));
         conversation.appendMessage(RoleMessage.assistant("Sure, what's your order number?"));
-        MessageId targetId = conversation.lastMessage().get().getId();
+        MessageId targetId = conversation.lastMessage().get().info().id();
         conversation.appendMessage(RoleMessage.user("My order number is #12345"));
         conversation.appendMessage(RoleMessage.assistant("Let me check the status for you..."));
 
@@ -175,7 +172,7 @@ class TurnBasedConversationTest {
 
         List<Message> messages = conversation.lastMessages(10);
         assertEquals(1, messages.size());
-        assertEquals("Can you help me with my order?", messages.get(0).getContent());
+        assertEquals("Can you help me with my order?", messages.get(0).content());
     }
 
     @Test
@@ -183,13 +180,13 @@ class TurnBasedConversationTest {
         TurnBasedConversation conversation = new DefaultTurnBasedConversation();
         conversation.appendMessage(RoleMessage.user("What's the return policy?"));
         conversation.appendMessage(RoleMessage.assistant("Returns are accepted within 30 days with a receipt."));
-        MessageId targetId = conversation.lastMessage().get().getId();
+        MessageId targetId = conversation.lastMessage().get().info().id();
 
         conversation.resetAfter(targetId, true);
 
         assertEquals(2, conversation.lastMessages(2).size());
-        assertEquals("What's the return policy?", conversation.lastMessages(2).get(0).getContent());
-        assertEquals("Returns are accepted within 30 days with a receipt.", conversation.lastMessages(2).get(1).getContent());
+        assertEquals("What's the return policy?", conversation.lastMessages(2).get(0).content());
+        assertEquals("Returns are accepted within 30 days with a receipt.", conversation.lastMessages(2).get(1).content());
     }
 
     @Test
@@ -208,14 +205,14 @@ class TurnBasedConversationTest {
         List<Message> messages = new ArrayList<>();
         conversation.iterator().forEachRemaining(messages::add);
         assertEquals(4, messages.size());
-        assertEquals("Hello", messages.get(0).getContent());
-        assertEquals(RoleMessage.ROLE_USER, messages.get(0).getRole());
-        assertEquals("Hi there! How can I help?", messages.get(1).getContent());
-        assertEquals(RoleMessage.ROLE_ASSISTANT, messages.get(1).getRole());
-        assertEquals("I need help with my account", messages.get(2).getContent());
-        assertEquals(RoleMessage.ROLE_USER, messages.get(2).getRole());
-        assertEquals("What seems to be the problem?", messages.get(3).getContent());
-        assertEquals(RoleMessage.ROLE_ASSISTANT, messages.get(3).getRole());
+        assertEquals("Hello", messages.get(0).content());
+        assertEquals(MessageInfo.ROLE_USER, messages.get(0).info().role());
+        assertEquals("Hi there! How can I help?", messages.get(1).content());
+        assertEquals(MessageInfo.ROLE_ASSISTANT, messages.get(1).info().role());
+        assertEquals("I need help with my account", messages.get(2).content());
+        assertEquals(MessageInfo.ROLE_USER, messages.get(2).info().role());
+        assertEquals("What seems to be the problem?", messages.get(3).content());
+        assertEquals(MessageInfo.ROLE_ASSISTANT, messages.get(3).info().role());
     }
 
     @Test
@@ -233,13 +230,13 @@ class TurnBasedConversationTest {
 
         List<Message> messages = Lists.newArrayList(conversation.reverse());
         assertEquals(4, messages.size());
-        assertEquals("What seems to be the problem?", messages.get(0).getContent());
-        assertEquals(RoleMessage.ROLE_ASSISTANT, messages.get(0).getRole());
-        assertEquals("I need help with my account", messages.get(1).getContent());
-        assertEquals(RoleMessage.ROLE_USER, messages.get(1).getRole());
-        assertEquals("Hi there! How can I help?", messages.get(2).getContent());
-        assertEquals(RoleMessage.ROLE_ASSISTANT, messages.get(2).getRole());
-        assertEquals("Hello", messages.get(3).getContent());
-        assertEquals(RoleMessage.ROLE_USER, messages.get(3).getRole());
+        assertEquals("What seems to be the problem?", messages.get(0).content());
+        assertEquals(MessageInfo.ROLE_ASSISTANT, messages.get(0).info().role());
+        assertEquals("I need help with my account", messages.get(1).content());
+        assertEquals(MessageInfo.ROLE_USER, messages.get(1).info().role());
+        assertEquals("Hi there! How can I help?", messages.get(2).content());
+        assertEquals(MessageInfo.ROLE_ASSISTANT, messages.get(2).info().role());
+        assertEquals("Hello", messages.get(3).content());
+        assertEquals(MessageInfo.ROLE_USER, messages.get(3).info().role());
     }
 }

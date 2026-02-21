@@ -1,7 +1,7 @@
 /*
  * MIT License
  *
- * Copyright (c) 2026 MetaAgent
+ * Copyright (c) 2025 MetaAgent
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -22,34 +22,44 @@
  * SOFTWARE.
  */
 
-package org.metaagent.framework.core.agent.chat.conversation;
+package org.metaagent.framework.core.agent.chat.message.part;
 
-import java.io.Closeable;
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonValue;
+import org.apache.commons.lang3.StringUtils;
+
+import java.util.UUID;
 
 /**
- * Conversation storage interface for storing and retrieving messages.
+ * Message part ID value object.
  *
  * @author vyckey
  */
-public interface ConversationStorage extends Closeable {
-    /**
-     * Store the conversation.
-     *
-     * @param conversation the conversation to save
-     */
-    void store(Conversation conversation);
+public record MessagePartIdValue(String value) implements MessagePartId {
+    public MessagePartIdValue {
+        if (StringUtils.isEmpty(value)) {
+            throw new IllegalArgumentException("MessagePart ID cannot be empty");
+        }
+    }
 
-    /**
-     * Load the conversation.
-     *
-     * @param conversation the conversation to load
-     */
-    void load(Conversation conversation);
+    @JsonCreator
+    public static MessagePartIdValue of(String value) {
+        return new MessagePartIdValue(value);
+    }
 
-    /**
-     * Clear the conversation.
-     *
-     * @param conversationId the conversation ID to clear
-     */
-    void clear(ConversationId conversationId);
+    public static MessagePartIdValue next() {
+        String uuid = UUID.randomUUID().toString();
+        return new MessagePartIdValue(uuid.replace("-", "").substring(24, 32));
+    }
+
+    @JsonValue
+    @Override
+    public String value() {
+        return value;
+    }
+
+    @Override
+    public String toString() {
+        return "MessagePartId{value='" + value + "'}";
+    }
 }

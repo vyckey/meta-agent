@@ -111,7 +111,7 @@ public class HttpRequestTool implements Tool<HttpRequest, HttpResponse> {
                 .build();
         PermissionApproval approvalResult = toolContext.requestApproval(approvalRequest);
         if (approvalResult.getApprovalStatus() == ApprovalStatus.REJECTED) {
-            throw new ToolRejectException(getName(), "http request was rejected by approval: " + approvalResult.getContent());
+            throw new ToolRejectException(getName(), "http request was rejected by approval: " + approvalResult.content());
         }
     }
 

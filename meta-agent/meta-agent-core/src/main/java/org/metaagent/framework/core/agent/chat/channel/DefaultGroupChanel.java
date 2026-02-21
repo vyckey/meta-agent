@@ -79,8 +79,8 @@ public class DefaultGroupChanel extends DefaultChannel implements GroupChannel {
 
     @Override
     public void send(Message message) {
-        if (!members.contains(message.getRole())) {
-            throw new IllegalArgumentException("sender " + message.getRole() + " is not in channel " + name);
+        if (!members.contains(message.info().role())) {
+            throw new IllegalArgumentException("sender " + message.info().role() + " is not in channel " + name);
         }
         super.send(message);
     }

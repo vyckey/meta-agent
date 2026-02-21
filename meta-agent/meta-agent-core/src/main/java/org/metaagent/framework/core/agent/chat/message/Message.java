@@ -25,12 +25,10 @@
 package org.metaagent.framework.core.agent.chat.message;
 
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
-import org.metaagent.framework.common.content.MediaContent;
-import org.metaagent.framework.common.content.MediaResource;
 import org.metaagent.framework.common.content.TextContent;
 import org.metaagent.framework.common.metadata.MetadataProvider;
+import org.metaagent.framework.core.agent.chat.message.part.MessagePart;
 
-import java.time.Instant;
 import java.util.List;
 
 /**
@@ -39,42 +37,26 @@ import java.util.List;
  * @author vyckey
  */
 @JsonTypeInfo(
-        use=JsonTypeInfo.Id.NAME,
-        include=JsonTypeInfo.As.PROPERTY,
-        property="type"
+        use = JsonTypeInfo.Id.NAME,
+        include = JsonTypeInfo.As.PROPERTY,
+        property = "@class",
+        defaultImpl = RoleMessage.class
 )
-public interface Message extends TextContent, MediaContent {
-    /**
-     * Get the unique identifier of the message.
-     *
-     * @return the unique identifier of the message
-     */
-    MessageId getId();
+public interface Message extends TextContent {
 
     /**
-     * Get the role of the message.
+     * Get the info of the message.
      *
-     * @return the role of the message
+     * @return the info of the message
      */
-    String getRole();
+    MessageInfo info();
 
     /**
-     * Get the text content of the message.
+     * Get the content of the message.
      *
      * @return the content of the message
      */
-    @Override
-    String getContent();
-
-    /**
-     * Get the media resources associated with the message.
-     *
-     * @return a list of media resources
-     */
-    @Override
-    default List<MediaResource> getMedia() {
-        return  List.of();
-    }
+    List<MessagePart> parts();
 
     /**
      * Get the metadata of the message.
@@ -82,12 +64,45 @@ public interface Message extends TextContent, MediaContent {
      * @return the metadata of the message
      */
     @Override
-    MetadataProvider getMetadata();
+    default MetadataProvider metadata() {
+        return info().metadata();
+    }
 
     /**
-     * Get the time when the message was created.
+     * The builder interface for building a message.
      *
-     * @return the time when the message was created
+     * @author vyckey
      */
-    Instant getCreatedAt();
+    interface Builder {
+        /**
+         * Set the info of the message.
+         *
+         * @param info the info of the message
+         * @return the builder
+         */
+        Builder info(MessageInfo info);
+
+        /**
+         * Set the parts of the message.
+         *
+         * @param parts the parts of the message
+         * @return the builder
+         */
+        Builder parts(List<MessagePart> parts);
+
+        /**
+         * Add a part to the message.
+         *
+         * @param part the part to add
+         * @return the builder
+         */
+        Builder addPart(MessagePart part);
+
+        /**
+         * Build the message.
+         *
+         * @return the message
+         */
+        Message build();
+    }
 }

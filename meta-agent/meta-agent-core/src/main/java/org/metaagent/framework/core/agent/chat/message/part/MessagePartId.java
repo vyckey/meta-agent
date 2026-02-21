@@ -1,7 +1,7 @@
 /*
  * MIT License
  *
- * Copyright (c) 2026 MetaAgent
+ * Copyright (c) 2025 MetaAgent
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -22,34 +22,41 @@
  * SOFTWARE.
  */
 
-package org.metaagent.framework.core.agent.chat.conversation;
+package org.metaagent.framework.core.agent.chat.message.part;
 
-import java.io.Closeable;
+import com.fasterxml.jackson.annotation.JsonValue;
 
 /**
- * Conversation storage interface for storing and retrieving messages.
+ * Represents a unique identifier for a message part.
  *
  * @author vyckey
  */
-public interface ConversationStorage extends Closeable {
+@FunctionalInterface
+public interface MessagePartId {
     /**
-     * Store the conversation.
+     * Create a message part ID from a string value.
      *
-     * @param conversation the conversation to save
+     * @param value the string value of the message part ID
+     * @return a MessagePartId instance representing the given string value
      */
-    void store(Conversation conversation);
+    static MessagePartId of(String value) {
+        return MessagePartIdValue.of(value);
+    }
 
     /**
-     * Load the conversation.
+     * Create a new unique message part ID.
      *
-     * @param conversation the conversation to load
+     * @return a new unique message part ID
      */
-    void load(Conversation conversation);
+    static MessagePartId next() {
+        return MessagePartIdValue.next();
+    }
 
     /**
-     * Clear the conversation.
+     * Get the string value of the message part ID.
      *
-     * @param conversationId the conversation ID to clear
+     * @return the string value of the message part ID
      */
-    void clear(ConversationId conversationId);
+    @JsonValue
+    String value();
 }

@@ -42,19 +42,19 @@ import java.util.function.Function;
  * @author vyckey
  */
 public class ConversationFileStorage implements ConversationStorage {
-    private final Function<String, String> filePathResolver;
+    private final Function<ConversationId, String> filePathResolver;
 
-    public ConversationFileStorage(Function<String, String> filePathResolver) {
+    public ConversationFileStorage(Function<ConversationId, String> filePathResolver) {
         this.filePathResolver = Objects.requireNonNull(filePathResolver, "File path resolver is required.");
     }
 
-    public String getFilePath(String conversationId) {
+    public String getFilePath(ConversationId conversationId) {
         return filePathResolver.apply(conversationId);
     }
 
     public static ConversationFileStorage fromPattern(String filePathPattern) {
         Objects.requireNonNull(filePathPattern, "filePathPattern is required");
-        return new ConversationFileStorage(conversationId -> String.format(filePathPattern.trim(), conversationId));
+        return new ConversationFileStorage(conversationId -> String.format(filePathPattern.trim(), conversationId.value()));
     }
 
     @Override
@@ -74,9 +74,9 @@ public class ConversationFileStorage implements ConversationStorage {
                 for (MessageTurn messageTurn : turnBasedConversation.turns(false)) {
                     messageTurns.add(new MessageTurnDO(messageTurn));
                 }
-                convDo = new ConversationDO(conversation.id(), null, messageTurns, className);
+                convDo = new ConversationDO(conversation.id().value(), null, messageTurns, className);
             } else {
-                convDo = new ConversationDO(conversation.id(), Lists.newArrayList(conversation), null, className);
+                convDo = new ConversationDO(conversation.id().value(), Lists.newArrayList(conversation), null, className);
             }
             MessageSerializer.getObjectMapper().writeValue(file, convDo);
         } catch (IOException e) {
@@ -107,7 +107,7 @@ public class ConversationFileStorage implements ConversationStorage {
     }
 
     @Override
-    public void clear(String conversationId) {
+    public void clear(ConversationId conversationId) {
         String filePath = getFilePath(conversationId);
         File file = new File(filePath);
         if (file.exists()) {
@@ -127,7 +127,10 @@ public class ConversationFileStorage implements ConversationStorage {
     }
 
     @JsonInclude(JsonInclude.Include.NON_NULL)
-    private record ConversationDO(String convId, List<Message> messages, List<MessageTurnDO> messageTurns,
-                                  @JsonProperty("@class") String className) {
+    private record ConversationDO(
+            String convId,
+            List<Message> messages,
+            List<MessageTurnDO> messageTurns,
+            @JsonProperty("@class") String className) {
     }
 }

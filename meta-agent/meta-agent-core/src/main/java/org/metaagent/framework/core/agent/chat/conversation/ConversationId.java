@@ -24,32 +24,39 @@
 
 package org.metaagent.framework.core.agent.chat.conversation;
 
-import java.io.Closeable;
+import com.fasterxml.jackson.annotation.JsonValue;
 
 /**
- * Conversation storage interface for storing and retrieving messages.
+ * Conversation ID
  *
  * @author vyckey
  */
-public interface ConversationStorage extends Closeable {
+@FunctionalInterface
+public interface ConversationId {
     /**
-     * Store the conversation.
+     * Create a conversation ID
      *
-     * @param conversation the conversation to save
+     * @param value Conversation ID value
+     * @return Conversation ID
      */
-    void store(Conversation conversation);
+    static ConversationId of(String value) {
+        return ConversationIdValue.of(value);
+    }
 
     /**
-     * Load the conversation.
+     * Create a new conversation ID
      *
-     * @param conversation the conversation to load
+     * @return Conversation ID
      */
-    void load(Conversation conversation);
+    static ConversationId next() {
+        return ConversationIdValue.next();
+    }
 
     /**
-     * Clear the conversation.
+     * Conversation ID value
      *
-     * @param conversationId the conversation ID to clear
+     * @author vyckey
      */
-    void clear(ConversationId conversationId);
+    @JsonValue
+    String value();
 }

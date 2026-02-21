@@ -99,7 +99,7 @@ public class DefaultToolExecutor implements ToolExecutor {
         ToolApprovalRequest approvalRequest = ToolApprovalRequest.requestCall(toolContext.getExecutionId(), tool.getName(), input);
         PermissionApproval approval = toolContext.requestApproval(approvalRequest);
         if (!approval.isApproved()) {
-            String reason = StringUtils.isNotEmpty(approval.getContent()) ? approval.getContent() : "user rejected tool execution";
+            String reason = StringUtils.isNotEmpty(approval.content()) ? approval.content() : "user rejected tool execution";
             throw new ToolRejectException(tool.getName(), reason);
         }
     }

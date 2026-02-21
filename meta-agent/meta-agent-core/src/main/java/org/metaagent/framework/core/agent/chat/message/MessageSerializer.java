@@ -31,6 +31,10 @@ import com.fasterxml.jackson.databind.jsontype.NamedType;
 import com.fasterxml.jackson.databind.module.SimpleModule;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import com.google.common.collect.Lists;
+import org.metaagent.framework.core.agent.chat.message.part.MediaMessagePart;
+import org.metaagent.framework.core.agent.chat.message.part.TextMessagePart;
+import org.metaagent.framework.core.agent.chat.message.part.ToolCallMessagePart;
+import org.metaagent.framework.core.agent.chat.message.part.ToolResponseMessagePart;
 
 import java.util.List;
 
@@ -42,7 +46,13 @@ public class MessageSerializer {
             .disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
     private static volatile boolean initialized = false;
     private static final List<NamedType> MESSAGE_TYPES = Lists.newArrayList(
-            new NamedType(RoleMessage.class, "role")
+            new NamedType(RoleMessage.class, RoleMessage.class.getTypeName())
+    );
+    private static final List<NamedType> MESSAGE_PART_TYPES = Lists.newArrayList(
+            new NamedType(TextMessagePart.class, TextMessagePart.TYPE),
+            new NamedType(MediaMessagePart.class, MediaMessagePart.TYPE),
+            new NamedType(ToolCallMessagePart.class, ToolCallMessagePart.TYPE),
+            new NamedType(ToolResponseMessagePart.class, ToolResponseMessagePart.TYPE)
     );
 
     public static void registerMessageType(String name, Class<? extends Message> messageClass) {
@@ -54,6 +64,9 @@ public class MessageSerializer {
         if (!initialized) {
             SimpleModule module = new SimpleModule();
             for (NamedType type : MESSAGE_TYPES) {
+                module.registerSubtypes(type);
+            }
+            for (NamedType type : MESSAGE_PART_TYPES) {
                 module.registerSubtypes(type);
             }
             OBJECT_MAPPER.registerModule(module);

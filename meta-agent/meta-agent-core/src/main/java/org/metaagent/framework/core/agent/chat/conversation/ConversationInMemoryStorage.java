@@ -37,7 +37,7 @@ import java.util.concurrent.ConcurrentHashMap;
  */
 public class ConversationInMemoryStorage implements ConversationStorage {
     public static final ConversationInMemoryStorage INSTANCE = new ConversationInMemoryStorage();
-    private final Map<String, Conversation> conversations = new ConcurrentHashMap<>();
+    private final Map<ConversationId, Conversation> conversations = new ConcurrentHashMap<>();
 
     private ConversationInMemoryStorage() {
     }
@@ -65,7 +65,7 @@ public class ConversationInMemoryStorage implements ConversationStorage {
     }
 
     @Override
-    public void clear(String conversationId) {
+    public void clear(ConversationId conversationId) {
         conversations.remove(conversationId);
     }
 

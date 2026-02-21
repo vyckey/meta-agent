@@ -26,11 +26,8 @@ package org.metaagent.framework.core.agents.chat.output;
 
 import org.metaagent.framework.common.metadata.MetadataProvider;
 import org.metaagent.framework.core.agent.chat.message.Message;
+import org.metaagent.framework.core.agent.chat.message.part.MessagePart;
 import reactor.core.publisher.Flux;
-
-import java.util.List;
-import java.util.Objects;
-import java.util.stream.Collectors;
 
 /**
  * Default implementation of {@link ChatOutput}.
@@ -38,27 +35,30 @@ import java.util.stream.Collectors;
  * @author vyckey
  */
 public record DefaultChatOutput(
-        List<Message> messages,
-        String thought,
-        Flux<Message> stream,
+        Message message,
+        Flux<MessagePart> stream,
         MetadataProvider metadata
 ) implements ChatOutput {
 
     public DefaultChatOutput {
-        if (messages == null && stream == null) {
-            throw new IllegalArgumentException("messages or stream is required");
+        if (message == null && stream == null) {
+            throw new IllegalArgumentException("message or stream is required");
         }
         if (metadata == null) {
             metadata = MetadataProvider.empty();
         }
     }
 
-    public DefaultChatOutput(Builder builder) {
-        this(builder.messages, builder.thought, builder.stream, builder.metadata);
+    public DefaultChatOutput(Message message) {
+        this(message, null, MetadataProvider.empty());
     }
 
-    public DefaultChatOutput(List<Message> messages) {
-        this(Objects.requireNonNull(messages, "messages is required"), null, null, null);
+    public DefaultChatOutput(Flux<MessagePart> stream) {
+        this(null, stream, MetadataProvider.empty());
+    }
+
+    public DefaultChatOutput(Builder builder) {
+        this(builder.message, builder.stream, builder.metadata);
     }
 
     public static Builder builder() {
@@ -70,7 +70,7 @@ public record DefaultChatOutput(
     }
 
     @Override
-    public Flux<Message> stream() {
+    public Flux<MessagePart> stream() {
         return stream;
     }
 
@@ -80,44 +80,32 @@ public record DefaultChatOutput(
         if (stream != null) {
             return sb.append("stream=true").append("}").toString();
         }
-        if (thought != null) {
-            sb.append("\nthought: ").append(thought);
-        }
-        String messages = messages().stream().map(m -> m + "- " + m).collect(Collectors.joining("\n"));
-        sb.append("\nmessages:\n").append(messages);
+        sb.append("\nmessages:\n").append(message.content());
         return sb.append("\n}").toString();
     }
 
     public static class Builder implements ChatOutput.Builder {
-        private List<Message> messages;
-        private String thought;
-        private Flux<Message> stream;
+        private Message message;
+        private Flux<MessagePart> stream;
         private MetadataProvider metadata;
 
         private Builder() {
         }
 
         private Builder(ChatOutput chatOutput) {
-            this.messages = chatOutput.messages();
-            this.thought = chatOutput.thought();
+            this.message = chatOutput.message();
             this.stream = chatOutput.stream();
             this.metadata = chatOutput.metadata();
         }
 
         @Override
-        public Builder messages(List<Message> messages) {
-            this.messages = messages;
+        public Builder message(Message message) {
+            this.message = message;
             return this;
         }
 
         @Override
-        public Builder thought(String thought) {
-            this.thought = thought;
-            return this;
-        }
-
-        @Override
-        public Builder stream(Flux<Message> stream) {
+        public Builder stream(Flux<MessagePart> stream) {
             this.stream = stream;
             return this;
         }

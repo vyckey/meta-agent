@@ -22,34 +22,50 @@
  * SOFTWARE.
  */
 
-package org.metaagent.framework.core.agent.chat.conversation;
+package org.metaagent.framework.core.agent.chat.message.part;
 
-import java.io.Closeable;
+import org.metaagent.framework.common.metadata.MetadataProvider;
+
+import java.time.Instant;
 
 /**
- * Conversation storage interface for storing and retrieving messages.
+ * Abstract builder for {@link MessagePart}.
  *
  * @author vyckey
  */
-public interface ConversationStorage extends Closeable {
-    /**
-     * Store the conversation.
-     *
-     * @param conversation the conversation to save
-     */
-    void store(Conversation conversation);
+public abstract class AbstractMessagePartBuilder<B extends AbstractMessagePartBuilder<B>>
+        implements MessagePart.Builder {
+    protected MessagePartId id;
+    protected Instant createdAt;
+    protected Instant updatedAt;
+    protected MetadataProvider metadata;
 
-    /**
-     * Load the conversation.
-     *
-     * @param conversation the conversation to load
-     */
-    void load(Conversation conversation);
+    protected abstract B self();
 
-    /**
-     * Clear the conversation.
-     *
-     * @param conversationId the conversation ID to clear
-     */
-    void clear(ConversationId conversationId);
+    @Override
+    public B id(MessagePartId id) {
+        this.id = id;
+        return self();
+    }
+
+    @Override
+    public B createdAt(Instant createdAt) {
+        this.createdAt = createdAt;
+        return self();
+    }
+
+    @Override
+    public B updatedAt(Instant updatedAt) {
+        this.updatedAt = updatedAt;
+        return self();
+    }
+
+    @Override
+    public B metadata(MetadataProvider metadata) {
+        this.metadata = metadata;
+        return self();
+    }
+
+    @Override
+    public abstract MessagePart build();
 }

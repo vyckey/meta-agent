@@ -55,7 +55,7 @@ public class DefaultMessageTurn implements MessageTurn {
     }
 
     public String turnId() {
-        return messages.isEmpty() ? String.valueOf(hashCode()) : messages.get(0).getId().value();
+        return messages.isEmpty() ? String.valueOf(hashCode()) : messages.get(0).info().id().value();
     }
 
     @Override
@@ -106,13 +106,13 @@ public class DefaultMessageTurn implements MessageTurn {
 
     private void appendMessages(StringBuilder sb, List<Message> messages, int maxMessageLength) {
         for (Message message : messages) {
-            String content = message.getContent();
+            String content = message.content();
             if (content.length() > maxMessageLength) {
                 content = content.substring(0, maxMessageLength) + "...(truncated)";
             }
-            ZonedDateTime createdTime = message.getCreatedAt().atZone(ZoneId.systemDefault());
+            ZonedDateTime createdTime = message.info().createdAt().atZone(ZoneId.systemDefault());
             sb.append("[").append(createdTime.format(TIME_FORMATTER)).append("] ");
-            sb.append(message.getRole()).append(": ").append(content);
+            sb.append(message.info().role()).append(": ").append(content);
             sb.append("\n");
         }
     }

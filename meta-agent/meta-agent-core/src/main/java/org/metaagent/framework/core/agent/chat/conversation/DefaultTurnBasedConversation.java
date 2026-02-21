@@ -43,24 +43,24 @@ import java.util.function.Predicate;
  * @author vyckey
  */
 public class DefaultTurnBasedConversation implements TurnBasedConversation {
-    protected final String conversationId;
+    protected final ConversationId conversationId;
     protected final List<MessageTurn> turns;
 
-    public DefaultTurnBasedConversation(String conversationId, List<MessageTurn> turns) {
+    public DefaultTurnBasedConversation(ConversationId conversationId, List<MessageTurn> turns) {
         this.conversationId = Objects.requireNonNull(conversationId, "conversationId is required");
         this.turns = Objects.requireNonNull(turns, "turns is required");
     }
 
-    public DefaultTurnBasedConversation(String conversationId) {
+    public DefaultTurnBasedConversation(ConversationId conversationId) {
         this(conversationId, Lists.newArrayList());
     }
 
     public DefaultTurnBasedConversation() {
-        this(DefaultConversation.generateConversationId());
+        this(ConversationId.next());
     }
 
     @Override
-    public String id() {
+    public ConversationId id() {
         return conversationId;
     }
 
@@ -164,7 +164,7 @@ public class DefaultTurnBasedConversation implements TurnBasedConversation {
             MessageTurn turn = turnIterator.next();
             int index = -1;
             for (int i = 0; i < turn.messages().size(); i++) {
-                if (turn.messages().get(i).getId().equals(messageId)) {
+                if (turn.messages().get(i).info().id().equals(messageId)) {
                     index = i;
                     break;
                 }

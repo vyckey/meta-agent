@@ -34,12 +34,22 @@ import com.fasterxml.jackson.annotation.JsonValue;
 @FunctionalInterface
 public interface MessageId {
     /**
-     * Generate a random MessageId.
+     * Create a message ID from a string value.
      *
-     * @return a random MessageId
+     * @param value the string value of the message ID
+     * @return a MessageId instance representing the given string value
      */
-    static MessageId random() {
-        return MessageIdValue.random();
+    static MessageId of(String value) {
+        return MessageIdValue.of(value);
+    }
+
+    /**
+     * Create a new unique message ID.
+     *
+     * @return a new unique message ID
+     */
+    static MessageId next() {
+        return MessageIdValue.next();
     }
 
     /**

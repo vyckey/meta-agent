@@ -28,6 +28,8 @@ import org.metaagent.framework.core.agent.StreamingAgent;
 import org.metaagent.framework.core.agent.chat.conversation.Conversation;
 import org.metaagent.framework.core.agent.chat.message.Message;
 import org.metaagent.framework.core.agent.chat.message.RoleMessage;
+import org.metaagent.framework.core.agent.chat.message.part.MessagePart;
+import org.metaagent.framework.core.agent.chat.message.part.TextMessagePart;
 import org.metaagent.framework.core.agent.output.AgentOutput;
 import org.metaagent.framework.core.agents.chat.input.ChatInput;
 import org.metaagent.framework.core.agents.chat.output.ChatOutput;
@@ -38,7 +40,7 @@ import org.metaagent.framework.core.agents.chat.output.ChatOutput;
  * @author vyckey
  */
 public interface ChatAgent<I extends ChatInput, O extends ChatOutput>
-        extends StreamingAgent<I, O, Message> {
+        extends StreamingAgent<I, O, MessagePart> {
     String METADATA_KEY_CONTEXT_COMPRESSION_RATIO = "contextCompressionRatio";
     String METADATA_KEY_COMPRESSION_RESERVED_MESSAGES_COUNT = "compressionReservedMessageCount";
 
@@ -57,7 +59,8 @@ public interface ChatAgent<I extends ChatInput, O extends ChatOutput>
      */
     @Override
     default AgentOutput<O> run(String input) {
-        return run(RoleMessage.user(input));
+        RoleMessage message = RoleMessage.user(new TextMessagePart(input));
+        return run(message);
     }
 
     /**
@@ -79,7 +82,8 @@ public interface ChatAgent<I extends ChatInput, O extends ChatOutput>
      * @return the output of the agent
      */
     default AgentOutput<O> runStream(String input) {
-        return runStream(RoleMessage.user(input));
+        RoleMessage message = RoleMessage.user(new TextMessagePart(input));
+        return runStream(message);
     }
 
     /**

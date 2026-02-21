@@ -32,6 +32,9 @@ import org.apache.commons.lang3.StringUtils;
 import org.metaagent.framework.common.metadata.MetadataProvider;
 import org.metaagent.framework.core.agent.chat.message.Message;
 import org.metaagent.framework.core.agent.chat.message.RoleMessage;
+import org.metaagent.framework.core.agent.chat.message.RoleMessageInfo;
+import org.metaagent.framework.core.agent.chat.message.part.MessagePart;
+import org.metaagent.framework.core.agent.chat.message.part.TextMessagePart;
 import org.metaagent.framework.core.mcp.client.UnifiedMcpClient;
 import org.metaagent.framework.core.model.prompt.ChatPromptValue;
 import org.metaagent.framework.core.model.prompt.PromptFormatException;
@@ -86,12 +89,12 @@ public class McpPrompt implements PromptTemplate {
     }
 
     static Message newMessage(McpSchema.PromptMessage promptMessage) {
+        MessagePart messagePart;
         String contentType = promptMessage.content().type();
-        Message message;
         switch (contentType) {
             case "text" -> {
                 McpSchema.TextContent textContent = (McpSchema.TextContent) promptMessage.content();
-                message = new RoleMessage(promptMessage.role().name(), textContent.text(), MetadataProvider.empty());
+                messagePart = new TextMessagePart(textContent.text(), MetadataProvider.create());
             }
             case "image" -> {
                 McpSchema.ImageContent imageContent = (McpSchema.ImageContent) promptMessage.content();
@@ -110,6 +113,9 @@ public class McpPrompt implements PromptTemplate {
             }
             default -> throw new PromptFormatException("Unsupported content type: " + contentType);
         }
-        return message;
+        return RoleMessage.builder()
+                .info(RoleMessageInfo.builder().role(promptMessage.role().name()).build())
+                .addPart(messagePart)
+                .build();
     }
 }

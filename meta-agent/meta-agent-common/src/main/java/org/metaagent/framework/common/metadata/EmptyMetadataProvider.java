@@ -56,4 +56,9 @@ public class EmptyMetadataProvider implements ImmutableMetadataProvider, Metadat
     public MetadataProvider union(MetadataProvider other) {
         return other;
     }
+
+    @Override
+    public EmptyMetadataProvider copy() {
+        return INSTANCE;
+    }
 }
