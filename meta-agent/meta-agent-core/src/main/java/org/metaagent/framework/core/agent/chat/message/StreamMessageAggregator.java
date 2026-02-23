@@ -29,8 +29,8 @@ import org.apache.commons.lang3.StringUtils;
 import org.metaagent.framework.common.metadata.MetadataProvider;
 import org.metaagent.framework.core.agent.chat.message.part.MessagePart;
 import org.metaagent.framework.core.agent.chat.message.part.TextMessagePart;
-import org.metaagent.framework.core.agent.chat.message.part.ToolCallMessagePart;
-import org.metaagent.framework.core.agent.chat.message.part.ToolResponseMessagePart;
+import org.metaagent.framework.core.agent.chat.message.part.ToolCallInputMessagePart;
+import org.metaagent.framework.core.agent.chat.message.part.ToolCallResultMessagePart;
 
 import java.util.List;
 
@@ -52,11 +52,11 @@ public class StreamMessageAggregator {
                 if (lastMessagePart.getClass().equals(streamMessage.getClass())) {
                     if (streamMessage instanceof TextMessagePart) {
                         appendToLastGroup = true;
-                    } else if (streamMessage instanceof ToolCallMessagePart toolCallMessagePart
-                            && ((ToolCallMessagePart) lastMessagePart).toolCall().name().equals(toolCallMessagePart.toolCall().name())) {
+                    } else if (streamMessage instanceof ToolCallInputMessagePart toolCallInputMessagePart
+                            && ((ToolCallInputMessagePart) lastMessagePart).toolCall().name().equals(toolCallInputMessagePart.toolCall().name())) {
                         appendToLastGroup = true;
-                    } else if (streamMessage instanceof ToolResponseMessagePart toolRespMessagePart
-                            && ((ToolResponseMessagePart) lastMessagePart).toolResponse().name().equals(toolRespMessagePart.toolResponse().name())) {
+                    } else if (streamMessage instanceof ToolCallResultMessagePart toolRespMessagePart
+                            && ((ToolCallResultMessagePart) lastMessagePart).toolResponse().name().equals(toolRespMessagePart.toolResponse().name())) {
                         appendToLastGroup = true;
                     }
                 }
@@ -99,36 +99,36 @@ public class StreamMessageAggregator {
                 sb.append(textMessagePart.text());
             }
             builder = TextMessagePart.builder().text(sb.toString());
-        } else if (firstMessagePart instanceof ToolCallMessagePart toolCallMessagePart) {
+        } else if (firstMessagePart instanceof ToolCallInputMessagePart toolCallInputMessagePart) {
             StringBuilder arguments = new StringBuilder();
             for (MessagePart messagePart : messageParts) {
-                ToolCallMessagePart toolCallPart = (ToolCallMessagePart) messagePart;
+                ToolCallInputMessagePart toolCallPart = (ToolCallInputMessagePart) messagePart;
                 String args = toolCallPart.toolCall().arguments();
                 arguments.append(StringUtils.isEmpty(args) ? "" : args);
             }
 
-            ToolCallMessagePart.ToolCall toolCall = new ToolCallMessagePart.ToolCall(
-                    toolCallMessagePart.toolCall().id(),
-                    toolCallMessagePart.toolCall().type(),
-                    toolCallMessagePart.toolCall().name(),
+            ToolCallInputMessagePart.ToolCall toolCall = new ToolCallInputMessagePart.ToolCall(
+                    toolCallInputMessagePart.toolCall().id(),
+                    toolCallInputMessagePart.toolCall().type(),
+                    toolCallInputMessagePart.toolCall().name(),
                     arguments.toString()
             );
-            builder = ToolCallMessagePart.builder()
+            builder = ToolCallInputMessagePart.builder()
                     .toolCall(toolCall);
-        } else if (firstMessagePart instanceof ToolResponseMessagePart toolResponseMessagePart) {
+        } else if (firstMessagePart instanceof ToolCallResultMessagePart toolCallResultMessagePart) {
             StringBuilder responseData = new StringBuilder();
             for (MessagePart messagePart : messageParts) {
-                ToolResponseMessagePart toolRespPart = (ToolResponseMessagePart) messagePart;
+                ToolCallResultMessagePart toolRespPart = (ToolCallResultMessagePart) messagePart;
                 String respData = toolRespPart.toolResponse().responseData();
                 responseData.append(StringUtils.isEmpty(respData) ? "" : respData);
             }
 
-            ToolResponseMessagePart.ToolResponse toolResponse = new ToolResponseMessagePart.ToolResponse(
-                    toolResponseMessagePart.toolResponse().id(),
-                    toolResponseMessagePart.toolResponse().name(),
+            ToolCallResultMessagePart.ToolResponse toolResponse = new ToolCallResultMessagePart.ToolResponse(
+                    toolCallResultMessagePart.toolResponse().id(),
+                    toolCallResultMessagePart.toolResponse().name(),
                     responseData.toString()
             );
-            builder = ToolResponseMessagePart.builder()
+            builder = ToolCallResultMessagePart.builder()
                     .toolResponse(toolResponse);
         } else {
             throw new IllegalStateException("Not support to aggregate message part type: "

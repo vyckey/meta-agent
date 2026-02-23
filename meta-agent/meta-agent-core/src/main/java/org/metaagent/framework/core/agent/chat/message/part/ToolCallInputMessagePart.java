@@ -32,15 +32,16 @@ import java.time.Instant;
 import java.util.Objects;
 
 /**
- * ToolResponseMessagePart represents a part of a message that contains tool responses.
+ * ToolCallInputMessagePart represents a tool call message part in a chat message.
  *
  * @author vyckey
  * @see MessagePart
  */
-public record ToolResponseMessagePart(
+public record ToolCallInputMessagePart(
+        @JsonDeserialize(as = MessagePartIdValue.class)
         MessagePartId id,
 
-        ToolResponse toolResponse,
+        ToolCall toolCall,
 
         Instant createdAt,
 
@@ -49,18 +50,14 @@ public record ToolResponseMessagePart(
         @JsonDeserialize(as = MapMetadataProvider.class)
         MetadataProvider metadata
 ) implements MessagePart {
-    public static final String TYPE = "tool_response";
+    public static final String TYPE = "tool_call";
 
-    public ToolResponseMessagePart {
+    public ToolCallInputMessagePart {
         id = id != null ? id : MessagePartId.next();
-        Objects.requireNonNull(toolResponse, "toolResponse cannot be null");
+        Objects.requireNonNull(toolCall, "Tool call cannot be null");
         createdAt = createdAt != null ? createdAt : Instant.now();
         updatedAt = updatedAt != null ? updatedAt : Instant.now();
         metadata = metadata != null ? metadata : MetadataProvider.empty();
-    }
-
-    public ToolResponseMessagePart(ToolResponse toolResponse) {
-        this(MessagePartId.next(), toolResponse, Instant.now(), Instant.now(), MetadataProvider.empty());
     }
 
     public static Builder builder() {
@@ -74,27 +71,28 @@ public record ToolResponseMessagePart(
 
     @Override
     public String content() {
-        return "ToolResponse[" + toolResponse.id() + "] " + toolResponse.name() + ": " + toolResponse.responseData;
+        return "ToolCall[" + toolCall.id() + "] " + toolCall.name() + ": " + toolCall.arguments();
     }
 
-    public record ToolResponse(String id, String name, String responseData) {
+    public record ToolCall(String id, String type, String name, String arguments) {
     }
+
 
     public static class Builder extends AbstractMessagePartBuilder<Builder> {
-        private ToolResponse toolResponse;
+        private ToolCall toolCall;
 
         @Override
         protected Builder self() {
             return this;
         }
 
-        public Builder toolResponse(ToolResponse toolResponse) {
-            this.toolResponse = toolResponse;
-            return this;
+        public Builder toolCall(ToolCall toolCall) {
+            this.toolCall = toolCall;
+            return self();
         }
 
-        public ToolResponseMessagePart build() {
-            return new ToolResponseMessagePart(id, toolResponse, createdAt, updatedAt, metadata);
+        public ToolCallInputMessagePart build() {
+            return new ToolCallInputMessagePart(id, toolCall, createdAt, updatedAt, metadata);
         }
     }
 }

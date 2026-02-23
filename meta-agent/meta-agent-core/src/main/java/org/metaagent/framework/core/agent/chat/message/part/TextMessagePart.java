@@ -41,6 +41,8 @@ public record TextMessagePart(
         @JsonDeserialize(as = MessagePartIdValue.class)
         MessagePartId id,
 
+        String subType,
+
         String text,
 
         Instant createdAt,
@@ -51,6 +53,7 @@ public record TextMessagePart(
         MetadataProvider metadata
 ) implements MessagePart {
     public static final String TYPE = "text";
+    public static final String SUB_TYPE_REASONING = "reasoning";
 
     public TextMessagePart {
         id = id != null ? id : MessagePartId.next();
@@ -61,7 +64,7 @@ public record TextMessagePart(
     }
 
     public TextMessagePart(String text, MetadataProvider metadata) {
-        this(MessagePartId.next(), text, Instant.now(), Instant.now(), metadata);
+        this(MessagePartId.next(), "", text, Instant.now(), Instant.now(), metadata);
     }
 
     public TextMessagePart(String text) {
@@ -84,11 +87,17 @@ public record TextMessagePart(
 
 
     public static class Builder extends AbstractMessagePartBuilder<Builder> {
+        private String subType;
         private String text;
 
         @Override
         protected Builder self() {
             return this;
+        }
+
+        public Builder subType(String subType) {
+            this.subType = subType;
+            return self();
         }
 
         public Builder text(String text) {
@@ -97,7 +106,7 @@ public record TextMessagePart(
         }
 
         public TextMessagePart build() {
-            return new TextMessagePart(id, text, createdAt, updatedAt, metadata);
+            return new TextMessagePart(id, subType, text, createdAt, updatedAt, metadata);
         }
     }
 }

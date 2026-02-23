@@ -33,8 +33,8 @@ import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import com.google.common.collect.Lists;
 import org.metaagent.framework.core.agent.chat.message.part.MediaMessagePart;
 import org.metaagent.framework.core.agent.chat.message.part.TextMessagePart;
-import org.metaagent.framework.core.agent.chat.message.part.ToolCallMessagePart;
-import org.metaagent.framework.core.agent.chat.message.part.ToolResponseMessagePart;
+import org.metaagent.framework.core.agent.chat.message.part.ToolCallInputMessagePart;
+import org.metaagent.framework.core.agent.chat.message.part.ToolCallResultMessagePart;
 
 import java.util.List;
 
@@ -51,8 +51,8 @@ public class MessageSerializer {
     private static final List<NamedType> MESSAGE_PART_TYPES = Lists.newArrayList(
             new NamedType(TextMessagePart.class, TextMessagePart.TYPE),
             new NamedType(MediaMessagePart.class, MediaMessagePart.TYPE),
-            new NamedType(ToolCallMessagePart.class, ToolCallMessagePart.TYPE),
-            new NamedType(ToolResponseMessagePart.class, ToolResponseMessagePart.TYPE)
+            new NamedType(ToolCallInputMessagePart.class, ToolCallInputMessagePart.TYPE),
+            new NamedType(ToolCallResultMessagePart.class, ToolCallResultMessagePart.TYPE)
     );
 
     public static void registerMessageType(String name, Class<? extends Message> messageClass) {
