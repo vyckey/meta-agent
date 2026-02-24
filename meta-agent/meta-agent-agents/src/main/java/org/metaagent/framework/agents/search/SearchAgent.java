@@ -110,7 +110,7 @@ public class SearchAgent extends AbstractAgent<SearchAgentInput, SearchAgentOutp
             message = "## Context\n" + searchInput.queryContext() + "\n##Query\n" + message;
         }
         List<Message> messages = List.of(
-                new SystemMessage(promptValue.toString()),
+                new SystemMessage(promptValue.text()),
                 new UserMessage(message)
         );
         return new Prompt(messages, options);
