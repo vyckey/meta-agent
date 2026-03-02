@@ -28,6 +28,7 @@ import com.google.common.collect.Lists;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.ai.chat.messages.AssistantMessage;
+import org.springframework.ai.chat.metadata.ChatResponseMetadata;
 import org.springframework.ai.chat.model.ChatResponse;
 import org.springframework.ai.chat.model.Generation;
 
@@ -51,7 +52,7 @@ public abstract class ChatResponseUtils {
         }
         List<AssistantMessage.ToolCall> aggregatedToolCalls = Lists.newArrayListWithExpectedSize(toolCalls.size());
         for (AssistantMessage.ToolCall toolCall : toolCalls) {
-            if (aggregatedToolCalls.isEmpty()){
+            if (aggregatedToolCalls.isEmpty()) {
                 aggregatedToolCalls.add(toolCall);
                 continue;
             }
@@ -99,5 +100,17 @@ public abstract class ChatResponseUtils {
             }
         }
         return ChatResponse.builder().from(chatResponse).generations(generations).build();
+    }
+
+    public static ChatResponseMetadata.Builder newBuilder(ChatResponseMetadata metadata) {
+        ChatResponseMetadata.Builder builder = ChatResponseMetadata.builder()
+                .id(metadata.getId())
+                .model(metadata.getModel())
+                .usage(metadata.getUsage())
+                .rateLimit(metadata.getRateLimit());
+        for (String key : metadata.keySet()) {
+            builder.keyValue(key, metadata.get(key));
+        }
+        return builder;
     }
 }

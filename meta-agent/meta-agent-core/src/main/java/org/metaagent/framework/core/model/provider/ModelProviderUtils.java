@@ -26,11 +26,17 @@ package org.metaagent.framework.core.model.provider;
 
 import org.metaagent.framework.core.model.ModelId;
 import org.metaagent.framework.core.model.ModelInstance;
+import org.metaagent.framework.core.model.chat.ChatModelInstance;
 import org.springframework.ai.model.ModelRequest;
 import org.springframework.ai.model.ModelResponse;
 
 import java.util.Objects;
 
+/**
+ * Utility class for working with model providers.
+ *
+ * @author vyckey
+ */
 public class ModelProviderUtils {
     private ModelProviderUtils() {
     }
@@ -49,10 +55,31 @@ public class ModelProviderUtils {
         return Objects.requireNonNull(modelProvider.getModel(modelId), "No model found for model id: " + modelId);
     }
 
+    /**
+     * Get a model instance by its model identifier and model class.
+     *
+     * @param providerRegistry the model provider registry
+     * @param modelId          the model identifier
+     * @param modelClass       the model class
+     * @return a model instance
+     * @throws NullPointerException if the model id is invalid or not found
+     */
     public static <T extends ModelRequest<?>, R extends ModelResponse<?>, M extends ModelInstance<T, R>>
     M getModel(ModelProviderRegistry providerRegistry, ModelId modelId, Class<M> modelClass) {
         ModelProvider modelProvider = providerRegistry.getProvider(modelId.providerId());
         Objects.requireNonNull(modelProvider, "No model provider found for model id: " + modelId);
         return Objects.requireNonNull(modelProvider.getModel(modelId, modelClass), "No model found for model id: " + modelId);
+    }
+
+    /**
+     * Get a chat model instance by its model identifier.
+     *
+     * @param providerRegistry the model provider registry
+     * @param modelId          the model identifier
+     * @return a chat model instance
+     * @throws NullPointerException if the model id is invalid or not found
+     */
+    public static ChatModelInstance getChatModel(ModelProviderRegistry providerRegistry, ModelId modelId) {
+        return getModel(providerRegistry, modelId, ChatModelInstance.class);
     }
 }

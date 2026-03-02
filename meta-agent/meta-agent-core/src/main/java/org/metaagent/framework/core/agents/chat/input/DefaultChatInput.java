@@ -25,6 +25,8 @@
 package org.metaagent.framework.core.agents.chat.input;
 
 import org.metaagent.framework.core.agent.chat.message.Message;
+import org.metaagent.framework.core.model.ModelId;
+import org.metaagent.framework.core.model.prompt.Prompt;
 
 import java.util.List;
 import java.util.Objects;
@@ -35,15 +37,16 @@ import java.util.stream.Collectors;
  *
  * @author vyckey
  */
-public class DefaultChatInput implements ChatInput {
-    private final List<Message> messages;
-    private final Boolean isThinkingEnabled;
-    private final Boolean isStreamingEnabled;
+public record DefaultChatInput(
+        List<Message> messages,
+        ModelId modelId,
+        Prompt systemPrompt,
+        Boolean isThinkingEnabled,
+        Boolean isStreamingEnabled
+) implements ChatInput {
 
-    public DefaultChatInput(List<Message> messages, Boolean isThinkingEnabled, Boolean isStreamingEnabled) {
-        this.messages = Objects.requireNonNull(messages, "messages is required");
-        this.isThinkingEnabled = isThinkingEnabled;
-        this.isStreamingEnabled = isStreamingEnabled;
+    public DefaultChatInput {
+        Objects.requireNonNull(messages, "messages is required");
     }
 
     public static Builder builder() {
@@ -52,21 +55,6 @@ public class DefaultChatInput implements ChatInput {
 
     public static Builder builder(ChatInput chatInput) {
         return new Builder(chatInput);
-    }
-
-    @Override
-    public List<Message> messages() {
-        return messages;
-    }
-
-    @Override
-    public Boolean isThinkingEnabled() {
-        return isThinkingEnabled;
-    }
-
-    @Override
-    public Boolean isStreamingEnabled() {
-        return isStreamingEnabled;
     }
 
     @Override
@@ -85,6 +73,8 @@ public class DefaultChatInput implements ChatInput {
 
     public static class Builder implements ChatInput.Builder {
         private List<Message> messages;
+        private ModelId modelId;
+        private Prompt systemPrompt;
         private Boolean isThinkingEnabled;
         private Boolean isStreamingEnabled;
 
@@ -109,6 +99,18 @@ public class DefaultChatInput implements ChatInput {
         }
 
         @Override
+        public ChatInput.Builder modelId(ModelId modelId) {
+            this.modelId = modelId;
+            return this;
+        }
+
+        @Override
+        public ChatInput.Builder systemPrompt(Prompt systemPrompt) {
+            this.systemPrompt = systemPrompt;
+            return this;
+        }
+
+        @Override
         public Builder isThinkingEnabled(Boolean isThinkingEnabled) {
             this.isThinkingEnabled = isThinkingEnabled;
             return this;
@@ -123,6 +125,8 @@ public class DefaultChatInput implements ChatInput {
         public DefaultChatInput build() {
             return new DefaultChatInput(
                     messages,
+                    modelId,
+                    systemPrompt,
                     isThinkingEnabled,
                     isStreamingEnabled
             );

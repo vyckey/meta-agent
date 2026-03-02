@@ -42,6 +42,7 @@ import org.metaagent.framework.core.agent.chat.message.Message;
 import org.metaagent.framework.core.agent.chat.message.MessageId;
 import org.metaagent.framework.core.agent.chat.message.MessageInfo;
 import org.metaagent.framework.core.agent.chat.message.RoleMessage;
+import org.metaagent.framework.core.agent.chat.message.RoleMessageInfo;
 import org.metaagent.framework.core.agent.chat.message.part.MessagePart;
 import org.metaagent.framework.core.agent.input.AgentInput;
 import org.metaagent.framework.core.agent.output.AgentOutput;
@@ -52,13 +53,15 @@ import org.metaagent.framework.core.agents.chat.ChatAgentTask;
 import org.metaagent.framework.core.agents.chat.DefaultChatAgentTask;
 import org.metaagent.framework.core.agents.chat.input.ChatInput;
 import org.metaagent.framework.core.agents.chat.input.DefaultChatInput;
+import org.metaagent.framework.core.agents.chat.model.ChatModelClient;
+import org.metaagent.framework.core.agents.chat.model.ChatModelResponse;
+import org.metaagent.framework.core.agents.chat.model.ChatStreamResponse;
 import org.metaagent.framework.core.agents.chat.output.ChatOutput;
 import org.metaagent.framework.core.agents.chat.output.DefaultChatOutput;
 import org.metaagent.framework.core.agents.chat.output.DefaultChatStreamOutput;
-import org.metaagent.framework.core.model.chat.ChatModelClient;
-import org.metaagent.framework.core.model.chat.ChatModelProvider;
-import org.metaagent.framework.core.model.chat.ChatModelResponse;
-import org.metaagent.framework.core.model.chat.ChatModelUtils;
+import org.metaagent.framework.core.model.ModelId;
+import org.metaagent.framework.core.model.chat.ChatModelInfo;
+import org.metaagent.framework.core.model.chat.ChatModelInstance;
 import org.metaagent.framework.core.model.chat.compression.ChatCompressionModel;
 import org.metaagent.framework.core.model.chat.compression.CompressOptions;
 import org.metaagent.framework.core.model.chat.compression.CompressionModel;
@@ -67,12 +70,14 @@ import org.metaagent.framework.core.model.chat.compression.CompressionResponse;
 import org.metaagent.framework.core.model.chat.compression.CompressionResult;
 import org.metaagent.framework.core.model.chat.compression.DefaultCompressOptions;
 import org.metaagent.framework.core.model.chat.message.MessageConverter;
-import org.metaagent.framework.core.model.chat.metadata.ChatModelMetadata;
+import org.metaagent.framework.core.model.prompt.Prompt;
 import org.metaagent.framework.core.model.prompt.PromptTemplate;
 import org.metaagent.framework.core.model.prompt.PromptValue;
 import org.metaagent.framework.core.model.prompt.StringPromptTemplate;
 import org.metaagent.framework.core.model.prompt.StringPromptValue;
 import org.metaagent.framework.core.model.prompt.registry.PromptRegistry;
+import org.metaagent.framework.core.model.provider.ModelProviderRegistry;
+import org.metaagent.framework.core.model.provider.ModelProviderUtils;
 import org.springframework.ai.chat.messages.AssistantMessage;
 import org.springframework.ai.chat.messages.SystemMessage;
 import org.springframework.ai.chat.model.ChatModel;
@@ -135,9 +140,11 @@ public class LlmChatAgent extends AbstractStreamAgent<ChatInput, ChatOutput, Mes
     protected BlockingQueue<ChatAgentTask> pendingInputs = new LinkedBlockingQueue<>();
     protected ExecutorService taskExecutor = Executors.newSingleThreadExecutor();
 
-    protected ChatModelProvider modelProvider;
+    protected ModelProviderRegistry modelProviderRegistry;
+    protected ModelId defaultModelId;
+    protected ModelId currentModelId;
     protected ChatModelClient chatModelClient;
-    protected PromptTemplate systemPromptTemplate;
+    protected Prompt systemPrompt;
     protected MessageConverter messageConverter;
     protected CompressionModel compressionModel;
 
@@ -145,18 +152,21 @@ public class LlmChatAgent extends AbstractStreamAgent<ChatInput, ChatOutput, Mes
     protected ConversationStorage conversationStorage;
     protected ConversationStorage compressedConversationStorage;
 
-    public LlmChatAgent(String name, String description, ChatModelProvider modelProvider) {
-        this(name, description, modelProvider, null);
+    public LlmChatAgent(String name, String description, ModelId defaultModelId) {
+        this(name, description, defaultModelId, null);
     }
 
-    public LlmChatAgent(String name, String description, ChatModelProvider modelProvider, PromptTemplate systemPromptTemplate) {
+    public LlmChatAgent(String name, String description, ModelId defaultModelId, Prompt systemPrompt) {
         super(AgentProfile.create(name, description));
-        this.modelProvider = Objects.requireNonNull(modelProvider, "modelProvider is required");
-        this.chatModelClient = new ChatModelClient(modelProvider.getModel());
-        this.systemPromptTemplate = systemPromptTemplate != null ?
-                systemPromptTemplate : PromptRegistry.global().getPromptTemplate(DEFAULT_SYSTEM_PROMPT_ID);
+        this.modelProviderRegistry = ModelProviderRegistry.global();
+        this.defaultModelId = Objects.requireNonNull(defaultModelId, "defaultModelId cannot be null");
+        this.currentModelId = defaultModelId;
+        ChatModelInstance chatModel = ModelProviderUtils.getChatModel(modelProviderRegistry, defaultModelId);
+        this.chatModelClient = new ChatModelClient(chatModel);
+        this.systemPrompt = systemPrompt != null ?
+                systemPrompt : PromptRegistry.global().getPromptTemplate(DEFAULT_SYSTEM_PROMPT_ID);
         this.messageConverter = new MessageConverter(true);
-        this.compressionModel = defaultCompressionModel(modelProvider.getModel());
+        this.compressionModel = defaultCompressionModel(chatModel.getRuntime());
         this.conversation = new DefaultTurnBasedConversation();
         this.conversationStorage = ConversationInMemoryStorage.INSTANCE;
         this.compressedConversationStorage = ConversationInMemoryStorage.INSTANCE;
@@ -164,13 +174,17 @@ public class LlmChatAgent extends AbstractStreamAgent<ChatInput, ChatOutput, Mes
 
     public LlmChatAgent(Builder builder) {
         super(builder);
-        this.modelProvider = Objects.requireNonNull(builder.modelProvider, "modelProvider is required");
-        this.chatModelClient = new ChatModelClient(modelProvider.getModel());
-        this.systemPromptTemplate = builder.systemPromptTemplate != null ?
-                builder.systemPromptTemplate : PromptRegistry.global().getPromptTemplate(DEFAULT_SYSTEM_PROMPT_ID);
+        this.modelProviderRegistry = builder.modelProviderRegistry != null ?
+                builder.modelProviderRegistry : ModelProviderRegistry.global();
+        this.defaultModelId = Objects.requireNonNull(builder.defaultModelId, "defaultModelId cannot be null");
+        this.currentModelId = defaultModelId;
+        ChatModelInstance chatModel = ModelProviderUtils.getChatModel(modelProviderRegistry, defaultModelId);
+        this.chatModelClient = new ChatModelClient(chatModel);
+        this.systemPrompt = builder.systemPrompt != null ?
+                builder.systemPrompt : PromptRegistry.global().getPromptTemplate(DEFAULT_SYSTEM_PROMPT_ID);
         this.messageConverter = new MessageConverter(true);
-        this.compressionModel = builder.compressionModel != null
-                ? builder.compressionModel : defaultCompressionModel(modelProvider.getModel());
+        this.compressionModel = builder.compressionModel != null ?
+                builder.compressionModel : defaultCompressionModel(chatModel.getRuntime());
         this.conversation = builder.conversation != null ? builder.conversation : new DefaultTurnBasedConversation();
         this.conversationStorage = builder.conversationStorage != null ?
                 builder.conversationStorage : ConversationInMemoryStorage.INSTANCE;
@@ -191,7 +205,11 @@ public class LlmChatAgent extends AbstractStreamAgent<ChatInput, ChatOutput, Mes
 
     private static CompressionModel defaultCompressionModel(ChatModel chatModel) {
         PromptValue prompt = PromptRegistry.global().getPrompt(DEFAULT_CONTEXT_COMPRESSION_SYSTEM_PROMPT_ID);
-        return new ChatCompressionModel(chatModel, new SystemMessage(prompt.toString()));
+        return new ChatCompressionModel(chatModel, new SystemMessage(prompt.text()));
+    }
+
+    protected ChatModelInstance getChatModel() {
+        return ModelProviderUtils.getModel(modelProviderRegistry, currentModelId, ChatModelInstance.class);
     }
 
     @Override
@@ -221,6 +239,7 @@ public class LlmChatAgent extends AbstractStreamAgent<ChatInput, ChatOutput, Mes
     @Override
     public AgentOutput<ChatOutput> run(AgentInput<ChatInput> agentInput) {
         ensureInitialized();
+        checkInput(agentInput);
 
         ChatAgentTask agentTask = createChatTask(agentInput);
         try {
@@ -244,6 +263,7 @@ public class LlmChatAgent extends AbstractStreamAgent<ChatInput, ChatOutput, Mes
     @Override
     public CompletableFuture<AgentOutput<ChatOutput>> runAsync(AgentInput<ChatInput> agentInput) {
         ensureInitialized();
+        checkInput(agentInput);
 
         ChatAgentTask agentTask = createChatTask(agentInput);
         return agentTask.outputFuture();
@@ -258,6 +278,7 @@ public class LlmChatAgent extends AbstractStreamAgent<ChatInput, ChatOutput, Mes
     @Override
     public AgentOutput<ChatOutput> runStream(AgentInput<ChatInput> agentInput) {
         ensureInitialized();
+        checkInput(agentInput);
 
         ChatInput chatInput = agentInput.input();
         if (BooleanUtils.isFalse(chatInput.isStreamingEnabled())) {
@@ -350,27 +371,52 @@ public class LlmChatAgent extends AbstractStreamAgent<ChatInput, ChatOutput, Mes
         }
     }
 
+    protected void checkInput(AgentInput<ChatInput> agentInput) {
+        ChatInput chatInput = agentInput.input();
+        if (chatInput.modelId() != null) {
+            try {
+                ModelProviderUtils.getChatModel(modelProviderRegistry, chatInput.modelId());
+            } catch (Exception e) {
+                throw new AgentExecutionException(e.getMessage(), e);
+            }
+        }
+    }
+
     @Override
     protected AgentInput<ChatInput> preprocess(AgentInput<ChatInput> agentInput) {
         agentInput = super.preprocess(agentInput);
-        // set system prompt
-        ChatModelMetadata modelMetadata = modelProvider.getModelMetadata();
-        String modelCutoffDate = "Unknown";
-        if (modelMetadata.getCutOffDate() != null) {
-            modelCutoffDate = LocalDate.ofInstant(modelMetadata.getCutOffDate(), ZoneId.systemDefault()).format(DateTimeFormatter.ISO_LOCAL_DATE);
+        if (agentInput.input().modelId() != null) {
+            currentModelId = agentInput.input().modelId();
         }
 
-        PromptValue systemPrompt = systemPromptTemplate.format(Map.of(
-                "name", getName(),
-                "current_date", LocalDateTime.now().format(DateTimeFormatter.ISO_LOCAL_DATE),
-                "model_cutoff_date", modelCutoffDate
-        ));
-        chatModelClient.setSystemMessage(new SystemMessage(systemPrompt.toString()));
+        PromptValue systemPromptValue = buildSystemPrompt(agentInput);
+        chatModelClient.setSystemMessage(new SystemMessage(systemPromptValue.text()));
         chatModelClient.setToolContext(buildToolExecutorContext(agentInput), agentInput.context().getToolExecutor());
 
         conversation.newTurn();
         agentInput.input().messages().forEach(conversation::appendMessage);
         return agentInput;
+    }
+
+    protected PromptValue buildSystemPrompt(AgentInput<ChatInput> agentInput) {
+        ChatModelInstance chatModel = getChatModel();
+        ChatModelInfo modelInfo = chatModel.getInfo();
+        String modelCutoffDate = "Unknown";
+        if (modelInfo.getCutOffDate() != null) {
+            modelCutoffDate = LocalDate.ofInstant(modelInfo.getCutOffDate(), ZoneId.systemDefault())
+                    .format(DateTimeFormatter.ISO_LOCAL_DATE);
+        }
+
+        Prompt systemPrompt = Optional.ofNullable(agentInput.input().systemPrompt()).orElse(this.systemPrompt);
+        if (systemPrompt instanceof PromptTemplate promptTemplate) {
+            return promptTemplate.format(Map.of(
+                    "name", getName(),
+                    "current_date", LocalDateTime.now().format(DateTimeFormatter.ISO_LOCAL_DATE),
+                    "model_cutoff_date", modelCutoffDate
+            ));
+        } else {
+            return (PromptValue) systemPrompt;
+        }
     }
 
     protected void compressContextIfNeeded(AgentInput<ChatInput> input) {
@@ -385,7 +431,8 @@ public class LlmChatAgent extends AbstractStreamAgent<ChatInput, ChatOutput, Mes
         int maxMessagesCount = agentMetadata.getProperty(ChatAgent.METADATA_KEY_COMPRESSION_RESERVED_MESSAGES_COUNT,
                 Integer.class, DEFAULT_COMPRESSION_RESERVED_MESSAGES_COUNT);
 
-        int maxTokens = (int) (modelProvider.getModelMetadata().getMaxWindowSize() * contextCompressionRatio);
+        ChatModelInstance chatModel = getChatModel();
+        int maxTokens = (int) (chatModel.getInfo().getContextSize() * contextCompressionRatio);
         CompressOptions compressOptions = DefaultCompressOptions.builder()
                 .maxTokens(maxTokens)
                 .reservedMessagesCount(maxMessagesCount)
@@ -452,11 +499,10 @@ public class LlmChatAgent extends AbstractStreamAgent<ChatInput, ChatOutput, Mes
     @Override
     protected AgentOutput<ChatOutput> doStep(AgentInput<ChatInput> agentInput) {
         ChatInput input = agentInput.input();
-        List<org.springframework.ai.chat.messages.Message> inputMessages = input.messages()
-                .stream().map(messageConverter::convert).flatMap(List::stream).toList();
-        ChatModelResponse chatResponse = chatModelClient.sendMessages(inputMessages);
 
-        List<MessagePart> messageParts = messageConverter.convert(chatModelClient.lastTurnOutputMessages());
+        ChatModelResponse response = chatModelClient.sendMessages(input.messages());
+
+        List<MessagePart> messageParts = response.messages();
         Message outputMessage = RoleMessage.builder()
                 .info(MessageInfo.assistant()
                         .createdAt(messageParts.get(0).createdAt())
@@ -468,7 +514,7 @@ public class LlmChatAgent extends AbstractStreamAgent<ChatInput, ChatOutput, Mes
         conversation.appendMessage(outputMessage);
 
         ChatOutput agentOutput = ChatOutput.builder().message(outputMessage).build();
-        return AgentOutput.create(agentOutput, ChatModelUtils.getMetadata(chatResponse));
+        return AgentOutput.create(agentOutput);
     }
 
     @Override
@@ -493,19 +539,21 @@ public class LlmChatAgent extends AbstractStreamAgent<ChatInput, ChatOutput, Mes
     @Override
     protected AgentOutput<ChatOutput> doStepStream(AgentInput<ChatInput> agentInput) {
         ChatInput input = agentInput.input();
-        List<org.springframework.ai.chat.messages.Message> inputMessages = input.messages()
-                .stream().map(messageConverter::convert).flatMap(List::stream).toList();
-        Flux<ChatModelResponse> messageFlux = chatModelClient.sendMessageStream(inputMessages);
-        Flux<MessagePart> stream = messageFlux
-                .map(chatModelResponse -> messageConverter.convert(chatModelResponse.getOutput()))
-                .flatMap(Flux::fromIterable);
-        ChatOutput chatOutput = ChatOutput.builder().stream(stream).build();
+        RoleMessageInfo messageInfo = RoleMessageInfo.assistant()
+                .build();
+
+        Flux<ChatStreamResponse> messageFlux = chatModelClient.sendMessageStream(input.messages());
+        ChatOutput chatOutput = ChatOutput.builder()
+                .message(RoleMessage.builder().info(messageInfo).build())
+                .stream(messageFlux.map(ChatStreamResponse::message))
+                .build();
         return AgentOutput.create(chatOutput);
     }
 
     @Override
     public StreamOutput.Aggregator<MessagePart, ChatOutput> getStreamOutputAggregator() {
-        MessageInfo messageInfo = MessageInfo.assistant().build();
+        RoleMessageInfo messageInfo = RoleMessageInfo.assistant()
+                .build();
         return DefaultChatStreamOutput.aggregator(messageInfo);
     }
 
@@ -545,12 +593,15 @@ public class LlmChatAgent extends AbstractStreamAgent<ChatInput, ChatOutput, Mes
             logger.error("Failed to shutdown process executor", e);
             Thread.currentThread().interrupt();
         }
+
+        chatModelClient.close();
     }
 
 
     public static class Builder extends AbstractAgentBuilder<LlmChatAgent, Builder, ChatInput, ChatOutput> {
-        private ChatModelProvider modelProvider;
-        private PromptTemplate systemPromptTemplate;
+        private ModelProviderRegistry modelProviderRegistry;
+        private ModelId defaultModelId;
+        private Prompt systemPrompt;
         private CompressionModel compressionModel;
         private TurnBasedConversation conversation;
         protected ConversationStorage conversationStorage;
@@ -561,13 +612,18 @@ public class LlmChatAgent extends AbstractStreamAgent<ChatInput, ChatOutput, Mes
             return this;
         }
 
-        public Builder modelProvider(ChatModelProvider modelProvider) {
-            this.modelProvider = modelProvider;
+        public Builder modelProviderRegistry(ModelProviderRegistry modelProviderRegistry) {
+            this.modelProviderRegistry = modelProviderRegistry;
             return self();
         }
 
-        public Builder systemPromptTemplate(PromptTemplate systemPromptTemplate) {
-            this.systemPromptTemplate = systemPromptTemplate;
+        public Builder defaultModelId(ModelId defaultModelId) {
+            this.defaultModelId = defaultModelId;
+            return self();
+        }
+
+        public Builder systemPrompt(Prompt systemPrompt) {
+            this.systemPrompt = systemPrompt;
             return self();
         }
 

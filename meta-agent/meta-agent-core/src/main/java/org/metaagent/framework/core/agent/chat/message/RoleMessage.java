@@ -121,6 +121,9 @@ public record RoleMessage(
         }
 
         public RoleMessage build() {
+            if (parts == null) {
+                parts = List.of();
+            }
             return new RoleMessage(info, parts);
         }
     }

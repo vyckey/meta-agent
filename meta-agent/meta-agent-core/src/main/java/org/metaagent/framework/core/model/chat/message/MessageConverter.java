@@ -37,8 +37,8 @@ import org.metaagent.framework.core.agent.chat.message.part.MediaMessagePart;
 import org.metaagent.framework.core.agent.chat.message.part.MessagePart;
 import org.metaagent.framework.core.agent.chat.message.part.MessagePartId;
 import org.metaagent.framework.core.agent.chat.message.part.TextMessagePart;
-import org.metaagent.framework.core.agent.chat.message.part.ToolCallMessagePart;
-import org.metaagent.framework.core.agent.chat.message.part.ToolResponseMessagePart;
+import org.metaagent.framework.core.agent.chat.message.part.ToolCallInputMessagePart;
+import org.metaagent.framework.core.agent.chat.message.part.ToolCallResultMessagePart;
 import org.springframework.ai.chat.messages.AssistantMessage;
 import org.springframework.ai.chat.messages.ToolResponseMessage;
 import org.springframework.ai.chat.messages.UserMessage;
@@ -94,9 +94,9 @@ public class MessageConverter implements Converter<Message, List<org.springframe
         for (MessagePart messagePart : message.parts()) {
             if (subParts.isEmpty()) {
                 subParts.add(messagePart);
-            } else if (messagePart instanceof ToolCallMessagePart && subParts.get(0) instanceof ToolCallMessagePart) {
+            } else if (messagePart instanceof ToolCallInputMessagePart && subParts.get(0) instanceof ToolCallInputMessagePart) {
                 subParts.add(messagePart);
-            } else if (messagePart instanceof ToolResponseMessagePart && subParts.get(0) instanceof ToolResponseMessagePart) {
+            } else if (messagePart instanceof ToolCallResultMessagePart && subParts.get(0) instanceof ToolCallResultMessagePart) {
                 subParts.add(messagePart);
             } else if (messagePart instanceof MediaMessagePart && subParts.get(0) instanceof TextMessagePart) {
                 subParts.add(messagePart);
@@ -145,14 +145,14 @@ public class MessageConverter implements Converter<Message, List<org.springframe
                         .media(media)
                         .build();
             }
-        } else if (parts.get(0) instanceof ToolCallMessagePart) {
+        } else if (parts.get(0) instanceof ToolCallInputMessagePart) {
             MetadataProvider metadata = MetadataProvider.create();
             for (MessagePart part : parts) {
                 metadata.merge(part.metadata());
             }
             metadata.merge(extendMetadata);
-            List<AssistantMessage.ToolCall> toolCallList = parts.stream().map(ToolCallMessagePart.class::cast)
-                    .map(ToolCallMessagePart::toolCall)
+            List<AssistantMessage.ToolCall> toolCallList = parts.stream().map(ToolCallInputMessagePart.class::cast)
+                    .map(ToolCallInputMessagePart::toolCall)
                     .map(call -> new AssistantMessage.ToolCall(
                             call.id(), call.type(), call.name(), call.arguments()
                     ))
@@ -162,14 +162,14 @@ public class MessageConverter implements Converter<Message, List<org.springframe
                     .properties(metadata.getProperties())
                     .toolCalls(toolCallList)
                     .build();
-        } else if (parts.get(0) instanceof ToolResponseMessagePart) {
+        } else if (parts.get(0) instanceof ToolCallResultMessagePart) {
             MetadataProvider metadata = MetadataProvider.create();
             for (MessagePart part : parts) {
                 metadata.merge(part.metadata());
             }
             metadata.merge(extendMetadata);
-            List<ToolResponseMessage.ToolResponse> toolResponseList = parts.stream().map(ToolResponseMessagePart.class::cast)
-                    .map(ToolResponseMessagePart::toolResponse)
+            List<ToolResponseMessage.ToolResponse> toolResponseList = parts.stream().map(ToolCallResultMessagePart.class::cast)
+                    .map(ToolCallResultMessagePart::toolResponse)
                     .map(response -> new ToolResponseMessage.ToolResponse(
                             response.id(), response.name(), response.responseData()
                     ))
@@ -225,9 +225,9 @@ public class MessageConverter implements Converter<Message, List<org.springframe
         } else if (message instanceof AssistantMessage assistantMessage) {
             if (assistantMessage.hasToolCalls()) {
                 for (AssistantMessage.ToolCall toolCall : assistantMessage.getToolCalls()) {
-                    ToolCallMessagePart toolCallMessagePart = ToolCallMessagePart.builder()
+                    ToolCallInputMessagePart toolCallInputMessagePart = ToolCallInputMessagePart.builder()
                             .id(messagePartIdProvider.get())
-                            .toolCall(new ToolCallMessagePart.ToolCall(
+                            .toolCall(new ToolCallInputMessagePart.ToolCall(
                                     toolCall.id(),
                                     toolCall.type(),
                                     toolCall.name(),
@@ -236,7 +236,7 @@ public class MessageConverter implements Converter<Message, List<org.springframe
                             .createdAt(createdAt)
                             .updatedAt(updatedAt)
                             .build();
-                    parts.add(toolCallMessagePart);
+                    parts.add(toolCallInputMessagePart);
                 }
             } else {
                 TextMessagePart textMessagePart = TextMessagePart.builder()
@@ -257,9 +257,9 @@ public class MessageConverter implements Converter<Message, List<org.springframe
             }
         } else if (message instanceof ToolResponseMessage toolResponseMessage) {
             for (ToolResponseMessage.ToolResponse toolResponse : toolResponseMessage.getResponses()) {
-                ToolResponseMessagePart toolResponseMessagePart = ToolResponseMessagePart.builder()
+                ToolCallResultMessagePart toolCallResultMessagePart = ToolCallResultMessagePart.builder()
                         .id(messagePartIdProvider.get())
-                        .toolResponse(new ToolResponseMessagePart.ToolResponse(
+                        .toolResponse(new ToolCallResultMessagePart.ToolResponse(
                                 toolResponse.id(),
                                 toolResponse.name(),
                                 toolResponse.responseData()))
@@ -267,7 +267,7 @@ public class MessageConverter implements Converter<Message, List<org.springframe
                         .createdAt(createdAt)
                         .updatedAt(updatedAt)
                         .build();
-                parts.add(toolResponseMessagePart);
+                parts.add(toolCallResultMessagePart);
             }
         } else {
             throw new IllegalArgumentException("message cannot be converted: " + message.getClass());

@@ -121,7 +121,6 @@ public record DefaultModelProvider(
 
         public Builder() {
             this.metadata = MetadataProvider.empty();
-            this.models = Map.of();
         }
 
         public Builder id(String id) {

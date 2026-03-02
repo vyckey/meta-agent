@@ -26,6 +26,8 @@ package org.metaagent.framework.core.agents.chat.input;
 
 import org.metaagent.framework.core.agent.chat.message.Message;
 import org.metaagent.framework.core.agents.chat.ChatAgent;
+import org.metaagent.framework.core.model.ModelId;
+import org.metaagent.framework.core.model.prompt.Prompt;
 
 import java.util.List;
 
@@ -50,6 +52,20 @@ public interface ChatInput {
      * @return the messages of this input
      */
     List<Message> messages();
+
+    /**
+     * Get the model id of this input, default to the agent's default model if not specified.
+     *
+     * @return the model id of this input, default null.
+     */
+    ModelId modelId();
+
+    /**
+     * Get the system prompt of this input, default to the agent's default system prompt if not specified.
+     *
+     * @return the system prompt of this input, default null.
+     */
+    Prompt systemPrompt();
 
     /**
      * Check whether the agent is thinking enabled. It's determined by the agent's implementation if not present.
@@ -85,6 +101,22 @@ public interface ChatInput {
          * @return this builder
          */
         Builder messages(Message... messages);
+
+        /**
+         * Set the model id of this input.
+         *
+         * @param modelId the model id of this input
+         * @return this builder
+         */
+        Builder modelId(ModelId modelId);
+
+        /**
+         * Set the system prompt of this input.
+         *
+         * @param systemPrompt the system prompt of this input
+         * @return this builder
+         */
+        Builder systemPrompt(Prompt systemPrompt);
 
         /**
          * Set whether the agent is thinking enabled.

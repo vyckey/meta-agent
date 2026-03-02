@@ -1,7 +1,7 @@
 /*
  * MIT License
  *
- * Copyright (c) 2025 MetaAgent
+ * Copyright (c) 2026 MetaAgent
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -22,42 +22,32 @@
  * SOFTWARE.
  */
 
-package org.metaagent.framework.core.model.chat.metadata;
+package org.metaagent.framework.core.agents.chat.model.metadata;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import lombok.EqualsAndHashCode;
 import org.springframework.ai.chat.metadata.Usage;
 
 /**
- * Record to hold token usage information.
+ * Token usage of a chat completion interaction.
  *
  * @author vyckey
  */
-@EqualsAndHashCode(callSuper = false)
-public class TokenUsage implements Usage {
-    private final int promptTokens;
-    private final int completionTokens;
-    private final int totalTokens;
-    private final Object nativeUsage;
+public record TokenUsage(
+        Integer promptTokens,
 
-    public static TokenUsage empty() {
-        return new TokenUsage(0, 0, 0, null);
-    }
+        Integer completionTokens,
 
-    @JsonCreator
-    public static TokenUsage from(@JsonProperty("promptTokens") Integer promptTokens,
-                                  @JsonProperty("completionTokens") Integer completionTokens,
-                                  @JsonProperty("totalTokens") Integer totalTokens,
-                                  @JsonProperty("nativeUsage") Object nativeUsage) {
-        return new TokenUsage(promptTokens, completionTokens, totalTokens, nativeUsage);
-    }
+        Integer totalTokens,
 
-    public TokenUsage(Integer promptTokens, Integer completionTokens, Integer totalTokens, Object nativeUsage) {
-        this.promptTokens = promptTokens != null ? promptTokens : 0;
-        this.completionTokens = completionTokens != null ? completionTokens : 0;
-        this.totalTokens = totalTokens != null ? totalTokens : this.promptTokens + this.completionTokens;
-        this.nativeUsage = nativeUsage;
+        Object nativeUsage
+) implements Usage {
+    private static final TokenUsage EMPTY = new TokenUsage(0, 0, 0, null);
+
+    public TokenUsage {
+        promptTokens = promptTokens != null ? promptTokens : 0;
+        completionTokens = completionTokens != null ? completionTokens : 0;
+        totalTokens = totalTokens != null ? totalTokens : promptTokens + completionTokens;
     }
 
     public TokenUsage(Integer promptTokens, Integer completionTokens, Integer totalTokens) {
@@ -68,8 +58,20 @@ public class TokenUsage implements Usage {
         this(promptTokens, completionTokens, null, null);
     }
 
+    public static TokenUsage empty() {
+        return EMPTY;
+    }
+
+    @JsonCreator
+    public static TokenUsage from(@JsonProperty("promptTokens") Integer promptTokens,
+                                  @JsonProperty("completionTokens") Integer completionTokens,
+                                  @JsonProperty("totalTokens") Integer totalTokens,
+                                  @JsonProperty("nativeUsage") Object nativeUsage) {
+        return new TokenUsage(promptTokens, completionTokens, totalTokens, nativeUsage);
+    }
+
     public TokenUsage accumulate(Usage other) {
-        if (other == null) {
+        if (other == null || EMPTY.equals(other)) {
             return this;
         }
         return new TokenUsage(

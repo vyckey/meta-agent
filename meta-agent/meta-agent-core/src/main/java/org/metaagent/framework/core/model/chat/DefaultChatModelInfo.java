@@ -50,8 +50,8 @@ public record DefaultChatModelInfo(
     public DefaultChatModelInfo {
         Objects.requireNonNull(id, "id must not be null");
         Objects.requireNonNull(name, "name must not be null");
-        if (contextSize < 0) {
-            throw new IllegalArgumentException("contextSize must be non-negative");
+        if (contextSize <= 0) {
+            throw new IllegalArgumentException("contextSize must be positive");
         }
     }
 

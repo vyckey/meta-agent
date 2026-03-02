@@ -57,6 +57,7 @@ public record TextMessagePart(
 
     public TextMessagePart {
         id = id != null ? id : MessagePartId.next();
+        subType = subType != null ? subType : "";
         Objects.requireNonNull(text, "text is required");
         createdAt = createdAt != null ? createdAt : Instant.now();
         updatedAt = updatedAt != null ? updatedAt : Instant.now();
@@ -78,6 +79,10 @@ public record TextMessagePart(
     @Override
     public String type() {
         return TYPE;
+    }
+
+    public boolean isSubType(String subType) {
+        return Objects.equals(subType, this.subType);
     }
 
     @Override
