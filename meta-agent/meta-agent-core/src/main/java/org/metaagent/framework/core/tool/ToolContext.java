@@ -78,7 +78,7 @@ public interface ToolContext {
      * @return the working directory
      */
     default Path getWorkingDirectory() {
-        return getToolExecutionConfig().configPaths().currentWorkingDirectory();
+        return getToolExecutionConfig().workspaceConfig().workingDirectory();
     }
 
     /**
@@ -123,6 +123,13 @@ public interface ToolContext {
      * @param executionId the execution id
      */
     void setExecutionId(String executionId);
+
+    /**
+     * Creates a new builder based on the current ToolContext instance.
+     *
+     * @return a new ToolContext builder
+     */
+    Builder toBuilder();
 
 
     /**

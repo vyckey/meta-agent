@@ -70,8 +70,6 @@ public enum CommonTools {
     HTTP_REQUEST_TOOL(HttpRequestTool.TOOL_NAME, HttpRequestTool::new),
     HUMAN_INPUT_TOOL(HumanInputTool.TOOL_NAME, HumanInputTool::new),
     SCRIPT_ENGINE_TOOL(ScriptEngineTool.TOOL_NAME, ScriptEngineTool::new),
-    LIST_SKILLS_TOOL(ListSkillsTool.TOOL_NAME, ListSkillsTool::new),
-    LOAD_SKILL_TOOL(LoadSkillTool.TOOL_NAME, LoadSkillTool::new),
     ;
 
     private static volatile Toolkit toolkit;

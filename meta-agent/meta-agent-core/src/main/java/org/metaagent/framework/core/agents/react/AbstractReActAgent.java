@@ -24,10 +24,10 @@
 
 package org.metaagent.framework.core.agents.react;
 
+import org.apache.commons.lang3.NotImplementedException;
 import org.metaagent.framework.core.agent.AbstractAgent;
 import org.metaagent.framework.core.agent.AgentExecutionContext;
 import org.metaagent.framework.core.agent.action.Action;
-import org.metaagent.framework.core.agent.action.DefaultActionExecutionContext;
 import org.metaagent.framework.core.agent.action.actions.AgentFinishAction;
 import org.metaagent.framework.core.agent.action.result.ActionResult;
 import org.metaagent.framework.core.agent.input.AgentInput;
@@ -70,12 +70,6 @@ public abstract class AbstractReActAgent<I, O>
     @Override
     public ActionResult act(AgentInput<I> input, Action action) {
         AgentExecutionContext context = input.context();
-        DefaultActionExecutionContext executionContext = DefaultActionExecutionContext.builder()
-                .environment(context.getEnvironment())
-                .toolManager(getToolManager())
-                .actionExecutor(context.getActionExecutor())
-                .actionHistory(agentState.getActionHistory())
-                .build();
-        return context.getActionExecutor().execute(executionContext, action);
+        throw new NotImplementedException("Not implemented yet.");
     }
 }

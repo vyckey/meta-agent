@@ -27,14 +27,19 @@ package org.metaagent.framework.core.agent;
 import lombok.Getter;
 import org.metaagent.framework.common.abort.AbortController;
 import org.metaagent.framework.common.abort.AbortSignal;
-import org.metaagent.framework.core.agent.action.executor.ActionExecutor;
-import org.metaagent.framework.core.agent.action.executor.SyncActionExecutor;
 import org.metaagent.framework.core.agent.observability.AgentListenerRegistry;
-import org.metaagent.framework.core.config.ConfigPaths;
-import org.metaagent.framework.core.environment.Environment;
+import org.metaagent.framework.core.config.WorkspaceConfig;
+import org.metaagent.framework.core.security.SecurityLevel;
+import org.metaagent.framework.core.security.approval.AsyncEventPermissionApprovalManager;
+import org.metaagent.framework.core.security.approval.PermissionApprovalManager;
+import org.metaagent.framework.core.security.approval.PermissionApprover;
+import org.metaagent.framework.core.skill.loader.SkillLoaders;
+import org.metaagent.framework.core.skill.manager.SkillManager;
+import org.metaagent.framework.core.tool.approval.ToolApprovalRequest;
 import org.metaagent.framework.core.tool.executor.DefaultToolExecutor;
 import org.metaagent.framework.core.tool.executor.ToolExecutor;
 import org.metaagent.framework.core.tool.listener.ToolExecutionListenerRegistry;
+import org.metaagent.framework.core.tool.manager.ToolManager;
 
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
@@ -46,65 +51,82 @@ import java.util.concurrent.Executors;
  */
 @Getter
 public class DefaultAgentExecutionContext implements AgentExecutionContext {
-    private final Environment environment;
+    private final SecurityLevel securityLevel;
     private final AgentListenerRegistry<?, ?> agentListenerRegistry;
+    private final ToolManager toolManager;
     private final ToolExecutor toolExecutor;
     private final ToolExecutionListenerRegistry toolListenerRegistry;
-    private final ActionExecutor actionExecutor;
+    private final PermissionApprovalManager<ToolApprovalRequest> toolApprovalManager;
+    private final SkillManager skillManager;
     private final AbortSignal abortSignal;
     private final Executor executor;
-    private final ConfigPaths configPaths;
+    private final WorkspaceConfig workspaceConfig;
 
     protected DefaultAgentExecutionContext(Builder builder) {
-        this.environment = builder.environment;
+        this.securityLevel = builder.securityLevel;
         this.agentListenerRegistry = builder.agentListenerRegistry;
+        this.toolManager = builder.toolManager;
         this.toolExecutor = builder.toolExecutor;
         this.toolListenerRegistry = builder.toolListenerRegistry;
-        this.actionExecutor = builder.actionExecutor;
+        this.toolApprovalManager = builder.toolApprovalManager;
+        this.skillManager = builder.skillManager;
         this.abortSignal = builder.abortSignal;
         this.executor = builder.executor;
-        this.configPaths = builder.configPaths;
+        this.workspaceConfig = builder.workspaceConfig;
     }
 
     public static Builder builder() {
         return new Builder();
     }
 
-    public static Builder builder(AgentExecutionContext context) {
-        return new Builder(context);
+    @Override
+    public AgentExecutionContextBuilder toBuilder() {
+        return new Builder(this);
     }
 
+
     public static final class Builder implements AgentExecutionContextBuilder {
-        private Environment environment;
+        private SecurityLevel securityLevel;
         private AgentListenerRegistry<?, ?> agentListenerRegistry;
+        private ToolManager toolManager;
         private ToolExecutor toolExecutor;
         private ToolExecutionListenerRegistry toolListenerRegistry;
-        private ActionExecutor actionExecutor;
+        private PermissionApprovalManager<ToolApprovalRequest> toolApprovalManager;
+        private SkillManager skillManager;
         private AbortSignal abortSignal;
         private Executor executor;
-        private ConfigPaths configPaths;
+        private WorkspaceConfig workspaceConfig;
 
         private Builder() {
         }
 
         private Builder(AgentExecutionContext context) {
-            this.environment = context.getEnvironment();
-            this.actionExecutor = context.getActionExecutor();
+            this.securityLevel = context.getSecurityLevel();
+            this.agentListenerRegistry = context.getAgentListenerRegistry();
+            this.toolManager = context.getToolManager();
+            this.toolExecutor = context.getToolExecutor();
             this.toolListenerRegistry = context.getToolListenerRegistry();
-            this.executor = context.getExecutor();
+            this.skillManager = context.getSkillManager();
             this.abortSignal = context.getAbortSignal();
             this.executor = context.getExecutor();
+            this.workspaceConfig = context.getWorkspaceConfig();
         }
 
         @Override
-        public Builder environment(Environment environment) {
-            this.environment = environment;
+        public AgentExecutionContextBuilder securityLevel(SecurityLevel securityLevel) {
+            this.securityLevel = securityLevel;
             return this;
         }
 
         @Override
         public AgentExecutionContextBuilder agentListenerRegistry(AgentListenerRegistry<?, ?> listenerRegistry) {
             this.agentListenerRegistry = listenerRegistry;
+            return this;
+        }
+
+        @Override
+        public AgentExecutionContextBuilder toolManager(ToolManager toolManager) {
+            this.toolManager = toolManager;
             return this;
         }
 
@@ -121,8 +143,14 @@ public class DefaultAgentExecutionContext implements AgentExecutionContext {
         }
 
         @Override
-        public Builder actionExecutor(ActionExecutor actionExecutor) {
-            this.actionExecutor = actionExecutor;
+        public AgentExecutionContextBuilder toolApprovalManager(PermissionApprovalManager<ToolApprovalRequest> toolApprovalManager) {
+            this.toolApprovalManager = toolApprovalManager;
+            return this;
+        }
+
+        @Override
+        public AgentExecutionContextBuilder skillManager(SkillManager skillManager) {
+            this.skillManager = skillManager;
             return this;
         }
 
@@ -139,8 +167,8 @@ public class DefaultAgentExecutionContext implements AgentExecutionContext {
         }
 
         @Override
-        public AgentExecutionContextBuilder configPaths(ConfigPaths configPaths) {
-            this.configPaths = configPaths;
+        public AgentExecutionContextBuilder workspaceConfig(WorkspaceConfig workspaceConfig) {
+            this.workspaceConfig = workspaceConfig;
             return this;
         }
 
@@ -148,14 +176,23 @@ public class DefaultAgentExecutionContext implements AgentExecutionContext {
             if (agentListenerRegistry == null) {
                 agentListenerRegistry = AgentListenerRegistry.create();
             }
+            if (toolManager == null) {
+                this.toolManager = ToolManager.create();
+            }
             if (toolExecutor == null) {
                 this.toolExecutor = DefaultToolExecutor.INSTANCE;
             }
             if (toolListenerRegistry == null) {
                 this.toolListenerRegistry = ToolExecutionListenerRegistry.create();
             }
-            if (actionExecutor == null) {
-                actionExecutor = SyncActionExecutor.INSTANCE;
+            if (toolApprovalManager == null) {
+                this.toolApprovalManager = AsyncEventPermissionApprovalManager.assign(
+                        PermissionApprover.alwaysApproved(), Executors.newSingleThreadExecutor()
+                );
+            }
+            if (skillManager == null) {
+                this.skillManager = SkillManager.create();
+                this.skillManager.registerSkillLoader(SkillLoaders.fileSkillLoader());
             }
             if (abortSignal == null) {
                 abortSignal = AbortController.global().signal();
@@ -163,8 +200,8 @@ public class DefaultAgentExecutionContext implements AgentExecutionContext {
             if (executor == null) {
                 executor = Executors.newSingleThreadExecutor();
             }
-            if (configPaths == null) {
-                configPaths = ConfigPaths.newDefault();
+            if (workspaceConfig == null) {
+                workspaceConfig = WorkspaceConfig.newDefault();
             }
         }
 

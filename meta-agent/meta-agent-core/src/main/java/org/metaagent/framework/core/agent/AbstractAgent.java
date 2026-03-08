@@ -31,10 +31,8 @@ import org.metaagent.framework.core.agent.output.AgentOutput;
 import org.metaagent.framework.core.agent.profile.AgentProfile;
 import org.metaagent.framework.core.config.ConfigPaths;
 import org.metaagent.framework.core.skill.loader.SkillLoaders;
-import org.metaagent.framework.core.skill.manager.SkillManager;
 import org.metaagent.framework.core.tool.ToolContext;
 import org.metaagent.framework.core.tool.executor.ToolExecutorContext;
-import org.metaagent.framework.core.tool.manager.ToolManager;
 
 /**
  * Abstract {@link Agent} implementation.
@@ -45,14 +43,9 @@ import org.metaagent.framework.core.tool.manager.ToolManager;
  */
 public abstract class AbstractAgent<I, O>
         extends AbstractMetaAgent<I, O> implements Agent<I, O> {
-    protected ToolManager toolManager;
-    protected SkillManager skillManager;
 
     protected AbstractAgent(String name) {
         super(name);
-        this.toolManager = ToolManager.create();
-        this.skillManager = SkillManager.create();
-        this.skillManager.registerSkillLoader(SkillLoaders.fileSkillLoader());
     }
 
     protected AbstractAgent(AgentProfile profile) {
@@ -62,23 +55,6 @@ public abstract class AbstractAgent<I, O>
 
     protected AbstractAgent(AbstractAgentBuilder<?, ?, I, O> builder) {
         super(builder);
-        this.toolManager = builder.toolManager != null ? builder.toolManager : ToolManager.create();
-        if (builder.skillManager != null) {
-            this.skillManager = builder.skillManager;
-        } else {
-            this.skillManager = SkillManager.create();
-            this.skillManager.registerSkillLoader(SkillLoaders.fileSkillLoader());
-        }
-    }
-
-    @Override
-    public ToolManager getToolManager() {
-        return toolManager;
-    }
-
-    @Override
-    public SkillManager getSkillManager() {
-        return skillManager;
     }
 
     @Override
@@ -90,8 +66,8 @@ public abstract class AbstractAgent<I, O>
     protected AgentInput<I> preprocess(AgentInput<I> input) {
         AgentInput<I> agentInput = super.preprocess(input);
 
-        ConfigPaths configPaths = input.context().getConfigPaths();
-        SkillLoaders.loadSkillsIfNotLoaded(skillManager, configPaths);
+        AgentExecutionContext context = input.context();
+        SkillLoaders.loadSkillsIfNotLoaded(context.getSkillManager(), ConfigPaths.get(), context.getWorkspaceConfig());
         return agentInput;
     }
 
@@ -103,11 +79,13 @@ public abstract class AbstractAgent<I, O>
     protected ToolExecutorContext buildToolExecutorContext(AgentInput<I> input) {
         AgentExecutionContext agentContext = input.context();
         return ToolExecutorContext.builder()
-                .toolManager(getToolManager())
+                .toolManager(agentContext.getToolManager())
                 .toolListenerRegistry(agentContext.getToolListenerRegistry())
                 .toolCallTracker(getAgentState().getToolCallTracker())
                 .toolContext(ToolContext.builder()
                         .agent(this)
+                        .securityLevel(agentContext.getSecurityLevel())
+                        .approvalManager(agentContext.getToolApprovalManager())
                         .abortSignal(agentContext.getAbortSignal())
                         .build())
                 .build();

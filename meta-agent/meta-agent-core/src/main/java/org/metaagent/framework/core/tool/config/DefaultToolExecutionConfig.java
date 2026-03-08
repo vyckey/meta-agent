@@ -26,6 +26,7 @@ package org.metaagent.framework.core.tool.config;
 
 import com.google.common.collect.Sets;
 import org.metaagent.framework.core.config.ConfigPaths;
+import org.metaagent.framework.core.config.WorkspaceConfig;
 
 import java.util.List;
 import java.util.Objects;
@@ -33,11 +34,13 @@ import java.util.Set;
 
 public record DefaultToolExecutionConfig(
         ConfigPaths configPaths,
+        WorkspaceConfig workspaceConfig,
         Set<ToolPattern> allowedCommands,
         Set<ToolPattern> disallowedCommands
 ) implements ToolExecutionConfig {
     public DefaultToolExecutionConfig {
         Objects.requireNonNull(configPaths, "configPaths is required");
+        Objects.requireNonNull(workspaceConfig, "workspaceConfig is required");
         if (allowedCommands == null) {
             allowedCommands = Sets.newHashSet();
         }
@@ -47,7 +50,7 @@ public record DefaultToolExecutionConfig(
     }
 
     private DefaultToolExecutionConfig(Builder builder) {
-        this(builder.configPaths, builder.allowedCommands, builder.disallowedCommands);
+        this(builder.configPaths, builder.workspaceConfig, builder.allowedCommands, builder.disallowedCommands);
     }
 
     public static Builder builder() {
@@ -76,6 +79,7 @@ public record DefaultToolExecutionConfig(
 
     public static class Builder {
         private ConfigPaths configPaths;
+        private WorkspaceConfig workspaceConfig;
         private Set<ToolPattern> allowedCommands;
         private Set<ToolPattern> disallowedCommands;
 
@@ -84,6 +88,11 @@ public record DefaultToolExecutionConfig(
 
         public Builder configPaths(ConfigPaths configPaths) {
             this.configPaths = configPaths;
+            return this;
+        }
+
+        public Builder workspaceConfig(WorkspaceConfig workspaceConfig) {
+            this.workspaceConfig = workspaceConfig;
             return this;
         }
 
@@ -99,7 +108,10 @@ public record DefaultToolExecutionConfig(
 
         public DefaultToolExecutionConfig build() {
             if (configPaths == null) {
-                configPaths = ConfigPaths.newDefault();
+                configPaths = ConfigPaths.get();
+            }
+            if (workspaceConfig == null) {
+                workspaceConfig = WorkspaceConfig.newDefault();
             }
             return new DefaultToolExecutionConfig(this);
         }

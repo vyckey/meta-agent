@@ -102,12 +102,28 @@ public class DefaultToolContext implements ToolContext {
         this.executionId = Objects.requireNonNull(executionId, "executionId cannot be null");
     }
 
+    @Override
+    public ToolContext.Builder toBuilder() {
+        return new Builder(this);
+    }
+
     public static class Builder implements ToolContext.Builder {
         private Agent<?, ?> agent;
         private ToolExecutionConfig toolExecutionConfig;
         private SecurityLevel securityLevel;
         private PermissionApprovalManager<ToolApprovalRequest> approvalManager;
         private AbortSignal abortSignal;
+
+        public Builder() {
+        }
+
+        private Builder(ToolContext toolContext) {
+            this.agent = toolContext.getAgent();
+            this.toolExecutionConfig = toolContext.getToolExecutionConfig();
+            this.securityLevel = toolContext.getSecurityLevel();
+            this.approvalManager = toolContext.getApprovalManager();
+            this.abortSignal = toolContext.getAbortSignal();
+        }
 
         @Override
         public ToolContext.Builder agent(Agent<?, ?> agent) {

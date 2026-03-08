@@ -25,12 +25,15 @@
 package org.metaagent.framework.core.agent;
 
 import org.metaagent.framework.common.abort.AbortSignal;
-import org.metaagent.framework.core.agent.action.executor.ActionExecutor;
 import org.metaagent.framework.core.agent.observability.AgentListenerRegistry;
-import org.metaagent.framework.core.config.ConfigPaths;
-import org.metaagent.framework.core.environment.Environment;
+import org.metaagent.framework.core.config.WorkspaceConfig;
+import org.metaagent.framework.core.security.SecurityLevel;
+import org.metaagent.framework.core.security.approval.PermissionApprovalManager;
+import org.metaagent.framework.core.skill.manager.SkillManager;
+import org.metaagent.framework.core.tool.approval.ToolApprovalRequest;
 import org.metaagent.framework.core.tool.executor.ToolExecutor;
 import org.metaagent.framework.core.tool.listener.ToolExecutionListenerRegistry;
+import org.metaagent.framework.core.tool.manager.ToolManager;
 
 import java.util.concurrent.Executor;
 
@@ -41,13 +44,14 @@ import java.util.concurrent.Executor;
  * @see AgentExecutionContext
  */
 public interface AgentExecutionContextBuilder {
+
     /**
-     * Sets the environment for the agent execution context
+     * Sets the security level for the agent execution context
      *
-     * @param environment the environment in which the agent operates
+     * @param securityLevel the security level for the agent
      * @return this builder instance for method chaining
      */
-    AgentExecutionContextBuilder environment(Environment environment);
+    AgentExecutionContextBuilder securityLevel(SecurityLevel securityLevel);
 
     /**
      * Sets the agent listener registry for the agent execution context
@@ -56,6 +60,14 @@ public interface AgentExecutionContextBuilder {
      * @return this builder instance for method chaining
      */
     AgentExecutionContextBuilder agentListenerRegistry(AgentListenerRegistry<?, ?> listenerRegistry);
+
+    /**
+     * Sets the tool manager for the agent execution context
+     *
+     * @param toolManager the tool manager for the agent
+     * @return this builder instance for method chaining
+     */
+    AgentExecutionContextBuilder toolManager(ToolManager toolManager);
 
     /**
      * Sets the tool executor for the agent execution context
@@ -74,12 +86,20 @@ public interface AgentExecutionContextBuilder {
     AgentExecutionContextBuilder toolListenerRegistry(ToolExecutionListenerRegistry toolExecutionListenerRegistry);
 
     /**
-     * Sets the action executor for the agent execution context
+     * Sets the tool approval manager for the agent execution context
      *
-     * @param actionExecutor the executor responsible for executing actions
+     * @param toolApprovalManager the manager responsible for tool approval
      * @return this builder instance for method chaining
      */
-    AgentExecutionContextBuilder actionExecutor(ActionExecutor actionExecutor);
+    AgentExecutionContextBuilder toolApprovalManager(PermissionApprovalManager<ToolApprovalRequest> toolApprovalManager);
+
+    /**
+     * Sets the skill manager for the agent execution context
+     *
+     * @param skillManager the skill manager for the agent
+     * @return this builder instance for method chaining
+     */
+    AgentExecutionContextBuilder skillManager(SkillManager skillManager);
 
     /**
      * Sets the abort signal for the agent execution context
@@ -98,12 +118,12 @@ public interface AgentExecutionContextBuilder {
     AgentExecutionContextBuilder executor(Executor executor);
 
     /**
-     * Sets the agent config paths for the agent execution context
+     * Sets the workspace configuration for the agent execution context
      *
-     * @param configPaths the agent config paths
+     * @param workspaceConfig the workspace configuration for the agent
      * @return this builder instance for method chaining
      */
-    AgentExecutionContextBuilder configPaths(ConfigPaths configPaths);
+    AgentExecutionContextBuilder workspaceConfig(WorkspaceConfig workspaceConfig);
 
     /**
      * Builds and returns the {@link AgentExecutionContext} instance

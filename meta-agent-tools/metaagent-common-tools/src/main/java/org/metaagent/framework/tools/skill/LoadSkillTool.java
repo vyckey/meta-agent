@@ -59,6 +59,11 @@ public class LoadSkillTool implements Tool<LoadSkillInput, LoadSkillOutput> {
             .build();
     private static final ToolConverter<LoadSkillInput, LoadSkillOutput> TOOL_CONVERTER =
             ToolConverters.jsonConverter(LoadSkillInput.class);
+    private final SkillManager skillManager;
+
+    public LoadSkillTool(SkillManager skillManager) {
+        this.skillManager = Objects.requireNonNull(skillManager, "skillManager cannot be null");
+    }
 
     @Override
     public ToolDefinition getDefinition() {
@@ -74,7 +79,6 @@ public class LoadSkillTool implements Tool<LoadSkillInput, LoadSkillOutput> {
     public LoadSkillOutput run(ToolContext toolContext, LoadSkillInput input) throws ToolExecutionException {
         ToolArgsValidator.validate(input);
 
-        SkillManager skillManager = toolContext.getAgent().getSkillManager();
         Skill skill = skillManager.getSkill(input.skillName(), input.skillVersion());
 
         String relativePath = Objects.requireNonNullElse(input.relativePath(), SKILL_FILENAME);

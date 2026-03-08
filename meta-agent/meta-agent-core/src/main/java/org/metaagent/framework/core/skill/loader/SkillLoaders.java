@@ -26,6 +26,7 @@ package org.metaagent.framework.core.skill.loader;
 
 import org.apache.commons.lang3.NotImplementedException;
 import org.metaagent.framework.core.config.ConfigPaths;
+import org.metaagent.framework.core.config.WorkspaceConfig;
 import org.metaagent.framework.core.skill.exception.SkillLoadException;
 import org.metaagent.framework.core.skill.manager.SkillManager;
 
@@ -93,7 +94,7 @@ public class SkillLoaders {
         throw new NotImplementedException("Not implemented");
     }
 
-    public static void loadSkillsIfNotLoaded(SkillManager skillManager, ConfigPaths configPaths) {
+    public static void loadSkillsIfNotLoaded(SkillManager skillManager, ConfigPaths configPaths, WorkspaceConfig workspaceConfig) {
         String skillsDir = SkillLoader.SKILLS_DIRNAME + "/";
         URL globalSkillUrl = resolveLocation(configPaths.globalConfigPath().resolve(skillsDir));
         if (!skillManager.isSkillLoaded(globalSkillUrl)) {
@@ -105,8 +106,9 @@ public class SkillLoaders {
             skillManager.loadSkillsFrom(userSkillsUrl);
         }
 
-        if (configPaths.projectConfigPath() != null) {
-            URL projectSkillsUrl = resolveLocation(configPaths.projectConfigPath().resolve(skillsDir));
+        Path projectConfigPath = configPaths.projectConfigPath(workspaceConfig);
+        if (projectConfigPath != null) {
+            URL projectSkillsUrl = resolveLocation(projectConfigPath.resolve(skillsDir));
             if (!skillManager.isSkillLoaded(projectSkillsUrl)) {
                 skillManager.loadSkillsFrom(projectSkillsUrl);
             }

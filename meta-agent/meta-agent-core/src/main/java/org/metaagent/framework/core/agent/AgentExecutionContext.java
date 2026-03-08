@@ -25,12 +25,16 @@
 package org.metaagent.framework.core.agent;
 
 import org.metaagent.framework.common.abort.AbortSignal;
-import org.metaagent.framework.core.agent.action.executor.ActionExecutor;
 import org.metaagent.framework.core.agent.observability.AgentListenerRegistry;
-import org.metaagent.framework.core.config.ConfigPaths;
-import org.metaagent.framework.core.environment.Environment;
+import org.metaagent.framework.core.config.WorkspaceConfig;
+import org.metaagent.framework.core.security.SecurityLevel;
+import org.metaagent.framework.core.security.approval.PermissionApprovalManager;
+import org.metaagent.framework.core.skill.manager.SkillManager;
+import org.metaagent.framework.core.tool.ToolContext;
+import org.metaagent.framework.core.tool.approval.ToolApprovalRequest;
 import org.metaagent.framework.core.tool.executor.ToolExecutor;
 import org.metaagent.framework.core.tool.listener.ToolExecutionListenerRegistry;
+import org.metaagent.framework.core.tool.manager.ToolManager;
 
 import java.util.concurrent.Executor;
 
@@ -59,18 +63,25 @@ public interface AgentExecutionContext {
     }
 
     /**
-     * Get the environment associated with this agent execution context.
-     *
-     * @return the environment
-     */
-    Environment getEnvironment();
-
-    /**
      * Get the agent listener registry associated with this agent execution context.
      *
      * @return the agent listener registry
      */
     <I, O> AgentListenerRegistry<I, O> getAgentListenerRegistry();
+
+    /**
+     * Get the agent security level.
+     *
+     * @return the agent security level
+     */
+    SecurityLevel getSecurityLevel();
+
+    /**
+     * Gets the agent tool manager.
+     *
+     * @return the tool manager.
+     */
+    ToolManager getToolManager();
 
     /**
      * Get the tool executor associated with this agent execution context.
@@ -87,11 +98,18 @@ public interface AgentExecutionContext {
     ToolExecutionListenerRegistry getToolListenerRegistry();
 
     /**
-     * Get the action executor associated with this agent execution context.
+     * Gets the permission approval manager for managing tool permissions.
      *
-     * @return the action executor
+     * @return the permission approval manager
      */
-    ActionExecutor getActionExecutor();
+    PermissionApprovalManager<ToolApprovalRequest> getToolApprovalManager();
+
+    /**
+     * Gets skill manager.
+     *
+     * @return the skill manager.
+     */
+    SkillManager getSkillManager();
 
     /**
      * Gets the abort signal for managing agent execution aborts.
@@ -108,10 +126,17 @@ public interface AgentExecutionContext {
     Executor getExecutor();
 
     /**
-     * Get the agent path config associated with this agent execution context.
+     * Get the workspace configuration associated with this agent execution context.
      *
-     * @return the agent path config
+     * @return the workspace configuration
      */
-    ConfigPaths getConfigPaths();
+    WorkspaceConfig getWorkspaceConfig();
+
+    /**
+     * Create a new builder instance based on this agent execution context.
+     *
+     * @return a new builder instance
+     */
+    AgentExecutionContextBuilder toBuilder();
 
 }

@@ -44,20 +44,6 @@ import org.metaagent.framework.core.tool.manager.ToolManager;
 public interface Agent<I, O> extends MetaAgent<I, O> {
 
     /**
-     * Gets the agent tool manager.
-     *
-     * @return the tool manager.
-     */
-    ToolManager getToolManager();
-
-    /**
-     * Gets skill manager.
-     *
-     * @return the skill manager.
-     */
-    SkillManager getSkillManager();
-
-    /**
      * Gets loop control strategy which controls if the agent will continue to do next loop.
      *
      * @return the loop control strategy.
