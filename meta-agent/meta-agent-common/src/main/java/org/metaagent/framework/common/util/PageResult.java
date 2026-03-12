@@ -1,7 +1,7 @@
 /*
  * MIT License
  *
- * Copyright (c) 2025 MetaAgent
+ * Copyright (c) 2026 MetaAgent
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -22,38 +22,45 @@
  * SOFTWARE.
  */
 
-package org.metaagent.framework.core.model.chat.metadata;
+package org.metaagent.framework.common.util;
 
-import org.metaagent.framework.core.model.ModelMetadata;
-
-import java.time.Instant;
+import java.util.List;
+import java.util.Objects;
 
 /**
- * Chat model metadata
+ * PageResult represents a page of results.
  *
  * @author vyckey
  */
-public interface ChatModelMetadata extends ModelMetadata {
-    /**
-     * Builder for {@link ChatModelMetadata}
-     *
-     * @return the builder
-     */
-    static DefaultChatModelMetadata.Builder builder() {
-        return DefaultChatModelMetadata.builder();
+public record PageResult<T>(List<T> items, String nextCursor, boolean hasMore) {
+    public PageResult {
+        Objects.requireNonNull(items, "items is required");
+        if (hasMore && nextCursor == null) {
+            throw new IllegalArgumentException("nextCursor is required when hasMore is true");
+        }
+        if (!hasMore && nextCursor != null) {
+            throw new IllegalArgumentException("nextCursor must be null when hasMore is false");
+        }
     }
 
     /**
-     * Gets model cut-off day
+     * Create a page result.
      *
-     * @return the model cut-off day
+     * @param items      items
+     * @param nextCursor next cursor
+     * @param hasMore    has more
+     * @return page result
      */
-    Instant getCutOffDate();
+    public static <T> PageResult<T> of(List<T> items, String nextCursor, boolean hasMore) {
+        return new PageResult<>(items, nextCursor, hasMore);
+    }
 
     /**
-     * Gets max window size of model
+     * Create an empty page result.
      *
-     * @return the max window size of model. Returns -1 if not present.
+     * @return empty page result
      */
-    int getMaxWindowSize();
+    public static <T> PageResult<T> empty() {
+        return new PageResult<>(List.of(), null, false);
+    }
 }

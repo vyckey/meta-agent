@@ -25,6 +25,7 @@
 package org.metaagent.framework.core.agent.chat.message;
 
 import org.metaagent.framework.common.metadata.MetadataProvider;
+import org.metaagent.framework.core.agent.chat.session.SessionId;
 
 import java.time.Instant;
 
@@ -72,6 +73,20 @@ public interface MessageInfo {
     MessageId id();
 
     /**
+     * Get the unique identifier of the parent message.
+     *
+     * @return the unique identifier of the parent message, or null if there is no parent message
+     */
+    MessageId parentId();
+
+    /**
+     * Get the unique identifier of the session.
+     *
+     * @return the unique identifier of the session, or null if there is no session
+     */
+    SessionId sessionId();
+
+    /**
      * Get the role of the message.
      *
      * @return the role of the message
@@ -117,6 +132,22 @@ public interface MessageInfo {
          * @return the builder
          */
         Builder id(MessageId id);
+
+        /**
+         * Set the unique identifier of the parent message.
+         *
+         * @param parentId the unique identifier of the parent message
+         * @return the builder
+         */
+        Builder parentId(MessageId parentId);
+
+        /**
+         * Set the unique identifier of the session.
+         *
+         * @param sessionId the unique identifier of the session
+         * @return the builder
+         */
+        Builder sessionId(SessionId sessionId);
 
         /**
          * Set the role of the message.

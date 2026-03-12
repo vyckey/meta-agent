@@ -26,10 +26,11 @@ package org.metaagent.framework.core.agent.chat.channel;
 
 import com.google.common.collect.Lists;
 import lombok.extern.slf4j.Slf4j;
-import org.metaagent.framework.core.agent.chat.message.Message;
-import org.metaagent.framework.core.agent.chat.message.MessageListener;
 import org.metaagent.framework.core.agent.chat.conversation.Conversation;
 import org.metaagent.framework.core.agent.chat.conversation.DefaultConversation;
+import org.metaagent.framework.core.agent.chat.message.Message;
+import org.metaagent.framework.core.agent.chat.message.MessageListener;
+import org.metaagent.framework.core.agent.chat.session.SessionId;
 
 import java.io.IOException;
 import java.util.List;
@@ -44,7 +45,7 @@ import java.util.concurrent.CompletableFuture;
 public class DefaultChannel implements Channel {
     protected final String name;
     protected final List<MessageListener> messageListeners = Lists.newArrayList();
-    protected Conversation conversation = new DefaultConversation();
+    protected Conversation conversation = new DefaultConversation(SessionId.next());
     protected boolean open = true;
 
     public DefaultChannel(String name) {
