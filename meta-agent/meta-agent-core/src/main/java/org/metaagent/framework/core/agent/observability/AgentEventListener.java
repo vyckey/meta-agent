@@ -24,6 +24,9 @@
 
 package org.metaagent.framework.core.agent.observability;
 
+import org.metaagent.framework.common.event.EventListener;
+import org.metaagent.framework.core.agent.observability.event.AgentEvent;
+
 /**
  * AgentEventListener is an interface for listening to agent events.
  *
@@ -31,14 +34,15 @@ package org.metaagent.framework.core.agent.observability;
  * @author vyckey
  */
 @FunctionalInterface
-public interface AgentEventListener<E> {
+public interface AgentEventListener<E extends AgentEvent> extends EventListener<E> {
     /**
      * Checks whether the listener accepts the given agent event.
      *
      * @param event the agent event
      * @return true if the listener accepts the event, false otherwise
      */
-    default boolean accept(E event) {
+    @Override
+    default boolean accepts(E event) {
         return true;
     }
 
@@ -47,5 +51,6 @@ public interface AgentEventListener<E> {
      *
      * @param event the agent event
      */
-    void onAgentEvent(E event);
+    @Override
+    void onEvent(E event);
 }

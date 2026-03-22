@@ -24,6 +24,7 @@
 
 package org.metaagent.framework.core.agent.observability.event;
 
+import org.metaagent.framework.common.event.Event;
 import org.metaagent.framework.core.agent.MetaAgent;
 
 import java.time.Instant;
@@ -33,7 +34,7 @@ import java.time.Instant;
  *
  * @author vyckey
  */
-public interface AgentEvent {
+public interface AgentEvent extends Event {
     /**
      * Returns the agent that generated the event.
      *
@@ -46,5 +47,6 @@ public interface AgentEvent {
      *
      * @return the time when the event occurred
      */
+    @Override
     Instant occurredTime();
 }

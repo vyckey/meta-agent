@@ -22,33 +22,22 @@
  * SOFTWARE.
  */
 
-package org.metaagent.framework.core.agent.observability;
+package org.metaagent.framework.common.event;
 
-import org.metaagent.framework.common.event.DefaultEventBus;
-import org.metaagent.framework.core.agent.observability.event.AgentEvent;
-
-import java.util.concurrent.ArrayBlockingQueue;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.ThreadPoolExecutor;
+import java.time.Instant;
 
 /**
- * DefaultAgentEventBus is a default implementation of the AgentEventBus interface.
+ * Base interface for events.
  *
  * @author vyckey
+ * @see EventBus
+ * @see EventListener
  */
-public class DefaultAgentEventBus<E extends AgentEvent> extends DefaultEventBus<E, AgentEventListener<E>> implements AgentEventBus<E> {
-    static final DefaultAgentEventBus<AgentEvent> GLOBAL = new DefaultAgentEventBus<>(new ThreadPoolExecutor(
-            1, 1,
-            60L, java.util.concurrent.TimeUnit.SECONDS,
-            new ArrayBlockingQueue<>(1000),
-            r -> new Thread(r, "GlobalAgentEventBus-Thread")
-    ));
-
-    public DefaultAgentEventBus(ExecutorService threadPool) {
-        super(threadPool);
-    }
-
-    public DefaultAgentEventBus() {
-        super();
-    }
+public interface Event {
+    /**
+     * Returns the time when the event occurred.
+     *
+     * @return the time when the event occurred
+     */
+    Instant occurredTime();
 }

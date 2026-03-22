@@ -24,6 +24,7 @@
 
 package org.metaagent.framework.core.agent.observability;
 
+import org.metaagent.framework.common.event.EventBus;
 import org.metaagent.framework.core.agent.observability.event.AgentEvent;
 
 /**
@@ -31,7 +32,7 @@ import org.metaagent.framework.core.agent.observability.event.AgentEvent;
  *
  * @author vyckey
  */
-public interface AgentEventBus<E extends AgentEvent> extends AutoCloseable {
+public interface AgentEventBus<E extends AgentEvent> extends EventBus<E, AgentEventListener<E>> {
     /**
      * Get the global agent event bus.
      *
@@ -40,30 +41,4 @@ public interface AgentEventBus<E extends AgentEvent> extends AutoCloseable {
     static AgentEventBus<AgentEvent> global() {
         return DefaultAgentEventBus.GLOBAL;
     }
-
-    /**
-     * Publish an agent event.
-     *
-     * @param event the agent event to publish
-     */
-    void publish(E event);
-
-    /**
-     * Subscribe to agent events.
-     *
-     * @param listener the agent event listener to subscribe
-     */
-    void subscribe(AgentEventListener<E> listener);
-
-    /**
-     * Unsubscribe from agent events.
-     *
-     * @param listener the agent event listener to unsubscribe
-     */
-    void unsubscribe(AgentEventListener<E> listener);
-
-    /**
-     * Unsubscribe all agent event listeners.
-     */
-    void unsubscribeAll();
 }
