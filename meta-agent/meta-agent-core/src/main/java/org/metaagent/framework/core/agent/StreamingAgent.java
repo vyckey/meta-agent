@@ -25,54 +25,40 @@
 package org.metaagent.framework.core.agent;
 
 import org.metaagent.framework.core.agent.input.AgentInput;
-import org.metaagent.framework.core.agent.output.AgentOutput;
-import org.metaagent.framework.core.agent.output.StreamOutput;
+import org.metaagent.framework.core.agent.output.AgentStreamOutput;
 
 /**
  * The streaming agent abstraction.
  *
  * @param <I> the type of agent input
  * @param <O> the type of agent output
- * @param <S> the type of agent stream output
  * @author vyckey
  */
-public interface StreamingAgent<I, O extends StreamOutput<S>, S> extends Agent<I, O> {
+public interface StreamingAgent<I extends AgentInput, O extends AgentStreamOutput<?>> extends MetaAgent<I, O> {
+
     /**
-     * Runs agent logic in a streaming way.
+     * Run the agent with input.
+     * <p>
+     * The implementation of method can choose to run in streaming mode or non-streaming mode.
+     * <ul>
+     * <li>Streaming mode (default): The agent runs in streaming mode and returns a non-null value from {@link AgentStreamOutput#stream()}.</li>
+     * <li>Non-streaming mode: The agent runs in non-streaming mode and returns a null value from {@link AgentStreamOutput#stream()}.</li>
+     * </ul>
      *
-     * @param input the agent input.
-     * @return the streaming agent output.
+     * @param agentInput the agent input.
+     * @return the final agent output.
      */
-    default AgentOutput<O> runStream(AgentInput<I> input) {
-        return stepStream(input);
+    @Override
+    default O run(I agentInput) {
+        return runStream(agentInput);
     }
 
     /**
-     * Runs agent logic in a streaming way.
+     * Run the agent in streaming mode.
      *
-     * @param input the agent input.
-     * @return the streaming agent output.
+     * @param agentInput the agent input.
+     * @return the final agent output.
      */
-    default AgentOutput<O> runStream(I input) {
-        return runStream(AgentInput.builder(input).context(newExecutionContext()).build());
-    }
+    O runStream(I agentInput);
 
-    /**
-     * Start an agent step.
-     *
-     * @param input the agent input.
-     * @return the agent output.
-     */
-    default AgentOutput<O> stepStream(AgentInput<I> input) {
-        throw new UnsupportedOperationException("Streaming is not supported");
-    }
-
-    /**
-     * Get the agent stream output aggregator.
-     *
-     * @return the agent stream output aggregator.
-     */
-    default StreamOutput.Aggregator<S, O> getStreamOutputAggregator() {
-        throw new UnsupportedOperationException("Streaming is not supported");
-    }
 }

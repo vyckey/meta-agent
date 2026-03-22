@@ -1,7 +1,7 @@
 /*
  * MIT License
  *
- * Copyright (c) 2025 MetaAgent
+ * Copyright (c) 2026 MetaAgent
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -22,36 +22,34 @@
  * SOFTWARE.
  */
 
-package org.metaagent.framework.core.agent.fallback;
+package org.metaagent.framework.core.agent;
 
-import lombok.extern.slf4j.Slf4j;
-import org.metaagent.framework.core.agent.Agent;
-import org.metaagent.framework.core.agent.input.AgentInput;
-import org.metaagent.framework.core.agent.output.AgentOutput;
-import org.metaagent.framework.core.agent.state.AgentState;
+import org.metaagent.framework.common.logger.DelegateLogger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import java.util.Objects;
 
 /**
- * Retry Agent Fallback Strategy
+ * Agent Logger
  *
  * @author vyckey
  */
-@Slf4j
-public class RetryAgentFallbackStrategy<A extends Agent<I, O>, I extends AgentInput, O extends AgentOutput>
-        implements AgentFallbackStrategy<A, I, O> {
-    private final int maxRetries;
+public class AgentLogger extends DelegateLogger {
+    private final String agentName;
 
-    public RetryAgentFallbackStrategy(int maxRetries) {
-        this.maxRetries = maxRetries;
+    public AgentLogger(String agentName, Logger delegate) {
+        super(delegate);
+        this.agentName = Objects.requireNonNull(agentName, "Agent name must not be null");
+    }
+
+    public static AgentLogger getLogger(String agentName) {
+        return new AgentLogger(agentName, LoggerFactory.getLogger("Agent"));
     }
 
     @Override
-    public O fallback(A agent, I input, Exception exception) {
-        AgentState agentState = agent.getAgentState();
-        if (agentState.getStepState().getRetryCount().get() < maxRetries) {
-            agentState.getStepState().getRetryCount().incrementAndGet();
-            return agent.step(input);
-        }
-        log.warn("Failed to retry agent after {} retries", maxRetries);
-        return new FastFailAgentFallbackStrategy<I, O>().fallback(agent, input, exception);
+    protected String rebuildFormat(String format) {
+        return "[" + agentName + "] " + format;
     }
+
 }

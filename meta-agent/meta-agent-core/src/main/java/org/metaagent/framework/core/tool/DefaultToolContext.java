@@ -28,6 +28,8 @@ import lombok.Getter;
 import org.metaagent.framework.common.abort.AbortController;
 import org.metaagent.framework.common.abort.AbortSignal;
 import org.metaagent.framework.core.agent.Agent;
+import org.metaagent.framework.core.agent.input.AgentInput;
+import org.metaagent.framework.core.agent.output.AgentOutput;
 import org.metaagent.framework.core.security.SecurityLevel;
 import org.metaagent.framework.core.security.approval.AsyncEventPermissionApprovalManager;
 import org.metaagent.framework.core.security.approval.PermissionApproval;
@@ -78,7 +80,7 @@ public class DefaultToolContext implements ToolContext {
         return new Builder();
     }
 
-    public <I, O> Agent<I, O> getAgent() {
+    public <I extends AgentInput, O extends AgentOutput> Agent<I, O> getAgent() {
         //noinspection unchecked
         return (Agent<I, O>) agent;
     }

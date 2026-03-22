@@ -1,7 +1,7 @@
 /*
  * MIT License
  *
- * Copyright (c) 2025 MetaAgent
+ * Copyright (c) 2026 MetaAgent
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -22,43 +22,47 @@
  * SOFTWARE.
  */
 
-package org.metaagent.framework.core.tool.tools;
+package org.metaagent.framework.core.agent.listener;
 
 import org.metaagent.framework.core.agent.MetaAgent;
 import org.metaagent.framework.core.agent.input.AgentInput;
 import org.metaagent.framework.core.agent.output.AgentOutput;
-import org.metaagent.framework.core.tool.Tool;
-import org.metaagent.framework.core.tool.ToolContext;
-import org.metaagent.framework.core.tool.exception.ToolExecutionException;
 
 /**
- * AgentAsTool is a tool that can be used to execute an Agent. The agent is treated as a tool.
+ * AgentRunListener is an interface for listening to agent run events.
  *
- * @param <A> the agent type
- * @param <I> the input type
- * @param <O> the output type
+ * @param <I> the type of agent input
+ * @param <O> the type of agent output
  * @author vyckey
  */
-public interface AgentAsTool<A extends MetaAgent<I, O>, I extends AgentInput, O extends AgentOutput> extends Tool<I, O> {
-    /**
-     * Get the agent.
-     *
-     * @return the agent
-     */
-    A getAgent();
+public interface AgentRunListener<I extends AgentInput, O extends AgentOutput> {
 
     /**
-     * Get the tool's name.
+     * Called when an agent starts running.
      *
-     * @return the tool name
+     * @param agent      the agent that started running
+     * @param agentInput the input provided to the agent
      */
-    @Override
-    default String getName() {
-        return getAgent().name();
+    default void onAgentStart(MetaAgent<I, O> agent, I agentInput) {
     }
 
-    @Override
-    default O run(ToolContext context, I input) throws ToolExecutionException {
-        return getAgent().run(input);
+    /**
+     * Called when an agent produces an output.
+     *
+     * @param agent       the agent that produced the output
+     * @param agentInput  the input provided to the agent
+     * @param agentOutput the output produced by the agent
+     */
+    default void onAgentOutput(MetaAgent<I, O> agent, I agentInput, O agentOutput) {
+    }
+
+    /**
+     * Called when an agent encounters an exception.
+     *
+     * @param agent      the agent that encountered the exception
+     * @param agentInput the input provided to the agent
+     * @param exception  the exception encountered by the agent
+     */
+    default void onAgentException(MetaAgent<I, O> agent, I agentInput, Exception exception) {
     }
 }

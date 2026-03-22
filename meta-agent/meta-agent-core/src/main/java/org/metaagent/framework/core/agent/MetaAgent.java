@@ -1,7 +1,7 @@
 /*
  * MIT License
  *
- * Copyright (c) 2025 MetaAgent
+ * Copyright (c) 2026 MetaAgent
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -24,15 +24,11 @@
 
 package org.metaagent.framework.core.agent;
 
-import org.apache.commons.lang3.NotImplementedException;
-import org.metaagent.framework.core.agent.converter.AgentIOConverter;
+import org.metaagent.framework.core.agent.exception.AgentExecutionException;
+import org.metaagent.framework.core.agent.exception.AgentInterruptedException;
 import org.metaagent.framework.core.agent.input.AgentInput;
-import org.metaagent.framework.core.agent.memory.Memory;
 import org.metaagent.framework.core.agent.output.AgentOutput;
 import org.metaagent.framework.core.agent.profile.AgentProfile;
-import org.metaagent.framework.core.agent.state.AgentRunStatus;
-import org.metaagent.framework.core.agent.state.AgentState;
-import org.metaagent.framework.core.agent.state.AgentStepState;
 
 import java.util.concurrent.CompletableFuture;
 
@@ -43,15 +39,14 @@ import java.util.concurrent.CompletableFuture;
  * @param <O> the type of agent output
  * @author vyckey
  */
-public interface MetaAgent<I, O> extends AutoCloseable {
-
+public interface MetaAgent<I extends AgentInput, O extends AgentOutput> extends AutoCloseable {
     /**
      * Gets agent name.
      *
      * @return the agent name.
      */
-    default String getName() {
-        return getAgentProfile().getName();
+    default String name() {
+        return profile().getName();
     }
 
     /**
@@ -59,116 +54,51 @@ public interface MetaAgent<I, O> extends AutoCloseable {
      *
      * @return the agent profile.
      */
-    AgentProfile getAgentProfile();
-
-    /**
-     * Gets agent state.
-     *
-     * @return the agent state.
-     */
-    AgentState getAgentState();
-
-    /**
-     * Gets agent memory.
-     *
-     * @return the agent memory.
-     */
-    Memory getMemory();
-
-    /**
-     * Gets Input/Output converter.
-     *
-     * @return the converter.
-     */
-    default AgentIOConverter<I, O> getIOConverter() {
-        throw new NotImplementedException("not implement yet");
-    }
-
-    /**
-     * Creates a new default execution context.
-     *
-     * @return the new default execution context.
-     */
-    default AgentExecutionContext newExecutionContext() {
-        return AgentExecutionContext.create();
-    }
-
-    /**
-     * Runs agent logic.
-     *
-     * @param input the agent input.
-     * @return the agent output.
-     */
-    default AgentOutput<O> run(AgentInput<I> input) {
-        AgentState agentState = getAgentState();
-        if (agentState.getStatus() == AgentRunStatus.RUNNING) {
-            throw new AgentExecutionException("agent is already running");
-        }
-
-        agentState.setStatus(AgentRunStatus.RUNNING);
-        AgentStepState stepState = agentState.resetStepState();
-        try {
-            return step(input);
-        } catch (AgentInterruptedException ex) {
-            agentState.setStatus(AgentRunStatus.INTERRUPTED);
-            stepState.setLastException(ex);
-            throw ex;
-        } catch (AgentExecutionException ex) {
-            agentState.setStatus(AgentRunStatus.FAILED);
-            stepState.setLastException(ex);
-            throw ex;
-        } catch (Exception ex) {
-            agentState.setStatus(AgentRunStatus.FAILED);
-            AgentExecutionException exception = new AgentExecutionException("agent execution failed", ex);
-            stepState.setLastException(exception);
-            throw exception;
-        } finally {
-            if (!agentState.getStatus().isFinished()) {
-                agentState.setStatus(AgentRunStatus.COMPLETED);
-            }
-        }
-    }
+    AgentProfile profile();
 
     /**
      * Runs agent with input.
+     * <p>
+     * The default implementation is as follows:
+     * <pre>
+     * public O run(I input) {
+     *     try {
+     *         return step(input);
+     *     } catch (AbortException ex) {
+     *         throw new AgentInterruptedException("agent is interrupted", ex);
+     *     } catch (AgentExecutionException | AgentInterruptedException ex) {
+     *         throw ex;
+     *     } catch (Exception ex) {
+     *         throw new AgentExecutionException("agent execution failed", ex);
+     *     }
+     * }
+     * </pre>
      *
-     * @param input the agent input
+     * @param agentInput the agent input
      * @return the agent output
+     * @throws AgentExecutionException   if agent execution failed
+     * @throws AgentInterruptedException if agent is interrupted
      */
-    default AgentOutput<O> run(I input) {
-        return run(AgentInput.builder(input).context(newExecutionContext()).build());
-    }
+    O run(I agentInput);
 
     /**
      * Runs agent synchronously.
      *
-     * @param input the agent input
-     * @return the agent out.
-     */
-    default CompletableFuture<AgentOutput<O>> runAsync(AgentInput<I> input) {
-        return CompletableFuture.supplyAsync(() -> run(input), input.context().getExecutor());
-    }
-
-    /**
-     * Runs agent synchronously.
-     *
-     * @param input the agent input
+     * @param agentInput the agent input
      * @return the agent out
      */
-    default CompletableFuture<AgentOutput<O>> runAsync(I input) {
-        return runAsync(AgentInput.builder(input).context(newExecutionContext()).build());
+    default CompletableFuture<O> runAsync(I agentInput) {
+        return CompletableFuture.supplyAsync(() -> run(agentInput), agentInput.context().getExecutor());
     }
-
-    /**
-     * Start an agent step.
-     *
-     * @param input the agent input.
-     * @return the agent output.
-     */
-    AgentOutput<O> step(AgentInput<I> input);
 
     /**
      * Reset the agent to initial state.
      */
     void reset();
+
+    /**
+     * Cleans up resources and stop the agent.
+     */
+    @Override
+    void close();
 }

@@ -1,7 +1,7 @@
 /*
  * MIT License
  *
- * Copyright (c) 2025 MetaAgent
+ * Copyright (c) 2026 MetaAgent
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -22,36 +22,49 @@
  * SOFTWARE.
  */
 
-package org.metaagent.framework.core.agent.fallback;
+package org.metaagent.framework.core.agent.listener;
 
-import lombok.extern.slf4j.Slf4j;
-import org.metaagent.framework.core.agent.Agent;
+import org.metaagent.framework.core.agent.context.AgentStepContext;
 import org.metaagent.framework.core.agent.input.AgentInput;
 import org.metaagent.framework.core.agent.output.AgentOutput;
-import org.metaagent.framework.core.agent.state.AgentState;
+
+import java.util.List;
 
 /**
- * Retry Agent Fallback Strategy
+ * AgentStepListenerRegistry is a registry for agent step listeners.
  *
+ * @param <I> the type of agent input
+ * @param <O> the type of agent output
+ * @param <C> the type of agent step context
  * @author vyckey
  */
-@Slf4j
-public class RetryAgentFallbackStrategy<A extends Agent<I, O>, I extends AgentInput, O extends AgentOutput>
-        implements AgentFallbackStrategy<A, I, O> {
-    private final int maxRetries;
+public interface AgentStepListenerRegistry<
+        I extends AgentInput,
+        O extends AgentOutput,
+        C extends AgentStepContext> {
+    /**
+     * Returns the list of step listeners.
+     *
+     * @return the list of step listeners
+     */
+    List<AgentStepListener<I, O, C>> getStepListeners();
 
-    public RetryAgentFallbackStrategy(int maxRetries) {
-        this.maxRetries = maxRetries;
-    }
+    /**
+     * Registers a step listener.
+     *
+     * @param listener the listener to register
+     */
+    void registerStepListener(AgentStepListener<I, O, C> listener);
 
-    @Override
-    public O fallback(A agent, I input, Exception exception) {
-        AgentState agentState = agent.getAgentState();
-        if (agentState.getStepState().getRetryCount().get() < maxRetries) {
-            agentState.getStepState().getRetryCount().incrementAndGet();
-            return agent.step(input);
-        }
-        log.warn("Failed to retry agent after {} retries", maxRetries);
-        return new FastFailAgentFallbackStrategy<I, O>().fallback(agent, input, exception);
-    }
+    /**
+     * Unregisters a step listener.
+     *
+     * @param listener the listener to unregister
+     */
+    void unregisterStepListener(AgentStepListener<I, O, C> listener);
+
+    /**
+     * Unregisters all step listeners.
+     */
+    void unregisterStepListeners();
 }

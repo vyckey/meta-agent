@@ -26,6 +26,8 @@ package org.metaagent.framework.core.tool;
 
 import org.metaagent.framework.common.abort.AbortSignal;
 import org.metaagent.framework.core.agent.Agent;
+import org.metaagent.framework.core.agent.input.AgentInput;
+import org.metaagent.framework.core.agent.output.AgentOutput;
 import org.metaagent.framework.core.security.SecurityLevel;
 import org.metaagent.framework.core.security.approval.PermissionApproval;
 import org.metaagent.framework.core.security.approval.PermissionApprovalManager;
@@ -63,7 +65,8 @@ public interface ToolContext {
      *
      * @return the agent
      */
-    <I, O> Agent<I, O> getAgent();
+    <I extends AgentInput, O extends AgentOutput>
+    Agent<I, O> getAgent();
 
     /**
      * Gets the tool execution configuration.

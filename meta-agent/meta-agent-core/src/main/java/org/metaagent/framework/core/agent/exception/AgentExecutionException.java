@@ -1,7 +1,7 @@
 /*
  * MIT License
  *
- * Copyright (c) 2025 MetaAgent
+ * Copyright (c) 2026 MetaAgent
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -22,23 +22,24 @@
  * SOFTWARE.
  */
 
-package org.metaagent.framework.core.agent.output;
-
-import org.metaagent.framework.common.metadata.MetadataProvider;
+package org.metaagent.framework.core.agent.exception;
 
 /**
- * None agent output
+ * AgentExecutionException is thrown when an agent execution fails.
  *
  * @author vyckey
  */
-public final class NoneAgentOutput implements AgentOutput {
-    public static final NoneAgentOutput INSTANCE = new NoneAgentOutput();
-
-    private NoneAgentOutput() {
+public class AgentExecutionException extends RuntimeException {
+    public AgentExecutionException(String message) {
+        super(message);
     }
 
-    @Override
-    public MetadataProvider metadata() {
-        return MetadataProvider.empty();
+    public AgentExecutionException(String message, Throwable cause) {
+        super(message, cause);
     }
+
+    public AgentExecutionException(Throwable cause) {
+        super(cause);
+    }
+
 }

@@ -1,7 +1,7 @@
 /*
  * MIT License
  *
- * Copyright (c) 2025 MetaAgent
+ * Copyright (c) 2026 MetaAgent
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -22,23 +22,46 @@
  * SOFTWARE.
  */
 
-package org.metaagent.framework.core.agent.output;
+package org.metaagent.framework.core.agent.context;
 
-import org.metaagent.framework.common.metadata.MetadataProvider;
+import org.metaagent.framework.common.abort.AbortSignal;
+import org.metaagent.framework.core.agent.event.AgentEventBus;
+
+import java.util.concurrent.Executor;
 
 /**
- * None agent output
+ * Agent execution context which won't contain agent state.
  *
  * @author vyckey
  */
-public final class NoneAgentOutput implements AgentOutput {
-    public static final NoneAgentOutput INSTANCE = new NoneAgentOutput();
+public interface AgentContext {
 
-    private NoneAgentOutput() {
-    }
+    /**
+     * Get the agent event bus associated with this agent execution context.
+     *
+     * @return the agent event bus
+     */
+    AgentEventBus getAgentEventBus();
 
-    @Override
-    public MetadataProvider metadata() {
-        return MetadataProvider.empty();
-    }
+    /**
+     * Gets the abort signal for managing agent execution aborts.
+     *
+     * @return the abort signal
+     */
+    AbortSignal getAbortSignal();
+
+    /**
+     * Get the executor associated with this agent execution context.
+     *
+     * @return the executor
+     */
+    Executor getExecutor();
+
+    /**
+     * Create a new builder instance based on this agent execution context.
+     *
+     * @return a new builder instance
+     */
+    <B extends AgentContextBuilder<B>> B toBuilder();
+
 }

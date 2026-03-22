@@ -1,7 +1,7 @@
 /*
  * MIT License
  *
- * Copyright (c) 2025 MetaAgent
+ * Copyright (c) 2026 MetaAgent
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -22,23 +22,25 @@
  * SOFTWARE.
  */
 
-package org.metaagent.framework.core.agent.output;
+package org.metaagent.framework.core.agent.context;
 
-import org.metaagent.framework.common.metadata.MetadataProvider;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
- * None agent output
+ * AgentStepContext is used to transfer agent step context between agent steps.
  *
  * @author vyckey
  */
-public final class NoneAgentOutput implements AgentOutput {
-    public static final NoneAgentOutput INSTANCE = new NoneAgentOutput();
+public interface AgentStepContext {
+    /**
+     * Get the loop count of the agent.
+     *
+     * @return the loop count of the agent
+     */
+    AtomicInteger getLoopCounter();
 
-    private NoneAgentOutput() {
-    }
-
-    @Override
-    public MetadataProvider metadata() {
-        return MetadataProvider.empty();
-    }
+    /**
+     * Reset the step context.
+     */
+    void reset();
 }

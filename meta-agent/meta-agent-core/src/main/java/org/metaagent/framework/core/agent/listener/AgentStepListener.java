@@ -1,7 +1,7 @@
 /*
  * MIT License
  *
- * Copyright (c) 2025 MetaAgent
+ * Copyright (c) 2026 MetaAgent
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -22,28 +22,55 @@
  * SOFTWARE.
  */
 
-package org.metaagent.framework.core.agent.fallback;
+package org.metaagent.framework.core.agent.listener;
 
 import org.metaagent.framework.core.agent.MetaAgent;
+import org.metaagent.framework.core.agent.context.AgentStepContext;
 import org.metaagent.framework.core.agent.input.AgentInput;
 import org.metaagent.framework.core.agent.output.AgentOutput;
 
 /**
- * Agent Fallback Strategy
+ * AgentStepListener is a listener that is called before the agent next loop.
  *
- * @param <A> the type of agent
  * @param <I> the type of agent input
  * @param <O> the type of agent output
+ * @param <C> the type of agent step context
  * @author vyckey
  */
-public interface AgentFallbackStrategy<A extends MetaAgent<I, O>, I extends AgentInput, O extends AgentOutput> {
+public interface AgentStepListener<
+        I extends AgentInput,
+        O extends AgentOutput,
+        C extends AgentStepContext> {
+
     /**
-     * Fallback when agent execution failed.
+     * Called before the agent step.
      *
-     * @param agent     agent
-     * @param input     the agent input
-     * @param exception exception
-     * @return the agent output
+     * @param agent       the agent
+     * @param agentInput  the input
+     * @param stepContext the step context
      */
-    O fallback(A agent, I input, Exception exception);
+    default void onAgentStepStart(MetaAgent<I, O> agent, I agentInput, C stepContext) {
+    }
+
+    /**
+     * Called when an agent step is finished.
+     *
+     * @param agent       the agent
+     * @param agentInput  the input
+     * @param agentOutput the output
+     * @param stepContext the step context
+     */
+    default void onAgentStepFinish(MetaAgent<I, O> agent, I agentInput, O agentOutput, C stepContext) {
+    }
+
+    /**
+     * Called when an agent step throws an exception.
+     *
+     * @param agent       the agent
+     * @param agentInput  the input
+     * @param exception   the exception
+     * @param stepContext the step context
+     */
+    default void onAgentStepError(MetaAgent<I, O> agent, I agentInput, Exception exception, C stepContext) {
+    }
 }

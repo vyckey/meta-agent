@@ -1,7 +1,7 @@
 /*
  * MIT License
  *
- * Copyright (c) 2025 MetaAgent
+ * Copyright (c) 2026 MetaAgent
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -22,23 +22,33 @@
  * SOFTWARE.
  */
 
-package org.metaagent.framework.core.agent.output;
+package org.metaagent.framework.core.agent.event;
 
-import org.metaagent.framework.common.metadata.MetadataProvider;
+import org.metaagent.framework.common.event.EventListener;
 
 /**
- * None agent output
+ * AgentEventListener is an interface for listening to agent events.
  *
  * @author vyckey
  */
-public final class NoneAgentOutput implements AgentOutput {
-    public static final NoneAgentOutput INSTANCE = new NoneAgentOutput();
-
-    private NoneAgentOutput() {
-    }
-
+@FunctionalInterface
+public interface AgentEventListener extends EventListener<AgentEvent> {
+    /**
+     * Checks whether the listener accepts the given agent event.
+     *
+     * @param event the agent event
+     * @return true if the listener accepts the event, false otherwise
+     */
     @Override
-    public MetadataProvider metadata() {
-        return MetadataProvider.empty();
+    default boolean accepts(AgentEvent event) {
+        return true;
     }
+
+    /**
+     * Called when an agent event occurs.
+     *
+     * @param event the agent event
+     */
+    @Override
+    void onEvent(AgentEvent event);
 }

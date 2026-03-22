@@ -1,7 +1,7 @@
 /*
  * MIT License
  *
- * Copyright (c) 2025 MetaAgent
+ * Copyright (c) 2026 MetaAgent
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -22,36 +22,44 @@
  * SOFTWARE.
  */
 
-package org.metaagent.framework.core.agent.fallback;
+package org.metaagent.framework.core.agent.listener;
 
-import lombok.extern.slf4j.Slf4j;
-import org.metaagent.framework.core.agent.Agent;
 import org.metaagent.framework.core.agent.input.AgentInput;
 import org.metaagent.framework.core.agent.output.AgentOutput;
-import org.metaagent.framework.core.agent.state.AgentState;
+
+import java.util.List;
 
 /**
- * Retry Agent Fallback Strategy
+ * Agent run listener registry.
  *
+ * @param <I> the type of agent input
+ * @param <O> the type of agent output
  * @author vyckey
  */
-@Slf4j
-public class RetryAgentFallbackStrategy<A extends Agent<I, O>, I extends AgentInput, O extends AgentOutput>
-        implements AgentFallbackStrategy<A, I, O> {
-    private final int maxRetries;
+public interface AgentRunListenerRegistry<I extends AgentInput, O extends AgentOutput> {
+    /**
+     * Returns the list of run listeners.
+     *
+     * @return the list of run listeners
+     */
+    List<AgentRunListener<I, O>> getRunListeners();
 
-    public RetryAgentFallbackStrategy(int maxRetries) {
-        this.maxRetries = maxRetries;
-    }
+    /**
+     * Registers a run listener.
+     *
+     * @param listener the listener to register
+     */
+    void registerRunListener(AgentRunListener<I, O> listener);
 
-    @Override
-    public O fallback(A agent, I input, Exception exception) {
-        AgentState agentState = agent.getAgentState();
-        if (agentState.getStepState().getRetryCount().get() < maxRetries) {
-            agentState.getStepState().getRetryCount().incrementAndGet();
-            return agent.step(input);
-        }
-        log.warn("Failed to retry agent after {} retries", maxRetries);
-        return new FastFailAgentFallbackStrategy<I, O>().fallback(agent, input, exception);
-    }
+    /**
+     * Unregisters a run listener.
+     *
+     * @param listener the listener to unregister
+     */
+    void unregisterRunListener(AgentRunListener<I, O> listener);
+
+    /**
+     * Unregisters all run listeners.
+     */
+    void unregisterRunListeners();
 }

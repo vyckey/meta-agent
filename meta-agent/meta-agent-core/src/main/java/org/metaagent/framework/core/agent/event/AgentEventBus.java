@@ -1,7 +1,7 @@
 /*
  * MIT License
  *
- * Copyright (c) 2025 MetaAgent
+ * Copyright (c) 2026 MetaAgent
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -22,23 +22,22 @@
  * SOFTWARE.
  */
 
-package org.metaagent.framework.core.agent.output;
+package org.metaagent.framework.core.agent.event;
 
-import org.metaagent.framework.common.metadata.MetadataProvider;
+import org.metaagent.framework.common.event.EventBus;
 
 /**
- * None agent output
+ * AgentEventBus interface for publishing and subscribing to agent events.
  *
  * @author vyckey
  */
-public final class NoneAgentOutput implements AgentOutput {
-    public static final NoneAgentOutput INSTANCE = new NoneAgentOutput();
-
-    private NoneAgentOutput() {
-    }
-
-    @Override
-    public MetadataProvider metadata() {
-        return MetadataProvider.empty();
+public interface AgentEventBus extends EventBus<AgentEvent, AgentEventListener> {
+    /**
+     * Creates a new agent event bus.
+     *
+     * @return a new agent event bus
+     */
+    static AgentEventBus create() {
+        return DefaultAgentEventBus.create(1);
     }
 }

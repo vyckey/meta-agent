@@ -1,7 +1,7 @@
 /*
  * MIT License
  *
- * Copyright (c) 2025 MetaAgent
+ * Copyright (c) 2026 MetaAgent
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -22,36 +22,34 @@
  * SOFTWARE.
  */
 
-package org.metaagent.framework.core.agent.fallback;
+package org.metaagent.framework.core.agent.event;
 
-import lombok.extern.slf4j.Slf4j;
-import org.metaagent.framework.core.agent.Agent;
+import org.metaagent.framework.common.event.Event;
+import org.metaagent.framework.core.agent.MetaAgent;
 import org.metaagent.framework.core.agent.input.AgentInput;
 import org.metaagent.framework.core.agent.output.AgentOutput;
-import org.metaagent.framework.core.agent.state.AgentState;
+
+import java.time.Instant;
 
 /**
- * Retry Agent Fallback Strategy
+ * AgentEvent represents an event that occurs in an agent.
  *
  * @author vyckey
  */
-@Slf4j
-public class RetryAgentFallbackStrategy<A extends Agent<I, O>, I extends AgentInput, O extends AgentOutput>
-        implements AgentFallbackStrategy<A, I, O> {
-    private final int maxRetries;
+public interface AgentEvent extends Event {
+    /**
+     * Returns the agent that generated the event.
+     *
+     * @return the agent that generated the event
+     */
+    <I extends AgentInput, O extends AgentOutput>
+    MetaAgent<I, O> agent();
 
-    public RetryAgentFallbackStrategy(int maxRetries) {
-        this.maxRetries = maxRetries;
-    }
-
+    /**
+     * Returns the time when the event occurred.
+     *
+     * @return the time when the event occurred
+     */
     @Override
-    public O fallback(A agent, I input, Exception exception) {
-        AgentState agentState = agent.getAgentState();
-        if (agentState.getStepState().getRetryCount().get() < maxRetries) {
-            agentState.getStepState().getRetryCount().incrementAndGet();
-            return agent.step(input);
-        }
-        log.warn("Failed to retry agent after {} retries", maxRetries);
-        return new FastFailAgentFallbackStrategy<I, O>().fallback(agent, input, exception);
-    }
+    Instant occurredTime();
 }

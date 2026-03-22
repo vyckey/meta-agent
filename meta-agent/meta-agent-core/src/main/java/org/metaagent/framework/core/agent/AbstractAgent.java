@@ -24,15 +24,17 @@
 
 package org.metaagent.framework.core.agent;
 
+import org.metaagent.framework.core.agent.context.AgentStepContext;
+import org.metaagent.framework.core.agent.fallback.AgentFallbackStrategy;
+import org.metaagent.framework.core.agent.fallback.FastFailAgentFallbackStrategy;
 import org.metaagent.framework.core.agent.input.AgentInput;
-import org.metaagent.framework.core.agent.loop.AgentLoopControlStrategy;
-import org.metaagent.framework.core.agent.loop.MaxLoopCountAgentLoopControl;
+import org.metaagent.framework.core.agent.listener.AgentStepListener;
+import org.metaagent.framework.core.agent.listener.AgentStepListenerRegistry;
+import org.metaagent.framework.core.agent.listener.DefaultAgentListenerRegistry;
 import org.metaagent.framework.core.agent.output.AgentOutput;
 import org.metaagent.framework.core.agent.profile.AgentProfile;
-import org.metaagent.framework.core.config.ConfigPaths;
-import org.metaagent.framework.core.skill.loader.SkillLoaders;
-import org.metaagent.framework.core.tool.ToolContext;
-import org.metaagent.framework.core.tool.executor.ToolExecutorContext;
+
+import java.util.List;
 
 /**
  * Abstract {@link Agent} implementation.
@@ -41,11 +43,13 @@ import org.metaagent.framework.core.tool.executor.ToolExecutorContext;
  * @param <O> the type of agent output
  * @author vyckey
  */
-public abstract class AbstractAgent<I, O>
-        extends AbstractMetaAgent<I, O> implements Agent<I, O> {
+public abstract class AbstractAgent<I extends AgentInput, O extends AgentOutput, C extends AgentStepContext>
+        extends AbstractMetaAgent<I, O> implements Agent<I, O, C> {
+    protected AgentStepListenerRegistry<I, O, C> stepListenerRegistry;
 
     protected AbstractAgent(String name) {
         super(name);
+        this.stepListenerRegistry = new DefaultAgentListenerRegistry<>();
     }
 
     protected AbstractAgent(AgentProfile profile) {
@@ -53,41 +57,70 @@ public abstract class AbstractAgent<I, O>
         this.profile = profile;
     }
 
-    protected AbstractAgent(AbstractAgentBuilder<?, ?, I, O> builder) {
+    protected AbstractAgent(AbstractAgentBuilder<?, I, O, C> builder) {
         super(builder);
+        this.stepListenerRegistry = builder.stepListenerRegistry != null
+                ? builder.stepListenerRegistry : new DefaultAgentListenerRegistry<>();
+    }
+
+    public AgentStepListenerRegistry<I, O, C> getStepListenerRegistry() {
+        return stepListenerRegistry;
+    }
+
+    public AgentFallbackStrategy<Agent<I, O, C>, I, O> getFallbackStrategy() {
+        return new FastFailAgentFallbackStrategy<>();
     }
 
     @Override
-    public AgentLoopControlStrategy<I, O> getLoopControlStrategy() {
-        return new MaxLoopCountAgentLoopControl<>(1);
+    protected O doRun(I agentInput) {
+        return handleExceptionIfRequired(() -> {
+            C stepContext = createStepContext(agentInput);
+
+            O agentOutput = null;
+            while (shouldContinueLoop(agentInput, agentOutput, stepContext)) {
+                try {
+                    agentOutput = step(agentInput, stepContext);
+                } catch (Exception ex) {
+                    agentOutput = getFallbackStrategy().fallback(this, agentInput, ex);
+                } finally {
+                    stepContext.getLoopCounter().incrementAndGet();
+                }
+            }
+            return agentOutput;
+        });
+    }
+
+    protected C createStepContext(I agentInput) {
+        throw new UnsupportedOperationException("Not implemented");
     }
 
     @Override
-    protected AgentInput<I> preprocess(AgentInput<I> input) {
-        AgentInput<I> agentInput = super.preprocess(input);
-
-        AgentExecutionContext context = input.context();
-        SkillLoaders.loadSkillsIfNotLoaded(context.getSkillManager(), ConfigPaths.get(), context.getWorkspaceConfig());
-        return agentInput;
+    public O step(I agentInput, C stepContext) {
+        List<AgentStepListener<I, O, C>> stepListeners = getStepListenerRegistry().getStepListeners();
+        try {
+            notifyListeners(stepListeners, listener ->
+                    listener.onAgentStepStart(this, agentInput, stepContext)
+            );
+            O agentOutput = doStep(agentInput, stepContext);
+            notifyListeners(stepListeners, listener ->
+                    listener.onAgentStepFinish(this, agentInput, agentOutput, stepContext)
+            );
+            return agentOutput;
+        } catch (Exception ex) {
+            notifyListeners(stepListeners, listener ->
+                    listener.onAgentStepError(this, agentInput, ex, stepContext)
+            );
+            throw ex;
+        }
     }
 
-    @Override
-    protected AgentOutput<O> doRun(AgentInput<I> input) {
-        return Agent.super.run(input);
-    }
+    /**
+     * Performs agent step.
+     *
+     * @param agentInput  the agent input
+     * @param stepContext the agent step context
+     * @return the agent output
+     */
+    protected abstract O doStep(I agentInput, C stepContext);
 
-    protected ToolExecutorContext buildToolExecutorContext(AgentInput<I> input) {
-        AgentExecutionContext agentContext = input.context();
-        return ToolExecutorContext.builder()
-                .toolManager(agentContext.getToolManager())
-                .toolListenerRegistry(agentContext.getToolListenerRegistry())
-                .toolCallTracker(getAgentState().getToolCallTracker())
-                .toolContext(ToolContext.builder()
-                        .agent(this)
-                        .securityLevel(agentContext.getSecurityLevel())
-                        .approvalManager(agentContext.getToolApprovalManager())
-                        .abortSignal(agentContext.getAbortSignal())
-                        .build())
-                .build();
-    }
 }

@@ -24,9 +24,11 @@
 
 package org.metaagent.framework.core.agent;
 
+import org.metaagent.framework.core.agent.input.AgentInput;
 import org.metaagent.framework.core.agent.memory.Memory;
 import org.metaagent.framework.core.agent.observability.AgentEventBus;
 import org.metaagent.framework.core.agent.observability.event.AgentEvent;
+import org.metaagent.framework.core.agent.output.AgentOutput;
 import org.metaagent.framework.core.agent.profile.AgentProfile;
 import org.metaagent.framework.core.agent.state.AgentState;
 import org.metaagent.framework.core.skill.manager.SkillManager;
@@ -41,7 +43,7 @@ import org.metaagent.framework.core.tool.manager.ToolManager;
  * @param <O> the output type of agent
  * @author vyckey
  */
-public abstract class AbstractAgentBuilder<A extends MetaAgent<I, O>, B, I, O> {
+public abstract class AbstractAgentBuilder<A extends MetaAgent<I, O>, B, I extends AgentInput, O extends AgentOutput> {
     protected AgentProfile profile;
     protected AgentState agentState;
     protected Memory memory;
