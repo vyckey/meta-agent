@@ -22,34 +22,29 @@
  * SOFTWARE.
  */
 
-package org.metaagent.framework.core.agent.chat.conversation;
+package org.metaagent.framework.core.agent.chat.session;
 
-import java.io.Closeable;
+
+import java.util.Objects;
 
 /**
- * Conversation storage interface for storing and retrieving messages.
+ * Thrown when a requested session does not exist.
  *
  * @author vyckey
  */
-public interface ConversationStorage extends Closeable {
-    /**
-     * Store the conversation.
-     *
-     * @param conversation the conversation to save
-     */
-    void store(Conversation conversation);
+public class SessionNotFoundException extends RuntimeException {
+    private final SessionId sessionId;
 
-    /**
-     * Load the conversation.
-     *
-     * @param conversation the conversation to load
-     */
-    void load(Conversation conversation);
+    public SessionNotFoundException(SessionId sessionId) {
+        this(sessionId, "Session not found: " + sessionId);
+    }
 
-    /**
-     * Clear the conversation.
-     *
-     * @param conversationId the conversation ID to clear
-     */
-    void clear(ConversationId conversationId);
+    public SessionNotFoundException(SessionId sessionId, String message) {
+        super(message);
+        this.sessionId = Objects.requireNonNull(sessionId, "sessionId must not be null");
+    }
+
+    public SessionId getSessionId() {
+        return sessionId;
+    }
 }
