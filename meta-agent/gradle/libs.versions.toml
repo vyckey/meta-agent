@@ -3,9 +3,10 @@
 [versions]
 junit = '4.13.2'
 jmockit = '1.49'
-jackson = '2.13.3'
-jacksonYaml = '2.19.2'
-jsonschema = '4.38.0'
+fasterxmlJsonson = '2.17.0'
+jackson = '3.1.0'
+jacksonYaml = '3.1.0'
+jsonschema = '5.0.0'
 lombok = '1.18.30'
 slf4j = '2.0.13'
 log4j = '1.2.17'
@@ -28,10 +29,13 @@ okhttp = '4.12.0'
 [libraries]
 junit = { module = 'junit:junit', version.ref = 'junit' }
 jmockit = { module = 'org.jmockit:jmockit', version.ref = 'jmockit' }
-jackson-core = { module = 'com.fasterxml.jackson.core:jackson-core', version.ref = 'jackson' }
-jackson-databind = { module = 'com.fasterxml.jackson.core:jackson-databind', version.ref = 'jackson' }
-jackson-annotations = { module = 'com.fasterxml.jackson.core:jackson-annotations', version.ref = 'jackson' }
-jackson-yaml = { module = 'com.fasterxml.jackson.dataformat:jackson-dataformat-yaml', version.ref = 'jacksonYaml' }
+fasterxml-jackson-core = { module = 'com.fasterxml.jackson.core:jackson-core', version.ref = 'fasterxmlJsonson' }
+fasterxml-jackson-databind = { module = 'com.fasterxml.jackson.core:jackson-databind', version.ref = 'fasterxmlJsonson' }
+fasterxml-jackson-annotations = { module = 'com.fasterxml.jackson.core:jackson-annotations', version.ref = 'fasterxmlJsonson' }
+jackson-core = { module = 'tools.jackson.core:jackson-core', version.ref = 'jackson' }
+jackson-databind = { module = 'tools.jackson.core:jackson-databind', version.ref = 'jackson' }
+jackson-datatype-jsr310 = { module = 'tools.jackson.datatype:jackson-datatype-jsr310', version = '3.0.0-rc2' }
+jackson-yaml = { module = 'tools.jackson.dataformat:jackson-dataformat-yaml', version.ref = 'jacksonYaml' }
 jsonschema-generator = { module = 'com.github.victools:jsonschema-generator', version.ref = 'jsonschema' }
 jsonschema-jackson = { module = 'com.github.victools:jsonschema-module-jackson', version.ref = 'jsonschema' }
 jsonschema-swagger = { module = 'com.github.victools:jsonschema-module-swagger-2', version.ref = 'jsonschema' }
@@ -62,7 +66,8 @@ picocli = { module = 'info.picocli:picocli', version = '4.7.6' }
 
 [bundles]
 unittest = ['jupiter', 'mockito']
-jackson = ['jackson-annotations', 'jackson-core', 'jackson-databind']
+fasterxmlJackson = ['fasterxml-jackson-annotations', 'fasterxml-jackson-core', 'fasterxml-jackson-databind']
+jackson = ['jackson-core', 'jackson-databind']
 jsonschema = ['jsonschema-generator', 'jsonschema-jackson', 'jsonschema-swagger']
 jacksonYaml = ['jackson-yaml']
 lombok = ['lombok']
