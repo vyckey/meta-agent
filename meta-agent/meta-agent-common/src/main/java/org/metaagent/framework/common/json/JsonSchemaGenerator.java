@@ -26,25 +26,25 @@ package org.metaagent.framework.common.json;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.node.ArrayNode;
-import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.github.victools.jsonschema.generator.Option;
 import com.github.victools.jsonschema.generator.OptionPreset;
 import com.github.victools.jsonschema.generator.SchemaGenerator;
 import com.github.victools.jsonschema.generator.SchemaGeneratorConfig;
 import com.github.victools.jsonschema.generator.SchemaGeneratorConfigBuilder;
 import com.github.victools.jsonschema.generator.SchemaVersion;
-import com.github.victools.jsonschema.module.jackson.JacksonModule;
 import com.github.victools.jsonschema.module.jackson.JacksonOption;
+import com.github.victools.jsonschema.module.jackson.JacksonSchemaModule;
 import com.github.victools.jsonschema.module.swagger2.Swagger2Module;
+import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.node.ArrayNode;
+import tools.jackson.databind.node.ObjectNode;
 
 import java.lang.reflect.Method;
 import java.lang.reflect.Parameter;
 import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.stream.Stream;
 
@@ -65,7 +65,7 @@ public final class JsonSchemaGenerator {
     static {
         SchemaGeneratorConfigBuilder configBuilder = new SchemaGeneratorConfigBuilder(
                 SchemaVersion.DRAFT_2020_12, OptionPreset.PLAIN_JSON)
-                .with(new JacksonModule(JacksonOption.RESPECT_JSONPROPERTY_REQUIRED))
+                .with(new JacksonSchemaModule(JacksonOption.RESPECT_JSONPROPERTY_REQUIRED))
                 .with(new Swagger2Module())
                 .with(Option.EXTRA_OPEN_API_FORMAT_VALUES)
                 .with(Option.PLAIN_DEFINITION_KEYS);
@@ -84,7 +84,7 @@ public final class JsonSchemaGenerator {
      * Generate a JSON Schema for a method's input parameters.
      */
     public static String generateForMethod(Method method, SchemaOption... schemaOptions) {
-        ObjectNode schema = new ObjectMapper().createObjectNode();
+        ObjectNode schema = SUBTYPE_SCHEMA_GENERATOR.generateSchema(Object.class);
         schema.put("$schema", SchemaVersion.DRAFT_2020_12.getIdentifier());
         schema.put("type", "object");
 
@@ -150,23 +150,23 @@ public final class JsonSchemaGenerator {
 
     private static void convertTypeValuesToUpperCase(ObjectNode node) {
         if (node.isObject()) {
-            node.fields().forEachRemaining(entry -> {
-                JsonNode value = entry.getValue();
+            for (Map.Entry<String, JsonNode> property : node.properties()) {
+                JsonNode value = property.getValue();
                 if (value.isObject()) {
                     convertTypeValuesToUpperCase((ObjectNode) value);
                 } else if (value.isArray()) {
-                    value.elements().forEachRemaining(element -> {
+                    value.values().forEach(element -> {
                         if (element.isObject() || element.isArray()) {
                             convertTypeValuesToUpperCase((ObjectNode) element);
                         }
                     });
-                } else if (value.isTextual() && entry.getKey().equals("type")) {
+                } else if (value.isTextual() && property.getKey().equals("type")) {
                     String oldValue = node.get("type").asText();
                     node.put("type", oldValue.toUpperCase());
                 }
-            });
+            }
         } else if (node.isArray()) {
-            node.elements().forEachRemaining(element -> {
+            node.values().forEach(element -> {
                 if (element.isObject() || element.isArray()) {
                     convertTypeValuesToUpperCase((ObjectNode) element);
                 }

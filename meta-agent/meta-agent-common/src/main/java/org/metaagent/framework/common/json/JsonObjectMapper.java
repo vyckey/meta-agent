@@ -24,21 +24,20 @@
 
 package org.metaagent.framework.common.json;
 
-import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.DeserializationFeature;
-import com.fasterxml.jackson.databind.JavaType;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.PropertyNamingStrategies;
-import com.fasterxml.jackson.databind.PropertyNamingStrategy;
-import com.fasterxml.jackson.databind.type.TypeFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import tools.jackson.core.JacksonException;
+import tools.jackson.core.type.TypeReference;
+import tools.jackson.databind.DeserializationFeature;
+import tools.jackson.databind.JavaType;
+import tools.jackson.databind.PropertyNamingStrategies;
+import tools.jackson.databind.json.JsonMapper;
+import tools.jackson.databind.type.TypeFactory;
 
-import java.io.IOException;
 import java.lang.reflect.Type;
 
 /**
- * {@link ObjectMapper} for JSON
+ * {@link JsonMapper} for JSON
  *
  * <p>example 1:</p>
  * <pre>{@code
@@ -67,34 +66,36 @@ import java.lang.reflect.Type;
  */
 public class JsonObjectMapper {
     private static final Logger log = LoggerFactory.getLogger(JsonObjectMapper.class);
-    public static final JsonObjectMapper CAMEL_CASE = new JsonObjectMapper(new ObjectMapper()
+    public static final JsonObjectMapper CAMEL_CASE = new JsonObjectMapper(JsonMapper.builder()
             .disable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES)
             .enable(DeserializationFeature.ACCEPT_EMPTY_STRING_AS_NULL_OBJECT)
+            .build()
     );
-    public static final JsonObjectMapper SNAKE_CASE = new JsonObjectMapper(new ObjectMapper()
+    public static final JsonObjectMapper SNAKE_CASE = new JsonObjectMapper(JsonMapper.builder()
             .disable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES)
             .enable(DeserializationFeature.ACCEPT_EMPTY_STRING_AS_NULL_OBJECT)
-            .setPropertyNamingStrategy(PropertyNamingStrategies.SNAKE_CASE)
+            .propertyNamingStrategy(new PropertyNamingStrategies.SnakeCaseStrategy())
+            .build()
     );
 
-    private final ObjectMapper objectMapper;
+    private final JsonMapper jsonMapper;
 
-    public JsonObjectMapper(ObjectMapper objectMapper) {
-        this.objectMapper = objectMapper;
+    public JsonObjectMapper(JsonMapper jsonMapper) {
+        this.jsonMapper = jsonMapper;
     }
 
-    protected ObjectMapper getObjectMapper() {
-        return objectMapper;
+    protected JsonMapper getJsonMapper() {
+        return jsonMapper;
     }
 
-    protected void handleException(IOException e) {
+    protected void handleException(JacksonException e) {
         log.error(e.getMessage(), e);
     }
 
     public String toJson(Object object) {
         try {
-            return objectMapper.writeValueAsString(object);
-        } catch (IOException e) {
+            return jsonMapper.writeValueAsString(object);
+        } catch (JacksonException e) {
             handleException(e);
         }
         return null;
@@ -102,8 +103,8 @@ public class JsonObjectMapper {
 
     public <T> T fromJson(String json, Class<T> valueType) {
         try {
-            return objectMapper.readValue(json, valueType);
-        } catch (IOException e) {
+            return jsonMapper.readValue(json, valueType);
+        } catch (JacksonException e) {
             handleException(e);
         }
         return null;
@@ -111,8 +112,8 @@ public class JsonObjectMapper {
 
     public <T> T fromJson(String json, TypeReference<T> valueTypeRef) {
         try {
-            return objectMapper.readValue(json, valueTypeRef);
-        } catch (IOException e) {
+            return jsonMapper.readValue(json, valueTypeRef);
+        } catch (JacksonException e) {
             handleException(e);
         }
         return null;
@@ -120,8 +121,8 @@ public class JsonObjectMapper {
 
     public <T> T fromJson(String json, JavaType valueType) {
         try {
-            return objectMapper.readValue(json, valueType);
-        } catch (IOException e) {
+            return jsonMapper.readValue(json, valueType);
+        } catch (JacksonException e) {
             handleException(e);
         }
         return null;
@@ -129,9 +130,9 @@ public class JsonObjectMapper {
 
     public <T> T fromJson(String json, Type type) {
         try {
-            JavaType javaType = TypeFactory.defaultInstance().constructType(type);
-            return objectMapper.readValue(json, javaType);
-        } catch (IOException e) {
+            JavaType javaType = TypeFactory.createDefaultInstance().constructType(type);
+            return jsonMapper.readValue(json, javaType);
+        } catch (JacksonException e) {
             handleException(e);
         }
         return null;
@@ -142,8 +143,8 @@ public class JsonObjectMapper {
             return null;
         }
         try {
-            return objectMapper.readValue(json, clazz);
-        } catch (IOException e) {
+            return jsonMapper.readValue(json, clazz);
+        } catch (JacksonException e) {
             handleException(e);
         }
         return null;
@@ -154,18 +155,18 @@ public class JsonObjectMapper {
             return null;
         }
         try {
-            return objectMapper.readValue(json, type);
-        } catch (IOException e) {
+            return jsonMapper.readValue(json, type);
+        } catch (JacksonException e) {
             handleException(e);
         }
         return null;
     }
 
     public <T> T convert(Object object, Class<T> clazz) {
-        return objectMapper.convertValue(object, clazz);
+        return jsonMapper.convertValue(object, clazz);
     }
 
     public <T> T convert(Object object, TypeReference<T> type) {
-        return objectMapper.convertValue(object, type);
+        return jsonMapper.convertValue(object, type);
     }
 }
