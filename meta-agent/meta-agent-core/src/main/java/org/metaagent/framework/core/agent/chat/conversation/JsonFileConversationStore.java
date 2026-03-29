@@ -25,7 +25,6 @@
 package org.metaagent.framework.core.agent.chat.conversation;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
@@ -36,6 +35,8 @@ import org.metaagent.framework.core.agent.chat.message.MessageInfo;
 import org.metaagent.framework.core.agent.chat.message.MessageSerializer;
 import org.metaagent.framework.core.agent.chat.session.SessionId;
 import org.metaagent.framework.core.agent.chat.session.SessionIdValue;
+import tools.jackson.core.JacksonException;
+import tools.jackson.databind.json.JsonMapper;
 
 import java.io.IOException;
 import java.io.UncheckedIOException;
@@ -68,7 +69,7 @@ import java.util.stream.Collectors;
 public class JsonFileConversationStore implements ConversationStore {
     private final Path storageRoot;
     private final Function<SessionId, String> fileNameResolver;
-    private final ObjectMapper objectMapper;
+    private final JsonMapper jsonMapper;
     private final ReentrantReadWriteLock lock = new ReentrantReadWriteLock();
 
     /**
@@ -81,7 +82,7 @@ public class JsonFileConversationStore implements ConversationStore {
     public JsonFileConversationStore(Path storageRoot, Function<SessionId, String> fileNameResolver) throws IOException {
         this.storageRoot = storageRoot.toAbsolutePath().normalize();
         this.fileNameResolver = Objects.requireNonNull(fileNameResolver, "fileNameResolver cannot be null");
-        this.objectMapper = MessageSerializer.getObjectMapper();
+        this.jsonMapper = MessageSerializer.getJsonMapper();
         Files.createDirectories(this.storageRoot);
     }
 
@@ -101,18 +102,18 @@ public class JsonFileConversationStore implements ConversationStore {
             return new ConversationDO(sessionId, new ArrayList<>());
         }
         try {
-            return objectMapper.readValue(file.toFile(), ConversationDO.class);
-        } catch (IOException e) {
-            throw new UncheckedIOException("Failed to read session file: " + file, e);
+            return jsonMapper.readValue(file.toFile(), ConversationDO.class);
+        } catch (JacksonException e) {
+            throw new UncheckedIOException("Failed to read session file: " + file, new IOException(e));
         }
     }
 
     private void writeConversation(SessionId sessionId, ConversationDO conversation) {
         Path file = getSessionFile(sessionId);
         try {
-            objectMapper.writeValue(file.toFile(), conversation);
-        } catch (IOException e) {
-            throw new UncheckedIOException("Failed to write session file: " + file, e);
+            jsonMapper.writeValue(file.toFile(), conversation);
+        } catch (JacksonException e) {
+            throw new UncheckedIOException("Failed to write session file: " + file, new IOException(e));
         }
     }
 

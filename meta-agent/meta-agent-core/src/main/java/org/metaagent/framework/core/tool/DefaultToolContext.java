@@ -27,7 +27,7 @@ package org.metaagent.framework.core.tool;
 import lombok.Getter;
 import org.metaagent.framework.common.abort.AbortController;
 import org.metaagent.framework.common.abort.AbortSignal;
-import org.metaagent.framework.core.agent.Agent;
+import org.metaagent.framework.core.agent.MetaAgent;
 import org.metaagent.framework.core.agent.input.AgentInput;
 import org.metaagent.framework.core.agent.output.AgentOutput;
 import org.metaagent.framework.core.security.SecurityLevel;
@@ -53,7 +53,7 @@ import java.util.concurrent.ForkJoinPool;
  */
 @Getter
 public class DefaultToolContext implements ToolContext {
-    private final Agent<?, ?> agent;
+    private final MetaAgent<?, ?> agent;
     private final ToolExecutionConfig toolExecutionConfig;
     private final SecurityLevel securityLevel;
     private final PermissionApprovalManager<ToolApprovalRequest> approvalManager;
@@ -80,9 +80,9 @@ public class DefaultToolContext implements ToolContext {
         return new Builder();
     }
 
-    public <I extends AgentInput, O extends AgentOutput> Agent<I, O> getAgent() {
+    public <I extends AgentInput, O extends AgentOutput> MetaAgent<I, O> getAgent() {
         //noinspection unchecked
-        return (Agent<I, O>) agent;
+        return (MetaAgent<I, O>) agent;
     }
 
     @Override
@@ -110,7 +110,7 @@ public class DefaultToolContext implements ToolContext {
     }
 
     public static class Builder implements ToolContext.Builder {
-        private Agent<?, ?> agent;
+        private MetaAgent<?, ?> agent;
         private ToolExecutionConfig toolExecutionConfig;
         private SecurityLevel securityLevel;
         private PermissionApprovalManager<ToolApprovalRequest> approvalManager;
@@ -128,7 +128,7 @@ public class DefaultToolContext implements ToolContext {
         }
 
         @Override
-        public ToolContext.Builder agent(Agent<?, ?> agent) {
+        public ToolContext.Builder agent(MetaAgent<?, ?> agent) {
             this.agent = agent;
             return this;
         }

@@ -25,7 +25,7 @@
 package org.metaagent.framework.core.tool;
 
 import org.metaagent.framework.common.abort.AbortSignal;
-import org.metaagent.framework.core.agent.Agent;
+import org.metaagent.framework.core.agent.MetaAgent;
 import org.metaagent.framework.core.agent.input.AgentInput;
 import org.metaagent.framework.core.agent.output.AgentOutput;
 import org.metaagent.framework.core.security.SecurityLevel;
@@ -66,7 +66,7 @@ public interface ToolContext {
      * @return the agent
      */
     <I extends AgentInput, O extends AgentOutput>
-    Agent<I, O> getAgent();
+    MetaAgent<I, O> getAgent();
 
     /**
      * Gets the tool execution configuration.
@@ -145,7 +145,7 @@ public interface ToolContext {
          * @param agent the agent
          * @return the builder instance
          */
-        Builder agent(Agent<?, ?> agent);
+        Builder agent(MetaAgent<?, ?> agent);
 
         /**
          * Sets the tool execution configuration for the tool context.

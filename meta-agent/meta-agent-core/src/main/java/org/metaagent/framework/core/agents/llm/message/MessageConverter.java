@@ -1,7 +1,7 @@
 /*
  * MIT License
  *
- * Copyright (c) 2025 MetaAgent
+ * Copyright (c) 2026 MetaAgent
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -22,10 +22,11 @@
  * SOFTWARE.
  */
 
-package org.metaagent.framework.core.model.chat.message;
+package org.metaagent.framework.core.agents.llm.message;
 
 import com.google.common.collect.Maps;
 import org.apache.commons.collections.MapUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.metaagent.framework.common.content.MediaResource;
 import org.metaagent.framework.common.converter.Converter;
 import org.metaagent.framework.common.metadata.MapMetadataProvider;
@@ -37,8 +38,6 @@ import org.metaagent.framework.core.agent.chat.message.part.MediaMessagePart;
 import org.metaagent.framework.core.agent.chat.message.part.MessagePart;
 import org.metaagent.framework.core.agent.chat.message.part.MessagePartId;
 import org.metaagent.framework.core.agent.chat.message.part.TextMessagePart;
-import org.metaagent.framework.core.agent.chat.message.part.ToolCallInputMessagePart;
-import org.metaagent.framework.core.agent.chat.message.part.ToolCallResultMessagePart;
 import org.springframework.ai.chat.messages.AssistantMessage;
 import org.springframework.ai.chat.messages.ToolResponseMessage;
 import org.springframework.ai.chat.messages.UserMessage;
@@ -58,7 +57,7 @@ import static org.metaagent.framework.core.agent.chat.message.MessageMetadataKey
 import static org.metaagent.framework.core.agent.chat.message.MessageMetadataKeys.KEY_UPDATED_AT;
 
 /**
- * description is here
+ * MessageConverter for converting between {@link Message} and {@link org.springframework.ai.chat.messages.Message}.
  *
  * @author vyckey
  */
@@ -90,25 +89,23 @@ public class MessageConverter implements Converter<Message, List<org.springframe
 
     private List<org.springframework.ai.chat.messages.Message> doConvert(Message message) {
         List<org.springframework.ai.chat.messages.Message> result = new ArrayList<>();
-        List<MessagePart> subParts = new ArrayList<>();
+        List<MessagePart> groupParts = new ArrayList<>();
         for (MessagePart messagePart : message.parts()) {
-            if (subParts.isEmpty()) {
-                subParts.add(messagePart);
-            } else if (messagePart instanceof ToolCallInputMessagePart && subParts.get(0) instanceof ToolCallInputMessagePart) {
-                subParts.add(messagePart);
-            } else if (messagePart instanceof ToolCallResultMessagePart && subParts.get(0) instanceof ToolCallResultMessagePart) {
-                subParts.add(messagePart);
-            } else if (messagePart instanceof MediaMessagePart && subParts.get(0) instanceof TextMessagePart) {
-                subParts.add(messagePart);
+            if (groupParts.isEmpty()) {
+                groupParts.add(messagePart);
+            } else if (messagePart instanceof ToolCallMessagePart && groupParts.get(0) instanceof ToolCallMessagePart) {
+                groupParts.add(messagePart);
+            } else if (messagePart instanceof MediaMessagePart && groupParts.get(0) instanceof TextMessagePart) {
+                groupParts.add(messagePart);
             } else {
-                result.add(convert(message.info().id(), message.info().role(), subParts));
-                subParts.clear();
-                subParts.add(messagePart);
+                result.addAll(convertGroupParts(message.info().id(), message.info().role(), groupParts));
+                groupParts.clear();
+                groupParts.add(messagePart);
             }
         }
-        if (!subParts.isEmpty()) {
-            result.add(convert(message.info().id(), message.info().role(), subParts));
-            subParts.clear();
+        if (!groupParts.isEmpty()) {
+            result.addAll(convertGroupParts(message.info().id(), message.info().role(), groupParts));
+            groupParts.clear();
         }
         return result;
     }
@@ -121,64 +118,77 @@ public class MessageConverter implements Converter<Message, List<org.springframe
                 .build();
     }
 
-    private org.springframework.ai.chat.messages.Message convert(MessageId messageId, String role, List<MessagePart> parts) {
+    private List<org.springframework.ai.chat.messages.Message> convertGroupParts(
+            MessageId messageId, String role, List<MessagePart> messageParts) {
+        MessagePart firstMessagePart = messageParts.get(0);
         MapMetadataProvider extendMetadata = MetadataProvider.builder()
                 .setProperty(KEY_MESSAGE_ID, messageId.value())
-                .setProperty(KEY_CREATED_AT, parts.get(0).createdAt().toEpochMilli())
-                .setProperty(KEY_UPDATED_AT, parts.get(parts.size() - 1).updatedAt().toEpochMilli())
+                .setProperty(KEY_CREATED_AT, firstMessagePart.createdAt().toEpochMilli())
+                .setProperty(KEY_UPDATED_AT, messageParts.get(messageParts.size() - 1).updatedAt().toEpochMilli())
                 .build();
 
-        if (parts.get(0) instanceof TextMessagePart textMessagePart) {
-            List<Media> media = parts.subList(1, parts.size()).stream()
+        List<org.springframework.ai.chat.messages.Message> messages = new ArrayList<>();
+        if (firstMessagePart instanceof TextMessagePart textMessagePart) {
+            List<Media> media = messageParts.subList(1, messageParts.size()).stream()
                     .map(MediaMessagePart.class::cast).map(this::convertMedia).toList();
             if (MessageInfo.ROLE_ASSISTANT.equals(role)) {
-                return org.springframework.ai.chat.messages.AssistantMessage.builder()
+                messages.add(org.springframework.ai.chat.messages.AssistantMessage.builder()
                         .content(textMessagePart.text())
                         .media(media)
                         .properties(textMessagePart.metadata().union(extendMetadata).getProperties())
                         .toolCalls(List.of())
-                        .build();
+                        .build());
             } else {
-                return org.springframework.ai.chat.messages.UserMessage.builder()
+                messages.add(org.springframework.ai.chat.messages.UserMessage.builder()
                         .text(textMessagePart.text())
                         .metadata(textMessagePart.metadata().union(extendMetadata).getProperties())
                         .media(media)
-                        .build();
+                        .build());
             }
-        } else if (parts.get(0) instanceof ToolCallInputMessagePart) {
-            MetadataProvider metadata = MetadataProvider.create();
-            for (MessagePart part : parts) {
-                metadata.merge(part.metadata());
-            }
-            metadata.merge(extendMetadata);
-            List<AssistantMessage.ToolCall> toolCallList = parts.stream().map(ToolCallInputMessagePart.class::cast)
-                    .map(ToolCallInputMessagePart::toolCall)
-                    .map(call -> new AssistantMessage.ToolCall(
-                            call.id(), call.type(), call.name(), call.arguments()
-                    ))
-                    .toList();
-            return org.springframework.ai.chat.messages.AssistantMessage.builder()
-                    .content("")
-                    .properties(metadata.getProperties())
-                    .toolCalls(toolCallList)
-                    .build();
-        } else if (parts.get(0) instanceof ToolCallResultMessagePart) {
-            MetadataProvider metadata = MetadataProvider.create();
-            for (MessagePart part : parts) {
-                metadata.merge(part.metadata());
-            }
-            metadata.merge(extendMetadata);
-            List<ToolResponseMessage.ToolResponse> toolResponseList = parts.stream().map(ToolCallResultMessagePart.class::cast)
-                    .map(ToolCallResultMessagePart::toolResponse)
-                    .map(response -> new ToolResponseMessage.ToolResponse(
-                            response.id(), response.name(), response.responseData()
-                    ))
-                    .toList();
+            return messages;
+        } else if (firstMessagePart instanceof ToolCallMessagePart) {
+            List<AssistantMessage.ToolCall> toolCalls = new ArrayList<>();
+            List<ToolResponseMessage.ToolResponse> toolResponses = new ArrayList<>();
+            MetadataProvider toolCallMetadata = MetadataProvider.create();
+            MetadataProvider toolResponseMetadata = MetadataProvider.create();
 
-            return org.springframework.ai.chat.messages.ToolResponseMessage.builder()
-                    .responses(toolResponseList)
-                    .metadata(metadata.getProperties())
-                    .build();
+            for (MessagePart messagePart : messageParts) {
+                ToolCallMessagePart toolCallMessagePart = (ToolCallMessagePart) messagePart;
+                if (toolCallMessagePart.arguments() != null) {
+                    toolCallMetadata.merge(toolCallMessagePart.metadata());
+
+                    toolCalls.add(new AssistantMessage.ToolCall(
+                            toolCallMessagePart.callId(),
+                            "",
+                            toolCallMessagePart.toolName(),
+                            toolCallMessagePart.arguments()
+                    ));
+                }
+                if (toolCallMessagePart.status() != ToolCallMessagePart.ToolCallStatus.START) {
+                    toolResponseMetadata.merge(toolCallMessagePart.metadata());
+                    toolResponses.add(new ToolResponseMessage.ToolResponse(
+                            toolCallMessagePart.callId(),
+                            toolCallMessagePart.toolName(),
+                            toolCallMessagePart.response()
+                    ));
+                }
+            }
+
+            messages.add(org.springframework.ai.chat.messages.AssistantMessage.builder()
+                    .content("")
+                    .properties(toolCallMetadata.getProperties())
+                    .toolCalls(toolCalls)
+                    .build());
+
+            if (toolResponses.isEmpty()) {
+                messages.add(org.springframework.ai.chat.messages.ToolResponseMessage.builder()
+                        .responses(toolResponses)
+                        .metadata(toolResponseMetadata.getProperties())
+                        .build());
+            }
+            return messages;
+        } else if (firstMessagePart instanceof LlmStartMessagePart || firstMessagePart instanceof LlmFinishMessagePart) {
+            return messages;
         } else {
             throw new IllegalArgumentException("messageParts cannot be converted");
         }
@@ -223,28 +233,14 @@ public class MessageConverter implements Converter<Message, List<org.springframe
                 parts.add(convertToMedia(media, MetadataProvider.from(userMessage.getMetadata()), createdAt, updatedAt));
             }
         } else if (message instanceof AssistantMessage assistantMessage) {
-            if (assistantMessage.hasToolCalls()) {
-                for (AssistantMessage.ToolCall toolCall : assistantMessage.getToolCalls()) {
-                    ToolCallInputMessagePart toolCallInputMessagePart = ToolCallInputMessagePart.builder()
-                            .id(messagePartIdProvider.get())
-                            .toolCall(new ToolCallInputMessagePart.ToolCall(
-                                    toolCall.id(),
-                                    toolCall.type(),
-                                    toolCall.name(),
-                                    toolCall.arguments()))
-                            .metadata(MetadataProvider.from(message.getMetadata()))
-                            .createdAt(createdAt)
-                            .updatedAt(updatedAt)
-                            .build();
-                    parts.add(toolCallInputMessagePart);
-                }
-            } else {
+            // Always add text content first if present
+            if (StringUtils.isNotEmpty(assistantMessage.getText())) {
                 TextMessagePart textMessagePart = TextMessagePart.builder()
                         .id(messagePartIdProvider.get())
                         .text(assistantMessage.getText())
                         .metadata(MetadataProvider.builder()
                                 .setProperties(assistantMessage.getMetadata())
-                                .setProperty(KEY_ROLE, MessageInfo.ROLE_USER)
+                                .setProperty(KEY_ROLE, MessageInfo.ROLE_ASSISTANT)
                                 .build()
                         )
                         .createdAt(createdAt)
@@ -252,17 +248,34 @@ public class MessageConverter implements Converter<Message, List<org.springframe
                         .build();
                 parts.add(textMessagePart);
             }
+
+            // Add tool calls if present
+            if (assistantMessage.hasToolCalls()) {
+                for (AssistantMessage.ToolCall toolCall : assistantMessage.getToolCalls()) {
+                    ToolCallMessagePart toolCallMessagePart = ToolCallMessagePart.builder()
+                            .id(messagePartIdProvider.get())
+                            .callId(toolCall.id())
+                            .toolName(toolCall.name())
+                            .arguments(toolCall.arguments())
+                            .status(ToolCallMessagePart.ToolCallStatus.START)
+                            .metadata(MetadataProvider.from(message.getMetadata()))
+                            .createdAt(createdAt)
+                            .updatedAt(updatedAt)
+                            .build();
+                    parts.add(toolCallMessagePart);
+                }
+            }
+
             for (Media media : assistantMessage.getMedia()) {
                 parts.add(convertToMedia(media, MetadataProvider.from(message.getMetadata()), createdAt, updatedAt));
             }
         } else if (message instanceof ToolResponseMessage toolResponseMessage) {
             for (ToolResponseMessage.ToolResponse toolResponse : toolResponseMessage.getResponses()) {
-                ToolCallResultMessagePart toolCallResultMessagePart = ToolCallResultMessagePart.builder()
+                ToolCallMessagePart toolCallResultMessagePart = ToolCallMessagePart.builder()
                         .id(messagePartIdProvider.get())
-                        .toolResponse(new ToolCallResultMessagePart.ToolResponse(
-                                toolResponse.id(),
-                                toolResponse.name(),
-                                toolResponse.responseData()))
+                        .callId(toolResponse.id())
+                        .toolName(toolResponse.name())
+                        .response(toolResponse.responseData())
                         .metadata(MetadataProvider.from(message.getMetadata()))
                         .createdAt(createdAt)
                         .updatedAt(updatedAt)

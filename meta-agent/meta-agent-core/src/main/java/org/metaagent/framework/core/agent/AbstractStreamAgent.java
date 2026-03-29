@@ -206,7 +206,9 @@ public abstract class AbstractStreamAgent<
                     notifyListeners(stepListeners, listener ->
                             listener.onAgentStepError(agent, agentInput, exception, stepContext)
                     );
-                });
+                })
+                .doOnTerminate(() -> stepContext.getLoopCounter().incrementAndGet())
+                .doOnCancel(() -> stepContext.getLoopCounter().incrementAndGet());
         return rebuildOutput(agentInput, agentOutput, stream);
     }
 

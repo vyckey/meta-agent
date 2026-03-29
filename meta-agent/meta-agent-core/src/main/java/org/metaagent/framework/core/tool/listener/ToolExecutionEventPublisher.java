@@ -25,12 +25,11 @@
 package org.metaagent.framework.core.tool.listener;
 
 import org.metaagent.framework.common.json.JsonObjectMapper;
-import org.metaagent.framework.core.agent.Agent;
-import org.metaagent.framework.core.agent.observability.AgentEventBus;
-import org.metaagent.framework.core.agent.observability.event.AgentEvent;
-import org.metaagent.framework.core.agent.observability.event.AgentToolErrorEvent;
-import org.metaagent.framework.core.agent.observability.event.AgentToolRequestEvent;
-import org.metaagent.framework.core.agent.observability.event.AgentToolResponseEvent;
+import org.metaagent.framework.core.agent.MetaAgent;
+import org.metaagent.framework.core.agent.event.AgentEventBus;
+import org.metaagent.framework.core.agent.event.AgentToolErrorEvent;
+import org.metaagent.framework.core.agent.event.AgentToolRequestEvent;
+import org.metaagent.framework.core.agent.event.AgentToolResponseEvent;
 import org.metaagent.framework.core.tool.Tool;
 import org.metaagent.framework.core.tool.ToolContext;
 import org.metaagent.framework.core.tool.exception.ToolExecutionException;
@@ -43,15 +42,15 @@ import java.util.Objects;
  * @author vyckey
  */
 public class ToolExecutionEventPublisher<I, O> implements ToolExecutionListener {
-    private final AgentEventBus<AgentEvent> agentEventBus;
+    private final AgentEventBus agentEventBus;
 
-    public ToolExecutionEventPublisher(AgentEventBus<AgentEvent> agentEventBus) {
+    public ToolExecutionEventPublisher(AgentEventBus agentEventBus) {
         this.agentEventBus = Objects.requireNonNull(agentEventBus, "agentEventBus is required");
     }
 
     @Override
     public void onToolInputRequest(Tool<?, ?> tool, ToolContext toolContext, String input) {
-        Agent<?, ?> agent = toolContext.getAgent();
+        MetaAgent<?, ?> agent = toolContext.getAgent();
         if (agent != null) {
             agentEventBus.publish(new AgentToolRequestEvent(agent, tool, input));
         }
@@ -59,7 +58,7 @@ public class ToolExecutionEventPublisher<I, O> implements ToolExecutionListener 
 
     @Override
     public <I> void onToolException(Tool<I, ?> tool, ToolContext toolContext, I input, ToolExecutionException exception) {
-        Agent<?, ?> agent = toolContext.getAgent();
+        MetaAgent<?, ?> agent = toolContext.getAgent();
         if (agent != null) {
             String inputJson = JsonObjectMapper.CAMEL_CASE.toJson(input);
             agentEventBus.publish(new AgentToolErrorEvent(agent, tool, inputJson, exception));
@@ -68,7 +67,7 @@ public class ToolExecutionEventPublisher<I, O> implements ToolExecutionListener 
 
     @Override
     public void onToolResponse(Tool<?, ?> tool, ToolContext toolContext, String input, String output) {
-        Agent<?, ?> agent = toolContext.getAgent();
+        MetaAgent<?, ?> agent = toolContext.getAgent();
         if (agent != null) {
             agentEventBus.publish(new AgentToolResponseEvent(agent, tool, input, output));
         }
