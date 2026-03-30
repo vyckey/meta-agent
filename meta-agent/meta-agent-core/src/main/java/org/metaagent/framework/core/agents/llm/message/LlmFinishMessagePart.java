@@ -32,7 +32,7 @@ import org.metaagent.framework.core.agent.chat.message.part.AbstractMessagePartB
 import org.metaagent.framework.core.agent.chat.message.part.MessagePart;
 import org.metaagent.framework.core.agent.chat.message.part.MessagePartId;
 import org.metaagent.framework.core.agent.chat.message.part.MessagePartIdValue;
-import org.metaagent.framework.core.agents.chat.model.metadata.TokenUsage;
+import org.metaagent.framework.core.model.chat.metadata.TokenUsage;
 
 import java.time.Instant;
 import java.util.Objects;

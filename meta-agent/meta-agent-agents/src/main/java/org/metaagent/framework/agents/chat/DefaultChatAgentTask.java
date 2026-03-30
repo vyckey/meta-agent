@@ -22,13 +22,11 @@
  * SOFTWARE.
  */
 
-package org.metaagent.framework.core.agents.chat;
+package org.metaagent.framework.agents.chat;
 
 import org.apache.commons.lang3.StringUtils;
-import org.metaagent.framework.core.agent.input.AgentInput;
-import org.metaagent.framework.core.agent.output.AgentOutput;
-import org.metaagent.framework.core.agents.chat.input.ChatInput;
-import org.metaagent.framework.core.agents.chat.output.ChatOutput;
+import org.metaagent.framework.agents.chat.input.ChatAgentInput;
+import org.metaagent.framework.agents.chat.output.ChatAgentOutput;
 
 import java.time.Instant;
 import java.util.Objects;
@@ -42,8 +40,8 @@ import java.util.concurrent.CompletableFuture;
  */
 public record DefaultChatAgentTask(
         String taskId,
-        AgentInput<ChatInput> input,
-        CompletableFuture<AgentOutput<ChatOutput>> outputFuture,
+        ChatAgentInput input,
+        CompletableFuture<ChatAgentOutput> outputFuture,
         Instant startTime
 ) implements ChatAgentTask {
     public DefaultChatAgentTask {
@@ -57,7 +55,7 @@ public record DefaultChatAgentTask(
         }
     }
 
-    public DefaultChatAgentTask(AgentInput<ChatInput> input) {
+    public DefaultChatAgentTask(ChatAgentInput input) {
         this(generateTaskId(), input, new CompletableFuture<>(), Instant.now());
     }
 

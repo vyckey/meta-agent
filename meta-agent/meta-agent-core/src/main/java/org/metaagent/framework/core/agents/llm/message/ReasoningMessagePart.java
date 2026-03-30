@@ -101,6 +101,10 @@ public record ReasoningMessagePart(
         return text;
     }
 
+    public Builder toBuilder() {
+        return new Builder(this);
+    }
+
     public enum ReasoningStatus {
         STARTED,
         PROCESSING,
@@ -112,9 +116,23 @@ public record ReasoningMessagePart(
         private ReasoningStatus status;
         private String text;
 
+        private Builder() {
+        }
+
+        public Builder(ReasoningMessagePart messagePart) {
+            super(messagePart);
+            this.status = messagePart.status;
+            this.text = messagePart.text;
+        }
+
         @Override
         protected Builder self() {
             return this;
+        }
+
+        public Builder status(ReasoningStatus status) {
+            this.status = status;
+            return self();
         }
 
         public Builder started() {

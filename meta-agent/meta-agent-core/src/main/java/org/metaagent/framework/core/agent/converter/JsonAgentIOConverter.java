@@ -28,6 +28,7 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import lombok.Getter;
 import org.metaagent.framework.common.converter.JsonBiConverter;
 import org.metaagent.framework.common.json.JsonSchemaGenerator;
+import org.metaagent.framework.core.agent.input.AgentInput;
 import org.metaagent.framework.core.agent.output.AgentOutput;
 
 import java.lang.reflect.Type;
@@ -38,7 +39,7 @@ import java.lang.reflect.Type;
  * @author vyckey
  */
 @Getter
-public class JsonAgentIOConverter<I, O, S> extends DefaultAgentIOConverter<I, O> {
+public class JsonAgentIOConverter<I extends AgentInput, O extends AgentOutput> extends DefaultAgentIOConverter<I, O> {
 
     public JsonAgentIOConverter(Class<I> inputType, Class<O> outputType) {
         super(
@@ -50,7 +51,7 @@ public class JsonAgentIOConverter<I, O, S> extends DefaultAgentIOConverter<I, O>
                         return inputType;
                     }
                 }),
-                JsonBiConverter.create(new TypeReference<AgentOutput<O>>() {
+                JsonBiConverter.create(new TypeReference<O>() {
                     @Override
                     public Type getType() {
                         return outputType;

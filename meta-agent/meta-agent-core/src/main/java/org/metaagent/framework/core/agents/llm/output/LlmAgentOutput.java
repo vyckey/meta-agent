@@ -22,32 +22,30 @@
  * SOFTWARE.
  */
 
-package org.metaagent.framework.core.agents.llm;
+package org.metaagent.framework.core.agents.llm.output;
 
 import com.google.common.base.Preconditions;
 import org.metaagent.framework.core.agent.chat.message.Message;
-import org.metaagent.framework.core.agent.chat.message.part.MessagePart;
-import org.metaagent.framework.core.agent.output.AgentStreamOutput;
-import org.metaagent.framework.core.agents.chat.model.metadata.TokenUsage;
-import reactor.core.publisher.Flux;
+import org.metaagent.framework.core.agent.output.AgentOutput;
+import org.metaagent.framework.core.agents.llm.LlmAgent;
+import org.metaagent.framework.core.model.chat.metadata.TokenUsage;
 
 /**
  * Output of {@link LlmAgent}.
  *
  * @author vyckey
+ * @see LlmAgent
  */
 public record LlmAgentOutput(
         Message message,
 
-        Flux<MessagePart> stream,
-
         String finishReason,
 
-        TokenUsage tokenUsage)
-        implements AgentStreamOutput<MessagePart> {
+        TokenUsage tokenUsage
+) implements AgentOutput {
     public LlmAgentOutput {
-        Preconditions.checkArgument(message != null, "message cannot be null");
-        Preconditions.checkArgument(tokenUsage != null, "tokenUsage cannot be null");
+        Preconditions.checkArgument(message != null, "message is required");
+        Preconditions.checkArgument(tokenUsage != null, "tokenUsage is required");
     }
 
     public static Builder builder() {
@@ -61,7 +59,6 @@ public record LlmAgentOutput(
 
     public static class Builder {
         private Message message;
-        private Flux<MessagePart> stream;
         private String finishReason;
         private TokenUsage tokenUsage;
 
@@ -70,18 +67,12 @@ public record LlmAgentOutput(
 
         private Builder(LlmAgentOutput agentOutput) {
             this.message = agentOutput.message();
-            this.stream = agentOutput.stream();
             this.finishReason = agentOutput.finishReason();
             this.tokenUsage = agentOutput.tokenUsage();
         }
 
         public Builder message(Message message) {
             this.message = message;
-            return this;
-        }
-
-        public Builder stream(Flux<MessagePart> stream) {
-            this.stream = stream;
             return this;
         }
 
@@ -96,7 +87,7 @@ public record LlmAgentOutput(
         }
 
         public LlmAgentOutput build() {
-            return new LlmAgentOutput(message, stream, finishReason, tokenUsage);
+            return new LlmAgentOutput(message, finishReason, tokenUsage);
         }
     }
 }

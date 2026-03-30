@@ -157,9 +157,9 @@ public abstract class AbstractMetaAgent<I extends AgentInput, O extends AgentOut
 
     @Override
     public O run(I agentInput) {
-        return handleExceptionIfRequired(() -> {
-            I input = preprocess(agentInput);
+        I input = preprocess(agentInput);
 
+        return handleExceptionIfRequired(() -> {
             List<AgentRunListener<I, O>> runListeners = getRunListenerRegistry().getRunListeners();
             try {
                 notifyListeners(runListeners, listener -> listener.onAgentStart(this, input));

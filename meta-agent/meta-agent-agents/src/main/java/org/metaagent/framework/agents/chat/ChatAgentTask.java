@@ -1,7 +1,7 @@
 /*
  * MIT License
  *
- * Copyright (c) 2025 MetaAgent
+ * Copyright (c) 2026 MetaAgent
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -22,45 +22,45 @@
  * SOFTWARE.
  */
 
-package org.metaagent.framework.core.agent.converter;
+package org.metaagent.framework.agents.chat;
 
-import org.metaagent.framework.common.converter.Converter;
-import org.metaagent.framework.core.agent.input.AgentInput;
-import org.metaagent.framework.core.agent.output.AgentOutput;
+import org.metaagent.framework.agents.chat.input.ChatAgentInput;
+import org.metaagent.framework.agents.chat.output.ChatAgentOutput;
+
+import java.time.Instant;
+import java.util.concurrent.CompletableFuture;
 
 /**
- * Agent Input/Output Converter.
+ * {@link ChatAgent} task interface.
  *
- * @param <I> the type of agent input
- * @param <O> the type of agent output
  * @author vyckey
  */
-public interface AgentIOConverter<I extends AgentInput, O extends AgentOutput> {
+public interface ChatAgentTask {
     /**
-     * Get the input schema of the agent.
+     * Gets the task ID.
      *
-     * @return the input schema of the agent.
+     * @return task ID
      */
-    String getInputSchema();
+    String taskId();
 
     /**
-     * Get the output schema of the agent.
+     * Gets the task input.
      *
-     * @return the output schema of the agent.
+     * @return task input
      */
-    String getOutputSchema();
+    ChatAgentInput input();
 
     /**
-     * Get the input converter of the agent.
+     * Gets the async task output.
      *
-     * @return the input converter of the agent.
+     * @return task output
      */
-    Converter<String, I> getInputConverter();
+    CompletableFuture<ChatAgentOutput> outputFuture();
 
     /**
-     * Get the output converter of the agent.
+     * Gets the task start time.
      *
-     * @return the output converter of the agent.
+     * @return task start time
      */
-    Converter<O, String> getOutputConverter();
+    Instant startTime();
 }

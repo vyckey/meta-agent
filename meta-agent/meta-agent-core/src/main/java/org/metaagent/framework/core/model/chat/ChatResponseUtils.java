@@ -26,12 +26,15 @@ package org.metaagent.framework.core.model.chat;
 
 import com.google.common.collect.Lists;
 import org.apache.commons.collections.CollectionUtils;
+import org.apache.commons.collections.MapUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.ai.chat.messages.AssistantMessage;
 import org.springframework.ai.chat.metadata.ChatResponseMetadata;
 import org.springframework.ai.chat.model.ChatResponse;
 import org.springframework.ai.chat.model.Generation;
+import org.springframework.util.ReflectionUtils;
 
+import java.lang.reflect.Field;
 import java.util.List;
 
 /**
@@ -112,5 +115,30 @@ public abstract class ChatResponseUtils {
             builder.keyValue(key, metadata.get(key));
         }
         return builder;
+    }
+
+    public static String getReasoningContent(AssistantMessage message) {
+        String reasoningContent = MapUtils.getString(message.getMetadata(), "reasoningContent");
+        if (StringUtils.isNotEmpty(reasoningContent)) {
+            return reasoningContent;
+        }
+        reasoningContent = MapUtils.getString(message.getMetadata(), "reasoning");
+        if (StringUtils.isNotEmpty(reasoningContent)) {
+            return reasoningContent;
+        }
+        if (AssistantMessage.class.equals(message.getClass())) {
+            return null;
+        }
+        try {
+            Field reasoningField = ReflectionUtils.findField(message.getClass(), "reasoningContent", String.class);
+            if (reasoningField != null) {
+                reasoningField.setAccessible(true);
+                reasoningContent = (String) ReflectionUtils.getField(reasoningField, message);
+            }
+            return reasoningContent;
+        } catch (Exception e) {
+            // Ignore any exception and return null
+            return null;
+        }
     }
 }

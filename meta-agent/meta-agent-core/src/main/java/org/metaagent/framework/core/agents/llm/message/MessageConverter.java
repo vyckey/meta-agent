@@ -24,13 +24,14 @@
 
 package org.metaagent.framework.core.agents.llm.message;
 
-import com.google.common.collect.Maps;
+import com.google.common.collect.ImmutableMap;
 import org.apache.commons.collections.MapUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.metaagent.framework.common.content.MediaResource;
 import org.metaagent.framework.common.converter.Converter;
 import org.metaagent.framework.common.metadata.MapMetadataProvider;
 import org.metaagent.framework.common.metadata.MetadataProvider;
+import org.metaagent.framework.common.util.IdGenerator;
 import org.metaagent.framework.core.agent.chat.message.Message;
 import org.metaagent.framework.core.agent.chat.message.MessageId;
 import org.metaagent.framework.core.agent.chat.message.MessageInfo;
@@ -39,6 +40,7 @@ import org.metaagent.framework.core.agent.chat.message.part.MessagePart;
 import org.metaagent.framework.core.agent.chat.message.part.MessagePartId;
 import org.metaagent.framework.core.agent.chat.message.part.TextMessagePart;
 import org.springframework.ai.chat.messages.AssistantMessage;
+import org.springframework.ai.chat.messages.SystemMessage;
 import org.springframework.ai.chat.messages.ToolResponseMessage;
 import org.springframework.ai.chat.messages.UserMessage;
 import org.springframework.ai.content.Media;
@@ -48,11 +50,10 @@ import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
-import java.util.function.Supplier;
 
 import static org.metaagent.framework.core.agent.chat.message.MessageMetadataKeys.KEY_CREATED_AT;
 import static org.metaagent.framework.core.agent.chat.message.MessageMetadataKeys.KEY_MESSAGE_ID;
+import static org.metaagent.framework.core.agent.chat.message.MessageMetadataKeys.KEY_REASONING_CONTENT;
 import static org.metaagent.framework.core.agent.chat.message.MessageMetadataKeys.KEY_ROLE;
 import static org.metaagent.framework.core.agent.chat.message.MessageMetadataKeys.KEY_UPDATED_AT;
 
@@ -62,32 +63,9 @@ import static org.metaagent.framework.core.agent.chat.message.MessageMetadataKey
  * @author vyckey
  */
 public class MessageConverter implements Converter<Message, List<org.springframework.ai.chat.messages.Message>> {
-    private final Supplier<MessagePartId> messagePartIdProvider;
-    private final boolean cacheEnabled;
-    private final Map<org.springframework.ai.chat.messages.Message, List<MessagePart>> messagePartCache;
-    private final Map<Message, List<org.springframework.ai.chat.messages.Message>> springMessageCache;
-
-    public MessageConverter(Supplier<MessagePartId> messagePartIdProvider,
-                            boolean cacheEnabled) {
-        this.messagePartIdProvider = Objects.requireNonNull(messagePartIdProvider, "messagePartIdProvider is required");
-        this.cacheEnabled = cacheEnabled;
-        this.messagePartCache = cacheEnabled ? Maps.newConcurrentMap() : null;
-        this.springMessageCache = cacheEnabled ? Maps.newConcurrentMap() : null;
-    }
-
-    public MessageConverter(boolean cacheEnabled) {
-        this(MessagePartId::next, cacheEnabled);
-    }
 
     @Override
     public List<org.springframework.ai.chat.messages.Message> convert(Message message) {
-        if (cacheEnabled) {
-            return springMessageCache.computeIfAbsent(message, this::doConvert);
-        }
-        return doConvert(message);
-    }
-
-    private List<org.springframework.ai.chat.messages.Message> doConvert(Message message) {
         List<org.springframework.ai.chat.messages.Message> result = new ArrayList<>();
         List<MessagePart> groupParts = new ArrayList<>();
         for (MessagePart messagePart : message.parts()) {
@@ -128,7 +106,29 @@ public class MessageConverter implements Converter<Message, List<org.springframe
                 .build();
 
         List<org.springframework.ai.chat.messages.Message> messages = new ArrayList<>();
-        if (firstMessagePart instanceof TextMessagePart textMessagePart) {
+        if (firstMessagePart instanceof SystemMessagePart systemMessagePart) {
+            messages.add(SystemMessage.builder()
+                    .text(systemMessagePart.text())
+                    .metadata(systemMessagePart.metadata().union(extendMetadata).getProperties())
+                    .build());
+        } else if (firstMessagePart instanceof ReasoningMessagePart) {
+            for (MessagePart messagePart : messageParts) {
+                if (messagePart instanceof ReasoningMessagePart reasoningPart) {
+                    Map<String, Object> properties = ImmutableMap.<String, Object>builder()
+                            .putAll(reasoningPart.metadata().getProperties())
+                            .putAll(extendMetadata.getProperties())
+                            .put(KEY_REASONING_CONTENT, reasoningPart.text())
+                            .build();
+
+                    messages.add(org.springframework.ai.chat.messages.AssistantMessage.builder()
+                            .content("")
+                            .media(List.of())
+                            .toolCalls(List.of())
+                            .properties(properties)
+                            .build());
+                }
+            }
+        } else if (firstMessagePart instanceof TextMessagePart textMessagePart) {
             List<Media> media = messageParts.subList(1, messageParts.size()).stream()
                     .map(MediaMessagePart.class::cast).map(this::convertMedia).toList();
             if (MessageInfo.ROLE_ASSISTANT.equals(role)) {
@@ -145,7 +145,6 @@ public class MessageConverter implements Converter<Message, List<org.springframe
                         .media(media)
                         .build());
             }
-            return messages;
         } else if (firstMessagePart instanceof ToolCallMessagePart) {
             List<AssistantMessage.ToolCall> toolCalls = new ArrayList<>();
             List<ToolResponseMessage.ToolResponse> toolResponses = new ArrayList<>();
@@ -186,63 +185,65 @@ public class MessageConverter implements Converter<Message, List<org.springframe
                         .metadata(toolResponseMetadata.getProperties())
                         .build());
             }
-            return messages;
         } else if (firstMessagePart instanceof LlmStartMessagePart || firstMessagePart instanceof LlmFinishMessagePart) {
             return messages;
         } else {
             throw new IllegalArgumentException("messageParts cannot be converted");
         }
+        return messages;
     }
 
     private Media convertMedia(MediaResource resource) {
         return Media.builder().mimeType(resource.mimeType()).name(resource.name()).data(resource.data()).build();
     }
 
-    public List<MessagePart> convert(List<org.springframework.ai.chat.messages.Message> messages) {
-        return messages.stream().map(this::convert).flatMap(List::stream).toList();
+    public List<MessagePart> convert(IdGenerator<MessagePartId> partIdGenerator,
+                                     List<org.springframework.ai.chat.messages.Message> messages,
+                                     Map<String, Object> extendMetadata) {
+        return messages.stream()
+                .map(message -> convert(partIdGenerator, messages, extendMetadata))
+                .flatMap(List::stream).toList();
     }
 
-    public List<MessagePart> convert(org.springframework.ai.chat.messages.Message message) {
-        if (cacheEnabled) {
-            return messagePartCache.computeIfAbsent(message, this::doConvert);
-        }
-        return doConvert(message);
-    }
-
-    private List<MessagePart> doConvert(org.springframework.ai.chat.messages.Message message) {
+    public List<MessagePart> convert(IdGenerator<MessagePartId> partIdGenerator,
+                                     org.springframework.ai.chat.messages.Message message,
+                                     Map<String, Object> extendMetadata) {
         final Instant createdAt = MapUtils.getLong(message.getMetadata(), KEY_CREATED_AT) != null
                 ? Instant.ofEpochMilli(MapUtils.getLong(message.getMetadata(), KEY_CREATED_AT)) : Instant.now();
         final Instant updatedAt = MapUtils.getLong(message.getMetadata(), KEY_UPDATED_AT) != null
                 ? Instant.ofEpochMilli(MapUtils.getLong(message.getMetadata(), KEY_UPDATED_AT)) : Instant.now();
 
+        MapMetadataProvider.Builder metadataBuilder = MetadataProvider.builder()
+                .setProperties(message.getMetadata())
+                .setProperties(extendMetadata);
+
         List<MessagePart> parts = new ArrayList<>();
         if (message instanceof UserMessage userMessage) {
             TextMessagePart textMessagePart = TextMessagePart.builder()
-                    .id(messagePartIdProvider.get())
+                    .id(partIdGenerator.nextId())
                     .text(userMessage.getText())
-                    .metadata(MetadataProvider.builder()
-                            .setProperties(userMessage.getMetadata())
-                            .setProperty(KEY_ROLE, MessageInfo.ROLE_USER)
-                            .build()
-                    )
+                    .metadata(metadataBuilder.setProperty(KEY_ROLE, MessageInfo.ROLE_USER).build())
                     .createdAt(createdAt)
                     .updatedAt(updatedAt)
                     .build();
             parts.add(textMessagePart);
             for (Media media : userMessage.getMedia()) {
-                parts.add(convertToMedia(media, MetadataProvider.from(userMessage.getMetadata()), createdAt, updatedAt));
+                MediaMessagePart mediaMessagePart = MediaMessagePart.builder()
+                        .id(partIdGenerator.nextId())
+                        .media(toMediaResource(media))
+                        .metadata(metadataBuilder.setProperty(KEY_ROLE, MessageInfo.ROLE_USER).build())
+                        .createdAt(createdAt)
+                        .updatedAt(updatedAt)
+                        .build();
+                parts.add(mediaMessagePart);
             }
         } else if (message instanceof AssistantMessage assistantMessage) {
             // Always add text content first if present
             if (StringUtils.isNotEmpty(assistantMessage.getText())) {
                 TextMessagePart textMessagePart = TextMessagePart.builder()
-                        .id(messagePartIdProvider.get())
+                        .id(partIdGenerator.nextId())
                         .text(assistantMessage.getText())
-                        .metadata(MetadataProvider.builder()
-                                .setProperties(assistantMessage.getMetadata())
-                                .setProperty(KEY_ROLE, MessageInfo.ROLE_ASSISTANT)
-                                .build()
-                        )
+                        .metadata(metadataBuilder.setProperty(KEY_ROLE, MessageInfo.ROLE_ASSISTANT).build())
                         .createdAt(createdAt)
                         .updatedAt(updatedAt)
                         .build();
@@ -253,12 +254,12 @@ public class MessageConverter implements Converter<Message, List<org.springframe
             if (assistantMessage.hasToolCalls()) {
                 for (AssistantMessage.ToolCall toolCall : assistantMessage.getToolCalls()) {
                     ToolCallMessagePart toolCallMessagePart = ToolCallMessagePart.builder()
-                            .id(messagePartIdProvider.get())
+                            .id(partIdGenerator.nextId())
                             .callId(toolCall.id())
                             .toolName(toolCall.name())
                             .arguments(toolCall.arguments())
                             .status(ToolCallMessagePart.ToolCallStatus.START)
-                            .metadata(MetadataProvider.from(message.getMetadata()))
+                            .metadata(metadataBuilder.setProperty(KEY_ROLE, MessageInfo.ROLE_ASSISTANT).build())
                             .createdAt(createdAt)
                             .updatedAt(updatedAt)
                             .build();
@@ -267,40 +268,49 @@ public class MessageConverter implements Converter<Message, List<org.springframe
             }
 
             for (Media media : assistantMessage.getMedia()) {
-                parts.add(convertToMedia(media, MetadataProvider.from(message.getMetadata()), createdAt, updatedAt));
+                MediaMessagePart mediaMessagePart = MediaMessagePart.builder()
+                        .id(partIdGenerator.nextId())
+                        .media(toMediaResource(media))
+                        .metadata(metadataBuilder.setProperty(KEY_ROLE, MessageInfo.ROLE_ASSISTANT).build())
+                        .createdAt(createdAt)
+                        .updatedAt(updatedAt)
+                        .build();
+                parts.add(mediaMessagePart);
             }
         } else if (message instanceof ToolResponseMessage toolResponseMessage) {
             for (ToolResponseMessage.ToolResponse toolResponse : toolResponseMessage.getResponses()) {
                 ToolCallMessagePart toolCallResultMessagePart = ToolCallMessagePart.builder()
-                        .id(messagePartIdProvider.get())
+                        .id(partIdGenerator.nextId())
                         .callId(toolResponse.id())
                         .toolName(toolResponse.name())
                         .response(toolResponse.responseData())
-                        .metadata(MetadataProvider.from(message.getMetadata()))
+                        .metadata(metadataBuilder.build())
                         .createdAt(createdAt)
                         .updatedAt(updatedAt)
                         .build();
                 parts.add(toolCallResultMessagePart);
             }
+        } else if (message instanceof SystemMessage systemMessage) {
+            SystemMessagePart systemMessagePart = SystemMessagePart.builder()
+                    .id(partIdGenerator.nextId())
+                    .text(systemMessage.getText())
+                    .metadata(metadataBuilder.build())
+                    .createdAt(createdAt)
+                    .build();
+            parts.add(systemMessagePart);
         } else {
             throw new IllegalArgumentException("message cannot be converted: " + message.getClass());
         }
         return parts;
     }
 
-    private MediaMessagePart convertToMedia(Media media, MetadataProvider metadata, Instant createdAt, Instant updatedAt) {
+    private MediaResource toMediaResource(Media media) {
         MediaResource resource;
         if (media.getData() instanceof URI) {
             resource = new MediaResource(media.getMimeType(), (URI) media.getData(), media.getName(), null);
         } else {
             resource = new MediaResource(media.getMimeType(), null, media.getName(), media.getData());
         }
-        return MediaMessagePart.builder()
-                .id(messagePartIdProvider.get())
-                .media(resource)
-                .metadata(metadata)
-                .createdAt(createdAt)
-                .updatedAt(updatedAt)
-                .build();
+        return resource;
     }
 }

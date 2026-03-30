@@ -61,9 +61,10 @@ public interface MetaAgent<I extends AgentInput, O extends AgentOutput> extends 
      * <p>
      * The default implementation is as follows:
      * <pre>
-     * public O run(I input) {
+     * public O run(I agentInput) {
      *     try {
-     *         return step(input);
+     *         C stepContext = createStepContext(agentInput);
+     *         return step(agentInput, stepContext);
      *     } catch (AbortException ex) {
      *         throw new AgentInterruptedException("agent is interrupted", ex);
      *     } catch (AgentExecutionException | AgentInterruptedException ex) {
@@ -88,7 +89,7 @@ public interface MetaAgent<I extends AgentInput, O extends AgentOutput> extends 
      * @return the agent out
      */
     default CompletableFuture<O> runAsync(I agentInput) {
-        return CompletableFuture.supplyAsync(() -> run(agentInput), agentInput.context().getExecutor());
+        return CompletableFuture.supplyAsync(() -> run(agentInput), agentInput.context().executor());
     }
 
     /**

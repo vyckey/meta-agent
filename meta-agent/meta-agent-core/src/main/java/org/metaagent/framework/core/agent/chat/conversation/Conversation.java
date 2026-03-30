@@ -118,6 +118,14 @@ public interface Conversation extends Iterable<Message>, Flushable, Closeable {
     List<Message> lastMessages(int count);
 
     /**
+     * Returns the message with the given ID.
+     *
+     * @param messageId the ID of the message to retrieve
+     * @return the message with the given ID, or empty if no such message exists
+     */
+    Optional<Message> getMessage(MessageId messageId);
+
+    /**
      * Finds all messages on the current branch that match the given predicate.
      * The search can be performed in forward (root to leaf) or reverse (leaf to root) order.
      *

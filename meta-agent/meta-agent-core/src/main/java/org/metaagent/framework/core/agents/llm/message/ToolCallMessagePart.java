@@ -94,6 +94,10 @@ public record ToolCallMessagePart(
         return "";
     }
 
+    public Builder toBuilder() {
+        return new Builder(this);
+    }
+
     @Override
     public String toString() {
         return "ToolCall[" + callId + "] " + toolName + "(" + arguments + ") => " + response;
@@ -116,6 +120,17 @@ public record ToolCallMessagePart(
         @Override
         protected Builder self() {
             return this;
+        }
+
+        private Builder() {
+        }
+
+        public Builder(ToolCallMessagePart messagePart) {
+            super(messagePart);
+            this.callId = messagePart.callId;
+            this.toolName = messagePart.toolName;
+            this.status = messagePart.status;
+            this.arguments = messagePart.arguments;
         }
 
         public Builder callId(String callId) {

@@ -71,13 +71,23 @@ public abstract class AbstractAgent<I extends AgentInput, O extends AgentOutput,
         return new FastFailAgentFallbackStrategy<>();
     }
 
+    /**
+     * Determines whether the agent should continue looping.
+     *
+     * @param agentInput  the agent input
+     * @param agentOutput the agent output which can be null
+     * @param stepContext the agent step context
+     * @return true if the agent should continue looping, false otherwise
+     */
+    protected abstract boolean shouldContinueLoop(I agentInput, O agentOutput, C stepContext);
+
     @Override
     protected O doRun(I agentInput) {
         return handleExceptionIfRequired(() -> {
             C stepContext = createStepContext(agentInput);
 
-            O agentOutput = null;
-            while (shouldContinueLoop(agentInput, agentOutput, stepContext)) {
+            O agentOutput;
+            do {
                 try {
                     agentOutput = step(agentInput, stepContext);
                 } catch (Exception ex) {
@@ -85,14 +95,18 @@ public abstract class AbstractAgent<I extends AgentInput, O extends AgentOutput,
                 } finally {
                     stepContext.getLoopCounter().incrementAndGet();
                 }
-            }
+            } while (shouldContinueLoop(agentInput, agentOutput, stepContext));
             return agentOutput;
         });
     }
 
-    protected C createStepContext(I agentInput) {
-        throw new UnsupportedOperationException("Not implemented");
-    }
+    /**
+     * Creates a new step context for the agent execution.
+     *
+     * @param agentInput the agent input
+     * @return a new step context instance
+     */
+    public abstract C createStepContext(I agentInput);
 
     @Override
     public O step(I agentInput, C stepContext) {

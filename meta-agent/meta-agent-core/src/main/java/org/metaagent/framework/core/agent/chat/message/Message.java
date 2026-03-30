@@ -28,9 +28,11 @@ import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import org.metaagent.framework.common.content.TextContent;
 import org.metaagent.framework.common.metadata.MetadataProvider;
 import org.metaagent.framework.core.agent.chat.message.part.MessagePart;
+import org.metaagent.framework.core.agent.chat.message.part.MessagePartId;
 
 import java.time.format.DateTimeFormatter;
 import java.util.List;
+import java.util.Optional;
 
 /**
  * The message interface represents a message in a chat.
@@ -68,6 +70,16 @@ public interface Message extends TextContent {
     @Override
     default MetadataProvider metadata() {
         return info().metadata();
+    }
+
+    /**
+     * Get the part of the message.
+     *
+     * @param partId the id of the part
+     * @return the part of the message
+     */
+    default Optional<MessagePart> part(MessagePartId partId) {
+        return parts().stream().filter(part -> part.id().equals(partId)).findFirst();
     }
 
     /**

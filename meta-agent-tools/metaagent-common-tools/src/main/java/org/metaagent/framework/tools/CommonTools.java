@@ -38,8 +38,6 @@ import org.metaagent.framework.tools.http.HttpRequestTool;
 import org.metaagent.framework.tools.human.HumanInputTool;
 import org.metaagent.framework.tools.script.engine.ScriptEngineTool;
 import org.metaagent.framework.tools.script.shell.ShellCommandTool;
-import org.metaagent.framework.tools.skill.ListSkillsTool;
-import org.metaagent.framework.tools.skill.LoadSkillTool;
 import org.metaagent.framework.tools.time.GetCurrentTimeTool;
 import org.metaagent.framework.tools.todo.TodoReadTool;
 import org.metaagent.framework.tools.todo.TodoWriteTool;

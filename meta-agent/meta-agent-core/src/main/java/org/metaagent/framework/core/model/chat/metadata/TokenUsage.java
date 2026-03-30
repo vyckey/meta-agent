@@ -22,7 +22,7 @@
  * SOFTWARE.
  */
 
-package org.metaagent.framework.core.agents.chat.model.metadata;
+package org.metaagent.framework.core.model.chat.metadata;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;

@@ -22,19 +22,24 @@
  * SOFTWARE.
  */
 
-package org.metaagent.framework.core.agents.llm;
+package org.metaagent.framework.core.agents.llm.input;
 
 import com.google.common.base.Preconditions;
 import org.apache.commons.collections.CollectionUtils;
+import org.metaagent.framework.common.util.IdGenerator;
 import org.metaagent.framework.core.agent.chat.message.Message;
+import org.metaagent.framework.core.agent.chat.message.MessageId;
+import org.metaagent.framework.core.agent.chat.message.part.MessagePartId;
 import org.metaagent.framework.core.agent.input.AgentInput;
+import org.metaagent.framework.core.agents.llm.LlmStreamingAgent;
+import org.metaagent.framework.core.agents.llm.context.LlmAgentContext;
 import org.metaagent.framework.core.model.ModelId;
 import org.metaagent.framework.core.model.prompt.PromptValue;
 
 import java.util.List;
 
 /**
- * Input of {@link LlmAgent}.
+ * Input of {@link LlmStreamingAgent}.
  *
  * @author vyckey
  */
@@ -42,8 +47,10 @@ public record LlmAgentInput(
         ModelId modelId,
         List<PromptValue> systemPrompts,
         List<Message> messages,
-        Boolean streaming,
+        Boolean thinking,
         Integer maxSteps,
+        IdGenerator<MessageId> messageIdGenerator,
+        IdGenerator<MessagePartId> messagePartIdGenerator,
         LlmAgentContext context
 ) implements AgentInput {
     public LlmAgentInput {
@@ -51,6 +58,18 @@ public record LlmAgentInput(
         systemPrompts = systemPrompts != null ? systemPrompts : List.of();
         Preconditions.checkArgument(CollectionUtils.isNotEmpty(messages), "messages cannot be empty");
         Preconditions.checkArgument(context != null, "context cannot be null");
+        messageIdGenerator = messageIdGenerator != null ? messageIdGenerator : MessageId::next;
+        messagePartIdGenerator = messagePartIdGenerator != null ? messagePartIdGenerator : MessagePartId::next;
+    }
+
+    private LlmAgentInput(Builder builder) {
+        this(
+                builder.modelId,
+                builder.systemPrompts, builder.messages,
+                builder.thinking, builder.maxSteps,
+                builder.messageIdGenerator, builder.messagePartIdGenerator,
+                builder.context
+        );
     }
 
     public static Builder builder() {
@@ -66,8 +85,10 @@ public record LlmAgentInput(
         private ModelId modelId;
         private List<PromptValue> systemPrompts;
         private List<Message> messages;
-        private Boolean streaming;
+        private Boolean thinking;
         private Integer maxSteps;
+        private IdGenerator<MessageId> messageIdGenerator;
+        private IdGenerator<MessagePartId> messagePartIdGenerator;
         private LlmAgentContext context;
 
         private Builder() {
@@ -77,7 +98,7 @@ public record LlmAgentInput(
             this.modelId = input.modelId();
             this.systemPrompts = input.systemPrompts();
             this.messages = input.messages();
-            this.streaming = input.streaming();
+            this.thinking = input.thinking();
             this.maxSteps = input.maxSteps();
             this.context = input.context();
         }
@@ -107,13 +128,23 @@ public record LlmAgentInput(
             return this;
         }
 
-        public Builder streaming(boolean streaming) {
-            this.streaming = streaming;
+        public Builder thinking(boolean thinking) {
+            this.thinking = thinking;
             return this;
         }
 
         public Builder maxSteps(int maxSteps) {
             this.maxSteps = maxSteps;
+            return this;
+        }
+
+        public Builder messageIdGenerator(IdGenerator<MessageId> messageIdGenerator) {
+            this.messageIdGenerator = messageIdGenerator;
+            return this;
+        }
+
+        public Builder messagePartIdGenerator(IdGenerator<MessagePartId> messagePartIdGenerator) {
+            this.messagePartIdGenerator = messagePartIdGenerator;
             return this;
         }
 
@@ -123,7 +154,7 @@ public record LlmAgentInput(
         }
 
         public LlmAgentInput build() {
-            return new LlmAgentInput(modelId, systemPrompts, messages, streaming, maxSteps, context);
+            return new LlmAgentInput(this);
         }
     }
 

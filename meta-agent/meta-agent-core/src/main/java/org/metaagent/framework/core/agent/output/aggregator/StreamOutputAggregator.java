@@ -22,7 +22,7 @@
  * SOFTWARE.
  */
 
-package org.metaagent.framework.core.agent.output;
+package org.metaagent.framework.core.agent.output.aggregator;
 
 import com.google.common.collect.Lists;
 
@@ -30,20 +30,21 @@ import java.util.function.BiFunction;
 import java.util.function.BinaryOperator;
 
 /**
- * Aggregates the stream outputs into the one output.
+ * Aggregates the stream outputs into the one result.
  *
+ * @param <S> the type of the stream output.
+ * @param <R> the type of the aggregated output.
  * @author vyckey
  */
 @FunctionalInterface
-public
-interface StreamAggregator<S, O> {
+public interface StreamOutputAggregator<S, R> {
     /**
      * Aggregate the stream outputs into the output.
      *
      * @param streamOutputs stream outputs
      * @return aggregated output
      */
-    O aggregate(Iterable<S> streamOutputs);
+    R aggregate(Iterable<S> streamOutputs);
 
     /**
      * Create an aggregator that reduces the stream outputs of into an output.
@@ -51,12 +52,13 @@ interface StreamAggregator<S, O> {
      * @param initialOutput the initial output to start with.
      * @param accumulator   the operator to accumulate output and stream output.
      * @param combiner      the binary operator to combine two outputs into an output.
-     * @param <O>           the type of the output.
+     * @param <S>           the type of the stream output.
+     * @param <R>           the type of the aggregated output.
      * @return An aggregator that reduces the stream of outputs into an output.
      */
-    static <S, O> StreamAggregator<S, O> reduce(O initialOutput,
-                                                BiFunction<O, ? super S, O> accumulator,
-                                                BinaryOperator<O> combiner) {
+    static <S, R> StreamOutputAggregator<S, R> reduce(R initialOutput,
+                                                      BiFunction<R, ? super S, R> accumulator,
+                                                      BinaryOperator<R> combiner) {
         return streamOutputs ->
                 Lists.newArrayList(streamOutputs).stream().reduce(initialOutput, accumulator, combiner);
     }
@@ -66,13 +68,14 @@ interface StreamAggregator<S, O> {
      *
      * @param initialOutput the initial output to start with.
      * @param accumulator   the operator to accumulate output and stream output.
-     * @param <O>           the type of the output.
+     * @param <S>           the type of the stream output.
+     * @param <R>           the type of the aggregated output.
      * @return An aggregator that reduces the stream of outputs into a single output.
      */
-    static <S, O> StreamAggregator<S, O> reduce(O initialOutput,
-                                                BiFunction<O, ? super S, O> accumulator) {
+    static <S, R> StreamOutputAggregator<S, R> reduce(R initialOutput,
+                                                      BiFunction<R, ? super S, R> accumulator) {
         return streamOutputs -> {
-            O fullOutput = initialOutput;
+            R fullOutput = initialOutput;
             for (S streamOutput : streamOutputs) {
                 fullOutput = accumulator.apply(fullOutput, streamOutput);
             }

@@ -1,7 +1,7 @@
 /*
  * MIT License
  *
- * Copyright (c) 2025 MetaAgent
+ * Copyright (c) 2026 MetaAgent
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -22,45 +22,35 @@
  * SOFTWARE.
  */
 
-package org.metaagent.framework.core.agent.converter;
+package org.metaagent.framework.core.agent.event;
 
-import org.metaagent.framework.common.converter.Converter;
-import org.metaagent.framework.core.agent.input.AgentInput;
-import org.metaagent.framework.core.agent.output.AgentOutput;
+import org.metaagent.framework.common.event.DefaultEventBus;
+
+import java.util.concurrent.ArrayBlockingQueue;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
 
 /**
- * Agent Input/Output Converter.
+ * DefaultAgentEventBus is a default implementation of the AgentEventBus interface.
  *
- * @param <I> the type of agent input
- * @param <O> the type of agent output
  * @author vyckey
  */
-public interface AgentIOConverter<I extends AgentInput, O extends AgentOutput> {
-    /**
-     * Get the input schema of the agent.
-     *
-     * @return the input schema of the agent.
-     */
-    String getInputSchema();
+public class DefaultAgentEventBus extends DefaultEventBus<AgentEvent, AgentEventListener> implements AgentEventBus {
+    public DefaultAgentEventBus(ExecutorService threadPool) {
+        super(threadPool);
+    }
 
-    /**
-     * Get the output schema of the agent.
-     *
-     * @return the output schema of the agent.
-     */
-    String getOutputSchema();
+    public DefaultAgentEventBus() {
+        super();
+    }
 
-    /**
-     * Get the input converter of the agent.
-     *
-     * @return the input converter of the agent.
-     */
-    Converter<String, I> getInputConverter();
-
-    /**
-     * Get the output converter of the agent.
-     *
-     * @return the output converter of the agent.
-     */
-    Converter<O, String> getOutputConverter();
+    public static DefaultAgentEventBus create(int corePoolSize) {
+        return new DefaultAgentEventBus(new ThreadPoolExecutor(
+                corePoolSize, corePoolSize,
+                60L, TimeUnit.SECONDS,
+                new ArrayBlockingQueue<>(1000),
+                r -> new Thread(r, "AgentEventBus-Thread")
+        ));
+    }
 }

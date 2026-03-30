@@ -41,27 +41,27 @@ public interface AgentContext {
      *
      * @return the agent event bus
      */
-    AgentEventBus getAgentEventBus();
+    AgentEventBus agentEventBus();
 
     /**
      * Gets the abort signal for managing agent execution aborts.
      *
      * @return the abort signal
      */
-    AbortSignal getAbortSignal();
+    AbortSignal abortSignal();
 
     /**
      * Get the executor associated with this agent execution context.
      *
      * @return the executor
      */
-    Executor getExecutor();
+    Executor executor();
 
     /**
      * Create a new builder instance based on this agent execution context.
      *
      * @return a new builder instance
      */
-    <B extends AgentContextBuilder<B>> B toBuilder();
+    AgentContextBuilder<?> toBuilder();
 
 }

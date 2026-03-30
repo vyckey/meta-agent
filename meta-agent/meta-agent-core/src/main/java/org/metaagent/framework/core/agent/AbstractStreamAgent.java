@@ -28,16 +28,18 @@ import org.metaagent.framework.common.abort.AbortException;
 import org.metaagent.framework.core.agent.context.AgentStepContext;
 import org.metaagent.framework.core.agent.exception.AgentExecutionException;
 import org.metaagent.framework.core.agent.exception.AgentInterruptedException;
+import org.metaagent.framework.core.agent.fallback.AgentFallbackStrategy;
+import org.metaagent.framework.core.agent.fallback.FastFailAgentFallbackStrategy;
 import org.metaagent.framework.core.agent.input.AgentInput;
 import org.metaagent.framework.core.agent.listener.AgentRunListener;
 import org.metaagent.framework.core.agent.listener.AgentStepListener;
+import org.metaagent.framework.core.agent.listener.AgentStepListenerRegistry;
+import org.metaagent.framework.core.agent.listener.DefaultAgentListenerRegistry;
 import org.metaagent.framework.core.agent.output.AgentStreamOutput;
 import org.metaagent.framework.core.agent.profile.AgentProfile;
 import reactor.core.publisher.Flux;
 
 import java.util.List;
-import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.atomic.AtomicReference;
 
 /**
  * Abstract {@link StreamingAgent} implementation.
@@ -49,9 +51,12 @@ public abstract class AbstractStreamAgent<
         O extends AgentStreamOutput<S>,
         C extends AgentStepContext,
         S>
-        extends AbstractAgent<I, O, C> implements StreamingAgent<I, O> {
+        extends AbstractMetaAgent<I, O> implements StreamingAgent<I, O, C, S> {
+    protected AgentStepListenerRegistry<I, O, C> stepListenerRegistry;
+
     protected AbstractStreamAgent(String name) {
         super(name);
+        this.stepListenerRegistry = new DefaultAgentListenerRegistry<>();
     }
 
     protected AbstractStreamAgent(AgentProfile profile) {
@@ -60,6 +65,16 @@ public abstract class AbstractStreamAgent<
 
     protected AbstractStreamAgent(AbstractAgentBuilder<?, I, O, C> builder) {
         super(builder);
+        this.stepListenerRegistry = builder.stepListenerRegistry != null
+                ? builder.stepListenerRegistry : new DefaultAgentListenerRegistry<>();
+    }
+
+    public AgentStepListenerRegistry<I, O, C> getStepListenerRegistry() {
+        return stepListenerRegistry;
+    }
+
+    public AgentFallbackStrategy<Agent<I, O, C>, I, O> getFallbackStrategy() {
+        return new FastFailAgentFallbackStrategy<>();
     }
 
     protected Flux<S> handleExceptionIfRequired(Flux<S> stream) {
@@ -84,15 +99,57 @@ public abstract class AbstractStreamAgent<
      * @return the output of the agent
      */
     @Override
-    public O runStream(I input) {
-        AbstractStreamAgent<I, O, C, S> agent = this;
-
+    public O run(I input) {
         I agentInput = preprocess(input);
         C stepContext = createStepContext(agentInput);
+
+        Flux<S> stream = runStream(agentInput, stepContext);
+        return buildAgentOutput(agentInput, stepContext, stream);
+    }
+
+    @Override
+    protected final O doRun(I input) {
+        throw new UnsupportedOperationException("doRun is not supported for streaming agent");
+    }
+
+    /**
+     * Builds the agent output.
+     *
+     * @param agentInput  the agent input
+     * @param stepContext the agent step context
+     * @param stream      the agent stream output
+     * @return the agent output
+     */
+    protected abstract O buildAgentOutput(I agentInput, C stepContext, Flux<S> stream);
+
+    /**
+     * Determines whether the agent should continue looping.
+     *
+     * @param agentInput  the agent input
+     * @param stepContext the agent step context
+     * @return true if the agent should continue looping, false otherwise
+     */
+    protected abstract boolean shouldContinueLoop(I agentInput, C stepContext);
+
+    /**
+     * Fallback while stream execution failed.
+     *
+     * @param agentInput The input for the agent.
+     * @param ex         The exception that caused the fallback.
+     * @return The fallback stream.
+     */
+    protected Flux<S> fallbackStream(I agentInput, Exception ex) {
+        return Flux.error(ex);
+    }
+
+    @Override
+    public Flux<S> runStream(I agentInput, C stepContext) {
+        AbstractStreamAgent<I, O, C, S> agent = this;
+
         List<AgentRunListener<I, O>> runListeners = getRunListenerRegistry().getRunListeners();
 
-        O agentOutput = doRunStream(agentInput, stepContext);
-        Flux<S> stream = agentOutput.stream()
+        Flux<S> stream = doRunStream(agentInput, stepContext);
+        Flux<S> wrappedStream = stream
                 .doOnSubscribe(sub ->
                         notifyListeners(runListeners, listener -> listener.onAgentStart(agent, agentInput))
                 )
@@ -102,7 +159,10 @@ public abstract class AbstractStreamAgent<
                     }
                     return Flux.error(throwable);
                 })
-                .doOnComplete(() -> notifyListeners(runListeners, listener -> listener.onAgentOutput(agent, agentInput, agentOutput)))
+                .doOnComplete(() -> notifyListeners(runListeners, listener -> {
+                    O agentOutput = buildAgentOutput(agentInput, stepContext, stream);
+                    listener.onAgentOutput(agent, agentInput, agentOutput);
+                }))
                 .doOnError(throwable -> {
                     if (throwable instanceof Exception ex) {
                         notifyListeners(runListeners, listener -> listener.onAgentException(agent, agentInput, ex));
@@ -111,8 +171,7 @@ public abstract class AbstractStreamAgent<
                         notifyListeners(runListeners, listener -> listener.onAgentException(agent, agentInput, ex));
                     }
                 });
-        stream = handleExceptionIfRequired(stream);
-        return rebuildOutput(agentInput, agentOutput, stream);
+        return handleExceptionIfRequired(wrappedStream);
     }
 
     /**
@@ -122,61 +181,26 @@ public abstract class AbstractStreamAgent<
      * @param stepContext The step context
      * @return the output of the agent
      */
-    protected O doRunStream(I agentInput, C stepContext) {
-        AtomicReference<I> currentInputRef = new AtomicReference<>(agentInput);
-        AtomicReference<O> lastOutputRef = new AtomicReference<>();
-
-        AtomicBoolean isFirstStep = new AtomicBoolean(true);
-        O firstAgentOutput = stepStream(currentInputRef.get(), stepContext);
-        lastOutputRef.set(firstAgentOutput);
-
-        Flux<S> stream = Flux
-                .defer(() -> {
-                    if (isFirstStep.get()) {
-                        isFirstStep.set(false);
-                        return firstAgentOutput.stream();
+    protected Flux<S> doRunStream(I agentInput, C stepContext) {
+        return stepStream(agentInput, stepContext)
+                .concatWith(Flux.defer(() -> {
+                    if (shouldContinueLoop(agentInput, stepContext)) {
+                        stepContext.getLoopCounter().incrementAndGet();
+                        return stepStream(buildNextInput(agentInput, stepContext), stepContext);
                     } else {
-                        O agentOutput = stepStream(currentInputRef.get(), stepContext);
-                        lastOutputRef.set(agentOutput);
-                        return agentOutput.stream();
+                        return Flux.empty();
                     }
-                })
-                .repeat(() -> {
-                    O lastAgentOutput = lastOutputRef.get();
-                    I currentInput = currentInputRef.get();
-
-                    if (shouldContinueLoop(currentInput, lastAgentOutput, stepContext)) {
-                        // perform next step
-                        I nextInput = buildNextStepInput(currentInput, lastAgentOutput);
-                        currentInputRef.set(nextInput);
-                        return true;
-                    } else {
-                        // stop loop
-                        return false;
-                    }
-                });
-        return rebuildOutput(agentInput, firstAgentOutput, stream);
+                }));
     }
 
     /**
-     * Fallback while stream execution failed.
+     * Builds the next input for the agent.
      *
-     * @param input The input for the agent.
-     * @param ex    The exception that caused the fallback.
-     * @return The fallback stream.
+     * @param agentInput  the agent input
+     * @param stepContext the agent step context
+     * @return the next input
      */
-    protected Flux<S> fallbackStream(I input, Exception ex) {
-        return Flux.error(ex);
-    }
-
-    /**
-     * Builds the next step input for the streaming agent.
-     *
-     * @param agentInput  The current input for the agent.
-     * @param agentOutput The output from the current step.
-     * @return The next step input for the agent.
-     */
-    protected I buildNextStepInput(I agentInput, O agentOutput) {
+    protected I buildNextInput(I agentInput, C stepContext) {
         return agentInput;
     }
 
@@ -186,16 +210,18 @@ public abstract class AbstractStreamAgent<
      * @param agentInput  The input for the agent.
      * @param stepContext The step context for the agent.
      */
-    protected O stepStream(I agentInput, C stepContext) {
-        Agent<I, O, C> agent = this;
+    public Flux<S> stepStream(I agentInput, C stepContext) {
+        MetaAgent<I, O> agent = this;
         List<AgentStepListener<I, O, C>> stepListeners = getStepListenerRegistry().getStepListeners();
 
-        O agentOutput = doStepStream(agentInput, stepContext);
-        Flux<S> stream = agentOutput.stream()
+        Flux<S> stream = doStepStream(agentInput, stepContext);
+        return stream
                 .doOnSubscribe(sub -> notifyListeners(stepListeners, listener ->
                         listener.onAgentStepStart(agent, agentInput, stepContext)))
-                .doOnComplete(() -> notifyListeners(stepListeners, listener ->
-                        listener.onAgentStepFinish(agent, agentInput, agentOutput, stepContext)))
+                .doOnComplete(() -> notifyListeners(stepListeners, listener -> {
+                    O agentOutput = buildAgentOutput(agentInput, stepContext, stream);
+                    listener.onAgentStepFinish(agent, agentInput, agentOutput, stepContext);
+                }))
                 .doOnError(throwable -> {
                     Exception exception;
                     if (throwable instanceof Exception ex) {
@@ -206,10 +232,7 @@ public abstract class AbstractStreamAgent<
                     notifyListeners(stepListeners, listener ->
                             listener.onAgentStepError(agent, agentInput, exception, stepContext)
                     );
-                })
-                .doOnTerminate(() -> stepContext.getLoopCounter().incrementAndGet())
-                .doOnCancel(() -> stepContext.getLoopCounter().incrementAndGet());
-        return rebuildOutput(agentInput, agentOutput, stream);
+                });
     }
 
     /**
@@ -219,16 +242,6 @@ public abstract class AbstractStreamAgent<
      * @param stepContext The step context for the agent.
      * @return The stream output of the agent.
      */
-    protected abstract O doStepStream(I agentInput, C stepContext);
-
-    /**
-     * Rebuilds the output of the agent with the given input, agent output, and stream.
-     *
-     * @param agentInput  The input for the agent.
-     * @param agentOutput The output from the agent.
-     * @param stream      The stream of outputs from the agent.
-     * @return The rebuilt output of the agent.
-     */
-    protected abstract O rebuildOutput(I agentInput, O agentOutput, Flux<S> stream);
+    protected abstract Flux<S> doStepStream(I agentInput, C stepContext);
 
 }

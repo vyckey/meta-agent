@@ -24,45 +24,20 @@
 
 package org.metaagent.framework.core.agents.chat;
 
-import org.metaagent.framework.core.agent.input.AgentInput;
-import org.metaagent.framework.core.agent.output.AgentOutput;
-import org.metaagent.framework.core.agents.chat.input.ChatInput;
-import org.metaagent.framework.core.agents.chat.output.ChatOutput;
+import org.metaagent.framework.common.util.IdGenerator;
+import org.metaagent.framework.core.agent.chat.message.MessageId;
+import org.metaagent.framework.core.agent.chat.message.part.MessagePartId;
+import org.metaagent.framework.core.agent.chat.session.Session;
+import org.metaagent.framework.core.agent.chat.session.SessionId;
 
-import java.time.Instant;
-import java.util.concurrent.CompletableFuture;
+public interface SessionService {
+    default IdGenerator<MessageId> messageIdGenerator() {
+        return MessageId::next;
+    }
 
-/**
- * {@link ChatAgent} task interface.
- *
- * @author vyckey
- */
-public interface ChatAgentTask {
-    /**
-     * Gets the task ID.
-     *
-     * @return task ID
-     */
-    String taskId();
+    default IdGenerator<MessagePartId> messagePartIdGenerator() {
+        return MessagePartId::next;
+    }
 
-    /**
-     * Gets the task input.
-     *
-     * @return task input
-     */
-    AgentInput<ChatInput> input();
-
-    /**
-     * Gets the async task output.
-     *
-     * @return task output
-     */
-    CompletableFuture<AgentOutput<ChatOutput>> outputFuture();
-
-    /**
-     * Gets the task start time.
-     *
-     * @return task start time
-     */
-    Instant startTime();
+    Session getSession(SessionId sessionId);
 }

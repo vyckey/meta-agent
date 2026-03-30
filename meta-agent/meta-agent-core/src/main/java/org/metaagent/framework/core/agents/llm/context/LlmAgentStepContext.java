@@ -22,7 +22,7 @@
  * SOFTWARE.
  */
 
-package org.metaagent.framework.core.agents.llm;
+package org.metaagent.framework.core.agents.llm.context;
 
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
@@ -30,8 +30,9 @@ import org.apache.commons.lang3.StringUtils;
 import org.metaagent.framework.core.agent.chat.message.MessageInfo;
 import org.metaagent.framework.core.agent.chat.message.part.MessagePart;
 import org.metaagent.framework.core.agent.context.AgentStepContext;
-import org.metaagent.framework.core.agents.chat.model.metadata.TokenUsage;
+import org.metaagent.framework.core.agents.llm.LlmStreamingAgent;
 import org.metaagent.framework.core.agents.llm.message.ToolCallMessagePart;
+import org.metaagent.framework.core.model.chat.metadata.TokenUsage;
 import org.springframework.ai.chat.messages.Message;
 import org.springframework.ai.chat.messages.SystemMessage;
 import org.springframework.ai.chat.metadata.Usage;
@@ -44,7 +45,7 @@ import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /**
- * Step context for {@link LlmAgent}, which contains the context for a single step of the agent.
+ * Step context for {@link LlmStreamingAgent}, which contains the context for a single step of the agent.
  *
  * @author vyckey
  */

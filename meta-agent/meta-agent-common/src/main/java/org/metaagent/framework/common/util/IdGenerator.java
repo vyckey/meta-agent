@@ -1,7 +1,7 @@
 /*
  * MIT License
  *
- * Copyright (c) 2025 MetaAgent
+ * Copyright (c) 2026 MetaAgent
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -22,31 +22,20 @@
  * SOFTWARE.
  */
 
-package org.metaagent.framework.core.agents.chat.output;
-
-import org.metaagent.framework.common.metadata.MetadataProvider;
-import org.metaagent.framework.core.agent.chat.message.part.MessagePart;
-import org.metaagent.framework.core.agents.chat.ChatAgent;
+package org.metaagent.framework.common.util;
 
 /**
- * {@link ChatAgent} streaming output.
+ * IdGenerator is an interface for generating unique identifiers.
  *
+ * @param <T> the type of the identifier
  * @author vyckey
  */
-public interface ChatStreamOutput {
+@FunctionalInterface
+public interface IdGenerator<T> {
     /**
-     * Get the streaming message of this agent.
+     * Generates a new unique identifier.
      *
-     * @return the streaming message of this agent
+     * @return the generated identifier
      */
-    MessagePart message();
-
-    /**
-     * Get streaming output metadata.
-     *
-     * @return the streaming output metadata
-     */
-    default MetadataProvider metadata() {
-        return MetadataProvider.empty();
-    }
+    T nextId();
 }

@@ -26,34 +26,28 @@ package org.metaagent.framework.common.metadata;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonValue;
-import com.google.common.collect.Maps;
+import com.google.common.collect.ImmutableMap;
 import lombok.EqualsAndHashCode;
 
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.Hashtable;
 import java.util.Map;
 import java.util.Objects;
-import java.util.TreeMap;
-import java.util.concurrent.ConcurrentHashMap;
 
 /**
- * MapMetadataProvider is a simple implementation of MetadataProvider that uses a Map to store metadata.
- * It allows for easy retrieval, setting, and removal of metadata entries.
+ * ImmutableMapMetadataProvider is an immutable implementation of MetadataProvider that uses an ImmutableMap to store metadata.
  *
  * @author vyckey
  */
 @EqualsAndHashCode(of = "properties")
-public class MapMetadataProvider implements MetadataProvider {
+public class ImmutableMapMetadataProvider implements ImmutableMetadataProvider {
     private final Map<String, Object> properties;
 
     @JsonCreator
-    public MapMetadataProvider(Map<String, Object> properties) {
-        this.properties = Objects.requireNonNull(properties);
+    public ImmutableMapMetadataProvider(ImmutableMap<String, Object> properties) {
+        this.properties = Objects.requireNonNull(properties, "properties cannot be null");
     }
 
-    public MapMetadataProvider() {
-        this(Maps.newHashMap());
+    public ImmutableMapMetadataProvider() {
+        this(ImmutableMap.of());
     }
 
     public static Builder builder() {
@@ -68,7 +62,7 @@ public class MapMetadataProvider implements MetadataProvider {
     @JsonValue
     @Override
     public Map<String, Object> getProperties() {
-        return Collections.unmodifiableMap(properties);
+        return properties;
     }
 
     @Override
@@ -86,52 +80,21 @@ public class MapMetadataProvider implements MetadataProvider {
     }
 
     @Override
-    public MetadataProvider setProperty(String key, Object value) {
-        properties.put(key, value);
-        return this;
-    }
-
-    @Override
-    public void removeProperty(String key) {
-        properties.remove(key);
-    }
-
-    @Override
-    public void clear() {
-        properties.clear();
-    }
-
-    @Override
-    public void merge(MetadataProvider other) {
-        this.properties.putAll(other.getProperties());
-    }
-
-    @Override
     public MetadataProvider union(MetadataProvider other) {
-        return new Builder(getProperties())
+        return new Builder(this)
                 .setProperties(other.getProperties())
                 .build();
     }
 
     @Override
-    public MapMetadataProvider copy() {
-        return new MapMetadataProvider(getProperties());
-    }
-
-    @Override
-    public boolean immutable() {
-        return !(properties instanceof HashMap || properties instanceof ConcurrentHashMap
-                || properties instanceof TreeMap || properties instanceof Hashtable);
+    public ImmutableMapMetadataProvider copy() {
+        return this;
     }
 
 
-    public record Builder(Map<String, Object> metadata) {
+    public record Builder(ImmutableMap.Builder<String, Object> metadataBuilder) {
         private Builder() {
-            this(Maps.newHashMap());
-        }
-
-        public Builder(Map<String, Object> metadata) {
-            this.metadata = Objects.requireNonNull(metadata);
+            this(ImmutableMap.builder());
         }
 
         public Builder(MetadataProvider metadata) {
@@ -140,22 +103,22 @@ public class MapMetadataProvider implements MetadataProvider {
         }
 
         public Builder setProperties(Map<String, Object> metadata) {
-            this.metadata.putAll(metadata);
+            this.metadataBuilder.putAll(metadata);
+            return this;
+        }
+
+        public Builder setProperties(Iterable<? extends Map.Entry<String, Object>> properties) {
+            metadataBuilder.putAll(properties);
             return this;
         }
 
         public Builder setProperty(String key, Object value) {
-            metadata.put(key, value);
+            metadataBuilder.put(key, value);
             return this;
         }
 
-        public Builder removeProperty(String key, Object value) {
-            metadata.remove(key);
-            return this;
-        }
-
-        public MapMetadataProvider build() {
-            return new MapMetadataProvider(metadata);
+        public ImmutableMapMetadataProvider build() {
+            return new ImmutableMapMetadataProvider(metadataBuilder.build());
         }
     }
 }

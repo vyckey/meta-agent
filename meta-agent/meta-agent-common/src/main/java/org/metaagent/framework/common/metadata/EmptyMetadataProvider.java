@@ -38,6 +38,11 @@ public class EmptyMetadataProvider implements ImmutableMetadataProvider, Metadat
     }
 
     @Override
+    public boolean isEmpty() {
+        return true;
+    }
+
+    @Override
     public Map<String, Object> getProperties() {
         return Map.of();
     }
@@ -60,5 +65,20 @@ public class EmptyMetadataProvider implements ImmutableMetadataProvider, Metadat
     @Override
     public EmptyMetadataProvider copy() {
         return INSTANCE;
+    }
+
+    @Override
+    public boolean immutable() {
+        return true;
+    }
+
+    @Override
+    public ImmutableMetadataProvider toImmutable() {
+        return this;
+    }
+
+    @Override
+    public MetadataProvider toMutable() {
+        return MetadataProvider.create();
     }
 }

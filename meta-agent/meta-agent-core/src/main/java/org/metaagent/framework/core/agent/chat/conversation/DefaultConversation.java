@@ -129,7 +129,7 @@ public class DefaultConversation implements Conversation {
     /**
      * Gets a message from cache or loads it from store.
      */
-    private Optional<Message> getMessage(MessageId messageId) {
+    public Optional<Message> getMessage(MessageId messageId) {
         Objects.requireNonNull(messageId, "messageId must not be null");
 
         lock.readLock().lock();

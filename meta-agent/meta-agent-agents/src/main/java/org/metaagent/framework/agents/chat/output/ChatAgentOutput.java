@@ -22,103 +22,79 @@
  * SOFTWARE.
  */
 
-package org.metaagent.framework.core.agents.chat.output;
+package org.metaagent.framework.agents.chat.output;
 
 import org.metaagent.framework.common.metadata.MetadataProvider;
-import org.metaagent.framework.core.agent.chat.message.Message;
+import org.metaagent.framework.core.agent.chat.message.MessageInfo;
 import org.metaagent.framework.core.agent.chat.message.part.MessagePart;
+import org.metaagent.framework.core.agent.output.AgentStreamOutput;
 import reactor.core.publisher.Flux;
 
+import java.util.Objects;
+
 /**
- * Default implementation of {@link ChatOutput}.
+ * Default implementation of {@link ChatAgentOutput}.
  *
  * @author vyckey
  */
-public record DefaultChatOutput(
-        Message message,
+public record ChatAgentOutput(
+        MessageInfo messageInfo,
         Flux<MessagePart> stream,
         MetadataProvider metadata
-) implements ChatOutput {
+) implements AgentStreamOutput<MessagePart> {
 
-    public DefaultChatOutput {
-        if (message == null && stream == null) {
-            throw new IllegalArgumentException("message or stream is required");
-        }
+    public ChatAgentOutput {
+        Objects.requireNonNull(messageInfo, "messageInfo is required");
+        Objects.requireNonNull(stream, "stream is required");
         if (metadata == null) {
             metadata = MetadataProvider.empty();
         }
     }
 
-    public DefaultChatOutput(Message message) {
-        this(message, null, MetadataProvider.empty());
-    }
-
-    public DefaultChatOutput(Flux<MessagePart> stream) {
-        this(null, stream, MetadataProvider.empty());
-    }
-
-    public DefaultChatOutput(Builder builder) {
-        this(builder.message, builder.stream, builder.metadata);
+    public ChatAgentOutput(Builder builder) {
+        this(builder.messageInfo, builder.stream, builder.metadata);
     }
 
     public static Builder builder() {
         return new Builder();
     }
 
-    public static Builder builder(ChatOutput chatOutput) {
-        return new Builder(chatOutput);
+    public static Builder builder(ChatAgentOutput chatAgentOutput) {
+        return new Builder(chatAgentOutput);
     }
 
-    @Override
-    public Flux<MessagePart> stream() {
-        return stream;
-    }
 
-    @Override
-    public String toString() {
-        StringBuilder sb = new StringBuilder("DefaultChatOutput{");
-        if (stream != null) {
-            return sb.append("stream=true").append("}").toString();
-        }
-        sb.append("\nmessages:\n").append(message.content());
-        return sb.append("\n}").toString();
-    }
-
-    public static class Builder implements ChatOutput.Builder {
-        private Message message;
+    public static class Builder {
+        private MessageInfo messageInfo;
         private Flux<MessagePart> stream;
         private MetadataProvider metadata;
 
         private Builder() {
         }
 
-        private Builder(ChatOutput chatOutput) {
-            this.message = chatOutput.message();
-            this.stream = chatOutput.stream();
-            this.metadata = chatOutput.metadata();
+        private Builder(ChatAgentOutput chatAgentOutput) {
+            this.messageInfo = chatAgentOutput.messageInfo();
+            this.stream = chatAgentOutput.stream();
+            this.metadata = chatAgentOutput.metadata();
         }
 
-        @Override
-        public Builder message(Message message) {
-            this.message = message;
+        public Builder messageInfo(MessageInfo messageInfo) {
+            this.messageInfo = messageInfo;
             return this;
         }
 
-        @Override
         public Builder stream(Flux<MessagePart> stream) {
             this.stream = stream;
             return this;
         }
 
-        @Override
         public Builder metadata(MetadataProvider metadata) {
             this.metadata = metadata;
             return this;
         }
 
-        @Override
-        public DefaultChatOutput build() {
-            return new DefaultChatOutput(this);
+        public ChatAgentOutput build() {
+            return new ChatAgentOutput(this);
         }
     }
 

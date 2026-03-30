@@ -24,6 +24,7 @@
 
 package org.metaagent.framework.core.agent;
 
+import org.apache.commons.lang3.NotImplementedException;
 import org.metaagent.framework.common.abort.AbortException;
 import org.metaagent.framework.core.agent.context.AgentStepContext;
 import org.metaagent.framework.core.agent.exception.AgentExecutionException;
@@ -51,12 +52,14 @@ public interface Agent<I extends AgentInput, O extends AgentOutput, C extends Ag
     /**
      * Determines whether the agent should continue looping.
      *
-     * @param input       the input
-     * @param output      the output which can be null
+     * @param agentInput  the agent input
+     * @param agentOutput the agent output which can be null
      * @param stepContext the agent step context
      * @return true if the agent should continue looping, false otherwise
      */
-    boolean shouldContinueLoop(I input, O output, C stepContext);
+    private boolean shouldContinueLoop(I agentInput, O agentOutput, C stepContext) {
+        throw new NotImplementedException("Not implemented");
+    }
 
     /**
      * The agent will execute a loop step until the agent should exit.
@@ -66,10 +69,10 @@ public interface Agent<I extends AgentInput, O extends AgentOutput, C extends Ag
      */
     @Override
     default O run(I agentInput) {
-        O agentOutput = null;
+        O agentOutput;
         try {
             C stepContext = createStepContext(agentInput);
-            while (shouldContinueLoop(agentInput, agentOutput, stepContext)) {
+            do {
                 try {
                     agentOutput = step(agentInput, stepContext);
                 } catch (Exception ex) {
@@ -77,7 +80,7 @@ public interface Agent<I extends AgentInput, O extends AgentOutput, C extends Ag
                 } finally {
                     stepContext.getLoopCounter().incrementAndGet();
                 }
-            }
+            } while (shouldContinueLoop(agentInput, agentOutput, stepContext));
         } catch (AbortException ex) {
             throw new AgentInterruptedException("agent is interrupted", ex);
         } catch (AgentExecutionException | AgentInterruptedException ex) {
@@ -90,15 +93,11 @@ public interface Agent<I extends AgentInput, O extends AgentOutput, C extends Ag
 
     /**
      * Creates a new step context for the agent execution.
-     * This is an internal method and should not be called by users.
-     * Subclasses must implement this to provide their specific context.
      *
      * @param agentInput the agent input
      * @return a new step context instance
      */
-    private C createStepContext(I agentInput) {
-        throw new UnsupportedOperationException("Not implemented");
-    }
+    C createStepContext(I agentInput);
 
     /**
      * Performs an agent step execution.

@@ -1,7 +1,7 @@
 /*
  * MIT License
  *
- * Copyright (c) 2025 MetaAgent
+ * Copyright (c) 2026 MetaAgent
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -22,45 +22,33 @@
  * SOFTWARE.
  */
 
-package org.metaagent.framework.core.agent.converter;
+package org.metaagent.framework.core.agent.output.aggregator;
 
-import org.metaagent.framework.common.converter.Converter;
-import org.metaagent.framework.core.agent.input.AgentInput;
-import org.metaagent.framework.core.agent.output.AgentOutput;
+import org.metaagent.framework.core.agent.chat.message.part.MessagePart;
+
+import java.util.List;
 
 /**
- * Agent Input/Output Converter.
+ * StreamMessageAggregator is an interface for aggregating stream messages into merged messages.
  *
- * @param <I> the type of agent input
- * @param <O> the type of agent output
  * @author vyckey
  */
-public interface AgentIOConverter<I extends AgentInput, O extends AgentOutput> {
+public interface StreamMessageAggregator extends StreamOutputAggregator<MessagePart, List<MessagePart>> {
     /**
-     * Get the input schema of the agent.
+     * Aggregates the stream messages into the merged message.
      *
-     * @return the input schema of the agent.
+     * @param streamOutputs the stream messages to aggregate.
+     * @return the merged messages.
      */
-    String getInputSchema();
+    @Override
+    List<MessagePart> aggregate(Iterable<MessagePart> streamOutputs);
 
     /**
-     * Get the output schema of the agent.
+     * Checks if the given message can be merged with the pending messages.
      *
-     * @return the output schema of the agent.
+     * @param message         the message to check.
+     * @param pendingMessages the pending messages.
+     * @return true if the message can be merged with the pending messages, false otherwise.
      */
-    String getOutputSchema();
-
-    /**
-     * Get the input converter of the agent.
-     *
-     * @return the input converter of the agent.
-     */
-    Converter<String, I> getInputConverter();
-
-    /**
-     * Get the output converter of the agent.
-     *
-     * @return the output converter of the agent.
-     */
-    Converter<O, String> getOutputConverter();
+    boolean canAggregateWith(MessagePart message, List<MessagePart> pendingMessages);
 }
