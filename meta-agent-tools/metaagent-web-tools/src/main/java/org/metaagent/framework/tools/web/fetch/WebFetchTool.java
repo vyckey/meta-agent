@@ -43,8 +43,8 @@ import org.metaagent.framework.core.tool.ToolContext;
 import org.metaagent.framework.core.tool.converter.ToolConverter;
 import org.metaagent.framework.core.tool.converter.ToolConverters;
 import org.metaagent.framework.core.tool.definition.ToolDefinition;
-import org.metaagent.framework.core.tool.exception.ToolExecutionException;
 import org.metaagent.framework.core.tool.exception.ToolArgumentException;
+import org.metaagent.framework.core.tool.exception.ToolExecutionException;
 import org.metaagent.framework.tools.web.utils.WebPageUtils;
 import org.springframework.ai.chat.messages.Message;
 import org.springframework.ai.chat.messages.SystemMessage;
@@ -224,7 +224,7 @@ public class WebFetchTool implements Tool<WebFetchInput, WebFetchOutput> {
         }
 
         List<Message> messages = List.of(
-                new SystemMessage(systemPrompt.toString()),
+                new SystemMessage(systemPrompt.text()),
                 new UserMessage(contentBuilder.toString()),
                 new UserMessage(prompt)
         );

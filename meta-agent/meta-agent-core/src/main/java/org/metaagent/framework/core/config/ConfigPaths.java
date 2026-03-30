@@ -24,11 +24,11 @@
 
 package org.metaagent.framework.core.config;
 
-import org.metaagent.framework.common.ignorefile.GitUtils;
+import org.apache.commons.lang3.StringUtils;
 
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.Objects;
-import java.util.Optional;
 
 /**
  * ConfigPaths represents the paths for configuration files.
@@ -36,47 +36,47 @@ import java.util.Optional;
  * @author vyckey
  */
 public record ConfigPaths(
+        String appName,
         Path globalConfigPath,
-        Path userConfigPath,
-        Path projectConfigPath,
-        Path currentWorkingDirectory
+        Path userConfigPath
 ) {
     public ConfigPaths {
+        Objects.requireNonNull(appName, "app name is required");
         Objects.requireNonNull(globalConfigPath, "global config path is required");
         Objects.requireNonNull(userConfigPath, "user config path is required");
-        Objects.requireNonNull(currentWorkingDirectory, "current working directory is required");
         globalConfigPath = globalConfigPath.toAbsolutePath().normalize();
         userConfigPath = userConfigPath.toAbsolutePath().normalize();
-        currentWorkingDirectory = currentWorkingDirectory.toAbsolutePath().normalize();
+    }
 
-        if (projectConfigPath != null) {
-            projectConfigPath = projectConfigPath.toAbsolutePath().normalize();
+    public static ConfigPaths build(String app) {
+        String os = System.getProperty("os.name").toLowerCase();
+        if (os.contains("win")) {
+            String global = StringUtils.isNotEmpty(System.getenv("PROGRAMDATA"))
+                    ? System.getenv("PROGRAMDATA") : System.getProperty("user.home");
+            String home = StringUtils.isNotEmpty(System.getenv("APPDATA"))
+                    ? System.getenv("APPDATA") : System.getProperty("user.home");
+            return new ConfigPaths(
+                    app,
+                    Paths.get(global, app),
+                    Paths.get(home, app)
+            );
         } else {
-            Optional<Path> rootPath = GitUtils.findGitRootPath(currentWorkingDirectory);
-            if (rootPath.isPresent()) {
-                projectConfigPath = rootPath.get();
-            }
+            String home = StringUtils.isNotEmpty(System.getenv("XDG_CONFIG_HOME"))
+                    ? System.getenv("XDG_CONFIG_HOME") : System.getProperty("user.home");
+            return new ConfigPaths(
+                    app,
+                    Paths.get("/etc", app),
+                    Paths.get(home, ".config", app)
+            );
         }
     }
 
-    public static Path defaultWorkingDirectory() {
-        if (System.getProperty("CWD") != null) {
-            return Path.of(System.getProperty("CWD")).toAbsolutePath();
-        } else {
-            return Path.of(".").toAbsolutePath().normalize();
-        }
+    public static ConfigPaths get() {
+        return build("meta-agent");
     }
 
-    public static ConfigPaths from(String appName, Path projectPath, Path currentWorkingDirectory) {
-        return new ConfigPaths(
-                Path.of("/etc/" + appName + "/"),
-                Path.of("~/." + appName + "/"),
-                projectPath,
-                currentWorkingDirectory
-        );
-    }
-
-    public static ConfigPaths newDefault() {
-        return from("meta-agent", null, defaultWorkingDirectory());
+    public Path projectConfigPath(WorkspaceConfig workspaceConfig) {
+        Path projectDirectory = workspaceConfig.projectDirectory();
+        return projectDirectory == null ? null : projectDirectory.resolve("." + appName);
     }
 }

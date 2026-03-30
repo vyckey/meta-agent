@@ -25,7 +25,9 @@
 package org.metaagent.framework.core.tool;
 
 import org.metaagent.framework.common.abort.AbortSignal;
-import org.metaagent.framework.core.agent.Agent;
+import org.metaagent.framework.core.agent.MetaAgent;
+import org.metaagent.framework.core.agent.input.AgentInput;
+import org.metaagent.framework.core.agent.output.AgentOutput;
 import org.metaagent.framework.core.security.SecurityLevel;
 import org.metaagent.framework.core.security.approval.PermissionApproval;
 import org.metaagent.framework.core.security.approval.PermissionApprovalManager;
@@ -63,7 +65,8 @@ public interface ToolContext {
      *
      * @return the agent
      */
-    <I, O> Agent<I, O> getAgent();
+    <I extends AgentInput, O extends AgentOutput>
+    MetaAgent<I, O> getAgent();
 
     /**
      * Gets the tool execution configuration.
@@ -78,7 +81,7 @@ public interface ToolContext {
      * @return the working directory
      */
     default Path getWorkingDirectory() {
-        return getToolExecutionConfig().configPaths().currentWorkingDirectory();
+        return getToolExecutionConfig().workspaceConfig().workingDirectory();
     }
 
     /**
@@ -124,6 +127,13 @@ public interface ToolContext {
      */
     void setExecutionId(String executionId);
 
+    /**
+     * Creates a new builder based on the current ToolContext instance.
+     *
+     * @return a new ToolContext builder
+     */
+    Builder toBuilder();
+
 
     /**
      * Builder interface for constructing ToolContext instances.
@@ -135,7 +145,7 @@ public interface ToolContext {
          * @param agent the agent
          * @return the builder instance
          */
-        Builder agent(Agent<?, ?> agent);
+        Builder agent(MetaAgent<?, ?> agent);
 
         /**
          * Sets the tool execution configuration for the tool context.

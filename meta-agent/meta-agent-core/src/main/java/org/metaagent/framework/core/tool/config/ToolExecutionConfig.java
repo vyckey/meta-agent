@@ -25,6 +25,7 @@
 package org.metaagent.framework.core.tool.config;
 
 import org.metaagent.framework.core.config.ConfigPaths;
+import org.metaagent.framework.core.config.WorkspaceConfig;
 
 import java.util.List;
 import java.util.Set;
@@ -42,6 +43,13 @@ public interface ToolExecutionConfig {
      * @return the configuration paths
      */
     ConfigPaths configPaths();
+
+    /**
+     * Return the workspace configuration.
+     *
+     * @return the workspace configuration
+     */
+    WorkspaceConfig workspaceConfig();
 
     /**
      * Return the set of allowed tools.
