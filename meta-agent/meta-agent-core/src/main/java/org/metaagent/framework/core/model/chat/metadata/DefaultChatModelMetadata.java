@@ -49,6 +49,11 @@ public class DefaultChatModelMetadata extends ClassMetadataProvider implements C
     }
 
     @Override
+    public boolean isEmpty() {
+        return false;
+    }
+
+    @Override
     public Instant getCutOffDate() {
         return cutOffDay;
     }

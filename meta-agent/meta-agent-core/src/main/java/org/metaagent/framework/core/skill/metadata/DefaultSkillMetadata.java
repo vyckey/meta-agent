@@ -67,6 +67,11 @@ public class DefaultSkillMetadata extends ClassMetadataProvider implements Skill
     }
 
     @Override
+    public boolean isEmpty() {
+        return false;
+    }
+
+    @Override
     public String name() {
         return name;
     }

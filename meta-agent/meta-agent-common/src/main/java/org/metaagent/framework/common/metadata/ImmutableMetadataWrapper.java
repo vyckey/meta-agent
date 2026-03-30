@@ -50,6 +50,11 @@ public class ImmutableMetadataWrapper implements ImmutableMetadataProvider {
         this(new MapMetadataProvider(properties));
     }
 
+    @Override
+    public boolean isEmpty() {
+        return metadata.isEmpty();
+    }
+
     @JsonValue
     @Override
     public Map<String, Object> getProperties() {

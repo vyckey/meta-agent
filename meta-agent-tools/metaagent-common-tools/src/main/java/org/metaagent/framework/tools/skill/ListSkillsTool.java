@@ -35,6 +35,7 @@ import org.metaagent.framework.core.tool.definition.ToolDefinition;
 import org.metaagent.framework.core.tool.exception.ToolExecutionException;
 
 import java.util.List;
+import java.util.Objects;
 
 /**
  * Tool to list all available skills.
@@ -53,6 +54,11 @@ public class ListSkillsTool implements Tool<ListSkillsInput, ListSkillOutput> {
             .build();
     private static final ToolConverter<ListSkillsInput, ListSkillOutput> TOOL_CONVERTER =
             ToolConverters.jsonConverter(ListSkillsInput.class);
+    private final SkillManager skillManager;
+
+    public ListSkillsTool(SkillManager skillManager) {
+        this.skillManager = Objects.requireNonNull(skillManager, "skillManager cannot be null");
+    }
 
     @Override
     public ToolDefinition getDefinition() {
@@ -66,7 +72,6 @@ public class ListSkillsTool implements Tool<ListSkillsInput, ListSkillOutput> {
 
     @Override
     public ListSkillOutput run(ToolContext toolContext, ListSkillsInput input) throws ToolExecutionException {
-        SkillManager skillManager = toolContext.getAgent().getSkillManager();
         List<SkillMetadata> skillMetadata = skillManager.listSkills();
 
         List<ListSkillOutput.SkillMetadata> skillList = skillMetadata.stream()

@@ -43,7 +43,7 @@ class MetadataProviderTest {
         MapMetadataProvider metadata2 = JsonObjectMapper.CAMEL_CASE.fromJson(json, MapMetadataProvider.class);
         assertEquals(metadata, metadata2);
 
-        ImmutableMetadataProvider metadata3 = metadata.immutable();
+        ImmutableMetadataProvider metadata3 = metadata.toImmutable();
         String json2 = JsonObjectMapper.CAMEL_CASE.toJson(metadata3);
         ImmutableMetadataWrapper metadata4 = JsonObjectMapper.CAMEL_CASE.fromJson(json2, ImmutableMetadataWrapper.class);
         assertEquals(metadata3, metadata4);
@@ -86,6 +86,11 @@ class MetadataProviderTest {
 
         void setDescription(String description) {
             this.description = description != null ? description.trim() : "";
+        }
+
+        @Override
+        public boolean isEmpty() {
+            return false;
         }
 
         @Override

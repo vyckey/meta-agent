@@ -38,8 +38,6 @@ import org.metaagent.framework.tools.http.HttpRequestTool;
 import org.metaagent.framework.tools.human.HumanInputTool;
 import org.metaagent.framework.tools.script.engine.ScriptEngineTool;
 import org.metaagent.framework.tools.script.shell.ShellCommandTool;
-import org.metaagent.framework.tools.skill.ListSkillsTool;
-import org.metaagent.framework.tools.skill.LoadSkillTool;
 import org.metaagent.framework.tools.time.GetCurrentTimeTool;
 import org.metaagent.framework.tools.todo.TodoReadTool;
 import org.metaagent.framework.tools.todo.TodoWriteTool;
@@ -70,8 +68,6 @@ public enum CommonTools {
     HTTP_REQUEST_TOOL(HttpRequestTool.TOOL_NAME, HttpRequestTool::new),
     HUMAN_INPUT_TOOL(HumanInputTool.TOOL_NAME, HumanInputTool::new),
     SCRIPT_ENGINE_TOOL(ScriptEngineTool.TOOL_NAME, ScriptEngineTool::new),
-    LIST_SKILLS_TOOL(ListSkillsTool.TOOL_NAME, ListSkillsTool::new),
-    LOAD_SKILL_TOOL(LoadSkillTool.TOOL_NAME, LoadSkillTool::new),
     ;
 
     private static volatile Toolkit toolkit;
