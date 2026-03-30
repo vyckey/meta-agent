@@ -1,7 +1,7 @@
 /*
  * MIT License
  *
- * Copyright (c) 2025 MetaAgent
+ * Copyright (c) 2026 MetaAgent
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -22,32 +22,40 @@
  * SOFTWARE.
  */
 
-package org.metaagent.framework.core.model.prompt;
-
-import org.metaagent.framework.core.agent.chat.message.Message;
-
-import java.util.List;
-import java.util.Objects;
-import java.util.stream.Collectors;
+package org.metaagent.framework.core.model.chat.config;
 
 /**
- * Represents a chat prompt value containing a list of messages.
- * This class is used to encapsulate the messages that will be sent in a chat context.
+ * Configuration for a model API.
  *
- * @param messages the list of messages in the chat prompt
  * @author vyckey
  */
-public record ChatPromptValue(List<Message> messages) implements PromptValue {
-    public ChatPromptValue {
-        Objects.requireNonNull(messages, "messages cannot be null");
+public record ModelApiConfig(
+        String baseUrl,
+        String apiKey
+) {
+    public static Builder builder() {
+        return new Builder();
     }
 
-    public ChatPromptValue(Message... messages) {
-        this(List.of(messages));
-    }
+    /**
+     * Builder for {@link ModelApiConfig} to support fluent construction.
+     */
+    public static final class Builder {
+        private String baseUrl;
+        private String apiKey;
 
-    @Override
-    public String text() {
-        return messages.stream().map(Message::toString).collect(Collectors.joining("\n"));
+        public Builder baseUrl(String baseUrl) {
+            this.baseUrl = baseUrl;
+            return this;
+        }
+
+        public Builder apiKey(String apiKey) {
+            this.apiKey = apiKey;
+            return this;
+        }
+
+        public ModelApiConfig build() {
+            return new ModelApiConfig(baseUrl, apiKey);
+        }
     }
 }

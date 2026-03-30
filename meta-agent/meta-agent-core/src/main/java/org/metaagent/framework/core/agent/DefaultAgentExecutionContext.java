@@ -164,7 +164,7 @@ public class DefaultAgentExecutionContext implements AgentExecutionContext {
                 executor = Executors.newSingleThreadExecutor();
             }
             if (configPaths == null) {
-                configPaths = ConfigPaths.newDefault();
+                configPaths = ConfigPaths.get();
             }
         }
 

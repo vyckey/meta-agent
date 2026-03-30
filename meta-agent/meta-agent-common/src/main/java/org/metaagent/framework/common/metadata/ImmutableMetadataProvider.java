@@ -24,12 +24,34 @@
 
 package org.metaagent.framework.common.metadata;
 
+import java.util.Map;
+
 /**
  * Immutable Metadata Provider
  *
  * @author vyckey
  */
 public interface ImmutableMetadataProvider extends MetadataProvider {
+
+    /**
+     * Creates a ImmutableMetadataProvider from the given properties map.
+     *
+     * @param properties the properties map.
+     * @return a ImmutableMetadataProvider instance containing the given properties.
+     */
+    static ImmutableMetadataProvider from(Map<String, Object> properties) {
+        return builder().setProperties(properties).build();
+    }
+
+    /**
+     * Creates a {@code MapMetadataProvider} builder.
+     *
+     * @return a MapMetadataProvider builder instance.
+     */
+    static ImmutableMapMetadataProvider.Builder builder() {
+        return ImmutableMapMetadataProvider.builder();
+    }
+
     @Override
     default MetadataProvider setProperty(String key, Object value) {
         throw new UnsupportedOperationException("Not supported operation for immutable metadata");
@@ -48,5 +70,15 @@ public interface ImmutableMetadataProvider extends MetadataProvider {
     @Override
     default void clear() {
         throw new UnsupportedOperationException("Not supported operation for immutable metadata");
+    }
+
+    @Override
+    default boolean immutable() {
+        return true;
+    }
+
+    @Override
+    default ImmutableMetadataProvider toImmutable() {
+        return this;
     }
 }

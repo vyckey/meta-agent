@@ -1,7 +1,7 @@
 /*
  * MIT License
  *
- * Copyright (c) 2025 MetaAgent
+ * Copyright (c) 2026 MetaAgent
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -22,32 +22,38 @@
  * SOFTWARE.
  */
 
-package org.metaagent.framework.core.model.prompt;
+package org.metaagent.framework.core.config;
 
-import org.metaagent.framework.core.agent.chat.message.Message;
+import org.metaagent.framework.common.ignorefile.GitUtils;
 
-import java.util.List;
+import java.nio.file.Path;
 import java.util.Objects;
-import java.util.stream.Collectors;
 
 /**
- * Represents a chat prompt value containing a list of messages.
- * This class is used to encapsulate the messages that will be sent in a chat context.
+ * Workspace configuration.
  *
- * @param messages the list of messages in the chat prompt
  * @author vyckey
  */
-public record ChatPromptValue(List<Message> messages) implements PromptValue {
-    public ChatPromptValue {
-        Objects.requireNonNull(messages, "messages cannot be null");
+public record WorkspaceConfig(
+        Path projectDirectory,
+        Path workingDirectory
+) {
+    public WorkspaceConfig {
+        Objects.requireNonNull(workingDirectory, "current working directory is required");
+        if (projectDirectory == null) {
+            projectDirectory = GitUtils.findGitRootPath(workingDirectory).orElse(null);
+        }
     }
 
-    public ChatPromptValue(Message... messages) {
-        this(List.of(messages));
+    public static WorkspaceConfig newDefault() {
+        return new WorkspaceConfig(null, defaultWorkingDirectory());
     }
 
-    @Override
-    public String text() {
-        return messages.stream().map(Message::toString).collect(Collectors.joining("\n"));
+    public static Path defaultWorkingDirectory() {
+        if (System.getProperty("CWD") != null) {
+            return Path.of(System.getProperty("CWD")).toAbsolutePath();
+        } else {
+            return Path.of(".").toAbsolutePath().normalize();
+        }
     }
 }

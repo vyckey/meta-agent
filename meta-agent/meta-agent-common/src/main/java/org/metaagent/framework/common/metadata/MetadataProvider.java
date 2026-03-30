@@ -64,6 +64,16 @@ public interface MetadataProvider {
     }
 
     /**
+     * Copies a MetadataProvider from the given properties map.
+     *
+     * @param properties the properties map.
+     * @return a MetadataProvider instance containing the given properties.
+     */
+    static MetadataProvider copy(Map<String, Object> properties) {
+        return builder().setProperties(properties).build();
+    }
+
+    /**
      * Creates a {@code MapMetadataProvider} builder.
      *
      * @return a MapMetadataProvider builder instance.
@@ -71,6 +81,13 @@ public interface MetadataProvider {
     static MapMetadataProvider.Builder builder() {
         return MapMetadataProvider.builder();
     }
+
+    /**
+     * Checks if this MetadataProvider is empty.
+     *
+     * @return true if this MetadataProvider is empty, false otherwise.
+     */
+    boolean isEmpty();
 
     /**
      * Gets all metadata as a map.
@@ -154,4 +171,34 @@ public interface MetadataProvider {
      * @return a copy of this MetadataProvider.
      */
     MetadataProvider copy();
+
+    /**
+     * Checks if this MetadataProvider is immutable.
+     *
+     * @return true if this MetadataProvider is immutable, false otherwise.
+     */
+    default boolean immutable() {
+        return this instanceof ImmutableMetadataProvider;
+    }
+
+    /**
+     * Converts this MetadataProvider to an immutable one.
+     *
+     * @return an immutable MetadataProvider instance.
+     */
+    default ImmutableMetadataProvider toImmutable() {
+        if (this instanceof ImmutableMetadataProvider immutableMetadata) {
+            return immutableMetadata;
+        }
+        return new ImmutableMetadataWrapper(this);
+    }
+
+    /**
+     * Converts this MetadataProvider to a mutable one.
+     *
+     * @return a mutable MetadataProvider instance.
+     */
+    default MetadataProvider toMutable() {
+        return immutable() ? MetadataProvider.copy(getProperties()) : this;
+    }
 }

@@ -1,7 +1,7 @@
 /*
  * MIT License
  *
- * Copyright (c) 2025 MetaAgent
+ * Copyright (c) 2026 MetaAgent
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -22,32 +22,35 @@
  * SOFTWARE.
  */
 
-package org.metaagent.framework.core.model.prompt;
-
-import org.metaagent.framework.core.agent.chat.message.Message;
-
-import java.util.List;
-import java.util.Objects;
-import java.util.stream.Collectors;
+package org.metaagent.framework.core.model;
 
 /**
- * Represents a chat prompt value containing a list of messages.
- * This class is used to encapsulate the messages that will be sent in a chat context.
+ * Basic metadata describing a model exposed by a {@code ModelProvider}.
  *
- * @param messages the list of messages in the chat prompt
- * @author vyckey
+ * <p>Implementations provide identifying information used by the runtime to
+ * locate and describe available models.</p>
  */
-public record ChatPromptValue(List<Message> messages) implements PromptValue {
-    public ChatPromptValue {
-        Objects.requireNonNull(messages, "messages cannot be null");
-    }
+public interface ModelInfo {
+    /**
+     * Provider-specific model identifier. This id should be unique within the
+     * scope of the provider that exposes the model.
+     *
+     * @return the model id string
+     */
+    ModelId getId();
 
-    public ChatPromptValue(Message... messages) {
-        this(List.of(messages));
-    }
+    /**
+     * Human-readable name for the model.
+     *
+     * @return the model's display name
+     */
+    String getName();
 
-    @Override
-    public String text() {
-        return messages.stream().map(Message::toString).collect(Collectors.joining("\n"));
-    }
+    /**
+     * Logical family or category of the model (for example: "chat", "embedding").
+     * This is provider-defined and may be used for grouping or filtering models.
+     *
+     * @return the model family identifier
+     */
+    String getFamily();
 }

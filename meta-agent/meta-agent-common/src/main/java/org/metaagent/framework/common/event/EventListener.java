@@ -1,7 +1,7 @@
 /*
  * MIT License
  *
- * Copyright (c) 2025 MetaAgent
+ * Copyright (c) 2026 MetaAgent
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -22,32 +22,28 @@
  * SOFTWARE.
  */
 
-package org.metaagent.framework.core.model.prompt;
-
-import org.metaagent.framework.core.agent.chat.message.Message;
-
-import java.util.List;
-import java.util.Objects;
-import java.util.stream.Collectors;
+package org.metaagent.framework.common.event;
 
 /**
- * Represents a chat prompt value containing a list of messages.
- * This class is used to encapsulate the messages that will be sent in a chat context.
+ * EventListener is an interface for listening to events.
  *
- * @param messages the list of messages in the chat prompt
  * @author vyckey
+ * @see Event
+ * @see EventBus
  */
-public record ChatPromptValue(List<Message> messages) implements PromptValue {
-    public ChatPromptValue {
-        Objects.requireNonNull(messages, "messages cannot be null");
-    }
+public interface EventListener<E extends Event> {
+    /**
+     * Checks whether the listener accepts the given event.
+     *
+     * @param event the event
+     * @return true if the listener accepts the event, false otherwise
+     */
+    boolean accepts(E event);
 
-    public ChatPromptValue(Message... messages) {
-        this(List.of(messages));
-    }
-
-    @Override
-    public String text() {
-        return messages.stream().map(Message::toString).collect(Collectors.joining("\n"));
-    }
+    /**
+     * Called when an event occurs.
+     *
+     * @param event the event
+     */
+    void onEvent(E event);
 }

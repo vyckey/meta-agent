@@ -91,7 +91,7 @@ public abstract class AbstractAgent<I, O>
         AgentInput<I> agentInput = super.preprocess(input);
 
         ConfigPaths configPaths = input.context().getConfigPaths();
-        SkillLoaders.loadSkillsIfNotLoaded(skillManager, configPaths);
+        SkillLoaders.loadSkillsIfNotLoaded(skillManager, configPaths, null);
         return agentInput;
     }
 

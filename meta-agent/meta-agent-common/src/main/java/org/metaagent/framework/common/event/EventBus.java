@@ -22,63 +22,61 @@
  * SOFTWARE.
  */
 
-package org.metaagent.framework.core.tool.config;
-
-import org.metaagent.framework.core.config.ConfigPaths;
-import org.metaagent.framework.core.config.WorkspaceConfig;
+package org.metaagent.framework.common.event;
 
 import java.util.List;
-import java.util.Set;
 
 /**
- * Tool execution configuration interface.
+ * EventBus interface for publishing and subscribing to specialized type events.
  *
+ * @param <E> the type of event
+ * @param <L> the type of event listener
  * @author vyckey
+ * @see Event
+ * @see EventListener
  */
-public interface ToolExecutionConfig {
+public interface EventBus<E extends Event, L extends EventListener<E>> extends AutoCloseable {
+    /**
+     * Create a new EventBus instance.
+     *
+     * @param <E> the type of event
+     * @param <L> the type of event listener
+     * @return a new EventBus instance
+     */
+    static <E extends Event, L extends EventListener<E>> EventBus<E, L> create() {
+        return new DefaultEventBus<>();
+    }
 
     /**
-     * Return the configuration paths.
+     * Publish an event.
      *
-     * @return the configuration paths
+     * @param event the event to publish
      */
-    ConfigPaths configPaths();
+    void publish(E event);
 
     /**
-     * Return the workspace configuration.
+     * Get all event listeners.
      *
-     * @return the workspace configuration
+     * @return the list of event listeners
      */
-    WorkspaceConfig workspaceConfig();
+    List<L> listeners();
 
     /**
-     * Return the set of allowed tools.
+     * Subscribe to events.
      *
-     * @return a set of allowed command strings
+     * @param listener the event listener to subscribe
      */
-    Set<ToolPattern> allowedTools();
+    void subscribe(L listener);
 
     /**
-     * Return the set of allowed tools for a specific tool name.
+     * Unsubscribe from events.
      *
-     * @param toolName the name of the tool
-     * @return a list of allowed command strings for the specified tool
+     * @param listener the event listener to unsubscribe
      */
-    List<ToolPattern> allowedTools(String toolName);
+    void unsubscribe(L listener);
 
     /**
-     * Return the set of disallowed tools.
-     *
-     * @return a set of disallowed command strings
+     * Unsubscribe all event listeners.
      */
-    Set<ToolPattern> disallowedTools();
-
-    /**
-     * Return the set of disallowed tools for a specific tool name.
-     *
-     * @param toolName the name of the tool
-     * @return a list of disallowed command strings for the specified tool
-     */
-    List<ToolPattern> disallowedTools(String toolName);
-
+    void unsubscribeAll();
 }
