@@ -1,25 +1,22 @@
 package org.metaagent.framework.core.model.prompt;
 
-import lombok.EqualsAndHashCode;
 import org.apache.commons.lang3.StringUtils;
 import org.metaagent.framework.common.io.IOUtils;
 
 import java.io.IOException;
+import java.util.Objects;
 
 /**
  * String format prompt value.
  *
  * @author vyckey
  */
-@EqualsAndHashCode
-public final class StringPromptValue implements PromptValue {
-    private final String value;
+public record StringPromptValue(String value) implements PromptValue {
 
-    StringPromptValue(String value) {
+    public StringPromptValue {
         if (StringUtils.isEmpty(value)) {
             throw new PromptFormatException("prompt value is empty");
         }
-        this.value = value;
     }
 
     public static StringPromptValue from(String value) {
@@ -29,6 +26,7 @@ public final class StringPromptValue implements PromptValue {
     public static StringPromptValue fromFile(String fileName) {
         String prompt;
         try {
+            Objects.requireNonNull(fileName, "fileName is null");
             prompt = IOUtils.readToString(fileName);
         } catch (IOException e) {
             throw new IllegalArgumentException("Failed to read prompt from file: " + fileName, e);
@@ -37,7 +35,7 @@ public final class StringPromptValue implements PromptValue {
     }
 
     @Override
-    public String toString() {
+    public String text() {
         return value;
     }
 }
