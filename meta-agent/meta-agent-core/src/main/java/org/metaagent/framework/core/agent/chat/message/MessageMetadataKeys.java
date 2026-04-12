@@ -33,6 +33,7 @@ public interface MessageMetadataKeys {
     String KEY_MESSAGE_ID = "msgId";
     String KEY_MESSAGE_PART_ID = "msgPartId";
     String KEY_ROLE = "role";
+    String KEY_REASONING_CONTENT = "reasoningContent";
     String KEY_CREATED_AT = "createdAt";
     String KEY_UPDATED_AT = "updatedAt";
 }

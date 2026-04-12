@@ -25,7 +25,7 @@
 package org.metaagent.framework.core.agent.fallback;
 
 import lombok.extern.slf4j.Slf4j;
-import org.metaagent.framework.core.agent.MetaAgent;
+import org.metaagent.framework.core.agent.Agent;
 import org.metaagent.framework.core.agent.input.AgentInput;
 import org.metaagent.framework.core.agent.output.AgentOutput;
 import org.metaagent.framework.core.agent.state.AgentState;
@@ -36,7 +36,8 @@ import org.metaagent.framework.core.agent.state.AgentState;
  * @author vyckey
  */
 @Slf4j
-public class RetryAgentFallbackStrategy<I, O> implements AgentFallbackStrategy<I, O> {
+public class RetryAgentFallbackStrategy<A extends Agent<I, O>, I extends AgentInput, O extends AgentOutput>
+        implements AgentFallbackStrategy<A, I, O> {
     private final int maxRetries;
 
     public RetryAgentFallbackStrategy(int maxRetries) {
@@ -44,7 +45,7 @@ public class RetryAgentFallbackStrategy<I, O> implements AgentFallbackStrategy<I
     }
 
     @Override
-    public AgentOutput<O> fallback(MetaAgent<I, O> agent, AgentInput<I> input, Exception exception) {
+    public O fallback(A agent, I input, Exception exception) {
         AgentState agentState = agent.getAgentState();
         if (agentState.getStepState().getRetryCount().get() < maxRetries) {
             agentState.getStepState().getRetryCount().incrementAndGet();

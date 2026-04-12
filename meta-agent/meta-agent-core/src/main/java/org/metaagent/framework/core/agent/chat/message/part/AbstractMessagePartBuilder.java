@@ -42,6 +42,16 @@ public abstract class AbstractMessagePartBuilder<B extends AbstractMessagePartBu
 
     protected abstract B self();
 
+    protected AbstractMessagePartBuilder() {
+    }
+
+    protected AbstractMessagePartBuilder(MessagePart messagePart) {
+        this.id = messagePart.id();
+        this.createdAt = messagePart.createdAt();
+        this.updatedAt = messagePart.updatedAt();
+        this.metadata = messagePart.metadata();
+    }
+
     @Override
     public B id(MessagePartId id) {
         this.id = id;

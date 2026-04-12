@@ -24,7 +24,7 @@
 
 package org.metaagent.framework.core.agent.ability;
 
-import org.metaagent.framework.core.agent.AgentExecutionContext;
+import org.metaagent.framework.core.agent.context.AgentContext;
 
 /**
  * description is here
@@ -36,7 +36,7 @@ public interface AgentAbility {
 
     boolean isActivated();
 
-    void activate(AgentExecutionContext context);
+    void activate(AgentContext context);
 
-    void deactivate(AgentExecutionContext context);
+    void deactivate(AgentContext context);
 }

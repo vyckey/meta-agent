@@ -28,6 +28,8 @@ import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import org.apache.commons.lang3.StringUtils;
 import org.metaagent.framework.common.metadata.MapMetadataProvider;
 import org.metaagent.framework.common.metadata.MetadataProvider;
+import org.metaagent.framework.core.agent.chat.session.SessionId;
+import org.metaagent.framework.core.agent.chat.session.SessionIdValue;
 
 import java.time.Instant;
 
@@ -39,6 +41,12 @@ import java.time.Instant;
 public record RoleMessageInfo(
         @JsonDeserialize(as = MessageIdValue.class)
         MessageId id,
+
+        @JsonDeserialize(as = MessageIdValue.class)
+        MessageId parentId,
+
+        @JsonDeserialize(as = SessionIdValue.class)
+        SessionId sessionId,
 
         String role,
 
@@ -61,7 +69,7 @@ public record RoleMessageInfo(
     }
 
     public RoleMessageInfo(MessageId id, String role, MetadataProvider metadata) {
-        this(id, role, Instant.now(), Instant.now(), metadata);
+        this(id, null, null, role, Instant.now(), Instant.now(), metadata);
     }
 
     public RoleMessageInfo(MessageId id, String role) {
@@ -92,6 +100,8 @@ public record RoleMessageInfo(
 
     public static class Builder implements MessageInfo.Builder {
         private MessageId id;
+        private MessageId parentId;
+        private SessionId sessionId;
         private String role;
         private Instant createdAt;
         private Instant updatedAt;
@@ -102,6 +112,8 @@ public record RoleMessageInfo(
 
         public Builder(MessageInfo messageInfo) {
             this.id = messageInfo.id();
+            this.parentId = messageInfo.parentId();
+            this.sessionId = messageInfo.sessionId();
             this.role = messageInfo.role();
             this.createdAt = messageInfo.createdAt();
             this.updatedAt = messageInfo.updatedAt();
@@ -111,6 +123,18 @@ public record RoleMessageInfo(
         @Override
         public Builder id(MessageId id) {
             this.id = id;
+            return this;
+        }
+
+        @Override
+        public MessageInfo.Builder parentId(MessageId parentId) {
+            this.parentId = parentId;
+            return this;
+        }
+
+        @Override
+        public MessageInfo.Builder sessionId(SessionId sessionId) {
+            this.sessionId = sessionId;
             return this;
         }
 
@@ -139,7 +163,7 @@ public record RoleMessageInfo(
         }
 
         public RoleMessageInfo build() {
-            return new RoleMessageInfo(id, role, createdAt, updatedAt, metadata);
+            return new RoleMessageInfo(id, parentId, sessionId, role, createdAt, updatedAt, metadata);
         }
     }
 }

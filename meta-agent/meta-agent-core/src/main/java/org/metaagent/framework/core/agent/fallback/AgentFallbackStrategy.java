@@ -31,11 +31,12 @@ import org.metaagent.framework.core.agent.output.AgentOutput;
 /**
  * Agent Fallback Strategy
  *
+ * @param <A> the type of agent
  * @param <I> the type of agent input
  * @param <O> the type of agent output
  * @author vyckey
  */
-public interface AgentFallbackStrategy<I, O> {
+public interface AgentFallbackStrategy<A extends MetaAgent<I, O>, I extends AgentInput, O extends AgentOutput> {
     /**
      * Fallback when agent execution failed.
      *
@@ -44,5 +45,5 @@ public interface AgentFallbackStrategy<I, O> {
      * @param exception exception
      * @return the agent output
      */
-    AgentOutput<O> fallback(MetaAgent<I, O> agent, AgentInput<I> input, Exception exception);
+    O fallback(A agent, I input, Exception exception);
 }

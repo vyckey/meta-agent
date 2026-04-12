@@ -24,7 +24,7 @@
 
 package org.metaagent.framework.core.agent.ability;
 
-import org.metaagent.framework.core.agent.AgentExecutionContext;
+import org.metaagent.framework.core.agent.context.AgentContext;
 
 /**
  * description is here
@@ -56,12 +56,12 @@ public abstract class AbstractAgentAbility implements AgentAbility {
     }
 
     @Override
-    public void activate(AgentExecutionContext context) {
+    public void activate(AgentContext context) {
         this.activated = true;
     }
 
     @Override
-    public void deactivate(AgentExecutionContext context) {
+    public void deactivate(AgentContext context) {
         this.activated = false;
     }
 

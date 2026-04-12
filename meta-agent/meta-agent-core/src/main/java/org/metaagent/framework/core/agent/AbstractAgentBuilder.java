@@ -24,58 +24,38 @@
 
 package org.metaagent.framework.core.agent;
 
-import org.metaagent.framework.core.agent.memory.Memory;
-import org.metaagent.framework.core.agent.observability.AgentEventBus;
-import org.metaagent.framework.core.agent.observability.event.AgentEvent;
+import org.metaagent.framework.core.agent.context.AgentStepContext;
+import org.metaagent.framework.core.agent.input.AgentInput;
+import org.metaagent.framework.core.agent.listener.AgentRunListenerRegistry;
+import org.metaagent.framework.core.agent.listener.AgentStepListenerRegistry;
+import org.metaagent.framework.core.agent.output.AgentOutput;
 import org.metaagent.framework.core.agent.profile.AgentProfile;
-import org.metaagent.framework.core.agent.state.AgentState;
-import org.metaagent.framework.core.skill.manager.SkillManager;
-import org.metaagent.framework.core.tool.manager.ToolManager;
 
 /**
  * AbstractAgentBuilder is an abstract class that provides a common interface for building agents.
  *
- * @param <A> the type of agent being built
  * @param <B> the type of builder
  * @param <I> the input type of agent
  * @param <O> the output type of agent
  * @author vyckey
  */
-public abstract class AbstractAgentBuilder<A extends MetaAgent<I, O>, B, I, O> {
+public abstract class AbstractAgentBuilder<B, I extends AgentInput, O extends AgentOutput, C extends AgentStepContext> {
     protected AgentProfile profile;
-    protected AgentState agentState;
-    protected Memory memory;
-    protected ToolManager toolManager;
-    protected SkillManager skillManager;
-    protected AgentEventBus<AgentEvent> agentEventBus;
+    protected AgentRunListenerRegistry<I, O> runListenerRegistry;
+    protected AgentStepListenerRegistry<I, O, C> stepListenerRegistry;
 
     public B agentProfile(AgentProfile profile) {
         this.profile = profile;
         return self();
     }
 
-    public B agentState(AgentState agentState) {
-        this.agentState = agentState;
+    public B runListenerRegistry(AgentRunListenerRegistry<I, O> runListenerRegistry) {
+        this.runListenerRegistry = runListenerRegistry;
         return self();
     }
 
-    public B memory(Memory memory) {
-        this.memory = memory;
-        return self();
-    }
-
-    public B toolManager(ToolManager toolManager) {
-        this.toolManager = toolManager;
-        return self();
-    }
-
-    public B skillManager(SkillManager skillManager) {
-        this.skillManager = skillManager;
-        return self();
-    }
-
-    public B agentEventBus(AgentEventBus<AgentEvent> agentEventBus) {
-        this.agentEventBus = agentEventBus;
+    public B stepListenerRegistry(AgentStepListenerRegistry<I, O, C> stepListenerRegistry) {
+        this.stepListenerRegistry = stepListenerRegistry;
         return self();
     }
 
@@ -91,5 +71,5 @@ public abstract class AbstractAgentBuilder<A extends MetaAgent<I, O>, B, I, O> {
      *
      * @return The built agent.
      */
-    public abstract A build();
+    public abstract MetaAgent<I, O> build();
 }

@@ -24,54 +24,62 @@
 
 package org.metaagent.framework.core.agent.chat.message;
 
-import com.fasterxml.jackson.databind.DeserializationFeature;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.SerializationFeature;
-import com.fasterxml.jackson.databind.jsontype.NamedType;
-import com.fasterxml.jackson.databind.module.SimpleModule;
-import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import com.google.common.collect.Lists;
 import org.metaagent.framework.core.agent.chat.message.part.MediaMessagePart;
 import org.metaagent.framework.core.agent.chat.message.part.TextMessagePart;
-import org.metaagent.framework.core.agent.chat.message.part.ToolCallMessagePart;
-import org.metaagent.framework.core.agent.chat.message.part.ToolResponseMessagePart;
+import tools.jackson.databind.DeserializationFeature;
+import tools.jackson.databind.json.JsonMapper;
+import tools.jackson.databind.jsontype.NamedType;
+import tools.jackson.databind.module.SimpleModule;
+import tools.jackson.datatype.jsr310.JavaTimeModule;
 
 import java.util.List;
 
 public class MessageSerializer {
-    private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper()
-            .disable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES)
-            .enable(DeserializationFeature.ACCEPT_EMPTY_STRING_AS_NULL_OBJECT)
-            .registerModule(new JavaTimeModule())
-            .disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
+    private static volatile JsonMapper jsonMapper;
     private static volatile boolean initialized = false;
     private static final List<NamedType> MESSAGE_TYPES = Lists.newArrayList(
             new NamedType(RoleMessage.class, RoleMessage.class.getTypeName())
     );
     private static final List<NamedType> MESSAGE_PART_TYPES = Lists.newArrayList(
             new NamedType(TextMessagePart.class, TextMessagePart.TYPE),
-            new NamedType(MediaMessagePart.class, MediaMessagePart.TYPE),
-            new NamedType(ToolCallMessagePart.class, ToolCallMessagePart.TYPE),
-            new NamedType(ToolResponseMessagePart.class, ToolResponseMessagePart.TYPE)
+            new NamedType(MediaMessagePart.class, MediaMessagePart.TYPE)
     );
 
     public static void registerMessageType(String name, Class<? extends Message> messageClass) {
+        if (initialized) {
+            throw new IllegalStateException("ObjectMapper has already been initialized.");
+        }
         MESSAGE_TYPES.add(new NamedType(messageClass, name));
-        initialized = false; // Reset initialization to re-register types
     }
 
-    public static ObjectMapper getObjectMapper() {
+    public static JsonMapper getJsonMapper() {
         if (!initialized) {
-            SimpleModule module = new SimpleModule();
-            for (NamedType type : MESSAGE_TYPES) {
-                module.registerSubtypes(type);
+            synchronized (MessageSerializer.class) {
+                if (!initialized) {
+                    jsonMapper = newJsonMapper();
+                    initialized = true;
+                }
             }
-            for (NamedType type : MESSAGE_PART_TYPES) {
-                module.registerSubtypes(type);
-            }
-            OBJECT_MAPPER.registerModule(module);
         }
-        return OBJECT_MAPPER;
+        return jsonMapper;
+    }
+
+    private static JsonMapper newJsonMapper() {
+        SimpleModule module = new SimpleModule();
+        for (NamedType type : MESSAGE_TYPES) {
+            module.registerSubtypes(type);
+        }
+        for (NamedType type : MESSAGE_PART_TYPES) {
+            module.registerSubtypes(type);
+        }
+
+        return JsonMapper.builder()
+                .disable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES)
+                .enable(DeserializationFeature.ACCEPT_EMPTY_STRING_AS_NULL_OBJECT)
+                .addModule(new JavaTimeModule())
+                .addModule(module)
+                .build();
     }
 
 }

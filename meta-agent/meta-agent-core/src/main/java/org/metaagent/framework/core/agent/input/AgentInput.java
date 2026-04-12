@@ -25,46 +25,21 @@
 package org.metaagent.framework.core.agent.input;
 
 import org.metaagent.framework.common.metadata.MetadataProvider;
-import org.metaagent.framework.core.agent.AgentExecutionContext;
+import org.metaagent.framework.core.agent.context.AgentContext;
 
 /**
  * AgentInput is an interface that represents the input for an agent.
  *
  * @author vyckey
  */
-public interface AgentInput<I> {
-    /**
-     * Creates an AgentInput instance.
-     *
-     * @param input the input
-     * @return the AgentInput instance
-     */
-    static <I> AgentInput<I> create(I input) {
-        return DefaultAgentInput.builder(input).build();
-    }
-
-    /**
-     * Returns the agent input builder.
-     *
-     * @return the agent input builder
-     */
-    static <I> Builder<I> builder(I input) {
-        return DefaultAgentInput.builder(input);
-    }
-
-    /**
-     * Gets the input of the agent.
-     *
-     * @return the input
-     */
-    I input();
+public interface AgentInput {
 
     /**
      * Gets the context of the agent execution.
      *
-     * @return the AgentExecutionContext associated with this input
+     * @return the AgentContext associated with this input
      */
-    AgentExecutionContext context();
+    AgentContext context();
 
     /**
      * Gets the metadata of agent input.
@@ -79,22 +54,15 @@ public interface AgentInput<I> {
     /**
      * Builder class for AgentInput.
      */
-    interface Builder<I> {
-        /**
-         * Sets the input of agent input.
-         *
-         * @param input the input.
-         * @return the builder
-         */
-        Builder<I> input(I input);
+    interface Builder<B extends Builder<B>> {
 
         /**
          * Sets the context of the agent execution.
          *
-         * @param context the AgentExecutionContext associated with this input
+         * @param context the AgentContext associated with this input
          * @return the builder
          */
-        Builder<I> context(AgentExecutionContext context);
+        B context(AgentContext context);
 
         /**
          * Sets the metadata of agent input.
@@ -102,13 +70,13 @@ public interface AgentInput<I> {
          * @param metadata the metadata.
          * @return the builder
          */
-        Builder<I> metadata(MetadataProvider metadata);
+        B metadata(MetadataProvider metadata);
 
         /**
          * Builds an AgentInput instance.
          *
          * @return the AgentInput instance
          */
-        AgentInput<I> build();
+        AgentInput build();
     }
 }

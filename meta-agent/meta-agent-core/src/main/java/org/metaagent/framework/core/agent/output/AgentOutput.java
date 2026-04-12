@@ -31,29 +31,7 @@ import org.metaagent.framework.common.metadata.MetadataProvider;
  *
  * @author vyckey
  */
-public interface AgentOutput<O> {
-    /**
-     * Creates an agent output with the given output.
-     *
-     * @param output the output
-     * @param <O>    the type of the output
-     * @return the agent output
-     */
-    static <O> AgentOutput<O> create(O output) {
-        return new DefaultAgentOutput<>(output);
-    }
-
-    /**
-     * Creates an agent output with the given output.
-     *
-     * @param output   the output
-     * @param <O>      the type of the output
-     * @param metadata the output metadata
-     * @return the agent output
-     */
-    static <O> AgentOutput<O> create(O output, MetadataProvider metadata) {
-        return new DefaultAgentOutput<>(output, metadata);
-    }
+public interface AgentOutput {
 
     /**
      * Gets agent output metadata.
@@ -64,10 +42,4 @@ public interface AgentOutput<O> {
         return MetadataProvider.empty();
     }
 
-    /**
-     * Gets agent output.
-     *
-     * @return output.
-     */
-    O result();
 }

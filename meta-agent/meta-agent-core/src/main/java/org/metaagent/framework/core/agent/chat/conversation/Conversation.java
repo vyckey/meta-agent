@@ -26,93 +26,225 @@ package org.metaagent.framework.core.agent.chat.conversation;
 
 import org.metaagent.framework.core.agent.chat.message.Message;
 import org.metaagent.framework.core.agent.chat.message.MessageId;
+import org.metaagent.framework.core.agent.chat.session.SessionId;
 
+import java.io.Closeable;
+import java.io.Flushable;
+import java.io.IOException;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Optional;
 import java.util.function.Predicate;
+import java.util.function.Supplier;
 
 /**
- * Interface representing a conversation of messages in a chat session.
- * The last message in the conversation is considered the most recent one.
+ * Represents the entire conversation history of a session, organized as a tree of messages.
+ * Each message has a unique ID and an optional parent ID (null for root messages).
+ * The conversation maintains a "current leaf" – the leaf message of the currently active branch.
+ * Most operations (like appending, querying recent messages, or resetting) are performed
+ * on the current branch, providing a linear view for convenience.
+ *
+ * <p>Implementations are expected to be thread-safe if accessed concurrently.
+ * They may cache parts of the tree for performance and should collaborate with a
+ * {@link ConversationStore} for persistence.
  *
  * @author vyckey
  */
-public interface Conversation extends Iterable<Message> {
+public interface Conversation extends Iterable<Message>, Flushable, Closeable {
 
     /**
-     * Returns the unique identifier for this message conversation.
+     * Returns the session ID associated with this conversation.
      *
-     * @return the conversation ID
+     * @return the session ID
      */
-    ConversationId id();
+    SessionId sessionId();
 
     /**
-     * Returns whether this message conversation is empty.
+     * Checks whether the conversation contains any messages.
      *
-     * @return true if there are no messages in the conversation, false otherwise
+     * @return {@code true} if there is at least one message, {@code false} otherwise
      */
     boolean isEmpty();
 
+    // ========== Linear view operations (based on current branch) ==========
+
     /**
-     * Appends a message to the conversation.
+     * Appends a message to the end of the current branch.
+     * If the message's parent ID is not set, it will be automatically set to the current branch leaf.
+     * After appending, the new message becomes the current branch leaf.
      *
-     * @param message the message to append
+     * @param message the message to append (must not be null)
+     * @throws IllegalArgumentException if the message's parent ID is explicitly set but does not
+     *                                  match the current branch leaf or if the message already exists
      */
     void appendMessage(Message message);
 
     /**
-     * Finds all messages that match the given predicate.
+     * Updates an existing message on the current branch.
+     * The message's ID must exist and belong to the current branch.
      *
-     * @param predicate the predicate to match messages against
-     * @param reverse   if true, search in reverse order
-     * @return a list of messages that match the predicate
+     * @param newMessage the new message content (its ID must match {@code messageId})
+     * @throws IllegalArgumentException if the message does not exist, is not on the current branch,
+     *                                  or the ID mismatch
      */
-    List<Message> findMessages(Predicate<Message> predicate, boolean reverse);
+    void updateMessage(Message newMessage);
 
     /**
-     * Finds the first message that matches the given predicate.
+     * Deletes all messages on the current branch after the given message ID.
+     * The message with the given ID must exist and belong to the current branch.
      *
-     * @param predicate the predicate to match the message against
-     * @param reverse   if true, search in reverse order
-     * @return an Optional containing the first matching message, or empty if no match is found
+     * @param messageId the ID of the message after which to delete messages
+     * @param inclusive whether to include the message with the given ID in the deletion
+     * @throws IllegalArgumentException if the message does not exist, is not on the current branch,
+     *                                  or the ID mismatch
      */
-    Optional<Message> findMessage(Predicate<Message> predicate, boolean reverse);
+    void deleteMessagesAfter(MessageId messageId, boolean inclusive);
 
     /**
-     * Returns the most recent message in the conversation.
+     * Returns the last message (the leaf) of the current branch.
      *
-     * @return an Optional containing the most recent message, or empty if the conversation is empty
+     * @return an {@link Optional} containing the last message, or empty if the conversation is empty
      */
     Optional<Message> lastMessage();
 
     /**
-     * Returns the last 'count' messages from the conversation.
+     * Returns the last {@code count} messages from the current branch, in chronological order
+     * (oldest to newest). If the branch has fewer than {@code count} messages, all messages are returned.
      *
-     * @param count the number of messages to retrieve
-     * @return a list of the last 'count' messages
+     * @param count the number of messages to retrieve (must be non-negative)
+     * @return a list of the last {@code count} messages, never null
+     * @throws IllegalArgumentException if {@code count} is negative
      */
     List<Message> lastMessages(int count);
 
     /**
-     * Resets the conversation to the state after the specified message ID.
-     * All messages after the given message ID will be removed.
+     * Returns the message with the given ID.
      *
-     * @param messageId the message ID to reset to
-     * @param inclusive if true, the message with the specified ID will also be removed
+     * @param messageId the ID of the message to retrieve
+     * @return the message with the given ID, or empty if no such message exists
      */
-    void resetAfter(MessageId messageId, boolean inclusive);
+    Optional<Message> getMessage(MessageId messageId);
 
     /**
-     * Clears all messages from the conversation.
-     * This operation is irreversible and will remove all messages.
+     * Finds all messages on the current branch that match the given predicate.
+     * The search can be performed in forward (root to leaf) or reverse (leaf to root) order.
+     *
+     * @param predicate the condition to match
+     * @param forward   if {@code true}, search from root to leaf; otherwise from leaf to root
+     * @return a list of matching messages (possibly empty)
+     */
+    List<Message> findMessages(Predicate<Message> predicate, boolean forward);
+
+    /**
+     * Finds the first message on the current branch that matches the given predicate.
+     * The search can be performed in forward or reverse order.
+     *
+     * @param predicate the condition to match
+     * @param forward   if {@code true}, search from root to leaf; otherwise from leaf to root
+     * @return an {@link Optional} containing the first matching message, or empty if none found
+     */
+    Optional<Message> findMessage(Predicate<Message> predicate, boolean forward);
+
+    /**
+     * Returns an iterator over the messages in the current branch,
+     * in order from the root message to the current leaf.
+     * The iterator supports {@link Iterator#remove()} only if permitted by the implementation.
+     *
+     * @return a forward iterator for the current branch
+     */
+    @Override
+    Iterator<Message> iterator();
+
+    /**
+     * Returns an iterator over the messages in the current branch,
+     * in reverse order from the current leaf back to the root.
+     * The iterator does not support {@link Iterator#remove()}.
+     *
+     * @return a reverse iterator for the current branch
+     */
+    Iterator<Message> reverse();
+
+    // ========== Branch management ==========
+
+    /**
+     * Returns the leaf message ID of the current active branch.
+     *
+     * @return an {@link Optional} containing the current leaf ID, or empty if the conversation is empty
+     */
+    Optional<MessageId> currentLeafId();
+
+    /**
+     * Switches the current branch to another leaf message.
+     * The specified message must be a leaf node (i.e., have no children) belonging to this conversation.
+     * After switching, all linear view operations will operate on the newly selected branch.
+     *
+     * @param leafMessageId the ID of the leaf message to become the new current leaf
+     * @throws IllegalArgumentException if the message does not exist, is not a leaf,
+     *                                  or does not belong to this conversation
+     */
+    void switchToBranch(MessageId leafMessageId);
+
+    /**
+     * Returns the IDs of all leaf messages in the conversation.
+     * Leaf messages are those with no children.
+     *
+     * @return a list of message IDs, never null (maybe empty)
+     */
+    List<MessageId> listLeafMessageIds();
+
+    /**
+     * Returns the full path from the root to the specified leaf, inclusive.
+     * The path is ordered from root (first) to leaf (last).
+     *
+     * @param leaf the ID of the leaf message (must belong to this conversation)
+     * @return a list of messages forming the path
+     * @throws IllegalArgumentException if the leaf does not exist
+     */
+    List<Message> getPathFromRoot(MessageId leaf);
+
+    /**
+     * Creates a new branch starting from the specified parent message.
+     * The new branch will be the current branch, and the specified message will become the current leaf.
+     *
+     * @param parentMessageId the ID of the parent message for the new branch
+     * @param message         the first message of the new branch
+     * @throws IllegalArgumentException if the parent message does not exist or is not a leaf
+     */
+    void fork(MessageId parentMessageId, Message message);
+
+    /**
+     * Creates a copy of this conversation under a new session.
+     * All messages in current branch are duplicated with new IDs generated by the provided supplier.
+     * The new conversation will only have a path but independent persistence.
+     *
+     * @param newSessionId       the ID of the new session
+     * @param messageIdGenerator a supplier that generates new unique message IDs
+     * @return a new {@code Conversation} instance representing the forked conversation
+     */
+    Conversation copy(SessionId newSessionId, Supplier<MessageId> messageIdGenerator);
+
+    /**
+     * Removes all messages from this conversation.
+     * This operation is irreversible and will also clear all branches.
      */
     void clear();
 
     /**
-     * Returns an iterable of messages in time reverse order.
-     * This is useful for iterating from the most recent message to the oldest.
+     * Flushes any pending changes to the underlying storage.
+     * This method is called automatically by the framework at appropriate times,
+     * but can be invoked manually to ensure durability.
      *
-     * @return an iterable of messages in reverse order
+     * @throws java.io.IOException if an I/O error occurs
      */
-    Iterable<Message> reverse();
+    @Override
+    void flush() throws IOException;
+
+    /**
+     * Releases any resources held by this conversation (e.g., caches, open connections).
+     * After closing, the conversation should not be used further.
+     *
+     * @throws IOException if an error occurs during closing
+     */
+    @Override
+    void close() throws IOException;
 }

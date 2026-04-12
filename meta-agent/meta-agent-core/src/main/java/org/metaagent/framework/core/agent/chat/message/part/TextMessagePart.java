@@ -41,6 +41,8 @@ public record TextMessagePart(
         @JsonDeserialize(as = MessagePartIdValue.class)
         MessagePartId id,
 
+        String subType,
+
         String text,
 
         Instant createdAt,
@@ -51,9 +53,11 @@ public record TextMessagePart(
         MetadataProvider metadata
 ) implements MessagePart {
     public static final String TYPE = "text";
+    public static final String SUB_TYPE_REASONING = "reasoning";
 
     public TextMessagePart {
         id = id != null ? id : MessagePartId.next();
+        subType = subType != null ? subType : "";
         Objects.requireNonNull(text, "text is required");
         createdAt = createdAt != null ? createdAt : Instant.now();
         updatedAt = updatedAt != null ? updatedAt : Instant.now();
@@ -61,7 +65,7 @@ public record TextMessagePart(
     }
 
     public TextMessagePart(String text, MetadataProvider metadata) {
-        this(MessagePartId.next(), text, Instant.now(), Instant.now(), metadata);
+        this(MessagePartId.next(), "", text, Instant.now(), Instant.now(), metadata);
     }
 
     public TextMessagePart(String text) {
@@ -77,18 +81,41 @@ public record TextMessagePart(
         return TYPE;
     }
 
+    public boolean isSubType(String subType) {
+        return Objects.equals(subType, this.subType);
+    }
+
     @Override
     public String content() {
         return text;
     }
 
+    public Builder toBuilder() {
+        return new Builder(this);
+    }
+
 
     public static class Builder extends AbstractMessagePartBuilder<Builder> {
+        private String subType;
         private String text;
+
+        private Builder() {
+        }
+
+        public Builder(TextMessagePart messagePart) {
+            super(messagePart);
+            this.subType = messagePart.subType;
+            this.text = messagePart.text;
+        }
 
         @Override
         protected Builder self() {
             return this;
+        }
+
+        public Builder subType(String subType) {
+            this.subType = subType;
+            return self();
         }
 
         public Builder text(String text) {
@@ -97,7 +124,7 @@ public record TextMessagePart(
         }
 
         public TextMessagePart build() {
-            return new TextMessagePart(id, text, createdAt, updatedAt, metadata);
+            return new TextMessagePart(id, subType, text, createdAt, updatedAt, metadata);
         }
     }
 }

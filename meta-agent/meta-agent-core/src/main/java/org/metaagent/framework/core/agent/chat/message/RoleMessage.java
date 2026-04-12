@@ -91,6 +91,13 @@ public record RoleMessage(
         return parts().stream().map(MessagePart::content).collect(Collectors.joining("\n"));
     }
 
+    @Override
+    public Message.Builder toBuilder() {
+        return new Builder()
+                .info(info)
+                .parts(parts);
+    }
+
 
     public static class Builder implements Message.Builder {
         private MessageInfo info;
@@ -121,6 +128,9 @@ public record RoleMessage(
         }
 
         public RoleMessage build() {
+            if (parts == null) {
+                parts = List.of();
+            }
             return new RoleMessage(info, parts);
         }
     }

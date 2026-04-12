@@ -24,55 +24,108 @@
 
 package org.metaagent.framework.core.agent;
 
+import org.apache.commons.lang3.NotImplementedException;
+import org.metaagent.framework.core.agent.context.AgentStepContext;
 import org.metaagent.framework.core.agent.input.AgentInput;
-import org.metaagent.framework.core.agent.output.AgentOutput;
-import org.metaagent.framework.core.agent.output.StreamOutput;
+import org.metaagent.framework.core.agent.output.AgentStreamOutput;
+import reactor.core.publisher.Flux;
 
 /**
  * The streaming agent abstraction.
  *
  * @param <I> the type of agent input
  * @param <O> the type of agent output
- * @param <S> the type of agent stream output
+ * @param <C> the type of agent step context
+ * @param <S> <S> the type of agent stream output
  * @author vyckey
  */
-public interface StreamingAgent<I, O extends StreamOutput<S>, S> extends Agent<I, O> {
+public interface StreamingAgent<
+        I extends AgentInput,
+        O extends AgentStreamOutput<S>,
+        C extends AgentStepContext,
+        S> extends MetaAgent<I, O> {
+
     /**
-     * Runs agent logic in a streaming way.
+     * Run the agent in streaming mode.
      *
-     * @param input the agent input.
-     * @return the streaming agent output.
+     * @param agentInput the agent input.
+     * @return the final agent output.
      */
-    default AgentOutput<O> runStream(AgentInput<I> input) {
-        return stepStream(input);
+    @Override
+    default O run(I agentInput) {
+        C stepContext = createStepContext(agentInput);
+        Flux<S> stream = runStream(agentInput, stepContext);
+        return buildAgentOutput(agentInput, stepContext, stream);
     }
 
     /**
-     * Runs agent logic in a streaming way.
+     * Builds the agent output.
      *
-     * @param input the agent input.
-     * @return the streaming agent output.
+     * @param agentInput  the agent input
+     * @param stepContext the agent step context
+     * @param stream      the agent stream output
+     * @return the agent output
      */
-    default AgentOutput<O> runStream(I input) {
-        return runStream(AgentInput.builder(input).context(newExecutionContext()).build());
+    private O buildAgentOutput(I agentInput, C stepContext, Flux<S> stream) {
+        throw new NotImplementedException("Not implemented");
     }
 
     /**
-     * Start an agent step.
+     * Determines whether the agent should continue looping.
      *
-     * @param input the agent input.
-     * @return the agent output.
+     * @param agentInput  the agent input
+     * @param stepContext the agent step context
+     * @return true if the agent should continue looping, false otherwise
      */
-    default AgentOutput<O> stepStream(AgentInput<I> input) {
-        throw new UnsupportedOperationException("Streaming is not supported");
+    private boolean shouldContinueLoop(I agentInput, C stepContext) {
+        throw new NotImplementedException("Not implemented");
     }
 
     /**
-     * Get the agent stream output aggregator.
+     * The agent will execute a loop step until the agent should exit.
      *
-     * @return the agent stream output aggregator.
+     * @param agentInput  the agent input.
+     * @param stepContext the agent step context.
+     * @return the agent stream output.
      */
-    default StreamOutput.Aggregator<S, O> getStreamOutputAggregator() {
-        throw new UnsupportedOperationException("Streaming is not supported");
+    default Flux<S> runStream(I agentInput, C stepContext) {
+        return stepStream(agentInput, stepContext)
+                .concatWith(Flux.defer(() -> {
+                    if (shouldContinueLoop(agentInput, stepContext)) {
+                        stepContext.getLoopCounter().incrementAndGet();
+                        return stepStream(buildNextInput(agentInput, stepContext), stepContext);
+                    } else {
+                        return Flux.empty();
+                    }
+                }));
     }
+
+    /**
+     * Creates a new step context for the agent execution.
+     *
+     * @param agentInput the agent input
+     * @return a new step context instance
+     */
+    C createStepContext(I agentInput);
+
+    /**
+     * Builds the next input for the agent.
+     *
+     * @param agentInput  the agent input
+     * @param stepContext the agent step context
+     * @return the next input
+     */
+    private I buildNextInput(I agentInput, C stepContext) {
+        return agentInput;
+    }
+
+    /**
+     * Performs an agent step execution.
+     *
+     * @param agentInput  the agent input.
+     * @param stepContext the agent step context.
+     * @return the agent stream output.
+     */
+    Flux<S> stepStream(I agentInput, C stepContext);
+
 }

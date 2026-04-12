@@ -39,7 +39,7 @@ import org.metaagent.framework.core.tool.exception.ToolExecutionException;
  * @param <O> the output type
  * @author vyckey
  */
-public interface AgentAsTool<A extends MetaAgent<I, O>, I, O> extends Tool<AgentInput<I>, AgentOutput<O>> {
+public interface AgentAsTool<A extends MetaAgent<I, O>, I extends AgentInput, O extends AgentOutput> extends Tool<I, O> {
     /**
      * Get the agent.
      *
@@ -54,11 +54,11 @@ public interface AgentAsTool<A extends MetaAgent<I, O>, I, O> extends Tool<Agent
      */
     @Override
     default String getName() {
-        return getAgent().getName();
+        return getAgent().name();
     }
 
     @Override
-    default AgentOutput<O> run(ToolContext context, AgentInput<I> input) throws ToolExecutionException {
+    default O run(ToolContext context, I input) throws ToolExecutionException {
         return getAgent().run(input);
     }
 }

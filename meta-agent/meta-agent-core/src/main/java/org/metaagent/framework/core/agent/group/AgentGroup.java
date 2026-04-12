@@ -25,6 +25,8 @@
 package org.metaagent.framework.core.agent.group;
 
 import org.metaagent.framework.core.agent.MetaAgent;
+import org.metaagent.framework.core.agent.input.AgentInput;
+import org.metaagent.framework.core.agent.output.AgentOutput;
 
 import java.util.Map;
 
@@ -58,7 +60,7 @@ public interface AgentGroup {
      * @param <O>  the type of AgentOutput
      * @return the agent with the specified name
      */
-    <I, O> MetaAgent<I, O> getAgent(String name);
+    <I extends AgentInput, O extends AgentOutput> MetaAgent<I, O> getAgent(String name);
 
     /**
      * Gets all agents in the group.

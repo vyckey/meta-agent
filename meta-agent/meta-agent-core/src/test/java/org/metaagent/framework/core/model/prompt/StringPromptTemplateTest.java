@@ -42,6 +42,6 @@ class StringPromptTemplateTest {
         StringPromptTemplate promptTemplate = StringPromptTemplate.fromFile("classpath:prompts/default_prompt_template_test.md");
         assertEquals(List.of("search_results", "question"), promptTemplate.getVariables().orElse(null));
         PromptValue promptValue = promptTemplate.format("search_results", "1. Apple ...\n2. Banana ...", "question", "What is the best fruit?");
-        assertTrue(DefaultTemplateRenderer.INSTANCE.extractVariables(promptValue.toString()).isEmpty());
+        assertTrue(DefaultTemplateRenderer.INSTANCE.extractVariables(promptValue.text()).isEmpty());
     }
 }

@@ -28,8 +28,11 @@ import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import org.metaagent.framework.common.content.TextContent;
 import org.metaagent.framework.common.metadata.MetadataProvider;
 import org.metaagent.framework.core.agent.chat.message.part.MessagePart;
+import org.metaagent.framework.core.agent.chat.message.part.MessagePartId;
 
+import java.time.format.DateTimeFormatter;
 import java.util.List;
+import java.util.Optional;
 
 /**
  * The message interface represents a message in a chat.
@@ -43,6 +46,7 @@ import java.util.List;
         defaultImpl = RoleMessage.class
 )
 public interface Message extends TextContent {
+    DateTimeFormatter TIME_FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ssXXX");
 
     /**
      * Get the info of the message.
@@ -66,6 +70,34 @@ public interface Message extends TextContent {
     @Override
     default MetadataProvider metadata() {
         return info().metadata();
+    }
+
+    /**
+     * Get the part of the message.
+     *
+     * @param partId the id of the part
+     * @return the part of the message
+     */
+    default Optional<MessagePart> part(MessagePartId partId) {
+        return parts().stream().filter(part -> part.id().equals(partId)).findFirst();
+    }
+
+    /**
+     * Get the builder of the message.
+     *
+     * @return the builder of the message
+     */
+    Builder toBuilder();
+
+    /**
+     * Copy and set the parent id of the new message.
+     *
+     * @param parentId the parent id of the message
+     * @return the new message
+     */
+    default Message withParentId(MessageId parentId) {
+        MessageInfo newMessageInfo = info().toBuilder().parentId(parentId).build();
+        return toBuilder().info(newMessageInfo).build();
     }
 
     /**

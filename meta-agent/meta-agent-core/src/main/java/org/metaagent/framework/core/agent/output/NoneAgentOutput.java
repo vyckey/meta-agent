@@ -31,10 +31,10 @@ import org.metaagent.framework.common.metadata.MetadataProvider;
  *
  * @author vyckey
  */
-public final class NoneAgentOutput<O> implements AgentOutput<O> {
-    @Override
-    public O result() {
-        return null;
+public final class NoneAgentOutput implements AgentOutput {
+    public static final NoneAgentOutput INSTANCE = new NoneAgentOutput();
+
+    private NoneAgentOutput() {
     }
 
     @Override

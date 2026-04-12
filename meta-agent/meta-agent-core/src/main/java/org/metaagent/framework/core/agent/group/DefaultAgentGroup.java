@@ -25,6 +25,8 @@
 package org.metaagent.framework.core.agent.group;
 
 import org.metaagent.framework.core.agent.MetaAgent;
+import org.metaagent.framework.core.agent.input.AgentInput;
+import org.metaagent.framework.core.agent.output.AgentOutput;
 
 import java.util.Collections;
 import java.util.HashMap;
@@ -54,7 +56,7 @@ public class DefaultAgentGroup implements AgentGroup {
 
     @SuppressWarnings("unchecked")
     @Override
-    public <I, O> MetaAgent<I, O> getAgent(String name) {
+    public <I extends AgentInput, O extends AgentOutput> MetaAgent<I, O> getAgent(String name) {
         return (MetaAgent<I, O>) agents.get(name);
     }
 
@@ -66,15 +68,15 @@ public class DefaultAgentGroup implements AgentGroup {
     @Override
     public void addAgent(MetaAgent<?, ?> agent) {
         Objects.requireNonNull(agent, "agent is required");
-        agents.put(agent.getName(), agent);
+        agents.put(agent.name(), agent);
     }
 
     @Override
     public void removeAgent(MetaAgent<?, ?> agent) {
         Objects.requireNonNull(agent, "agent is required");
-        if (!agents.containsKey(agent.getName())) {
-            throw new IllegalArgumentException("Agent " + agent.getName() + " not found in the group");
+        if (!agents.containsKey(agent.name())) {
+            throw new IllegalArgumentException("Agent " + agent.name() + " not found in the group");
         }
-        agents.remove(agent.getName());
+        agents.remove(agent.name());
     }
 }

@@ -24,25 +24,15 @@
 
 package org.metaagent.framework.core.agent;
 
-import org.metaagent.framework.core.agent.fallback.AgentFallbackStrategy;
-import org.metaagent.framework.core.agent.fallback.FastFailAgentFallbackStrategy;
+import org.metaagent.framework.common.abort.AbortException;
+import org.metaagent.framework.core.agent.exception.AgentExecutionException;
+import org.metaagent.framework.core.agent.exception.AgentInterruptedException;
 import org.metaagent.framework.core.agent.input.AgentInput;
-import org.metaagent.framework.core.agent.memory.EmptyMemory;
-import org.metaagent.framework.core.agent.memory.Memory;
-import org.metaagent.framework.core.agent.observability.AgentEventBus;
-import org.metaagent.framework.core.agent.observability.AgentListenerRegistry;
-import org.metaagent.framework.core.agent.observability.AgentLogListener;
-import org.metaagent.framework.core.agent.observability.AgentLogger;
-import org.metaagent.framework.core.agent.observability.AgentRunEventPublisher;
-import org.metaagent.framework.core.agent.observability.AgentRunListener;
-import org.metaagent.framework.core.agent.observability.AgentStepListener;
-import org.metaagent.framework.core.agent.observability.event.AgentEvent;
+import org.metaagent.framework.core.agent.listener.AgentRunListener;
+import org.metaagent.framework.core.agent.listener.AgentRunListenerRegistry;
+import org.metaagent.framework.core.agent.listener.DefaultAgentListenerRegistry;
 import org.metaagent.framework.core.agent.output.AgentOutput;
 import org.metaagent.framework.core.agent.profile.AgentProfile;
-import org.metaagent.framework.core.agent.state.AgentRunStatus;
-import org.metaagent.framework.core.agent.state.AgentState;
-import org.metaagent.framework.core.agent.state.AgentStepState;
-import org.metaagent.framework.core.agent.state.DefaultAgentState;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -58,83 +48,69 @@ import java.util.function.Consumer;
  * @param <O> the type of agent output
  * @author vyckey
  */
-public abstract class AbstractMetaAgent<I, O> implements MetaAgent<I, O> {
+public abstract class AbstractMetaAgent<I extends AgentInput, O extends AgentOutput>
+        implements MetaAgent<I, O> {
 
     protected String agentName;
     protected AgentProfile profile;
-    protected AgentState agentState;
-    protected Memory memory;
-    protected AgentEventBus<AgentEvent> eventBus;
-    protected boolean initialized = false;
+    protected volatile boolean initialized = false;
+
     protected AgentLogger agentLogger;
     protected Logger logger = LoggerFactory.getLogger(getClass());
-    protected AgentLogListener<I, O> logListener;
-    protected AgentRunListener<I, O> runEventPublisher;
+
+    protected AgentRunListenerRegistry<I, O> runListenerRegistry;
 
     protected AbstractMetaAgent(String name) {
         this.agentName = name;
-        this.agentState = DefaultAgentState.builder().build();
-        this.memory = EmptyMemory.INSTANCE;
-        this.eventBus = AgentEventBus.global();
         this.agentLogger = AgentLogger.getLogger(name);
+        this.runListenerRegistry = new DefaultAgentListenerRegistry<>();
     }
 
     protected AbstractMetaAgent(AgentProfile profile) {
         this(profile.getName());
         this.profile = profile;
-        this.eventBus = AgentEventBus.global();
     }
 
-    protected AbstractMetaAgent(AbstractAgentBuilder<?, ?, I, O> builder) {
+    protected AbstractMetaAgent(AbstractAgentBuilder<?, I, O, ?> builder) {
         this.profile = Objects.requireNonNull(builder.profile, "agent profile is required");
         this.agentName = builder.profile.getName();
         this.agentLogger = AgentLogger.getLogger(this.agentName);
-        this.agentState = builder.agentState != null ? builder.agentState : DefaultAgentState.builder().build();
-        this.memory = builder.memory != null ? builder.memory : EmptyMemory.INSTANCE;
-        this.eventBus = builder.agentEventBus != null ? builder.agentEventBus : AgentEventBus.global();
+        this.runListenerRegistry = builder.runListenerRegistry == null
+                ? new DefaultAgentListenerRegistry<>() : builder.runListenerRegistry;
     }
 
     @Override
-    public final String getName() {
+    public final String name() {
         return agentName;
     }
 
     @Override
-    public AgentProfile getAgentProfile() {
+    public AgentProfile profile() {
         return profile;
     }
 
-    @Override
-    public AgentState getAgentState() {
-        return agentState;
+    public AgentRunListenerRegistry<I, O> getRunListenerRegistry() {
+        return runListenerRegistry;
     }
 
-    @Override
-    public Memory getMemory() {
-        return memory;
-    }
-
-    public synchronized void initialize() {
+    /**
+     * Initializes the agent if not initialized.
+     */
+    public void initialize() {
         if (initialized) {
             return;
         }
-        doInitialize();
-        initialized = true;
+        synchronized (this) {
+            if (initialized) {
+                return;
+            }
+            doInitialize();
+            initialized = true;
+        }
     }
 
     protected void doInitialize() {
-        this.logListener = new AgentLogListener<>(agentState, agentLogger);
-        this.runEventPublisher = new AgentRunEventPublisher<>(eventBus);
-    }
-
-    protected List<AgentRunListener<I, O>> getRunListeners(AgentInput<I> agentInput) {
-        AgentListenerRegistry<I, O> listenerRegistry = agentInput.context().getAgentListenerRegistry();
-        return listenerRegistry.getRunListeners();
-    }
-
-    protected List<AgentStepListener<I, O>> getStepListeners(AgentInput<I> agentInput) {
-        AgentListenerRegistry<I, O> listenerRegistry = agentInput.context().getAgentListenerRegistry();
-        return listenerRegistry.getStepListeners();
+        // The child class should implement this method to initialize the agent.
     }
 
     protected <T> void notifyListeners(Iterable<T> listeners, Consumer<T> consumer) {
@@ -147,44 +123,22 @@ public abstract class AbstractMetaAgent<I, O> implements MetaAgent<I, O> {
         }
     }
 
-    public AgentFallbackStrategy<I, O> getFallbackStrategy() {
-        return new FastFailAgentFallbackStrategy<>();
-    }
-
     /**
-     * Performs the agent run.
+     * Handles exceptions thrown by the callable.
      *
      * @param callable the callable to execute
      * @param <V>      the type of the callable result
      * @return the callable result
      */
-    protected <V> V performRun(Callable<V> callable) {
-        AgentState agentState = getAgentState();
-        if (agentState.getStatus() == AgentRunStatus.RUNNING) {
-            throw new AgentExecutionException("agent is already running");
-        }
-
-        agentState.setStatus(AgentRunStatus.RUNNING);
-        AgentStepState stepState = agentState.resetStepState();
+    protected <V> V handleExceptionIfRequired(Callable<V> callable) {
         try {
             return callable.call();
-        } catch (AgentInterruptedException ex) {
-            agentState.setStatus(AgentRunStatus.INTERRUPTED);
-            stepState.setLastException(ex);
-            throw ex;
-        } catch (AgentExecutionException ex) {
-            agentState.setStatus(AgentRunStatus.FAILED);
-            stepState.setLastException(ex);
+        } catch (AbortException ex) {
+            throw new AgentInterruptedException("agent is interrupted", ex);
+        } catch (AgentExecutionException | AgentInterruptedException ex) {
             throw ex;
         } catch (Exception ex) {
-            agentState.setStatus(AgentRunStatus.FAILED);
-            AgentExecutionException exception = new AgentExecutionException("agent execution failed", ex);
-            stepState.setLastException(exception);
-            throw exception;
-        } finally {
-            if (!agentState.getStatus().isFinished()) {
-                agentState.setStatus(AgentRunStatus.COMPLETED);
-            }
+            throw new AgentExecutionException("agent execution failed", ex);
         }
     }
 
@@ -194,32 +148,23 @@ public abstract class AbstractMetaAgent<I, O> implements MetaAgent<I, O> {
      * @param input the agent input
      * @return the preprocessed agent input
      */
-    protected AgentInput<I> preprocess(AgentInput<I> input) {
+    protected I preprocess(I input) {
         if (!initialized) {
             initialize();
-        }
-        AgentListenerRegistry<I, O> listenerRegistry = input.context().getAgentListenerRegistry();
-        if (!listenerRegistry.getRunListeners().contains(logListener)) {
-            listenerRegistry.registerRunListener(logListener);
-        }
-        if (!listenerRegistry.getStepListeners().contains(logListener)) {
-            listenerRegistry.registerStepListener(logListener);
-        }
-        if (!listenerRegistry.getRunListeners().contains(runEventPublisher)) {
-            listenerRegistry.registerRunListener(runEventPublisher);
         }
         return input;
     }
 
     @Override
-    public AgentOutput<O> run(AgentInput<I> agentInput) {
-        return performRun(() -> {
-            AgentInput<I> input = preprocess(agentInput);
-            List<AgentRunListener<I, O>> runListeners = getRunListeners(input);
+    public O run(I agentInput) {
+        I input = preprocess(agentInput);
+
+        return handleExceptionIfRequired(() -> {
+            List<AgentRunListener<I, O>> runListeners = getRunListenerRegistry().getRunListeners();
             try {
                 notifyListeners(runListeners, listener -> listener.onAgentStart(this, input));
 
-                AgentOutput<O> output = doRun(input);
+                O output = doRun(input);
 
                 notifyListeners(runListeners, listener -> listener.onAgentOutput(this, input, output));
                 return output;
@@ -230,40 +175,21 @@ public abstract class AbstractMetaAgent<I, O> implements MetaAgent<I, O> {
         });
     }
 
-    protected AgentOutput<O> doRun(AgentInput<I> input) {
-        try {
-            return step(input);
-        } catch (Exception ex) {
-            return getFallbackStrategy().fallback(this, input, ex);
-        }
-    }
-
-    @Override
-    public AgentOutput<O> step(AgentInput<I> input) {
-        List<AgentStepListener<I, O>> stepListeners = getStepListeners(input);
-        try {
-            notifyListeners(stepListeners, listener -> listener.onAgentStepStart(this, input));
-            AgentOutput<O> output = doStep(input);
-            notifyListeners(stepListeners, listener -> listener.onAgentStepFinish(this, input, output));
-            return output;
-        } catch (Exception ex) {
-            getAgentState().getStepState().setLastException(ex);
-            notifyListeners(stepListeners, listener -> listener.onAgentStepError(this, input, ex));
-            throw ex;
-        }
-    }
-
-    protected abstract AgentOutput<O> doStep(AgentInput<I> input);
+    /**
+     * Performs agent run.
+     *
+     * @param input the agent input
+     * @return the agent output
+     */
+    protected abstract O doRun(I input);
 
     @Override
     public void reset() {
-        this.agentState.reset();
-        this.memory.clear();
         this.initialized = false;
     }
 
     @Override
     public String toString() {
-        return getName();
+        return this.getClass().getTypeName() + "{name=" + name() + "}";
     }
 }
