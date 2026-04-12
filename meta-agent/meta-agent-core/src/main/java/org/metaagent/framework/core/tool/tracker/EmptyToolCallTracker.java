@@ -26,6 +26,7 @@ package org.metaagent.framework.core.tool.tracker;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.Optional;
 import java.util.function.Predicate;
 
 public class EmptyToolCallTracker implements ToolCallTracker {
@@ -41,6 +42,11 @@ public class EmptyToolCallTracker implements ToolCallTracker {
     @Override
     public List<ToolCallRecord> find(Predicate<ToolCallRecord> predicate) {
         return Collections.emptyList();
+    }
+
+    @Override
+    public Optional<ToolCallRecord> findById(String executionId) {
+        return Optional.empty();
     }
 
     @Override

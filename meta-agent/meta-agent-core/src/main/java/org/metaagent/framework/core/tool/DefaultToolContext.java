@@ -24,10 +24,10 @@
 
 package org.metaagent.framework.core.tool;
 
-import lombok.Getter;
 import org.metaagent.framework.common.abort.AbortController;
 import org.metaagent.framework.common.abort.AbortSignal;
 import org.metaagent.framework.core.agent.MetaAgent;
+import org.metaagent.framework.core.agent.event.AgentEventBus;
 import org.metaagent.framework.core.agent.input.AgentInput;
 import org.metaagent.framework.core.agent.output.AgentOutput;
 import org.metaagent.framework.core.security.SecurityLevel;
@@ -39,8 +39,10 @@ import org.metaagent.framework.core.tool.approval.ToolApprovalRequest;
 import org.metaagent.framework.core.tool.config.DefaultToolExecutionConfig;
 import org.metaagent.framework.core.tool.config.ToolExecutionConfig;
 import org.metaagent.framework.core.tool.exception.ToolRejectException;
+import org.metaagent.framework.core.tool.listener.ToolExecutionListenerRegistry;
+import org.metaagent.framework.core.tool.manager.ToolManager;
+import org.metaagent.framework.core.tool.tracker.ToolCallTracker;
 
-import java.nio.file.Path;
 import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
@@ -51,29 +53,29 @@ import java.util.concurrent.ForkJoinPool;
  *
  * @author vyckey
  */
-@Getter
-public class DefaultToolContext implements ToolContext {
-    private final MetaAgent<?, ?> agent;
-    private final ToolExecutionConfig toolExecutionConfig;
-    private final SecurityLevel securityLevel;
-    private final PermissionApprovalManager<ToolApprovalRequest> approvalManager;
-    private final AbortSignal abortSignal;
-    private String executionId;
+public record DefaultToolContext(
+        MetaAgent<?, ?> agent,
+        AgentEventBus agentEventBus,
+        ToolManager toolManager,
+        ToolExecutionListenerRegistry toolListenerRegistry,
+        ToolCallTracker toolCallTracker,
+        ToolExecutionConfig toolExecutionConfig,
+        SecurityLevel securityLevel,
+        PermissionApprovalManager<ToolApprovalRequest> approvalManager,
+        AbortSignal abortSignal,
+        String executionId
+) implements ToolContext {
 
-    protected DefaultToolContext(Builder builder) {
-        this.agent = builder.agent;
-        this.toolExecutionConfig = Objects.requireNonNull(builder.toolExecutionConfig, "ToolExecutionConfig must not be null");
-        this.securityLevel = Objects.requireNonNull(builder.securityLevel, "SecurityLevel must not be null");
-        this.approvalManager = Objects.requireNonNull(builder.approvalManager, "ApprovalManager must not be null");
-        this.abortSignal = Objects.requireNonNull(builder.abortSignal, "AbortSignal must not be null");
-    }
-
-    public static Path defaultWorkingDirectory() {
-        if (System.getProperty("CWD") != null) {
-            return Path.of(System.getProperty("CWD")).toAbsolutePath();
-        } else {
-            return Path.of(".").toAbsolutePath().normalize();
-        }
+    public DefaultToolContext {
+        Objects.requireNonNull(agent, "agent is required");
+        Objects.requireNonNull(agentEventBus, "agentEventBus is required");
+        Objects.requireNonNull(toolManager, "toolManager is required");
+        Objects.requireNonNull(toolListenerRegistry, "toolListenerRegistry is required");
+        Objects.requireNonNull(toolCallTracker, "toolCallTracker is required");
+        Objects.requireNonNull(toolExecutionConfig, "toolExecutionConfig is required");
+        Objects.requireNonNull(securityLevel, "securityLevel is required");
+        Objects.requireNonNull(approvalManager, "approvalManager is required");
+        Objects.requireNonNull(abortSignal, "abortSignal is required");
     }
 
     public static Builder builder() {
@@ -83,6 +85,50 @@ public class DefaultToolContext implements ToolContext {
     public <I extends AgentInput, O extends AgentOutput> MetaAgent<I, O> getAgent() {
         //noinspection unchecked
         return (MetaAgent<I, O>) agent;
+    }
+
+    @Override
+    public AgentEventBus getAgentEventBus() {
+        return agentEventBus;
+    }
+
+    @Override
+    public ToolManager getToolManager() {
+        return toolManager;
+    }
+
+    @Override
+    public ToolExecutionListenerRegistry getToolListenerRegistry() {
+        return toolListenerRegistry;
+    }
+
+    @Override
+    public ToolCallTracker getToolCallTracker() {
+        return toolCallTracker;
+    }
+
+    @Override
+    public ToolExecutionConfig getToolExecutionConfig() {
+        return toolExecutionConfig;
+    }
+
+    @Override
+    public SecurityLevel getSecurityLevel() {
+        return securityLevel;
+    }
+
+    @Override
+    public PermissionApprovalManager<ToolApprovalRequest> getApprovalManager() {
+        return approvalManager;
+    }
+
+    public AbortSignal getAbortSignal() {
+        return abortSignal;
+    }
+
+    @Override
+    public String getExecutionId() {
+        return executionId;
     }
 
     @Override
@@ -100,65 +146,111 @@ public class DefaultToolContext implements ToolContext {
     }
 
     @Override
-    public void setExecutionId(String executionId) {
-        this.executionId = Objects.requireNonNull(executionId, "executionId cannot be null");
-    }
-
-    @Override
-    public ToolContext.Builder toBuilder() {
+    public ToolContextBuilder toBuilder() {
         return new Builder(this);
     }
 
-    public static class Builder implements ToolContext.Builder {
+    public static class Builder implements ToolContextBuilder {
         private MetaAgent<?, ?> agent;
+        private AgentEventBus agentEventBus;
+        private ToolManager toolManager;
+        private ToolExecutionListenerRegistry toolListenerRegistry;
+        private ToolCallTracker toolCallTracker;
         private ToolExecutionConfig toolExecutionConfig;
         private SecurityLevel securityLevel;
         private PermissionApprovalManager<ToolApprovalRequest> approvalManager;
         private AbortSignal abortSignal;
+        private String executionId;
 
         public Builder() {
         }
 
         private Builder(ToolContext toolContext) {
             this.agent = toolContext.getAgent();
+            this.agentEventBus = toolContext.getAgentEventBus();
+            this.toolManager = toolContext.getToolManager();
+            this.toolListenerRegistry = toolContext.getToolListenerRegistry();
+            this.toolCallTracker = toolContext.getToolCallTracker();
             this.toolExecutionConfig = toolContext.getToolExecutionConfig();
             this.securityLevel = toolContext.getSecurityLevel();
             this.approvalManager = toolContext.getApprovalManager();
             this.abortSignal = toolContext.getAbortSignal();
+            this.executionId = toolContext.getExecutionId();
         }
 
         @Override
-        public ToolContext.Builder agent(MetaAgent<?, ?> agent) {
+        public ToolContextBuilder agent(MetaAgent<?, ?> agent) {
             this.agent = agent;
             return this;
         }
 
         @Override
-        public ToolContext.Builder toolExecutionConfig(ToolExecutionConfig toolExecutionConfig) {
+        public ToolContextBuilder agentEventBus(AgentEventBus agentEventBus) {
+            this.agentEventBus = agentEventBus;
+            return this;
+        }
+
+        @Override
+        public ToolContextBuilder toolManager(ToolManager toolManager) {
+            this.toolManager = toolManager;
+            return this;
+        }
+
+        @Override
+        public ToolContextBuilder toolCallTracker(ToolCallTracker toolCallTracker) {
+            this.toolCallTracker = toolCallTracker;
+            return this;
+        }
+
+        @Override
+        public ToolContextBuilder toolListenerRegistry(ToolExecutionListenerRegistry toolListenerRegistry) {
+            this.toolListenerRegistry = toolListenerRegistry;
+            return this;
+        }
+
+        @Override
+        public ToolContextBuilder toolExecutionConfig(ToolExecutionConfig toolExecutionConfig) {
             this.toolExecutionConfig = toolExecutionConfig;
             return this;
         }
 
         @Override
-        public ToolContext.Builder securityLevel(SecurityLevel securityLevel) {
+        public ToolContextBuilder securityLevel(SecurityLevel securityLevel) {
             this.securityLevel = securityLevel;
             return this;
         }
 
         @Override
-        public ToolContext.Builder approvalManager(PermissionApprovalManager<ToolApprovalRequest> approvalManager) {
+        public ToolContextBuilder approvalManager(PermissionApprovalManager<ToolApprovalRequest> approvalManager) {
             this.approvalManager = approvalManager;
             return this;
         }
 
         @Override
-        public ToolContext.Builder abortSignal(AbortSignal abortSignal) {
+        public ToolContextBuilder abortSignal(AbortSignal abortSignal) {
             this.abortSignal = abortSignal;
             return this;
         }
 
         @Override
-        public DefaultToolContext build() {
+        public ToolContextBuilder executionId(String executionId) {
+            this.executionId = executionId;
+            return this;
+        }
+
+        protected ToolContextBuilder withDefaults() {
+            if (agentEventBus == null) {
+                this.agentEventBus = AgentEventBus.create();
+            }
+            if (toolManager == null) {
+                this.toolManager = ToolManager.create();
+            }
+            if (toolCallTracker == null) {
+                this.toolCallTracker = ToolCallTracker.empty();
+            }
+            if (toolListenerRegistry == null) {
+                this.toolListenerRegistry = ToolExecutionListenerRegistry.create();
+            }
             if (toolExecutionConfig == null) {
                 toolExecutionConfig = DefaultToolExecutionConfig.builder().build();
             }
@@ -174,7 +266,24 @@ public class DefaultToolContext implements ToolContext {
             if (abortSignal == null) {
                 this.abortSignal = AbortController.global().signal();
             }
-            return new DefaultToolContext(this);
+            return this;
+        }
+
+        @Override
+        public DefaultToolContext build() {
+            withDefaults();
+            return new DefaultToolContext(
+                    agent,
+                    agentEventBus,
+                    toolManager,
+                    toolListenerRegistry,
+                    toolCallTracker,
+                    toolExecutionConfig,
+                    securityLevel,
+                    approvalManager,
+                    abortSignal,
+                    executionId
+            );
         }
     }
 }

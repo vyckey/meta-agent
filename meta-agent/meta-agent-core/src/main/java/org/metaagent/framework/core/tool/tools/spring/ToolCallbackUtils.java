@@ -25,22 +25,20 @@
 package org.metaagent.framework.core.tool.tools.spring;
 
 import com.google.common.collect.Lists;
+import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 import org.apache.commons.collections.CollectionUtils;
 import org.metaagent.framework.core.tool.Tool;
-import org.metaagent.framework.core.tool.exception.ToolExecutionException;
-import org.metaagent.framework.core.tool.executor.BatchToolInputs;
-import org.metaagent.framework.core.tool.executor.BatchToolOutputs;
+import org.metaagent.framework.core.tool.ToolContext;
 import org.metaagent.framework.core.tool.executor.ToolExecutor;
-import org.metaagent.framework.core.tool.executor.ToolExecutorContext;
 import org.metaagent.framework.core.tool.manager.ToolManager;
-import org.springframework.ai.chat.messages.AssistantMessage;
-import org.springframework.ai.chat.messages.ToolResponseMessage;
 import org.springframework.ai.chat.prompt.ChatOptions;
 import org.springframework.ai.model.tool.DefaultToolCallingChatOptions;
 import org.springframework.ai.model.tool.ToolCallingChatOptions;
 import org.springframework.ai.tool.ToolCallback;
+import org.springframework.util.ReflectionUtils;
 
+import java.lang.reflect.Field;
 import java.util.List;
 import java.util.Map;
 
@@ -69,8 +67,8 @@ public abstract class ToolCallbackUtils {
     }
 
     public static ChatOptions buildChatOptionsWithTools(ChatOptions chatOptions,
+                                                        ToolManager toolManager,
                                                         ToolExecutor toolExecutor,
-                                                        ToolExecutorContext executorContext,
                                                         Boolean internalToolExecutionEnabled) {
         ToolCallingChatOptions toolCallingChatOptions = null;
         if (chatOptions == null) {
@@ -79,34 +77,29 @@ public abstract class ToolCallbackUtils {
             toolCallingChatOptions = chatOptions.copy();
         }
         if (toolCallingChatOptions != null) {
-            ToolManager toolManager = executorContext.getToolManager();
             ToolCallbackUtils.addToolsToChatOptions(toolCallingChatOptions, toolManager, toolExecutor);
-            toolCallingChatOptions.setToolContext(Map.of(
-                    ToolCallbackDelegate.CONTEXT_KEY, executorContext
-            ));
+            toolCallingChatOptions.setToolContext(Maps.newHashMap());
             toolCallingChatOptions.setInternalToolExecutionEnabled(internalToolExecutionEnabled);
             return toolCallingChatOptions;
         }
         return chatOptions;
     }
 
-    public static List<ToolResponseMessage.ToolResponse> callTools(
-            ToolExecutor toolExecutor,
-            ToolExecutorContext executorContext,
-            List<AssistantMessage.ToolCall> toolCalls) throws ToolExecutionException {
-        ToolManager toolManager = executorContext.getToolManager();
-        List<BatchToolInputs.ToolInput> toolInputs = Lists.newArrayList();
-        for (AssistantMessage.ToolCall toolCall : toolCalls) {
-            Tool<?, ?> tool = toolManager.getTool(toolCall.name());
-            if (tool == null) {
-                throw new ToolExecutionException("Tool \"" + toolCall.name() + "\" not found");
-            }
-            toolInputs.add(new BatchToolInputs.ToolInput(tool.getName(), toolCall.arguments()));
-        }
+    public static boolean setToolContext(ChatOptions chatOptions, ToolContext toolContext) {
+        if (chatOptions instanceof ToolCallingChatOptions toolChatOptions) {
+            try {
+                Map<String, Object> toolContextMap = Maps.newHashMap(toolChatOptions.getToolContext());
+                toolContextMap.put(ToolCallbackDelegate.CONTEXT_KEY, toolContext);
 
-        BatchToolOutputs toolOutputs = toolExecutor.execute(executorContext, new BatchToolInputs(toolInputs));
-        return toolOutputs.outputs().stream()
-                .map(output -> new ToolResponseMessage.ToolResponse(output.toolName(), output.toolName(), output.output()))
-                .toList();
+                Field contextField = ReflectionUtils.findField(chatOptions.getClass(), "toolContext");
+                contextField.setAccessible(true);
+                contextField.set(chatOptions, toolContextMap);
+                return true;
+            } catch (Exception e) {
+                return false;
+            }
+        }
+        return false;
     }
+
 }

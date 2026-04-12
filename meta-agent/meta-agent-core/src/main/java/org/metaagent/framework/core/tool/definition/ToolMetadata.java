@@ -22,29 +22,46 @@
  * SOFTWARE.
  */
 
-package org.metaagent.framework.core.agents.chat.model;
+package org.metaagent.framework.core.tool.definition;
 
-import org.metaagent.framework.core.agent.chat.message.part.MessagePart;
-import org.metaagent.framework.core.agents.chat.model.metadata.ChatResponseMetadata;
-
-import java.util.List;
-import java.util.Objects;
+import org.metaagent.framework.common.metadata.MetadataProvider;
 
 /**
- * ChatModelResponse represents a response from a chat model.
+ * Tool metadata.
  *
  * @author vyckey
  */
-public record ChatModelResponse(
-        List<MessagePart> messages,
-        ChatResponseMetadata metadata
-) {
-    public ChatModelResponse {
-        Objects.requireNonNull(messages, "messages cannot be null");
-        Objects.requireNonNull(metadata, "metadata cannot be null");
-    }
+public interface ToolMetadata extends MetadataProvider {
+    String KEY_CONCURRENCY_SAFE = "isConcurrencySafe";
+    String KEY_READ_ONLY = "isReadOnly";
+    String KEY_RETURN_DIRECTLY = "isReturnDirectly";
 
-    public ChatModelResponse(List<MessagePart> messages) {
-        this(messages, ChatResponseMetadata.builder().build());
-    }
+    /**
+     * Returns whether the tool is concurrency safe.
+     *
+     * @return whether the tool is concurrency safe
+     */
+    boolean isConcurrencySafe();
+
+    /**
+     * Returns whether the tool is read-only.
+     *
+     * @return whether the tool is read-only
+     */
+    boolean isReadOnly();
+
+    /**
+     * Returns whether the tool returns directly.
+     *
+     * @return whether the tool returns directly
+     */
+    boolean isReturnDirectly();
+
+    /**
+     * Returns a copy of the tool metadata.
+     *
+     * @return a copy of the tool metadata
+     */
+    @Override
+    ToolMetadata copy();
 }

@@ -28,6 +28,10 @@ import lombok.extern.slf4j.Slf4j;
 import org.metaagent.framework.core.tool.Tool;
 import org.metaagent.framework.core.tool.ToolContext;
 import org.metaagent.framework.core.tool.ToolDelegate;
+import org.metaagent.framework.core.tool.event.AgentToolEvent;
+import org.metaagent.framework.core.tool.event.ToolCallEvent;
+import org.metaagent.framework.core.tool.event.ToolErrorEvent;
+import org.metaagent.framework.core.tool.event.ToolResponseEvent;
 import org.metaagent.framework.core.tool.exception.ToolArgumentException;
 import org.metaagent.framework.core.tool.exception.ToolExecutionError;
 import org.metaagent.framework.core.tool.exception.ToolExecutionException;
@@ -36,7 +40,6 @@ import org.metaagent.framework.core.tool.listener.ToolExecutionListenerRegistry;
 import org.metaagent.framework.core.tool.tracker.DefaultToolCallRecord;
 import org.metaagent.framework.core.tool.tracker.ToolCallRecord;
 
-import java.util.Objects;
 import java.util.function.Consumer;
 
 /**
@@ -48,11 +51,9 @@ import java.util.function.Consumer;
  */
 @Slf4j
 public class ToolExecuteDelegate<I, O> extends ToolDelegate<I, O> {
-    protected final ToolExecutorContext executorContext;
 
-    public ToolExecuteDelegate(Tool<I, O> delegateTool, ToolExecutorContext executorContext) {
+    public ToolExecuteDelegate(Tool<I, O> delegateTool) {
         super(delegateTool);
-        this.executorContext = Objects.requireNonNull(executorContext, "executorContext is required");
     }
 
     protected void notifyListeners(ToolExecutionListenerRegistry listenerRegistry,
@@ -69,12 +70,14 @@ public class ToolExecuteDelegate<I, O> extends ToolDelegate<I, O> {
     @Override
     public O run(ToolContext context, I input) throws ToolExecutionException {
         Tool<I, O> tool = getDelegateTool();
-        ToolExecutionListenerRegistry listenerRegistry = executorContext.getToolListenerRegistry();
+        ToolExecutionListenerRegistry listenerRegistry = context.getToolListenerRegistry();
         try {
+            publishToolCallEvent(context, null, input);
             notifyListeners(listenerRegistry, listener -> listener.onToolInput(tool, context, input));
 
-            O output = getDelegateTool().run(executorContext.getToolContext(), input);
+            O output = getDelegateTool().run(context, input);
 
+            publishToolResponseEvent(context, null, input, null, output);
             notifyListeners(listenerRegistry, listener -> listener.onToolOutput(tool, context, input, output));
             return output;
         } catch (ToolExecutionException e) {
@@ -91,7 +94,7 @@ public class ToolExecuteDelegate<I, O> extends ToolDelegate<I, O> {
     public String call(ToolContext context, String input) throws ToolExecutionException {
         String toolName = getDefinition().name();
         Tool<I, O> tool = getDelegateTool();
-        ToolExecutionListenerRegistry listenerRegistry = executorContext.getToolListenerRegistry();
+        ToolExecutionListenerRegistry listenerRegistry = context.getToolListenerRegistry();
 
         DefaultToolCallRecord.Builder builder = DefaultToolCallRecord.builder()
                 .id(context.getExecutionId())
@@ -101,6 +104,7 @@ public class ToolExecuteDelegate<I, O> extends ToolDelegate<I, O> {
         @SuppressWarnings("unchecked") I[] toolInputHolder = (I[]) new Object[1];
         String output = null;
         try {
+            publishToolCallEvent(context, input, null);
             notifyListeners(listenerRegistry, listener ->
                     listener.onToolInputRequest(tool, context, input)
             );
@@ -109,12 +113,14 @@ public class ToolExecuteDelegate<I, O> extends ToolDelegate<I, O> {
             toolInputHolder[0] = toolInput;
             O toolOutput = run(context, toolInput);
 
+            publishToolResponseEvent(context, input, toolInput, null, toolOutput);
             notifyListeners(listenerRegistry, listener ->
                     listener.onToolOutput(tool, context, toolInputHolder[0], toolOutput)
             );
             output = getConverter().outputConverter().convert(toolOutput);
             builder.toolOutput(output);
         } catch (ToolExecutionException ex) {
+            publishToolErrorEvent(context, input, toolInputHolder[0], ex);
             notifyListeners(listenerRegistry, listener ->
                     listener.onToolException(tool, context, toolInputHolder[0], ex)
             );
@@ -123,6 +129,7 @@ public class ToolExecuteDelegate<I, O> extends ToolDelegate<I, O> {
             output = processException(context, input, ex);
         } catch (Exception e) {
             ToolExecutionException ex = new ToolExecutionError("Call tool " + toolName + " fail", e);
+            publishToolErrorEvent(context, input, toolInputHolder[0], ex);
             notifyListeners(listenerRegistry, listener ->
                     listener.onToolException(tool, context, toolInputHolder[0], ex)
             );
@@ -132,13 +139,14 @@ public class ToolExecuteDelegate<I, O> extends ToolDelegate<I, O> {
         } finally {
             if (output != null) {
                 String finalOutput = output;
+                publishToolResponseEvent(context, input, toolInputHolder[0], finalOutput, null);
                 notifyListeners(listenerRegistry, listener ->
                         listener.onToolResponse(tool, context, input, finalOutput)
                 );
             }
 
             ToolCallRecord callRecord = builder.toolOutput(output).build();
-            executorContext.getToolCallTracker().track(callRecord);
+            context.getToolCallTracker().track(callRecord);
         }
         return output;
     }
@@ -159,5 +167,44 @@ public class ToolExecuteDelegate<I, O> extends ToolDelegate<I, O> {
             return "An error occurred while calling tool '" + getName() + "': " + ex.getMessage()
                     + ". Fix your input if needed and try again.";
         }
+    }
+
+    private void publishToolCallEvent(ToolContext context, String input, I toolInput) {
+        AgentToolEvent event = ToolCallEvent.builder()
+                .agent(context.getAgent())
+                .executionId(context.getExecutionId())
+                .tool(this)
+                .toolArgs(input)
+                .toolInput(toolInput)
+                .build();
+
+        context.getAgentEventBus().publish(event);
+    }
+
+    private void publishToolResponseEvent(ToolContext context, String input, I toolInput, String output, O toolOutput) {
+        AgentToolEvent event = ToolResponseEvent.builder()
+                .agent(context.getAgent())
+                .executionId(context.getExecutionId())
+                .tool(this)
+                .toolArgs(input)
+                .toolInput(toolInput)
+                .toolResponse(output)
+                .toolOutput(toolOutput)
+                .build();
+
+        context.getAgentEventBus().publish(event);
+    }
+
+    private void publishToolErrorEvent(ToolContext context, String input, I toolInput, ToolExecutionException exception) {
+        AgentToolEvent event = ToolErrorEvent.builder()
+                .agent(context.getAgent())
+                .executionId(context.getExecutionId())
+                .tool(this)
+                .toolArgs(input)
+                .toolInput(toolInput)
+                .toolException(exception)
+                .build();
+
+        context.getAgentEventBus().publish(event);
     }
 }

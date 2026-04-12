@@ -25,6 +25,7 @@
 package org.metaagent.framework.core.tool.executor;
 
 import org.metaagent.framework.core.tool.Tool;
+import org.metaagent.framework.core.tool.ToolContext;
 import org.metaagent.framework.core.tool.exception.ToolExecutionException;
 
 /**
@@ -37,31 +38,30 @@ public interface ToolExecutor {
     /**
      * Executes the given tool with the provided context.
      *
-     * @param executorContext the tool executor context
-     * @param tool            the tool to be executed
+     * @param toolContext the tool context
+     * @param tool        the tool to be executed
      * @return the result of the tool execution
      * @throws ToolExecutionException if an error occurs during execution
      */
-    <I, O> O execute(ToolExecutorContext executorContext, Tool<I, O> tool, I input) throws ToolExecutionException;
+    <I, O> O execute(ToolContext toolContext, Tool<I, O> tool, I input);
 
     /**
      * Executes the given tool with the provided context and input.
      *
-     * @param executorContext the tool executor context
-     * @param tool            the tool to be executed
-     * @param input           the input for the tool
+     * @param toolContext the tool context
+     * @param tool        the tool to be executed
+     * @param input       the input for the tool
      * @return the result of the tool execution
      * @throws ToolExecutionException if an error occurs during execution
      */
-    <I, O> String execute(ToolExecutorContext executorContext, Tool<I, O> tool, String input) throws ToolExecutionException;
+    <I, O> String execute(ToolContext toolContext, Tool<I, O> tool, String input);
 
     /**
      * Executes the given tool with the provided context and input.
      *
-     * @param executorContext the tool executor context
-     * @param toolInputs      the batch inputs for the tools
+     * @param toolInputs the batch inputs for the tools
      * @return the outputs of the tools execution
      * @throws ToolExecutionException if an error occurs during execution
      */
-    BatchToolOutputs execute(ToolExecutorContext executorContext, BatchToolInputs toolInputs) throws ToolExecutionException;
+    BatchToolOutputs execute(BatchToolInputs toolInputs);
 }

@@ -90,7 +90,7 @@ public class LlmAgent extends AbstractAgent<LlmAgentInput, LlmAgentOutput, LlmAg
         ChatResponse chatResponse = modelInstance.getRuntime().call(prompt);
         List<MessagePart> outputMessageParts = streamingAgent.parseOutputMessageParts(chatResponse, stepContext, agentInput.messagePartIdGenerator());
         if (chatResponse.hasToolCalls()) {
-            List<ToolCallMessagePart> toolCallMessageParts = streamingAgent.executeToolCalls(modelInstance, prompt, chatResponse, stepContext);
+            List<ToolCallMessagePart> toolCallMessageParts = streamingAgent.executeToolCalls(chatResponse, agentContext, stepContext);
             outputMessageParts.addAll(toolCallMessageParts);
         }
 

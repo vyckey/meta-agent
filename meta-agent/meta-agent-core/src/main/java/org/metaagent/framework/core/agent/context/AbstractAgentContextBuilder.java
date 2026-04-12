@@ -24,6 +24,7 @@
 
 package org.metaagent.framework.core.agent.context;
 
+import org.metaagent.framework.common.abort.AbortController;
 import org.metaagent.framework.common.abort.AbortSignal;
 import org.metaagent.framework.core.agent.event.AgentEventBus;
 
@@ -73,6 +74,9 @@ public abstract class AbstractAgentContextBuilder<Builder extends AgentContextBu
     protected Builder withDefaults() {
         if (agentEventBus == null) {
             agentEventBus = AgentEventBus.create();
+        }
+        if (abortSignal == null) {
+            abortSignal = AbortController.global().signal();
         }
         if (executor == null) {
             executor = ForkJoinPool.commonPool();

@@ -28,6 +28,7 @@ import com.google.common.collect.Lists;
 
 import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.function.Predicate;
 
 /**
@@ -54,6 +55,11 @@ public class DefaultToolCallTracker implements ToolCallTracker {
     @Override
     public List<ToolCallRecord> find(Predicate<ToolCallRecord> predicate) {
         return this.records.stream().filter(predicate).toList();
+    }
+
+    @Override
+    public Optional<ToolCallRecord> findById(String executionId) {
+        return this.records.stream().filter(record -> record.getId().equals(executionId)).findFirst();
     }
 
     @Override

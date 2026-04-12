@@ -25,6 +25,7 @@
 package org.metaagent.framework.core.tool.tracker;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.function.Predicate;
 
 /**
@@ -65,6 +66,14 @@ public interface ToolCallTracker {
      * @return a list of matching tool call records
      */
     List<ToolCallRecord> find(Predicate<ToolCallRecord> predicate);
+
+    /**
+     * Finds tool call records by execution ID.
+     *
+     * @param executionId the execution ID to search for
+     * @return a tool call record matching the execution ID
+     */
+    Optional<ToolCallRecord> findById(String executionId);
 
     /**
      * Finds tool call records by tool name.

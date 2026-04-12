@@ -37,9 +37,10 @@ import org.metaagent.framework.core.tool.config.ToolPattern;
 import org.metaagent.framework.core.tool.exception.ToolExecutionException;
 import org.metaagent.framework.core.tool.exception.ToolRejectException;
 import org.metaagent.framework.core.tool.manager.ToolManager;
+import org.metaagent.framework.core.tool.tracker.ToolCallRecord;
 
 import java.util.List;
-import java.util.UUID;
+import java.util.Optional;
 
 /**
  * Default implementation of {@link ToolExecutor}.
@@ -51,32 +52,27 @@ public class DefaultToolExecutor implements ToolExecutor {
     public static final DefaultToolExecutor INSTANCE = new DefaultToolExecutor();
 
     @Override
-    public <I, O> O execute(ToolExecutorContext executorContext, Tool<I, O> tool, I input) throws ToolExecutionException {
-        ToolExecuteDelegate<I, O> delegate = new ToolExecuteDelegate<>(tool, executorContext);
-        return delegate.run(executorContext.getToolContext(), input);
+    public <I, O> O execute(ToolContext toolContext, Tool<I, O> tool, I input) throws ToolExecutionException {
+        ToolExecuteDelegate<I, O> delegate = new ToolExecuteDelegate<>(tool);
+        return delegate.run(toolContext, input);
     }
 
     @Override
-    public <I, O> String execute(ToolExecutorContext executorContext, Tool<I, O> tool, String input) throws ToolExecutionException {
-        ToolContext toolContext = executorContext.getToolContext();
-        String toolCallId = UUID.randomUUID().toString().replaceAll("-", "").substring(16);
-        toolContext.setExecutionId(toolCallId);
-
-        boolean approvalRequired = approvalRequired(executorContext, tool, input);
+    public <I, O> String execute(ToolContext toolContext, Tool<I, O> tool, String input) throws ToolExecutionException {
+        boolean approvalRequired = approvalRequired(toolContext, tool, input);
         if (approvalRequired) {
-            requestToolApproval(executorContext, tool, input);
+            requestToolApproval(toolContext, tool, input);
         }
 
-        ToolExecuteDelegate<I, O> delegate = new ToolExecuteDelegate<>(tool, executorContext);
-        return delegate.call(executorContext.getToolContext(), input);
+        ToolExecuteDelegate<I, O> delegate = new ToolExecuteDelegate<>(tool);
+        return delegate.call(toolContext, input);
     }
 
-    protected <I, O> boolean approvalRequired(ToolExecutorContext executorContext, Tool<I, O> tool, String input) {
-        ToolContext toolContext = executorContext.getToolContext();
+    protected <I, O> boolean approvalRequired(ToolContext toolContext, Tool<I, O> tool, String input) {
         if (toolContext.getSecurityLevel().compareTo(SecurityLevel.UNRESTRICTED_DANGEROUSLY) <= 0) {
             return false;
         } else if (toolContext.getSecurityLevel().compareTo(SecurityLevel.RESTRICTED_DEFAULT_SALE) <= 0) {
-            if (tool.getDefinition().isReadOnly()) {
+            if (tool.getDefinition().metadata().isReadOnly()) {
                 return false;
             }
         }
@@ -94,8 +90,7 @@ public class DefaultToolExecutor implements ToolExecutor {
         return allowedTools.isEmpty();
     }
 
-    protected void requestToolApproval(ToolExecutorContext executorContext, Tool<?, ?> tool, String input) {
-        ToolContext toolContext = executorContext.getToolContext();
+    protected void requestToolApproval(ToolContext toolContext, Tool<?, ?> tool, String input) {
         ToolApprovalRequest approvalRequest = ToolApprovalRequest.requestCall(toolContext.getExecutionId(), tool.getName(), input);
         PermissionApproval approval = toolContext.requestApproval(approvalRequest);
         if (!approval.isApproved()) {
@@ -105,18 +100,31 @@ public class DefaultToolExecutor implements ToolExecutor {
     }
 
     @Override
-    public BatchToolOutputs execute(ToolExecutorContext executorContext, BatchToolInputs toolInputs) throws ToolExecutionException {
-        ToolManager toolManager = executorContext.getToolManager();
-        ToolContext toolContext = executorContext.getToolContext();
-
+    public BatchToolOutputs execute(BatchToolInputs toolInputs) {
         List<BatchToolOutputs.ToolOutput> outputs = Lists.newArrayList();
         for (BatchToolInputs.ToolInput toolInput : toolInputs.inputs()) {
+            ToolContext toolContext = toolInput.toolContext();
+            ToolManager toolManager = toolContext.getToolManager();
             Tool<?, ?> tool = toolManager.getTool(toolInput.toolName());
+
+            String output;
+            boolean hasError = false;
             if (tool == null) {
-                throw new ToolExecutionException("tool not found: " + toolInput.toolName());
+                hasError = true;
+                output = "tool not found: " + toolInput.toolName();
+            } else {
+                output = execute(toolContext, tool, toolInput.input());
+                // check if there was an error
+                Optional<ToolCallRecord> callRecordOptional = toolContext.getToolCallTracker()
+                        .findById(toolContext.getExecutionId());
+                if (callRecordOptional.isPresent()) {
+                    hasError = callRecordOptional.get().getException() != null;
+                }
             }
-            String output = execute(executorContext, tool, toolInput.input());
-            outputs.add(new BatchToolOutputs.ToolOutput(toolContext.getExecutionId(), toolInput.toolName(), output));
+
+            outputs.add(new BatchToolOutputs.ToolOutput(
+                    toolContext.getExecutionId(), toolInput.toolName(), output, hasError
+            ));
         }
         return new BatchToolOutputs(outputs);
     }

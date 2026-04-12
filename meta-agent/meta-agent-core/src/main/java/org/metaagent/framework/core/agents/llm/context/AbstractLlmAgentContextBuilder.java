@@ -26,8 +26,6 @@ package org.metaagent.framework.core.agents.llm.context;
 
 import org.metaagent.framework.core.agent.context.AbstractAgentContextBuilder;
 import org.metaagent.framework.core.model.provider.ModelProviderRegistry;
-import org.metaagent.framework.core.tool.executor.DefaultToolExecutor;
-import org.metaagent.framework.core.tool.executor.ToolExecutor;
 import org.metaagent.framework.core.tool.executor.ToolExecutorContext;
 import org.metaagent.framework.core.tool.manager.ToolManager;
 
@@ -42,7 +40,6 @@ public abstract class AbstractLlmAgentContextBuilder<Builder extends AbstractLlm
         extends AbstractAgentContextBuilder<Builder> implements LlmAgentContextBuilder<Builder> {
     protected ModelProviderRegistry modelProviderRegistry;
     protected ToolManager toolManager;
-    protected ToolExecutor toolExecutor;
     protected ToolExecutorContext toolExecutorContext;
 
     protected AbstractLlmAgentContextBuilder() {
@@ -52,7 +49,6 @@ public abstract class AbstractLlmAgentContextBuilder<Builder extends AbstractLlm
         super(context);
         this.modelProviderRegistry = context.modelProviderRegistry();
         this.toolManager = context.toolManager();
-        this.toolExecutor = context.toolExecutor();
         this.toolExecutorContext = context.toolExecutorContext();
     }
 
@@ -63,11 +59,6 @@ public abstract class AbstractLlmAgentContextBuilder<Builder extends AbstractLlm
 
     public Builder toolManager(ToolManager toolManager) {
         this.toolManager = toolManager;
-        return self();
-    }
-
-    public Builder toolExecutor(ToolExecutor toolExecutor) {
-        this.toolExecutor = toolExecutor;
         return self();
     }
 
@@ -82,8 +73,8 @@ public abstract class AbstractLlmAgentContextBuilder<Builder extends AbstractLlm
         if (toolManager == null) {
             this.toolManager = ToolManager.create();
         }
-        if (toolExecutor == null) {
-            this.toolExecutor = DefaultToolExecutor.INSTANCE;
+        if (toolExecutorContext == null) {
+            toolExecutorContext = ToolExecutorContext.create();
         }
         return self();
     }

@@ -26,7 +26,6 @@ package org.metaagent.framework.core.tool.definition;
 
 import org.apache.commons.lang3.StringUtils;
 import org.metaagent.framework.common.json.JsonSchemaGenerator;
-import org.metaagent.framework.common.metadata.MetadataProvider;
 
 import java.lang.reflect.Type;
 
@@ -40,7 +39,7 @@ public record DefaultToolDefinition(
         String description,
         String inputSchema,
         String outputSchema,
-        MetadataProvider metadata) implements ToolDefinition {
+        ToolMetadata metadata) implements ToolDefinition {
 
     private DefaultToolDefinition(Builder builder) {
         this(builder.name, builder.description, builder.inputSchema, builder.outputSchema, builder.metadata);
@@ -55,7 +54,7 @@ public record DefaultToolDefinition(
         private String description;
         private String inputSchema;
         private String outputSchema;
-        private MetadataProvider metadata;
+        private ToolMetadata metadata;
 
         private Builder(String name) {
             this.name = name;
@@ -86,24 +85,32 @@ public record DefaultToolDefinition(
             return this;
         }
 
-        public Builder metadata(MetadataProvider metadata) {
+        public Builder metadata(ToolMetadata metadata) {
             this.metadata = metadata;
             return this;
         }
 
         public Builder isConcurrencySafe(boolean isConcurrencySafe) {
             if (metadata == null) {
-                metadata = MetadataProvider.create();
+                metadata = new DefaultToolMetadata();
             }
-            metadata.setProperty(ToolDefinition.PROP_IS_CONCURRENCY_SAFE, isConcurrencySafe);
+            metadata.setProperty(ToolMetadata.KEY_CONCURRENCY_SAFE, isConcurrencySafe);
             return this;
         }
 
         public Builder isReadOnly(boolean isReadOnly) {
             if (metadata == null) {
-                metadata = MetadataProvider.create();
+                metadata = new DefaultToolMetadata();
             }
-            metadata.setProperty(ToolDefinition.PROP_IS_READ_ONLY, isReadOnly);
+            metadata.setProperty(ToolMetadata.KEY_READ_ONLY, isReadOnly);
+            return this;
+        }
+
+        public Builder isReturnDirectly(boolean returnDirectly) {
+            if (metadata == null) {
+                metadata = new DefaultToolMetadata();
+            }
+            metadata.setProperty(ToolMetadata.KEY_RETURN_DIRECTLY, returnDirectly);
             return this;
         }
 
@@ -112,7 +119,7 @@ public record DefaultToolDefinition(
                 throw new IllegalArgumentException("Tool name is empty");
             }
             if (metadata == null) {
-                metadata = MetadataProvider.empty();
+                metadata = new DefaultToolMetadata();
             }
             return new DefaultToolDefinition(this);
         }

@@ -26,6 +26,7 @@ package org.metaagent.framework.core.tool;
 
 import org.metaagent.framework.common.abort.AbortSignal;
 import org.metaagent.framework.core.agent.MetaAgent;
+import org.metaagent.framework.core.agent.event.AgentEventBus;
 import org.metaagent.framework.core.agent.input.AgentInput;
 import org.metaagent.framework.core.agent.output.AgentOutput;
 import org.metaagent.framework.core.security.SecurityLevel;
@@ -33,6 +34,9 @@ import org.metaagent.framework.core.security.approval.PermissionApproval;
 import org.metaagent.framework.core.security.approval.PermissionApprovalManager;
 import org.metaagent.framework.core.tool.approval.ToolApprovalRequest;
 import org.metaagent.framework.core.tool.config.ToolExecutionConfig;
+import org.metaagent.framework.core.tool.listener.ToolExecutionListenerRegistry;
+import org.metaagent.framework.core.tool.manager.ToolManager;
+import org.metaagent.framework.core.tool.tracker.ToolCallTracker;
 
 import java.nio.file.Path;
 
@@ -56,7 +60,7 @@ public interface ToolContext {
      *
      * @return a new ToolContext builder
      */
-    static Builder builder() {
+    static ToolContextBuilder builder() {
         return DefaultToolContext.builder();
     }
 
@@ -67,6 +71,34 @@ public interface ToolContext {
      */
     <I extends AgentInput, O extends AgentOutput>
     MetaAgent<I, O> getAgent();
+
+    /**
+     * Gets the agent event bus for managing agent events.
+     *
+     * @return the agent event bus
+     */
+    AgentEventBus getAgentEventBus();
+
+    /**
+     * Gets the tool executor for executing tools.
+     *
+     * @return the tool executor
+     */
+    ToolManager getToolManager();
+
+    /**
+     * Gets the tool listener registry for managing tool execution listeners.
+     *
+     * @return the tool listener registry
+     */
+    ToolExecutionListenerRegistry getToolListenerRegistry();
+
+    /**
+     * Gets the tool executor for executing tools.
+     *
+     * @return the tool executor
+     */
+    ToolCallTracker getToolCallTracker();
 
     /**
      * Gets the tool execution configuration.
@@ -81,7 +113,7 @@ public interface ToolContext {
      * @return the working directory
      */
     default Path getWorkingDirectory() {
-        return getToolExecutionConfig().workspaceConfig().workingDirectory();
+        return getToolExecutionConfig().workspaceConfig().currentWorkingDirectory();
     }
 
     /**
@@ -121,70 +153,10 @@ public interface ToolContext {
     String getExecutionId();
 
     /**
-     * Sets the execution id for the current tool call.
-     *
-     * @param executionId the execution id
-     */
-    void setExecutionId(String executionId);
-
-    /**
      * Creates a new builder based on the current ToolContext instance.
      *
      * @return a new ToolContext builder
      */
-    Builder toBuilder();
-
-
-    /**
-     * Builder interface for constructing ToolContext instances.
-     */
-    interface Builder {
-        /**
-         * Sets the agent for the tool context.
-         *
-         * @param agent the agent
-         * @return the builder instance
-         */
-        Builder agent(MetaAgent<?, ?> agent);
-
-        /**
-         * Sets the tool execution configuration for the tool context.
-         *
-         * @param toolExecutionConfig the tool configuration
-         * @return the builder instance
-         */
-        Builder toolExecutionConfig(ToolExecutionConfig toolExecutionConfig);
-
-        /**
-         * Sets the security level for the tool context.
-         *
-         * @param securityLevel the security level
-         * @return the builder instance
-         */
-        Builder securityLevel(SecurityLevel securityLevel);
-
-        /**
-         * Sets the permission approval manager for the tool context.
-         *
-         * @param approvalManager the permission approval manager
-         * @return the builder instance
-         */
-        Builder approvalManager(PermissionApprovalManager<ToolApprovalRequest> approvalManager);
-
-        /**
-         * Sets the abort signal for the tool context.
-         *
-         * @param abortSignal the abort signal
-         * @return the builder instance
-         */
-        Builder abortSignal(AbortSignal abortSignal);
-
-        /**
-         * Builds the tool context.
-         *
-         * @return the tool context
-         */
-        ToolContext build();
-    }
+    ToolContextBuilder toBuilder();
 
 }

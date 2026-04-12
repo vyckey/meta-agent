@@ -24,6 +24,8 @@
 
 package org.metaagent.framework.core.tool.executor;
 
+import org.metaagent.framework.core.tool.ToolContext;
+
 import java.util.List;
 
 /**
@@ -33,6 +35,6 @@ import java.util.List;
  */
 public record BatchToolInputs(List<ToolInput> inputs) {
 
-    public record ToolInput(String toolName, String input) {
+    public record ToolInput(ToolContext toolContext, String toolName, String input) {
     }
 }

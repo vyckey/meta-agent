@@ -29,22 +29,61 @@ import org.metaagent.framework.core.tool.exception.ToolExecutionException;
 import java.time.Instant;
 
 /**
- * description is here
+ * Represents a record of a tool call execution.
+ * <p>
+ * This interface captures all relevant information about a tool invocation,
+ * including the tool name, input/output parameters, execution timestamps,
+ * and any exceptions that occurred during execution.
  *
  * @author vyckey
  */
 public interface ToolCallRecord {
+    /**
+     * Returns the unique identifier of this tool call record.
+     *
+     * @return the unique id of the tool call
+     */
     String getId();
 
+    /**
+     * Returns the name of the tool that was invoked.
+     *
+     * @return the tool name
+     */
     String getToolName();
 
+    /**
+     * Returns the input parameters passed to the tool.
+     *
+     * @return the tool input as a string
+     */
     String getToolInput();
 
+    /**
+     * Returns the output produced by the tool execution.
+     *
+     * @return the tool output as a string, or null if execution failed
+     */
     String getToolOutput();
 
+    /**
+     * Returns the timestamp when the tool execution started.
+     *
+     * @return the start time as an {@link Instant}
+     */
     Instant getStartTime();
 
+    /**
+     * Returns the timestamp when the tool execution completed.
+     *
+     * @return the end time as an {@link Instant}
+     */
     Instant getEndTime();
 
+    /**
+     * Returns the exception that occurred during tool execution, if any.
+     *
+     * @return the {@link ToolExecutionException} if execution failed, null otherwise
+     */
     ToolExecutionException getException();
 }

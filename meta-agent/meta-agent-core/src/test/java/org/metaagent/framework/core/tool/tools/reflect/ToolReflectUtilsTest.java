@@ -63,8 +63,8 @@ class ToolReflectUtilsTest {
         assertEquals("A test method for testing purposes", toolDefinition.description());
         assertNotNull(toolDefinition.inputSchema());
         assertNotNull(toolDefinition.outputSchema());
-        assertFalse(toolDefinition.isConcurrencySafe());
-        assertFalse(toolDefinition.isReadOnly());
+        assertFalse(toolDefinition.metadata().isConcurrencySafe());
+        assertFalse(toolDefinition.metadata().isReadOnly());
     }
 
     @Test
