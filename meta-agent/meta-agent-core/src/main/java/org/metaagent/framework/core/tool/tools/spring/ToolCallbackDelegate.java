@@ -26,7 +26,6 @@ package org.metaagent.framework.core.tool.tools.spring;
 
 import org.metaagent.framework.core.tool.Tool;
 import org.metaagent.framework.core.tool.executor.ToolExecutor;
-import org.metaagent.framework.core.tool.executor.ToolExecutorContext;
 import org.springframework.ai.chat.model.ToolContext;
 import org.springframework.ai.tool.ToolCallback;
 import org.springframework.ai.tool.definition.ToolDefinition;
@@ -84,17 +83,13 @@ public class ToolCallbackDelegate implements ToolCallback {
 
         // take out context from toolContext
         org.metaagent.framework.core.tool.ToolContext context = null;
-        ToolExecutorContext executorContext = null;
-        if (contextMap.get(CONTEXT_KEY) instanceof ToolExecutorContext ctx) {
-            executorContext = ctx;
-            context = ctx.getToolContext();
-        } else if (contextMap.get(CONTEXT_KEY) instanceof org.metaagent.framework.core.tool.ToolContext ctx) {
+        if (contextMap.get(CONTEXT_KEY) instanceof org.metaagent.framework.core.tool.ToolContext ctx) {
             context = ctx;
         }
 
         // prioritize to use tool executor to execute tool
-        if (toolExecutor != null && executorContext != null) {
-            return toolExecutor.execute(executorContext, tool, toolInput);
+        if (toolExecutor != null && toolContext != null) {
+            return toolExecutor.execute(context, tool, toolInput);
         }
 
         // use default tool call method

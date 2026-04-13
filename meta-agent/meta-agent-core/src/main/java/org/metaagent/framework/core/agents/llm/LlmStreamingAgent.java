@@ -50,6 +50,12 @@ import org.metaagent.framework.core.agents.llm.output.LlmAgentStreamOutput;
 import org.metaagent.framework.core.model.chat.ChatModelInstance;
 import org.metaagent.framework.core.model.chat.ChatResponseUtils;
 import org.metaagent.framework.core.model.provider.ModelProviderUtils;
+import org.metaagent.framework.core.tool.ToolContext;
+import org.metaagent.framework.core.tool.definition.ToolDefinition;
+import org.metaagent.framework.core.tool.executor.BatchToolInputs;
+import org.metaagent.framework.core.tool.executor.BatchToolOutputs;
+import org.metaagent.framework.core.tool.executor.ToolExecutor;
+import org.metaagent.framework.core.tool.manager.ToolManager;
 import org.metaagent.framework.core.tool.tools.spring.ToolCallbackUtils;
 import org.springframework.ai.chat.messages.AssistantMessage;
 import org.springframework.ai.chat.messages.SystemMessage;
@@ -75,6 +81,8 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
+import java.util.UUID;
 import java.util.function.Consumer;
 
 /**
@@ -124,11 +132,9 @@ public class LlmStreamingAgent extends AbstractStreamAgent<LlmAgentInput, LlmAge
     protected ChatOptions buildChatOptions(LlmAgentInput agentInput, ChatOptions defaultOptions) {
         LlmAgentContext agentContext = agentInput.context();
         ChatOptions chatOptions = ToolCallingChatOptions.builder().build();
-        if (agentContext.toolExecutorContext() != null) {
-            chatOptions = ToolCallbackUtils.buildChatOptionsWithTools(
-                    chatOptions, agentContext.toolExecutor(), agentContext.toolExecutorContext(), false
-            );
-        }
+        chatOptions = ToolCallbackUtils.buildChatOptionsWithTools(
+                chatOptions, agentContext.toolManager(), agentContext.toolExecutorContext().getToolExecutor(), false
+        );
         return chatOptions;
     }
 
@@ -195,7 +201,8 @@ public class LlmStreamingAgent extends AbstractStreamAgent<LlmAgentInput, LlmAge
                     }
 
                     return messageFlux.concatWith(Flux.defer(() ->
-                            Flux.fromIterable(executeToolCalls(modelInstance, prompt, chatResponse, stepContext))
+                                    Flux.fromIterable(executeToolCalls(chatResponse, agentContext, stepContext))
+                            // Flux.fromIterable(executeSpringToolCalls(modelInstance, prompt, chatResponse, agentContext, stepContext))
                     ));
                 })
                 .startWith(Mono.defer(() -> {
@@ -249,12 +256,103 @@ public class LlmStreamingAgent extends AbstractStreamAgent<LlmAgentInput, LlmAge
         return outputMessages;
     }
 
-    protected List<ToolCallMessagePart> executeToolCalls(
+    protected ToolContext buildToolContext(LlmAgentContext agentContext, String executionId) {
+        return agentContext.toolExecutorContext()
+                .newToolContextBuilder()
+                .toolManager(agentContext.toolManager())
+                .agent(this)
+                .agentEventBus(agentContext.agentEventBus())
+                .executionId(executionId)
+                .build();
+    }
+
+    protected List<ToolCallMessagePart> executeToolCalls(ChatResponse chatResponse,
+                                                         LlmAgentContext agentContext,
+                                                         LlmAgentStepContext stepContext) {
+        Optional<Generation> toolCallGeneration = chatResponse.getResults().stream()
+                .filter(g -> !CollectionUtils.isEmpty(g.getOutput().getToolCalls())).findFirst();
+        if (toolCallGeneration.isEmpty()) {
+            throw new IllegalStateException("No tool call requested by the chat model");
+        }
+
+        // Gets the tool calls
+        AssistantMessage assistantMessage = toolCallGeneration.get().getOutput();
+        stepContext.addNewMessages(List.of(assistantMessage));
+        List<AssistantMessage.ToolCall> toolCalls = assistantMessage.getToolCalls();
+
+        ToolManager toolManager = agentContext.toolManager();
+        BatchToolOutputs batchToolOutputs;
+        try {
+            // Build batch the tool inputs
+            List<BatchToolInputs.ToolInput> toolInputs = Lists.newArrayList();
+            for (AssistantMessage.ToolCall toolCall : toolCalls) {
+                ToolContext toolContext = buildToolContext(agentContext, toolCall.id());
+                toolInputs.add(new BatchToolInputs.ToolInput(
+                        toolContext, toolCall.name(), toolCall.arguments())
+                );
+            }
+
+            // Execute the tool calls
+            ToolExecutor toolExecutor = agentContext.toolExecutorContext().getToolExecutor();
+            batchToolOutputs = toolExecutor.execute(new BatchToolInputs(toolInputs));
+        } catch (Exception e) {
+            // Build tool outputs with error
+            String error = "Error executing tool call: " + e.getMessage();
+            List<BatchToolOutputs.ToolOutput> toolOutputs = Lists.newArrayListWithCapacity(toolCalls.size());
+            for (AssistantMessage.ToolCall toolCall : toolCalls) {
+                toolOutputs.add(new BatchToolOutputs.ToolOutput(toolCall.id(), toolCall.name(), error, true));
+            }
+            batchToolOutputs = new BatchToolOutputs(toolOutputs);
+        }
+
+        return extractToolResults(toolManager, batchToolOutputs, stepContext);
+    }
+
+    private List<ToolCallMessagePart> extractToolResults(ToolManager toolManager,
+                                                         BatchToolOutputs toolOutputs,
+                                                         LlmAgentStepContext stepContext) {
+        boolean returnDirectly = true;
+        List<ToolResponseMessage.ToolResponse> toolResponses = new ArrayList<>();
+        List<ToolCallMessagePart> toolCallMessages = new ArrayList<>();
+
+        for (BatchToolOutputs.ToolOutput toolOutput : toolOutputs.outputs()) {
+            ToolDefinition toolDefinition = toolManager.getTool(toolOutput.toolName()).getDefinition();
+            returnDirectly = returnDirectly && toolDefinition.metadata().isReturnDirectly();
+
+            toolResponses.add(new ToolResponseMessage.ToolResponse(
+                    toolOutput.toolName(), toolOutput.toolName(), toolOutput.output())
+            );
+
+            ToolCallMessagePart toolCallMessage = stepContext.getToolCallMessage(toolOutput.id());
+            ToolCallMessagePart messagePart = ToolCallMessagePart.builder()
+                    .callId(toolOutput.id())
+                    .toolName(toolOutput.toolName())
+                    .status(toolOutput.hasError() ? ToolCallMessagePart.ToolCallStatus.ERROR : ToolCallMessagePart.ToolCallStatus.END)
+                    .arguments(toolCallMessage != null ? toolCallMessage.arguments() : "")
+                    .response(toolOutput.output())
+                    .createdAt(toolCallMessage != null ? toolCallMessage.createdAt() : Instant.now())
+                    .build();
+            toolCallMessages.add(messagePart);
+        }
+
+        ToolResponseMessage responseMessage = ToolResponseMessage.builder().responses(toolResponses).build();
+        stepContext.addNewMessages(List.of(responseMessage));
+        if (returnDirectly) {
+            stepContext.setFinishReason("RETURN_DIRECT");
+        }
+        return toolCallMessages;
+    }
+
+    protected List<ToolCallMessagePart> executeSpringToolCalls(
             ChatModelInstance modelInstance,
             Prompt prompt,
             ChatResponse chatResponse,
+            LlmAgentContext agentContext,
             LlmAgentStepContext stepContext) {
         Generation generation = Objects.requireNonNull(chatResponse.getResult(), "generation is required");
+
+        ToolContext toolContext = buildToolContext(agentContext, UUID.randomUUID().toString());
+        ToolCallbackUtils.setToolContext(prompt.getOptions(), toolContext);
 
         ToolCallingManager toolCallingManager = getToolCallingManager(modelInstance);
         ToolExecutionResult executionResult = toolCallingManager.executeToolCalls(prompt, chatResponse);

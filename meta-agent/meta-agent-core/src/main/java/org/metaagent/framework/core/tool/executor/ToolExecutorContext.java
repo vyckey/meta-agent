@@ -25,34 +25,23 @@
 package org.metaagent.framework.core.tool.executor;
 
 import org.metaagent.framework.core.tool.ToolContext;
-import org.metaagent.framework.core.tool.listener.ToolExecutionListenerRegistry;
+import org.metaagent.framework.core.tool.ToolContextBuilder;
 import org.metaagent.framework.core.tool.manager.ToolManager;
-import org.metaagent.framework.core.tool.tracker.ToolCallTracker;
-
-import java.util.concurrent.Executor;
 
 /**
- * ToolExecutorContext is a context object that is passed to the ToolExecutor.
+ * ToolExecutorContext is the context for tool executor.
  *
  * @author vyckey
  */
 public interface ToolExecutorContext {
+
     /**
-     * Create a new tool executor context.
+     * Creates a default tool executor context.
      *
-     * @return a new tool executor context
+     * @return the tool executor context
      */
     static ToolExecutorContext create() {
-        return DefaultToolExecutorContext.builder().build();
-    }
-
-    /**
-     * Create a new tool executor context builder.
-     *
-     * @return a executor context builder
-     */
-    static ToolExecutorContextBuilder builder() {
-        return DefaultToolExecutorContext.builder();
+        return () -> DefaultToolExecutor.INSTANCE;
     }
 
     /**
@@ -60,34 +49,25 @@ public interface ToolExecutorContext {
      *
      * @return the tool executor
      */
-    ToolManager getToolManager();
+    ToolExecutor getToolExecutor();
 
     /**
-     * Gets the tool listener registry for managing tool execution listeners.
+     * Creates a new tool context.
      *
-     * @return the tool listener registry
-     */
-    ToolExecutionListenerRegistry getToolListenerRegistry();
-
-    /**
-     * Gets the tool executor for executing tools.
-     *
-     * @return the tool executor
-     */
-    ToolCallTracker getToolCallTracker();
-
-    /**
-     * Gets the tool context.
-     *
+     * @param toolManager the tool manager
      * @return the tool context
      */
-    ToolContext getToolContext();
+    default ToolContext newToolContext(ToolManager toolManager) {
+        return newToolContextBuilder().toolManager(toolManager).build();
+    }
 
     /**
-     * Gets the executor.
+     * Creates a new tool context builder.
      *
-     * @return the executor
+     * @return the tool context builder
      */
-    Executor getExecutor();
+    default ToolContextBuilder newToolContextBuilder() {
+        return ToolContext.builder();
+    }
 
 }

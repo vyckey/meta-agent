@@ -29,7 +29,6 @@ import org.metaagent.framework.core.agent.event.AgentEventBus;
 import org.metaagent.framework.core.agents.llm.LlmAgent;
 import org.metaagent.framework.core.agents.llm.LlmStreamingAgent;
 import org.metaagent.framework.core.model.provider.ModelProviderRegistry;
-import org.metaagent.framework.core.tool.executor.ToolExecutor;
 import org.metaagent.framework.core.tool.executor.ToolExecutorContext;
 import org.metaagent.framework.core.tool.manager.ToolManager;
 
@@ -47,7 +46,6 @@ public record DefaultLlmAgentContext(
         Executor executor,
         ModelProviderRegistry modelProviderRegistry,
         ToolManager toolManager,
-        ToolExecutor toolExecutor,
         ToolExecutorContext toolExecutorContext
 ) implements LlmAgentContext {
     public DefaultLlmAgentContext {
@@ -56,7 +54,6 @@ public record DefaultLlmAgentContext(
         Objects.requireNonNull(executor, "executor is required");
         Objects.requireNonNull(modelProviderRegistry, "modelProviderRegistry is required");
         Objects.requireNonNull(toolManager, "toolManager is required");
-        Objects.requireNonNull(toolExecutor, "toolExecutor is required");
         Objects.requireNonNull(toolExecutorContext, "toolExecutorContext is required");
     }
 
@@ -87,7 +84,7 @@ public record DefaultLlmAgentContext(
         public DefaultLlmAgentContext build() {
             withDefaults();
             return new DefaultLlmAgentContext(agentEventBus, abortSignal, executor,
-                    modelProviderRegistry, toolManager, toolExecutor, toolExecutorContext);
+                    modelProviderRegistry, toolManager, toolExecutorContext);
         }
     }
 }

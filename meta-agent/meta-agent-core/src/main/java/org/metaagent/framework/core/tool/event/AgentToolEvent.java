@@ -22,29 +22,29 @@
  * SOFTWARE.
  */
 
-package org.metaagent.framework.core.agents.chat.model;
+package org.metaagent.framework.core.tool.event;
 
-import org.metaagent.framework.core.agent.chat.message.part.MessagePart;
-import org.metaagent.framework.core.agents.chat.model.metadata.ChatResponseMetadata;
-
-import java.util.Objects;
+import org.metaagent.framework.core.agent.event.AgentEvent;
+import org.metaagent.framework.core.tool.Tool;
 
 /**
- * ChatStreamResponse represents a stream response from a chat model.
+ * Agent tool event.
  *
  * @author vyckey
  */
-public record ChatStreamResponse(
-        MessagePart message,
-        ChatResponseMetadata responseMetadata
-) {
-    public ChatStreamResponse {
-        Objects.requireNonNull(message, "Message cannot be null");
-        Objects.requireNonNull(responseMetadata, "Response metadata cannot be null");
-    }
+public interface AgentToolEvent extends AgentEvent {
 
-    public ChatStreamResponse(MessagePart message) {
-        this(message, ChatResponseMetadata.builder().build());
-    }
+    /**
+     * Tool execution id.
+     *
+     * @return tool execution id
+     */
+    String executionId();
 
+    /**
+     * Gets the tool.
+     *
+     * @return tool
+     */
+    Tool<?, ?> tool();
 }

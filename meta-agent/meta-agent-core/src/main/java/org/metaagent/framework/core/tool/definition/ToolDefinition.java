@@ -24,16 +24,12 @@
 
 package org.metaagent.framework.core.tool.definition;
 
-import org.metaagent.framework.common.metadata.MetadataProvider;
-
 /**
  * ToolDefinition is the interface for tool definition.
  *
  * @author vyckey
  */
 public interface ToolDefinition {
-    String PROP_IS_CONCURRENCY_SAFE = "isConcurrencySafe";
-    String PROP_IS_READ_ONLY = "isReadOnly";
 
     /**
      * Create a builder for the tool definition.
@@ -78,24 +74,6 @@ public interface ToolDefinition {
      *
      * @return the metadata of the tool
      */
-    MetadataProvider metadata();
-
-    /**
-     * Get whether the tool is concurrency safe.
-     *
-     * @return whether the tool is concurrency safe
-     */
-    default boolean isConcurrencySafe() {
-        return Boolean.TRUE.equals(metadata().getProperty(PROP_IS_CONCURRENCY_SAFE, Boolean.class));
-    }
-
-    /**
-     * Get whether the tool is read-only.
-     *
-     * @return whether the tool is read-only
-     */
-    default boolean isReadOnly() {
-        return Boolean.TRUE.equals(metadata().getProperty(PROP_IS_READ_ONLY, Boolean.class));
-    }
+    ToolMetadata metadata();
 
 }

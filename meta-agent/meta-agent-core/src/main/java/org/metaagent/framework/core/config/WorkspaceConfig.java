@@ -28,6 +28,7 @@ import org.metaagent.framework.common.ignorefile.GitUtils;
 
 import java.nio.file.Path;
 import java.util.Objects;
+import java.util.Set;
 
 /**
  * Workspace configuration.
@@ -36,20 +37,26 @@ import java.util.Objects;
  */
 public record WorkspaceConfig(
         Path projectDirectory,
-        Path workingDirectory
+        Set<Path> workingDirectories,
+        Path currentWorkingDirectory
 ) {
     public WorkspaceConfig {
-        Objects.requireNonNull(workingDirectory, "current working directory is required");
+        Objects.requireNonNull(workingDirectories, "working directories are required");
+        Objects.requireNonNull(currentWorkingDirectory, "current working directory is required");
         if (projectDirectory == null) {
-            projectDirectory = GitUtils.findGitRootPath(workingDirectory).orElse(null);
+            projectDirectory = GitUtils.findGitRootPath(currentWorkingDirectory).orElse(null);
+        }
+        if (!workingDirectories.contains(currentWorkingDirectory)) {
+            throw new IllegalArgumentException("current working directory must be in working directories");
         }
     }
 
     public static WorkspaceConfig newDefault() {
-        return new WorkspaceConfig(null, defaultWorkingDirectory());
+        Path cwd = defaultCurrentWorkingDirectory();
+        return new WorkspaceConfig(null, Set.of(cwd), cwd);
     }
 
-    public static Path defaultWorkingDirectory() {
+    public static Path defaultCurrentWorkingDirectory() {
         if (System.getProperty("CWD") != null) {
             return Path.of(System.getProperty("CWD")).toAbsolutePath();
         } else {

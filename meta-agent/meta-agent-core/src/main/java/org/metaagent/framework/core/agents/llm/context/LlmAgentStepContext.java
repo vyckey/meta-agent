@@ -50,7 +50,7 @@ import java.util.concurrent.atomic.AtomicInteger;
  * @author vyckey
  */
 public class LlmAgentStepContext implements AgentStepContext {
-    private static final Set<String> FINISH_REASONS = Set.of("STOP", "LENGTH", "CONTENT_FILTER");
+    private static final Set<String> FINISH_REASONS = Set.of("STOP", "LENGTH", "CONTENT_FILTER", "RETURN_DIRECT");
     private final AtomicInteger loopCounter;
     private final List<SystemMessage> systemMessages;
     private final List<Message> historyMessages;

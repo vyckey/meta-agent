@@ -26,7 +26,6 @@ package org.metaagent.framework.core.agents.llm.context;
 
 import org.metaagent.framework.core.agent.context.AgentContext;
 import org.metaagent.framework.core.model.provider.ModelProviderRegistry;
-import org.metaagent.framework.core.tool.executor.ToolExecutor;
 import org.metaagent.framework.core.tool.executor.ToolExecutorContext;
 import org.metaagent.framework.core.tool.manager.ToolManager;
 
@@ -58,13 +57,6 @@ public interface LlmAgentContext extends AgentContext {
      * @return tool manager
      */
     ToolManager toolManager();
-
-    /**
-     * Gets the tool executor.
-     *
-     * @return tool executor
-     */
-    ToolExecutor toolExecutor();
 
     /**
      * Gets the tool executor context.

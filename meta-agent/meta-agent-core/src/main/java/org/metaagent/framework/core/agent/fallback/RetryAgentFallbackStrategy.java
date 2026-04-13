@@ -25,10 +25,11 @@
 package org.metaagent.framework.core.agent.fallback;
 
 import lombok.extern.slf4j.Slf4j;
-import org.metaagent.framework.core.agent.Agent;
+import org.metaagent.framework.core.agent.MetaAgent;
 import org.metaagent.framework.core.agent.input.AgentInput;
 import org.metaagent.framework.core.agent.output.AgentOutput;
-import org.metaagent.framework.core.agent.state.AgentState;
+
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * Retry Agent Fallback Strategy
@@ -36,22 +37,22 @@ import org.metaagent.framework.core.agent.state.AgentState;
  * @author vyckey
  */
 @Slf4j
-public class RetryAgentFallbackStrategy<A extends Agent<I, O>, I extends AgentInput, O extends AgentOutput>
+public class RetryAgentFallbackStrategy<A extends MetaAgent<I, O>, I extends AgentInput, O extends AgentOutput>
         implements AgentFallbackStrategy<A, I, O> {
     private final int maxRetries;
+    private final AtomicInteger retries;
 
     public RetryAgentFallbackStrategy(int maxRetries) {
         this.maxRetries = maxRetries;
+        this.retries = new AtomicInteger();
     }
 
     @Override
     public O fallback(A agent, I input, Exception exception) {
-        AgentState agentState = agent.getAgentState();
-        if (agentState.getStepState().getRetryCount().get() < maxRetries) {
-            agentState.getStepState().getRetryCount().incrementAndGet();
-            return agent.step(input);
+        if (retries.getAndIncrement() < maxRetries) {
+            return agent.run(input);
         }
         log.warn("Failed to retry agent after {} retries", maxRetries);
-        return new FastFailAgentFallbackStrategy<I, O>().fallback(agent, input, exception);
+        return new FastFailAgentFallbackStrategy<A, I, O>().fallback(agent, input, exception);
     }
 }
