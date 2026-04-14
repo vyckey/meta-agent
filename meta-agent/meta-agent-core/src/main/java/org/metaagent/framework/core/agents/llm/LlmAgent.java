@@ -25,7 +25,6 @@
 package org.metaagent.framework.core.agents.llm;
 
 import org.metaagent.framework.core.agent.AbstractAgent;
-import org.metaagent.framework.core.agent.chat.message.RoleMessage;
 import org.metaagent.framework.core.agent.chat.message.part.MessagePart;
 import org.metaagent.framework.core.agents.llm.context.LlmAgentContext;
 import org.metaagent.framework.core.agents.llm.context.LlmAgentStepContext;
@@ -35,7 +34,6 @@ import org.metaagent.framework.core.agents.llm.output.LlmAgentOutput;
 import org.metaagent.framework.core.model.chat.ChatModelInstance;
 import org.metaagent.framework.core.model.provider.ModelProviderUtils;
 import org.springframework.ai.chat.model.ChatResponse;
-import org.springframework.ai.chat.prompt.ChatOptions;
 import org.springframework.ai.chat.prompt.Prompt;
 
 import java.util.List;
@@ -84,13 +82,14 @@ public class LlmAgent extends AbstractAgent<LlmAgentInput, LlmAgentOutput, LlmAg
         LlmAgentContext agentContext = agentInput.context();
         ChatModelInstance modelInstance = ModelProviderUtils.getChatModel(agentContext.modelProviderRegistry(), agentInput.modelId());
 
-        ChatOptions chatOptions = streamingAgent.buildChatOptions(agentInput, null);
-        Prompt prompt = new Prompt(stepContext.getAllMessages(), chatOptions);
+        Prompt prompt = streamingAgent.buildPrompt(agentInput, stepContext);
 
         ChatResponse chatResponse = modelInstance.getRuntime().call(prompt);
         List<MessagePart> outputMessageParts = streamingAgent.parseOutputMessageParts(chatResponse, stepContext, agentInput.messagePartIdGenerator());
         if (chatResponse.hasToolCalls()) {
-            List<ToolCallMessagePart> toolCallMessageParts = streamingAgent.executeToolCalls(chatResponse, agentContext, stepContext);
+            List<ToolCallMessagePart> toolCallMessageParts = streamingAgent.executeToolCalls(
+                    chatResponse, agentInput.messagePartIdGenerator(), agentContext, stepContext
+            );
             outputMessageParts.addAll(toolCallMessageParts);
         }
 
@@ -98,10 +97,7 @@ public class LlmAgent extends AbstractAgent<LlmAgentInput, LlmAgentOutput, LlmAg
         stepContext.addOutputMessageParts(outputMessageParts);
 
         return LlmAgentOutput.builder()
-                .message(RoleMessage.builder()
-                        .info(stepContext.getOutputMessageInfo())
-                        .parts(stepContext.getOutputMessageParts())
-                        .build())
+                .message(stepContext.getOutputMessage())
                 .finishReason(stepContext.getFinishReason())
                 .tokenUsage(stepContext.getTokenUsage())
                 .build();

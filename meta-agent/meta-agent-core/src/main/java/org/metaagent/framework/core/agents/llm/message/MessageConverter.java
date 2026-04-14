@@ -25,6 +25,7 @@
 package org.metaagent.framework.core.agents.llm.message;
 
 import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.Sets;
 import org.apache.commons.collections.MapUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.metaagent.framework.common.content.MediaResource;
@@ -50,11 +51,14 @@ import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import static org.metaagent.framework.core.agent.chat.message.MessageMetadataKeys.KEY_CREATED_AT;
 import static org.metaagent.framework.core.agent.chat.message.MessageMetadataKeys.KEY_MESSAGE_ID;
 import static org.metaagent.framework.core.agent.chat.message.MessageMetadataKeys.KEY_REASONING_CONTENT;
 import static org.metaagent.framework.core.agent.chat.message.MessageMetadataKeys.KEY_ROLE;
+import static org.metaagent.framework.core.agent.chat.message.MessageMetadataKeys.KEY_TOOL_CALL_ARGS;
+import static org.metaagent.framework.core.agent.chat.message.MessageMetadataKeys.KEY_TOOL_CALL_HAS_ERROR;
 import static org.metaagent.framework.core.agent.chat.message.MessageMetadataKeys.KEY_UPDATED_AT;
 
 /**
@@ -151,9 +155,10 @@ public class MessageConverter implements Converter<Message, List<org.springframe
             MetadataProvider toolCallMetadata = MetadataProvider.create();
             MetadataProvider toolResponseMetadata = MetadataProvider.create();
 
+            Set<String> addedToolCallIds = Sets.newHashSet();
             for (MessagePart messagePart : messageParts) {
                 ToolCallMessagePart toolCallMessagePart = (ToolCallMessagePart) messagePart;
-                if (toolCallMessagePart.arguments() != null) {
+                if (toolCallMessagePart.arguments() != null && !addedToolCallIds.contains(toolCallMessagePart.callId())) {
                     toolCallMetadata.merge(toolCallMessagePart.metadata());
 
                     toolCalls.add(new AssistantMessage.ToolCall(
@@ -162,9 +167,14 @@ public class MessageConverter implements Converter<Message, List<org.springframe
                             toolCallMessagePart.toolName(),
                             toolCallMessagePart.arguments()
                     ));
+                    addedToolCallIds.add(toolCallMessagePart.callId());
                 }
                 if (toolCallMessagePart.status() != ToolCallMessagePart.ToolCallStatus.START) {
                     toolResponseMetadata.merge(toolCallMessagePart.metadata());
+                    toolResponseMetadata.setProperty(KEY_TOOL_CALL_ARGS, toolCallMessagePart.arguments());
+                    if (toolCallMessagePart.status() == ToolCallMessagePart.ToolCallStatus.ERROR) {
+                        toolResponseMetadata.setProperty(KEY_TOOL_CALL_HAS_ERROR, true);
+                    }
                     toolResponses.add(new ToolResponseMessage.ToolResponse(
                             toolCallMessagePart.callId(),
                             toolCallMessagePart.toolName(),
@@ -179,7 +189,7 @@ public class MessageConverter implements Converter<Message, List<org.springframe
                     .toolCalls(toolCalls)
                     .build());
 
-            if (toolResponses.isEmpty()) {
+            if (!toolResponses.isEmpty()) {
                 messages.add(org.springframework.ai.chat.messages.ToolResponseMessage.builder()
                         .responses(toolResponses)
                         .metadata(toolResponseMetadata.getProperties())
@@ -283,7 +293,10 @@ public class MessageConverter implements Converter<Message, List<org.springframe
                         .id(partIdGenerator.nextId())
                         .callId(toolResponse.id())
                         .toolName(toolResponse.name())
+                        .arguments(MapUtils.getString(message.getMetadata(), KEY_TOOL_CALL_ARGS, ""))
                         .response(toolResponse.responseData())
+                        .status(MapUtils.getBoolean(message.getMetadata(), KEY_TOOL_CALL_HAS_ERROR, false)
+                                ? ToolCallMessagePart.ToolCallStatus.ERROR : ToolCallMessagePart.ToolCallStatus.END)
                         .metadata(metadataBuilder.build())
                         .createdAt(createdAt)
                         .updatedAt(updatedAt)

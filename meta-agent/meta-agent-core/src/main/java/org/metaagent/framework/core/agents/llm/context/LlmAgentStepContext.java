@@ -27,22 +27,23 @@ package org.metaagent.framework.core.agents.llm.context;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import org.apache.commons.lang3.StringUtils;
+import org.metaagent.framework.core.agent.chat.message.Message;
 import org.metaagent.framework.core.agent.chat.message.MessageInfo;
+import org.metaagent.framework.core.agent.chat.message.RoleMessage;
 import org.metaagent.framework.core.agent.chat.message.part.MessagePart;
 import org.metaagent.framework.core.agent.context.AgentStepContext;
 import org.metaagent.framework.core.agents.llm.LlmStreamingAgent;
+import org.metaagent.framework.core.agents.llm.message.SystemMessagePart;
 import org.metaagent.framework.core.agents.llm.message.ToolCallMessagePart;
 import org.metaagent.framework.core.model.chat.metadata.TokenUsage;
-import org.springframework.ai.chat.messages.Message;
-import org.springframework.ai.chat.messages.SystemMessage;
 import org.springframework.ai.chat.metadata.Usage;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.Function;
 
 /**
  * Step context for {@link LlmStreamingAgent}, which contains the context for a single step of the agent.
@@ -52,27 +53,23 @@ import java.util.concurrent.atomic.AtomicInteger;
 public class LlmAgentStepContext implements AgentStepContext {
     private static final Set<String> FINISH_REASONS = Set.of("STOP", "LENGTH", "CONTENT_FILTER", "RETURN_DIRECT");
     private final AtomicInteger loopCounter;
-    private final List<SystemMessage> systemMessages;
+    private final List<SystemMessagePart> systemMessages;
     private final List<Message> historyMessages;
-    private final List<Message> newMessages;
     private final Map<String, ToolCallMessagePart> toolCallMessages;
     private MessageInfo outputMessageInfo;
-    private List<MessagePart> outputMessageParts;
+    private final List<MessagePart> outputMessageParts;
+    private final Map<Message, List<org.springframework.ai.chat.messages.Message>> mappingMessageCache;
     private String finishReason;
     private TokenUsage tokenUsage;
 
-    public LlmAgentStepContext(List<SystemMessage> systemMessages, List<Message> historyMessages) {
+    public LlmAgentStepContext(List<SystemMessagePart> systemMessages, List<Message> historyMessages) {
         this.loopCounter = new AtomicInteger(0);
         this.systemMessages = Objects.requireNonNull(systemMessages, "systemMessages cannot be null");
         this.historyMessages = Objects.requireNonNull(historyMessages, "historyMessages cannot be null");
-        this.newMessages = Lists.newArrayList();
         this.toolCallMessages = Maps.newHashMap();
         this.outputMessageParts = Lists.newArrayList();
+        this.mappingMessageCache = Maps.newHashMap();
         this.tokenUsage = TokenUsage.empty();
-    }
-
-    public LlmAgentStepContext() {
-        this(List.of(), List.of());
     }
 
     @Override
@@ -88,15 +85,17 @@ public class LlmAgentStepContext implements AgentStepContext {
         this.outputMessageInfo = outputMessageInfo;
     }
 
-    public List<MessagePart> getOutputMessageParts() {
-        return outputMessageParts;
+    public Message getOutputMessage() {
+        MessageInfo messageInfo = outputMessageInfo;
+        if (!outputMessageParts.isEmpty()) {
+            messageInfo = messageInfo.toBuilder()
+                    .updatedAt(outputMessageParts.get(outputMessageParts.size() - 1).updatedAt())
+                    .build();
+        }
+        return RoleMessage.builder().info(messageInfo).parts(outputMessageParts).build();
     }
 
-    public void addOutputMessageParts(List<? extends MessagePart> outputMessageParts) {
-        this.outputMessageParts.addAll(outputMessageParts);
-    }
-
-    public List<SystemMessage> getSystemMessages() {
+    public List<SystemMessagePart> getSystemMessages() {
         return systemMessages;
     }
 
@@ -104,28 +103,53 @@ public class LlmAgentStepContext implements AgentStepContext {
         return historyMessages;
     }
 
-    public List<Message> getNewMessages() {
-        return newMessages;
+    public Message getLastUserMessage() {
+        for (int i = historyMessages.size() - 1; i >= 0; i--) {
+            Message message = historyMessages.get(i);
+            if (MessageInfo.ROLE_USER.equals(message.info().role())) {
+                return message;
+            }
+        }
+        throw new IllegalStateException("No user message found. This should never happen");
     }
 
     public List<Message> getAllMessages() {
-        List<Message> allMessages = new ArrayList<>();
-        allMessages.addAll(systemMessages);
-        allMessages.addAll(historyMessages);
-        allMessages.addAll(newMessages);
+        List<Message> allMessages = Lists.newArrayList(historyMessages);
+        allMessages.add(getOutputMessage());
         return allMessages;
     }
 
-    public void addNewMessages(List<Message> messages) {
-        this.newMessages.addAll(messages);
+    public void addOutputMessagePart(MessagePart messagePart) {
+        if (messagePart instanceof ToolCallMessagePart toolCallMessagePart) {
+            // insert or update tool call message
+            ToolCallMessagePart foundToolCallMessagePart = toolCallMessages.get(toolCallMessagePart.callId());
+            int index;
+            if (foundToolCallMessagePart != null && (index = this.outputMessageParts.indexOf(foundToolCallMessagePart)) >= 0) {
+                this.outputMessageParts.set(index, messagePart);
+            } else {
+                this.outputMessageParts.add(messagePart);
+            }
+
+            this.toolCallMessages.put(toolCallMessagePart.callId(), toolCallMessagePart);
+        } else {
+            this.outputMessageParts.add(messagePart);
+        }
     }
 
-    public void addToolCallMessage(ToolCallMessagePart message) {
-        toolCallMessages.put(message.callId(), message);
+    public void addOutputMessageParts(List<? extends MessagePart> messageParts) {
+        for (MessagePart messagePart : messageParts) {
+            addOutputMessagePart(messagePart);
+        }
     }
 
     public ToolCallMessagePart getToolCallMessage(String toolCallId) {
         return toolCallMessages.get(toolCallId);
+    }
+
+    public List<org.springframework.ai.chat.messages.Message> getMappingMessages(
+            Message message,
+            Function<Message, List<org.springframework.ai.chat.messages.Message>> converter) {
+        return mappingMessageCache.computeIfAbsent(message, converter);
     }
 
     public String getFinishReason() {
@@ -152,8 +176,10 @@ public class LlmAgentStepContext implements AgentStepContext {
     @Override
     public void reset() {
         loopCounter.set(0);
-        newMessages.clear();
+        outputMessageInfo = null;
+        outputMessageParts.clear();
         toolCallMessages.clear();
+        mappingMessageCache.clear();
         tokenUsage = TokenUsage.empty();
     }
 }

@@ -37,7 +37,6 @@ import org.metaagent.framework.core.security.approval.PermissionApprover;
 import org.metaagent.framework.core.skill.loader.SkillLoaders;
 import org.metaagent.framework.core.skill.manager.SkillManager;
 import org.metaagent.framework.core.tool.approval.ToolApprovalRequest;
-import org.metaagent.framework.core.tool.executor.ToolExecutor;
 import org.metaagent.framework.core.tool.executor.ToolExecutorContext;
 import org.metaagent.framework.core.tool.manager.ToolManager;
 
@@ -56,7 +55,6 @@ public record ChatAgentContext(
         Executor executor,
         ModelProviderRegistry modelProviderRegistry,
         ToolManager toolManager,
-        ToolExecutor toolExecutor,
         ToolExecutorContext toolExecutorContext,
         SkillManager skillManager,
         PermissionApprovalManager<ToolApprovalRequest> toolApprovalManager,
@@ -68,7 +66,6 @@ public record ChatAgentContext(
         Objects.requireNonNull(executor, "executor is required");
         Objects.requireNonNull(modelProviderRegistry, "modelProviderRegistry is required");
         Objects.requireNonNull(toolManager, "toolManager is required");
-        Objects.requireNonNull(toolExecutor, "toolExecutor is required");
         Objects.requireNonNull(toolExecutorContext, "toolExecutorContext is required");
         Objects.requireNonNull(skillManager, "skillManager is required");
         Objects.requireNonNull(toolApprovalManager, "toolApprovalManager is required");
@@ -146,7 +143,6 @@ public record ChatAgentContext(
                     executor,
                     modelProviderRegistry,
                     toolManager,
-                    toolExecutor,
                     toolExecutorContext,
                     skillManager,
                     toolApprovalManager,
