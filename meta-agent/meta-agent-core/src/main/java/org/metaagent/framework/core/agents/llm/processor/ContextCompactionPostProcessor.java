@@ -22,21 +22,31 @@
  * SOFTWARE.
  */
 
-package org.metaagent.framework.core.agent.chat.message;
+package org.metaagent.framework.core.agents.llm.processor;
+
+import org.metaagent.framework.core.agents.llm.compaction.CompactionResult;
+import org.metaagent.framework.core.agents.llm.compaction.PruningResult;
+import org.metaagent.framework.core.agents.llm.context.LlmAgentStepContext;
+import org.metaagent.framework.core.agents.llm.input.LlmAgentInput;
 
 /**
- * Message metadata keys
+ * Context compaction post processor interface.
  *
  * @author vyckey
  */
-public interface MessageMetadataKeys {
-    String KEY_MESSAGE_ID = "msgId";
-    String KEY_MESSAGE_PART_ID = "msgPartId";
-    String KEY_ROLE = "role";
-    String KEY_REASONING_CONTENT = "reasoningContent";
-    String KEY_TOOL_CALL_ARGS = "toolCallArguments";
-    String KEY_TOOL_CALL_HAS_ERROR = "toolCallHasError";
-    String KEY_CREATED_AT = "createdAt";
-    String KEY_UPDATED_AT = "updatedAt";
-    String KEY_SYNTHETIC = "synthetic";
+public interface ContextCompactionPostProcessor {
+    ContextCompactionPostProcessor NOOP = (agentInput, stepContext,
+                                           pruningResult, compactionResult) -> {
+    };
+
+    /**
+     * Post process the context compaction result.
+     *
+     * @param agentInput       the agent input
+     * @param stepContext      the step context
+     * @param pruningResult    the pruning result
+     * @param compactionResult the compaction result
+     */
+    void postProcess(LlmAgentInput agentInput, LlmAgentStepContext stepContext,
+                     PruningResult pruningResult, CompactionResult compactionResult);
 }

@@ -22,21 +22,26 @@
  * SOFTWARE.
  */
 
-package org.metaagent.framework.core.agent.chat.message;
+package org.metaagent.framework.core.agents.llm.compaction;
 
 /**
- * Message metadata keys
+ * Noop context compaction service.
  *
  * @author vyckey
  */
-public interface MessageMetadataKeys {
-    String KEY_MESSAGE_ID = "msgId";
-    String KEY_MESSAGE_PART_ID = "msgPartId";
-    String KEY_ROLE = "role";
-    String KEY_REASONING_CONTENT = "reasoningContent";
-    String KEY_TOOL_CALL_ARGS = "toolCallArguments";
-    String KEY_TOOL_CALL_HAS_ERROR = "toolCallHasError";
-    String KEY_CREATED_AT = "createdAt";
-    String KEY_UPDATED_AT = "updatedAt";
-    String KEY_SYNTHETIC = "synthetic";
+public class NoopContextCompactionService implements ContextCompactionService {
+    public static final NoopContextCompactionService INSTANCE = new NoopContextCompactionService();
+
+    private NoopContextCompactionService() {
+    }
+
+    @Override
+    public PruningResult prune(PruningInput pruningInput) {
+        return PruningResult.builder().pruned(false).build();
+    }
+
+    @Override
+    public CompactionResult compact(CompactionInput input) {
+        return CompactionResult.builder().compacted(false).build();
+    }
 }

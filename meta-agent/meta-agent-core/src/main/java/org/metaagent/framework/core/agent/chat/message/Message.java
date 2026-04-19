@@ -32,7 +32,9 @@ import org.metaagent.framework.core.agent.chat.message.part.MessagePartId;
 
 import java.time.format.DateTimeFormatter;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
+import java.util.function.Predicate;
 
 /**
  * The message interface represents a message in a chat.
@@ -73,13 +75,24 @@ public interface Message extends TextContent {
     }
 
     /**
-     * Get the part of the message.
+     * Find the part of the message by ID.
      *
      * @param partId the id of the part
      * @return the part of the message
      */
-    default Optional<MessagePart> part(MessagePartId partId) {
+    default Optional<MessagePart> findPart(MessagePartId partId) {
         return parts().stream().filter(part -> part.id().equals(partId)).findFirst();
+    }
+
+    /**
+     * Find the part of the message by predicate.
+     *
+     * @param predicate the predicate to match
+     * @return the part of the message
+     */
+    default Optional<MessagePart> findPart(Predicate<MessagePart> predicate) {
+        Objects.requireNonNull(predicate, "predicate must not be null");
+        return parts().stream().filter(predicate).findAny();
     }
 
     /**

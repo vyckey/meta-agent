@@ -25,6 +25,8 @@
 package org.metaagent.framework.core.agents.llm.context;
 
 import org.metaagent.framework.core.agent.context.AgentContext;
+import org.metaagent.framework.core.agents.llm.compaction.ContextCompactionService;
+import org.metaagent.framework.core.agents.llm.processor.ContextCompactionPostProcessor;
 import org.metaagent.framework.core.model.provider.ModelProviderRegistry;
 import org.metaagent.framework.core.tool.executor.ToolExecutorContext;
 import org.metaagent.framework.core.tool.manager.ToolManager;
@@ -64,6 +66,20 @@ public interface LlmAgentContext extends AgentContext {
      * @return tool executor context
      */
     ToolExecutorContext toolExecutorContext();
+
+    /**
+     * Gets the context compaction service.
+     *
+     * @return context compaction service
+     */
+    ContextCompactionService contextCompactionService();
+
+    /**
+     * Gets the context compaction post processor.
+     *
+     * @return context compaction post processor
+     */
+    ContextCompactionPostProcessor contextCompactionPostProcessor();
 
     /**
      * Gets the builder for this context.

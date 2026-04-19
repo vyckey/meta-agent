@@ -31,6 +31,7 @@ import org.metaagent.framework.core.agent.chat.message.Message;
 import org.metaagent.framework.core.agent.chat.message.MessageInfo;
 import org.metaagent.framework.core.agent.chat.message.RoleMessage;
 import org.metaagent.framework.core.agent.chat.message.part.MessagePart;
+import org.metaagent.framework.core.agent.chat.message.part.MessagePartId;
 import org.metaagent.framework.core.agent.context.AgentStepContext;
 import org.metaagent.framework.core.agents.llm.LlmStreamingAgent;
 import org.metaagent.framework.core.agents.llm.message.SystemMessagePart;
@@ -103,6 +104,11 @@ public class LlmAgentStepContext implements AgentStepContext {
         return historyMessages;
     }
 
+    public void setHistoryMessages(List<Message> newHistoryMessages) {
+        this.historyMessages.clear();
+        this.historyMessages.addAll(newHistoryMessages);
+    }
+
     public Message getLastUserMessage() {
         for (int i = historyMessages.size() - 1; i >= 0; i--) {
             Message message = historyMessages.get(i);
@@ -140,6 +146,47 @@ public class LlmAgentStepContext implements AgentStepContext {
         for (MessagePart messagePart : messageParts) {
             addOutputMessagePart(messagePart);
         }
+    }
+
+    public void setOutputMessageParts(List<? extends MessagePart> messageParts) {
+        this.outputMessageParts.clear();
+        addOutputMessageParts(messageParts);
+    }
+
+    public void deleteMessageParts(Set<MessagePartId> messagePartIds) {
+        outputMessageParts.removeIf(messagePart -> messagePartIds.contains(messagePart.id()));
+
+        for (int i = historyMessages.size() - 1; i >= 0; i--) {
+            Message historyMessage = historyMessages.get(i);
+            boolean needsRemove = historyMessage.findPart(part -> messagePartIds.contains(part.id())).isPresent();
+            if (needsRemove) {
+                List<MessagePart> newParts = historyMessage.parts().stream()
+                        .filter(part -> !messagePartIds.contains(part.id())).toList();
+                historyMessages.set(i, historyMessage.toBuilder().parts(newParts).build());
+            }
+        }
+    }
+
+    public void updateMessagePart(MessagePart messagePart) {
+        MessagePartId messagePartId = messagePart.id();
+        for (int i = 0; i < outputMessageParts.size(); i++) {
+            if (outputMessageParts.get(i).id().equals(messagePartId)) {
+                outputMessageParts.set(i, messagePart);
+                return;
+            }
+        }
+
+        for (int i = historyMessages.size() - 1; i >= 0; i--) {
+            Message historyMessage = historyMessages.get(i);
+            int index = historyMessage.findPartIndex(p -> p.id().equals(messagePartId));
+            if (index >= 0) {
+                List<MessagePart> parts = Lists.newArrayList(historyMessage.parts());
+                parts.set(index, messagePart);
+                historyMessages.set(i, historyMessage.toBuilder().parts(parts).build());
+            }
+        }
+
+        throw new IllegalArgumentException("Message part not found: " + messagePartId);
     }
 
     public ToolCallMessagePart getToolCallMessage(String toolCallId) {

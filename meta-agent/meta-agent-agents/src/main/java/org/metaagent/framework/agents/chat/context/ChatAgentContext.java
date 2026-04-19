@@ -26,9 +26,11 @@ package org.metaagent.framework.agents.chat.context;
 
 import org.metaagent.framework.common.abort.AbortSignal;
 import org.metaagent.framework.core.agent.event.AgentEventBus;
+import org.metaagent.framework.core.agents.llm.compaction.ContextCompactionService;
 import org.metaagent.framework.core.agents.llm.context.AbstractLlmAgentContextBuilder;
 import org.metaagent.framework.core.agents.llm.context.LlmAgentContext;
 import org.metaagent.framework.core.agents.llm.context.LlmAgentContextBuilder;
+import org.metaagent.framework.core.agents.llm.processor.ContextCompactionPostProcessor;
 import org.metaagent.framework.core.config.WorkspaceConfig;
 import org.metaagent.framework.core.model.provider.ModelProviderRegistry;
 import org.metaagent.framework.core.security.approval.AsyncEventPermissionApprovalManager;
@@ -57,6 +59,8 @@ public record ChatAgentContext(
         ToolManager toolManager,
         ToolExecutorContext toolExecutorContext,
         SkillManager skillManager,
+        ContextCompactionService contextCompactionService,
+        ContextCompactionPostProcessor contextCompactionPostProcessor,
         PermissionApprovalManager<ToolApprovalRequest> toolApprovalManager,
         WorkspaceConfig workspaceConfig
 ) implements LlmAgentContext {
@@ -68,6 +72,8 @@ public record ChatAgentContext(
         Objects.requireNonNull(toolManager, "toolManager is required");
         Objects.requireNonNull(toolExecutorContext, "toolExecutorContext is required");
         Objects.requireNonNull(skillManager, "skillManager is required");
+        Objects.requireNonNull(contextCompactionService, "contextCompactionService is required");
+        Objects.requireNonNull(contextCompactionPostProcessor, "contextCompactionPostProcessor is required");
         Objects.requireNonNull(toolApprovalManager, "toolApprovalManager is required");
         Objects.requireNonNull(workspaceConfig, "workspaceConfig is required");
     }
@@ -145,6 +151,8 @@ public record ChatAgentContext(
                     toolManager,
                     toolExecutorContext,
                     skillManager,
+                    contextCompactionService,
+                    contextCompactionPostProcessor,
                     toolApprovalManager,
                     workspaceConfig
             );

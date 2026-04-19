@@ -25,6 +25,9 @@
 package org.metaagent.framework.core.agents.llm.context;
 
 import org.metaagent.framework.core.agent.context.AbstractAgentContextBuilder;
+import org.metaagent.framework.core.agents.llm.compaction.ContextCompactionService;
+import org.metaagent.framework.core.agents.llm.compaction.NoopContextCompactionService;
+import org.metaagent.framework.core.agents.llm.processor.ContextCompactionPostProcessor;
 import org.metaagent.framework.core.model.provider.ModelProviderRegistry;
 import org.metaagent.framework.core.tool.executor.ToolExecutorContext;
 import org.metaagent.framework.core.tool.manager.ToolManager;
@@ -41,6 +44,8 @@ public abstract class AbstractLlmAgentContextBuilder<Builder extends AbstractLlm
     protected ModelProviderRegistry modelProviderRegistry;
     protected ToolManager toolManager;
     protected ToolExecutorContext toolExecutorContext;
+    protected ContextCompactionService contextCompactionService;
+    protected ContextCompactionPostProcessor contextCompactionPostProcessor;
 
     protected AbstractLlmAgentContextBuilder() {
     }
@@ -50,20 +55,36 @@ public abstract class AbstractLlmAgentContextBuilder<Builder extends AbstractLlm
         this.modelProviderRegistry = context.modelProviderRegistry();
         this.toolManager = context.toolManager();
         this.toolExecutorContext = context.toolExecutorContext();
+        this.contextCompactionService = context.contextCompactionService();
+        this.contextCompactionPostProcessor = context.contextCompactionPostProcessor();
     }
 
+    @Override
     public Builder modelProviderRegistry(ModelProviderRegistry modelProviderRegistry) {
         this.modelProviderRegistry = modelProviderRegistry;
         return self();
     }
 
+    @Override
     public Builder toolManager(ToolManager toolManager) {
         this.toolManager = toolManager;
         return self();
     }
 
+    @Override
     public Builder toolExecutorContext(ToolExecutorContext toolExecutorContext) {
         this.toolExecutorContext = toolExecutorContext;
+        return self();
+    }
+
+    @Override
+    public Builder contextCompactionService(ContextCompactionService contextCompactionService) {
+        this.contextCompactionService = contextCompactionService;
+        return self();
+    }
+
+    public Builder contextCompactionPostProcessor(ContextCompactionPostProcessor contextCompactionPostProcessor) {
+        this.contextCompactionPostProcessor = contextCompactionPostProcessor;
         return self();
     }
 
@@ -75,6 +96,12 @@ public abstract class AbstractLlmAgentContextBuilder<Builder extends AbstractLlm
         }
         if (toolExecutorContext == null) {
             toolExecutorContext = ToolExecutorContext.create();
+        }
+        if (contextCompactionService == null) {
+            contextCompactionService = NoopContextCompactionService.INSTANCE;
+        }
+        if (contextCompactionPostProcessor == null) {
+            contextCompactionPostProcessor = ContextCompactionPostProcessor.NOOP;
         }
         return self();
     }

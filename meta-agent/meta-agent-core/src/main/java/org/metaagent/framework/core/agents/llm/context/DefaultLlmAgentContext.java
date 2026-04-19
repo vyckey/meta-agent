@@ -28,6 +28,8 @@ import org.metaagent.framework.common.abort.AbortSignal;
 import org.metaagent.framework.core.agent.event.AgentEventBus;
 import org.metaagent.framework.core.agents.llm.LlmAgent;
 import org.metaagent.framework.core.agents.llm.LlmStreamingAgent;
+import org.metaagent.framework.core.agents.llm.compaction.ContextCompactionService;
+import org.metaagent.framework.core.agents.llm.processor.ContextCompactionPostProcessor;
 import org.metaagent.framework.core.model.provider.ModelProviderRegistry;
 import org.metaagent.framework.core.tool.executor.ToolExecutorContext;
 import org.metaagent.framework.core.tool.manager.ToolManager;
@@ -46,7 +48,9 @@ public record DefaultLlmAgentContext(
         Executor executor,
         ModelProviderRegistry modelProviderRegistry,
         ToolManager toolManager,
-        ToolExecutorContext toolExecutorContext
+        ToolExecutorContext toolExecutorContext,
+        ContextCompactionService contextCompactionService,
+        ContextCompactionPostProcessor contextCompactionPostProcessor
 ) implements LlmAgentContext {
     public DefaultLlmAgentContext {
         Objects.requireNonNull(agentEventBus, "agentEventBus is required");
@@ -55,6 +59,8 @@ public record DefaultLlmAgentContext(
         Objects.requireNonNull(modelProviderRegistry, "modelProviderRegistry is required");
         Objects.requireNonNull(toolManager, "toolManager is required");
         Objects.requireNonNull(toolExecutorContext, "toolExecutorContext is required");
+        Objects.requireNonNull(contextCompactionService, "contextCompactionService is required");
+        Objects.requireNonNull(contextCompactionPostProcessor, "contextCompactionPostProcessor is required");
     }
 
     public static Builder builder() {
@@ -84,7 +90,8 @@ public record DefaultLlmAgentContext(
         public DefaultLlmAgentContext build() {
             withDefaults();
             return new DefaultLlmAgentContext(agentEventBus, abortSignal, executor,
-                    modelProviderRegistry, toolManager, toolExecutorContext);
+                    modelProviderRegistry, toolManager, toolExecutorContext,
+                    contextCompactionService, contextCompactionPostProcessor);
         }
     }
 }
