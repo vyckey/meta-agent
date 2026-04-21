@@ -22,7 +22,8 @@
  * SOFTWARE.
  */
 
-package org.metaagent.framework.core.agents.llm.message;
+package org.metaagent.framework.core.agents.llm.message.part;
+
 
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import org.metaagent.framework.common.metadata.MapMetadataProvider;
@@ -31,52 +32,37 @@ import org.metaagent.framework.core.agent.chat.message.part.AbstractMessagePartB
 import org.metaagent.framework.core.agent.chat.message.part.MessagePart;
 import org.metaagent.framework.core.agent.chat.message.part.MessagePartId;
 import org.metaagent.framework.core.agent.chat.message.part.MessagePartIdValue;
+import org.metaagent.framework.core.model.chat.metadata.TokenUsage;
 
 import java.time.Instant;
 import java.util.Objects;
 
 /**
- * ToolCallMessagePart represents a tool call message part in a chat message.
+ * LlmFinishMessagePart represents a message part that indicates the end of a LLM model's response.
  *
  * @author vyckey
  * @see MessagePart
  */
-public record ToolCallMessagePart(
+public record LlmFinishMessagePart(
         @JsonDeserialize(as = MessagePartIdValue.class)
         MessagePartId id,
 
-        String callId,
+        String finishReason,
 
-        String toolName,
-
-        String arguments,
-
-        String response,
-
-        ToolCallStatus status,
+        TokenUsage tokenUsage,
 
         Instant createdAt,
-
-        Instant updatedAt,
 
         @JsonDeserialize(as = MapMetadataProvider.class)
         MetadataProvider metadata
 ) implements MessagePart {
-    public static final String TYPE = "tool_call";
+    public static final String TYPE = "llm_finish";
 
-    public ToolCallMessagePart {
+    public LlmFinishMessagePart {
         id = id != null ? id : MessagePartId.next();
-
-        Objects.requireNonNull(callId, "tool call id cannot be null");
-        Objects.requireNonNull(toolName, "tool name cannot be null");
-        Objects.requireNonNull(status, "tool call status cannot be null");
-        Objects.requireNonNull(arguments, "tool call arguments cannot be null");
-        if (status == ToolCallStatus.END || status == ToolCallStatus.ERROR) {
-            Objects.requireNonNull(response, "tool call response cannot be null");
-        }
-
+        Objects.requireNonNull(finishReason, "finishReason cannot be null");
+        Objects.requireNonNull(tokenUsage, "tokenUsage cannot be null");
         createdAt = createdAt != null ? createdAt : Instant.now();
-        updatedAt = updatedAt != null ? updatedAt : Instant.now();
         metadata = metadata != null ? metadata : MetadataProvider.empty();
     }
 
@@ -90,76 +76,37 @@ public record ToolCallMessagePart(
     }
 
     @Override
+    public Instant updatedAt() {
+        return createdAt;
+    }
+
+    @Override
     public String content() {
         return "";
     }
 
-    public Builder toBuilder() {
-        return new Builder(this);
-    }
-
-    @Override
-    public String toString() {
-        return "ToolCall[" + callId + "] " + toolName + "(" + arguments + ") => " + response;
-    }
-
-    public enum ToolCallStatus {
-        START,
-        END,
-        ERROR
-    }
-
 
     public static class Builder extends AbstractMessagePartBuilder<Builder> {
-        private String callId;
-        private String toolName;
-        private ToolCallStatus status;
-        private String arguments;
-        private String response;
+        private String finishReason;
+        private TokenUsage tokenUsage;
 
         @Override
         protected Builder self() {
             return this;
         }
 
-        private Builder() {
+        public Builder finishReason(String finishReason) {
+            this.finishReason = finishReason;
+            return this;
         }
 
-        public Builder(ToolCallMessagePart messagePart) {
-            super(messagePart);
-            this.callId = messagePart.callId;
-            this.toolName = messagePart.toolName;
-            this.status = messagePart.status;
-            this.arguments = messagePart.arguments;
+        public Builder tokenUsage(TokenUsage tokenUsage) {
+            this.tokenUsage = tokenUsage;
+            return this;
         }
 
-        public Builder callId(String callId) {
-            this.callId = callId;
-            return self();
-        }
-
-        public Builder toolName(String toolName) {
-            this.toolName = toolName;
-            return self();
-        }
-
-        public Builder status(ToolCallStatus status) {
-            this.status = status;
-            return self();
-        }
-
-        public Builder arguments(String arguments) {
-            this.arguments = arguments;
-            return self();
-        }
-
-        public Builder response(String response) {
-            this.response = response;
-            return self();
-        }
-
-        public ToolCallMessagePart build() {
-            return new ToolCallMessagePart(id, callId, toolName, arguments, response, status, createdAt, updatedAt, metadata);
+        public LlmFinishMessagePart build() {
+            return new LlmFinishMessagePart(id, finishReason, tokenUsage, createdAt, metadata);
         }
     }
 }

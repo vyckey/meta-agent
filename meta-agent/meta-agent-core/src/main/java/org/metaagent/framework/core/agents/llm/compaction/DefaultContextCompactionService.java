@@ -38,7 +38,7 @@ import org.metaagent.framework.core.agents.llm.LlmAgent;
 import org.metaagent.framework.core.agents.llm.context.LlmAgentContext;
 import org.metaagent.framework.core.agents.llm.context.LlmContextCache;
 import org.metaagent.framework.core.agents.llm.input.LlmAgentInput;
-import org.metaagent.framework.core.agents.llm.message.ToolCallMessagePart;
+import org.metaagent.framework.core.agents.llm.message.part.ToolCallMessagePart;
 import org.metaagent.framework.core.agents.llm.output.LlmAgentOutput;
 import org.metaagent.framework.core.model.ModelId;
 import org.metaagent.framework.core.model.prompt.PromptValue;

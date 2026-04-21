@@ -22,59 +22,46 @@
  * SOFTWARE.
  */
 
-package org.metaagent.framework.core.agents.llm.message;
+package org.metaagent.framework.core.agents.llm.message.part;
 
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
-import com.google.common.base.Preconditions;
-import org.apache.commons.lang3.StringUtils;
 import org.metaagent.framework.common.metadata.MapMetadataProvider;
 import org.metaagent.framework.common.metadata.MetadataProvider;
 import org.metaagent.framework.core.agent.chat.message.part.AbstractMessagePartBuilder;
 import org.metaagent.framework.core.agent.chat.message.part.MessagePart;
 import org.metaagent.framework.core.agent.chat.message.part.MessagePartId;
 import org.metaagent.framework.core.agent.chat.message.part.MessagePartIdValue;
-import org.metaagent.framework.core.model.prompt.PromptValue;
-import org.metaagent.framework.core.model.prompt.StringPromptValue;
 
 import java.time.Instant;
 
 /**
- * System message part
+ * CompactMessagePart represents a message part that performs compaction.
  *
  * @author vyckey
  * @see MessagePart
  */
-public record SystemMessagePart(
+public record CompactionMessagePart(
         @JsonDeserialize(as = MessagePartIdValue.class)
         MessagePartId id,
 
-        String text,
+        String prompt,
+
+        boolean auto,
+
+        Boolean overflow,
 
         Instant createdAt,
 
         @JsonDeserialize(as = MapMetadataProvider.class)
         MetadataProvider metadata
 ) implements MessagePart {
-    public static final String TYPE = "system";
+    public static final String TYPE = "compaction";
 
-    public SystemMessagePart {
+    public CompactionMessagePart {
         id = id != null ? id : MessagePartId.next();
-        Preconditions.checkArgument(StringUtils.isNotBlank(text), "text is required");
-        text = text.trim();
+        prompt = prompt != null ? prompt : "";
         createdAt = createdAt != null ? createdAt : Instant.now();
         metadata = metadata != null ? metadata : MetadataProvider.empty();
-    }
-
-    public SystemMessagePart(String text, MetadataProvider metadata) {
-        this(MessagePartId.next(), text, Instant.now(), metadata);
-    }
-
-    public SystemMessagePart(String text) {
-        this(text, MetadataProvider.empty());
-    }
-
-    public SystemMessagePart(PromptValue systemPrompt) {
-        this(systemPrompt.text(), MetadataProvider.empty());
     }
 
     public static Builder builder() {
@@ -93,11 +80,7 @@ public record SystemMessagePart(
 
     @Override
     public String content() {
-        return text;
-    }
-
-    public PromptValue toPromptValue() {
-        return StringPromptValue.from(text);
+        return prompt;
     }
 
     public Builder toBuilder() {
@@ -106,14 +89,15 @@ public record SystemMessagePart(
 
 
     public static class Builder extends AbstractMessagePartBuilder<Builder> {
-        private String text;
+        private String prompt;
+        private boolean auto;
+        private Boolean overflow;
 
         private Builder() {
         }
 
-        public Builder(SystemMessagePart messagePart) {
+        public Builder(CompactionMessagePart messagePart) {
             super(messagePart);
-            this.text = messagePart.text;
         }
 
         @Override
@@ -121,13 +105,23 @@ public record SystemMessagePart(
             return this;
         }
 
-        public Builder text(String text) {
-            this.text = text;
+        public Builder prompt(String prompt) {
+            this.prompt = prompt;
             return self();
         }
 
-        public SystemMessagePart build() {
-            return new SystemMessagePart(id, text, createdAt, metadata);
+        public Builder auto(boolean auto) {
+            this.auto = auto;
+            return self();
+        }
+
+        public Builder overflow(Boolean overflow) {
+            this.overflow = overflow;
+            return self();
+        }
+
+        public CompactionMessagePart build() {
+            return new CompactionMessagePart(id, prompt, auto, overflow, createdAt, metadata);
         }
     }
 }

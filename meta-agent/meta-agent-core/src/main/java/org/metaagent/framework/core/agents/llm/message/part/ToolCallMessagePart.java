@@ -22,7 +22,7 @@
  * SOFTWARE.
  */
 
-package org.metaagent.framework.core.agents.llm.message;
+package org.metaagent.framework.core.agents.llm.message.part;
 
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import org.metaagent.framework.common.metadata.MapMetadataProvider;
@@ -36,18 +36,24 @@ import java.time.Instant;
 import java.util.Objects;
 
 /**
- * ReasoningMessagePart represents a message part that contains a reasoning.
+ * ToolCallMessagePart represents a tool call message part in a chat message.
  *
  * @author vyckey
  * @see MessagePart
  */
-public record ReasoningMessagePart(
+public record ToolCallMessagePart(
         @JsonDeserialize(as = MessagePartIdValue.class)
         MessagePartId id,
 
-        ReasoningStatus status,
+        String callId,
 
-        String text,
+        String toolName,
+
+        String arguments,
+
+        String response,
+
+        ToolCallStatus status,
 
         Instant createdAt,
 
@@ -56,35 +62,22 @@ public record ReasoningMessagePart(
         @JsonDeserialize(as = MapMetadataProvider.class)
         MetadataProvider metadata
 ) implements MessagePart {
-    public static final String TYPE = "reasoning";
+    public static final String TYPE = "tool_call";
 
-    public ReasoningMessagePart {
+    public ToolCallMessagePart {
         id = id != null ? id : MessagePartId.next();
-        Objects.requireNonNull(status, "status is required");
-        if (status == ReasoningStatus.PROCESSING) {
-            Objects.requireNonNull(text, "text is required");
-        } else {
-            text = "";
+
+        Objects.requireNonNull(callId, "tool call id cannot be null");
+        Objects.requireNonNull(toolName, "tool name cannot be null");
+        Objects.requireNonNull(status, "tool call status cannot be null");
+        Objects.requireNonNull(arguments, "tool call arguments cannot be null");
+        if (status == ToolCallStatus.END || status == ToolCallStatus.ERROR) {
+            Objects.requireNonNull(response, "tool call response cannot be null");
         }
+
         createdAt = createdAt != null ? createdAt : Instant.now();
         updatedAt = updatedAt != null ? updatedAt : Instant.now();
         metadata = metadata != null ? metadata : MetadataProvider.empty();
-    }
-
-    public ReasoningMessagePart(ReasoningStatus status, String text, MetadataProvider metadata) {
-        this(MessagePartId.next(), status, text, Instant.now(), Instant.now(), metadata);
-    }
-
-    public static ReasoningMessagePart started() {
-        return new ReasoningMessagePart(ReasoningStatus.STARTED, "", MetadataProvider.empty());
-    }
-
-    public static ReasoningMessagePart completed() {
-        return new ReasoningMessagePart(ReasoningStatus.COMPLETED, "", MetadataProvider.empty());
-    }
-
-    public static ReasoningMessagePart text(String text, MetadataProvider metadata) {
-        return new ReasoningMessagePart(ReasoningStatus.PROCESSING, text, metadata);
     }
 
     public static Builder builder() {
@@ -98,61 +91,75 @@ public record ReasoningMessagePart(
 
     @Override
     public String content() {
-        return text;
+        return "";
     }
 
     public Builder toBuilder() {
         return new Builder(this);
     }
 
-    public enum ReasoningStatus {
-        STARTED,
-        PROCESSING,
-        COMPLETED,
+    @Override
+    public String toString() {
+        return "ToolCall[" + callId + "] " + toolName + "(" + arguments + ") => " + response;
+    }
+
+    public enum ToolCallStatus {
+        START,
+        END,
+        ERROR
     }
 
 
     public static class Builder extends AbstractMessagePartBuilder<Builder> {
-        private ReasoningStatus status;
-        private String text;
-
-        private Builder() {
-        }
-
-        public Builder(ReasoningMessagePart messagePart) {
-            super(messagePart);
-            this.status = messagePart.status;
-            this.text = messagePart.text;
-        }
+        private String callId;
+        private String toolName;
+        private ToolCallStatus status;
+        private String arguments;
+        private String response;
 
         @Override
         protected Builder self() {
             return this;
         }
 
-        public Builder status(ReasoningStatus status) {
+        private Builder() {
+        }
+
+        public Builder(ToolCallMessagePart messagePart) {
+            super(messagePart);
+            this.callId = messagePart.callId;
+            this.toolName = messagePart.toolName;
+            this.status = messagePart.status;
+            this.arguments = messagePart.arguments;
+        }
+
+        public Builder callId(String callId) {
+            this.callId = callId;
+            return self();
+        }
+
+        public Builder toolName(String toolName) {
+            this.toolName = toolName;
+            return self();
+        }
+
+        public Builder status(ToolCallStatus status) {
             this.status = status;
             return self();
         }
 
-        public Builder started() {
-            this.status = ReasoningStatus.STARTED;
+        public Builder arguments(String arguments) {
+            this.arguments = arguments;
             return self();
         }
 
-        public Builder completed() {
-            this.status = ReasoningStatus.COMPLETED;
+        public Builder response(String response) {
+            this.response = response;
             return self();
         }
 
-        public Builder text(String text) {
-            this.status = ReasoningStatus.PROCESSING;
-            this.text = text;
-            return self();
-        }
-
-        public ReasoningMessagePart build() {
-            return new ReasoningMessagePart(id, status, text, createdAt, updatedAt, metadata);
+        public ToolCallMessagePart build() {
+            return new ToolCallMessagePart(id, callId, toolName, arguments, response, status, createdAt, updatedAt, metadata);
         }
     }
 }

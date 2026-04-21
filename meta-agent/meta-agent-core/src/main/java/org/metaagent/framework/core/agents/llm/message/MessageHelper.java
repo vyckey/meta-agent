@@ -26,6 +26,7 @@ package org.metaagent.framework.core.agents.llm.message;
 
 import org.apache.commons.lang3.StringUtils;
 import org.metaagent.framework.core.agent.chat.message.Message;
+import org.metaagent.framework.core.agents.llm.message.part.CompactionMessagePart;
 import org.springframework.ai.chat.messages.AssistantMessage;
 
 import static org.metaagent.framework.core.agent.chat.message.MessageMetadataKeys.KEY_REASONING_CONTENT;

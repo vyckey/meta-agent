@@ -25,11 +25,10 @@
 package org.metaagent.framework.core.agents.llm;
 
 import org.metaagent.framework.core.agent.AbstractAgent;
-import org.metaagent.framework.core.agent.chat.message.part.MessagePart;
 import org.metaagent.framework.core.agents.llm.context.LlmAgentContext;
 import org.metaagent.framework.core.agents.llm.context.LlmAgentStepContext;
 import org.metaagent.framework.core.agents.llm.input.LlmAgentInput;
-import org.metaagent.framework.core.agents.llm.message.ToolCallMessagePart;
+import org.metaagent.framework.core.agents.llm.message.StreamMessageChunk;
 import org.metaagent.framework.core.agents.llm.output.LlmAgentOutput;
 import org.metaagent.framework.core.model.chat.ChatModelInstance;
 import org.metaagent.framework.core.model.provider.ModelProviderUtils;
@@ -79,25 +78,30 @@ public class LlmAgent extends AbstractAgent<LlmAgentInput, LlmAgentOutput, LlmAg
 
     @Override
     protected LlmAgentOutput doStep(LlmAgentInput agentInput, LlmAgentStepContext stepContext) {
+        // Compact context if required
+        streamingAgent.compactContextIfRequired(agentInput, stepContext);
+
         LlmAgentContext agentContext = agentInput.context();
         ChatModelInstance modelInstance = ModelProviderUtils.getChatModel(agentContext.modelProviderRegistry(), agentInput.modelId());
 
         Prompt prompt = streamingAgent.buildPrompt(agentInput, stepContext);
 
         ChatResponse chatResponse = modelInstance.getRuntime().call(prompt);
-        List<MessagePart> outputMessageParts = streamingAgent.parseOutputMessageParts(chatResponse, stepContext, agentInput.messagePartIdGenerator());
+        List<StreamMessageChunk> outputMessageParts = streamingAgent.parseOutputMessageParts(chatResponse, stepContext, agentInput.messagePartIdGenerator());
         if (chatResponse.hasToolCalls()) {
-            List<ToolCallMessagePart> toolCallMessageParts = streamingAgent.executeToolCalls(
+            List<StreamMessageChunk> toolCallMessageParts = streamingAgent.executeToolCalls(
                     chatResponse, agentInput.messagePartIdGenerator(), agentContext, stepContext
             );
             outputMessageParts.addAll(toolCallMessageParts);
         }
 
         stepContext.addTokenUsage(chatResponse.getMetadata().getUsage());
-        stepContext.addOutputMessageParts(outputMessageParts);
+        for (StreamMessageChunk messageChunk : outputMessageParts) {
+            stepContext.addOutputMessagePart(messageChunk.part());
+        }
 
         return LlmAgentOutput.builder()
-                .message(stepContext.getOutputMessage())
+                .messages(stepContext.getOutputMessages())
                 .finishReason(stepContext.getFinishReason())
                 .tokenUsage(stepContext.getTokenUsage())
                 .build();

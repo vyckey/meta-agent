@@ -26,8 +26,8 @@ package org.metaagent.framework.agents.chat.output;
 
 import org.metaagent.framework.common.metadata.MetadataProvider;
 import org.metaagent.framework.core.agent.chat.message.MessageInfo;
-import org.metaagent.framework.core.agent.chat.message.part.MessagePart;
 import org.metaagent.framework.core.agent.output.AgentStreamOutput;
+import org.metaagent.framework.core.agents.llm.message.StreamMessageChunk;
 import reactor.core.publisher.Flux;
 
 import java.util.Objects;
@@ -39,9 +39,9 @@ import java.util.Objects;
  */
 public record ChatAgentOutput(
         MessageInfo messageInfo,
-        Flux<MessagePart> stream,
+        Flux<StreamMessageChunk> stream,
         MetadataProvider metadata
-) implements AgentStreamOutput<MessagePart> {
+) implements AgentStreamOutput<StreamMessageChunk> {
 
     public ChatAgentOutput {
         Objects.requireNonNull(messageInfo, "messageInfo is required");
@@ -66,7 +66,7 @@ public record ChatAgentOutput(
 
     public static class Builder {
         private MessageInfo messageInfo;
-        private Flux<MessagePart> stream;
+        private Flux<StreamMessageChunk> stream;
         private MetadataProvider metadata;
 
         private Builder() {
@@ -83,7 +83,7 @@ public record ChatAgentOutput(
             return this;
         }
 
-        public Builder stream(Flux<MessagePart> stream) {
+        public Builder stream(Flux<StreamMessageChunk> stream) {
             this.stream = stream;
             return this;
         }

@@ -34,7 +34,6 @@ import org.metaagent.framework.core.agent.chat.message.Message;
 import org.metaagent.framework.core.agent.chat.message.MessageId;
 import org.metaagent.framework.core.agent.chat.message.MessageInfo;
 import org.metaagent.framework.core.agent.chat.message.RoleMessage;
-import org.metaagent.framework.core.agent.chat.message.part.MessagePart;
 import org.metaagent.framework.core.agent.chat.session.Session;
 import org.metaagent.framework.core.agent.event.AgentEventBus;
 import org.metaagent.framework.core.agent.event.AgentMessageEvent;
@@ -44,6 +43,7 @@ import org.metaagent.framework.core.agents.llm.LlmStreamingAgent;
 import org.metaagent.framework.core.agents.llm.context.DefaultLlmAgentContext;
 import org.metaagent.framework.core.agents.llm.context.LlmAgentContext;
 import org.metaagent.framework.core.agents.llm.input.LlmAgentInput;
+import org.metaagent.framework.core.agents.llm.message.StreamMessageChunk;
 import org.metaagent.framework.core.agents.llm.output.LlmAgentStreamOutput;
 import reactor.core.publisher.Flux;
 
@@ -58,7 +58,7 @@ import java.util.stream.Collectors;
  *
  * @author vyckey
  */
-public class ChatAgent extends AbstractStreamAgent<ChatAgentInput, ChatAgentOutput, ChatAgentStepContext, MessagePart> {
+public class ChatAgent extends AbstractStreamAgent<ChatAgentInput, ChatAgentOutput, ChatAgentStepContext, StreamMessageChunk> {
     private final SessionService sessionService = null;
     private final LlmStreamingAgent llmAgent = new LlmStreamingAgent("llm-agent");
 
@@ -105,7 +105,7 @@ public class ChatAgent extends AbstractStreamAgent<ChatAgentInput, ChatAgentOutp
     }
 
     @Override
-    protected ChatAgentOutput buildAgentOutput(ChatAgentInput agentInput, ChatAgentStepContext stepContext, Flux<MessagePart> stream) {
+    protected ChatAgentOutput buildAgentOutput(ChatAgentInput agentInput, ChatAgentStepContext stepContext, Flux<StreamMessageChunk> stream) {
         return ChatAgentOutput.builder()
                 .messageInfo(stepContext.getOutputMessageInfo())
                 .stream(stream)
@@ -118,7 +118,7 @@ public class ChatAgent extends AbstractStreamAgent<ChatAgentInput, ChatAgentOutp
     }
 
     @Override
-    protected Flux<MessagePart> doStepStream(ChatAgentInput agentInput, ChatAgentStepContext stepContext) {
+    protected Flux<StreamMessageChunk> doStepStream(ChatAgentInput agentInput, ChatAgentStepContext stepContext) {
         AgentEventBus llmAgentEventBus = AgentEventBus.create();
         llmAgentEventBus.subscribe(event -> {
             if (event instanceof AgentMessageEvent messageEvent) {

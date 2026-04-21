@@ -32,6 +32,7 @@ import org.metaagent.framework.common.util.IdGenerator;
 import org.metaagent.framework.core.agent.AbstractStreamAgent;
 import org.metaagent.framework.core.agent.chat.message.Message;
 import org.metaagent.framework.core.agent.chat.message.MessageId;
+import org.metaagent.framework.core.agent.chat.message.MessageInfo;
 import org.metaagent.framework.core.agent.chat.message.RoleMessageInfo;
 import org.metaagent.framework.core.agent.chat.message.part.MessagePart;
 import org.metaagent.framework.core.agent.chat.message.part.MessagePartId;
@@ -40,16 +41,18 @@ import org.metaagent.framework.core.agent.event.AgentMessageEvent;
 import org.metaagent.framework.core.agent.output.aggregator.StreamMessageAggregator;
 import org.metaagent.framework.core.agents.llm.context.LlmAgentContext;
 import org.metaagent.framework.core.agents.llm.context.LlmAgentStepContext;
+import org.metaagent.framework.core.agents.llm.context.LlmContextCache;
 import org.metaagent.framework.core.agents.llm.input.LlmAgentInput;
-import org.metaagent.framework.core.agents.llm.message.LlmFinishMessagePart;
-import org.metaagent.framework.core.agents.llm.message.LlmStartMessagePart;
 import org.metaagent.framework.core.agents.llm.message.LlmStreamMessageAggregator;
 import org.metaagent.framework.core.agents.llm.message.MessageConverter;
-import org.metaagent.framework.core.agents.llm.message.SystemMessagePart;
-import org.metaagent.framework.core.agents.llm.message.ToolCallMessagePart;
+import org.metaagent.framework.core.agents.llm.message.StreamMessageChunk;
+import org.metaagent.framework.core.agents.llm.message.part.LlmFinishMessagePart;
+import org.metaagent.framework.core.agents.llm.message.part.LlmStartMessagePart;
+import org.metaagent.framework.core.agents.llm.message.part.ToolCallMessagePart;
 import org.metaagent.framework.core.agents.llm.output.LlmAgentStreamOutput;
 import org.metaagent.framework.core.model.chat.ChatModelInstance;
 import org.metaagent.framework.core.model.chat.ChatResponseUtils;
+import org.metaagent.framework.core.model.prompt.PromptValue;
 import org.metaagent.framework.core.model.provider.ModelProviderUtils;
 import org.metaagent.framework.core.tool.ToolContext;
 import org.metaagent.framework.core.tool.definition.ToolDefinition;
@@ -93,7 +96,7 @@ import java.util.function.Consumer;
  * @see LlmAgentInput
  * @see LlmAgentStreamOutput
  */
-public class LlmStreamingAgent extends AbstractStreamAgent<LlmAgentInput, LlmAgentStreamOutput, LlmAgentStepContext, MessagePart> {
+public class LlmStreamingAgent extends AbstractStreamAgent<LlmAgentInput, LlmAgentStreamOutput, LlmAgentStepContext, StreamMessageChunk> {
     private final MessageConverter messageConverter = new MessageConverter();
 
     public LlmStreamingAgent(String name) {
@@ -102,12 +105,8 @@ public class LlmStreamingAgent extends AbstractStreamAgent<LlmAgentInput, LlmAge
 
     @Override
     public LlmAgentStepContext createStepContext(LlmAgentInput agentInput) {
-        List<SystemMessagePart> systemMessages = agentInput.systemPrompts().stream()
-                .map(prompt -> new SystemMessagePart(prompt.text()))
-                .toList();
-
         MessageId messageId = agentInput.messageIdGenerator().nextId();
-        LlmAgentStepContext stepContext = new LlmAgentStepContext(systemMessages, agentInput.messages());
+        LlmAgentStepContext stepContext = new LlmAgentStepContext(agentInput.systemPrompts(), agentInput.messages());
         MessageId userMessageId = stepContext.getLastUserMessage().info().id();
         stepContext.setOutputMessageInfo(RoleMessageInfo
                 .assistant()
@@ -129,7 +128,7 @@ public class LlmStreamingAgent extends AbstractStreamAgent<LlmAgentInput, LlmAge
     }
 
     @Override
-    protected LlmAgentStreamOutput buildAgentOutput(LlmAgentInput agentInput, LlmAgentStepContext stepContext, Flux<MessagePart> stream) {
+    protected LlmAgentStreamOutput buildAgentOutput(LlmAgentInput agentInput, LlmAgentStepContext stepContext, Flux<StreamMessageChunk> stream) {
         return LlmAgentStreamOutput.builder()
                 .messageInfo(stepContext.getOutputMessageInfo())
                 .stream(stream)
@@ -147,7 +146,7 @@ public class LlmStreamingAgent extends AbstractStreamAgent<LlmAgentInput, LlmAge
     }
 
     @Override
-    public Flux<MessagePart> stepStream(LlmAgentInput agentInput, LlmAgentStepContext stepContext) {
+    public Flux<StreamMessageChunk> stepStream(LlmAgentInput agentInput, LlmAgentStepContext stepContext) {
         AgentEventBus agentEventBus = agentInput.context().agentEventBus();
         AggregatedMessagePublisher messagePublisher = buildAggregatedMessagePublisher(stepContext, agentEventBus);
 
@@ -158,14 +157,25 @@ public class LlmStreamingAgent extends AbstractStreamAgent<LlmAgentInput, LlmAge
                 .doOnCancel(messagePublisher::flush);
     }
 
+    protected LlmContextCache buildContextCache(LlmAgentInput agentInput, LlmAgentStepContext stepContext) {
+        LlmAgentContext agentContext = agentInput.context();
+        return LlmContextCache.builder()
+                .modelId(agentInput.modelId())
+                .systemPrompts(agentInput.systemPrompts())
+                .prependMessages(stepContext.getAllMessages())
+                .toolManager(agentContext.toolManager())
+                .toolExecutorContext(agentContext.toolExecutorContext())
+                .build();
+    }
+
     private AggregatedMessagePublisher buildAggregatedMessagePublisher(LlmAgentStepContext stepContext, AgentEventBus agentEventBus) {
-        Consumer<MessagePart> messageHandler = messagePart -> {
-            stepContext.addOutputMessagePart(messagePart);
+        Consumer<StreamMessageChunk> messageHandler = messageChunk -> {
+            stepContext.addOutputMessagePart(messageChunk.part());
 
             agentEventBus.publish(AgentMessageEvent.builder()
                     .agent(this)
-                    .messageInfo(stepContext.getOutputMessageInfo())
-                    .messagePart(messagePart)
+                    .messageInfo(messageChunk.info())
+                    .messagePart(messageChunk.part())
                     .build()
             );
         };
@@ -173,12 +183,19 @@ public class LlmStreamingAgent extends AbstractStreamAgent<LlmAgentInput, LlmAge
         return new AggregatedMessagePublisher(messageHandler, LlmStreamMessageAggregator.INSTANCE);
     }
 
+    protected void compactContextIfRequired(LlmAgentInput agentInput, LlmAgentStepContext stepContext) {
+
+    }
+
     /**
      * Performs a single step of streaming execution.
      * This includes one LLM call and any tool execution (without recursive calls).
      */
     @Override
-    protected Flux<MessagePart> doStepStream(LlmAgentInput agentInput, LlmAgentStepContext stepContext) {
+    protected Flux<StreamMessageChunk> doStepStream(LlmAgentInput agentInput, LlmAgentStepContext stepContext) {
+        // Compact the context before each step if necessary
+        compactContextIfRequired(agentInput, stepContext);
+
         LlmAgentContext agentContext = agentInput.context();
         ChatModelInstance modelInstance = ModelProviderUtils.getChatModel(agentContext.modelProviderRegistry(), agentInput.modelId());
         Prompt prompt = buildPrompt(agentInput, stepContext);
@@ -187,9 +204,9 @@ public class LlmStreamingAgent extends AbstractStreamAgent<LlmAgentInput, LlmAge
                 .stream(prompt)
                 .map(ChatResponseUtils::rebuildResponseIfRequired)
                 .concatMap(chatResponse -> {
-                    List<MessagePart> messageParts = parseOutputMessageParts(
+                    List<StreamMessageChunk> messageParts = parseOutputMessageParts(
                             chatResponse, stepContext, agentInput.messagePartIdGenerator());
-                    Flux<MessagePart> messageFlux = Flux.fromIterable(messageParts);
+                    Flux<StreamMessageChunk> messageFlux = Flux.fromIterable(messageParts);
                     if (!chatResponse.hasToolCalls()) {
                         return messageFlux;
                     }
@@ -205,10 +222,11 @@ public class LlmStreamingAgent extends AbstractStreamAgent<LlmAgentInput, LlmAge
                     if (stepContext.getLoopCounter().get() > 0) {
                         return Mono.empty();
                     }
-                    return Mono.just(LlmStartMessagePart.builder()
+                    LlmStartMessagePart startMessagePart = LlmStartMessagePart.builder()
                             .metadata(MetadataProvider.builder()
                                     .build())
-                            .build());
+                            .build();
+                    return Mono.just(stepContext.newMessageChunk(startMessagePart));
                 }))
                 .concatWith(Mono.defer(() -> {
                     if (stepContext.isFinished()) {
@@ -216,7 +234,7 @@ public class LlmStreamingAgent extends AbstractStreamAgent<LlmAgentInput, LlmAge
                                 .finishReason(stepContext.getFinishReason())
                                 .tokenUsage(stepContext.getTokenUsage())
                                 .build();
-                        return Mono.just(finishMessagePart);
+                        return Mono.just(stepContext.newMessageChunk(finishMessagePart));
                     } else {
                         return Mono.empty();
                     }
@@ -227,10 +245,9 @@ public class LlmStreamingAgent extends AbstractStreamAgent<LlmAgentInput, LlmAge
         ChatOptions chatOptions = buildChatOptions(agentInput, null);
 
         List<org.springframework.ai.chat.messages.Message> messageList = Lists.newArrayList();
-        for (SystemMessagePart systemMessage : stepContext.getSystemMessages()) {
+        for (PromptValue systemPrompt : stepContext.getSystemPrompts()) {
             messageList.add(SystemMessage.builder()
-                    .text(systemMessage.text())
-                    .metadata(systemMessage.metadata().getProperties())
+                    .text(systemPrompt.text())
                     .build());
         }
 
@@ -241,15 +258,17 @@ public class LlmStreamingAgent extends AbstractStreamAgent<LlmAgentInput, LlmAge
         return new Prompt(messageList, chatOptions);
     }
 
-    protected List<MessagePart> parseOutputMessageParts(ChatResponse chatResponse, LlmAgentStepContext stepContext,
-                                                        IdGenerator<MessagePartId> partIdGenerator) {
-        List<MessagePart> outputMessages = Lists.newArrayList();
+    protected List<StreamMessageChunk> parseOutputMessageParts(ChatResponse chatResponse, LlmAgentStepContext stepContext,
+                                                               IdGenerator<MessagePartId> partIdGenerator) {
+        List<StreamMessageChunk> outputChunks = Lists.newArrayList();
 
         if (chatResponse.getResult() != null) {
             Generation generation = chatResponse.getResult();
             List<MessagePart> messageParts = messageConverter.convert(
                     partIdGenerator, generation.getOutput(), Collections.emptyMap());
-            outputMessages.addAll(messageParts);
+            for (MessagePart messagePart : messageParts) {
+                outputChunks.add(stepContext.newMessageChunk(messagePart));
+            }
 
             for (MessagePart messagePart : messageParts) {
                 if (messagePart instanceof ToolCallMessagePart) {
@@ -265,7 +284,7 @@ public class LlmStreamingAgent extends AbstractStreamAgent<LlmAgentInput, LlmAge
         }
 
         stepContext.addTokenUsage(chatResponse.getMetadata().getUsage());
-        return outputMessages;
+        return outputChunks;
     }
 
     protected ToolContext buildToolContext(LlmAgentContext agentContext, String executionId) {
@@ -278,10 +297,10 @@ public class LlmStreamingAgent extends AbstractStreamAgent<LlmAgentInput, LlmAge
                 .build();
     }
 
-    protected List<ToolCallMessagePart> executeToolCalls(ChatResponse chatResponse,
-                                                         IdGenerator<MessagePartId> partIdGenerator,
-                                                         LlmAgentContext agentContext,
-                                                         LlmAgentStepContext stepContext) {
+    protected List<StreamMessageChunk> executeToolCalls(ChatResponse chatResponse,
+                                                        IdGenerator<MessagePartId> partIdGenerator,
+                                                        LlmAgentContext agentContext,
+                                                        LlmAgentStepContext stepContext) {
         Optional<Generation> toolCallGeneration = chatResponse.getResults().stream()
                 .filter(g -> !CollectionUtils.isEmpty(g.getOutput().getToolCalls())).findFirst();
         if (toolCallGeneration.isEmpty()) {
@@ -317,7 +336,10 @@ public class LlmStreamingAgent extends AbstractStreamAgent<LlmAgentInput, LlmAge
             batchToolOutputs = new BatchToolOutputs(toolOutputs);
         }
 
-        return extractToolResults(toolManager, batchToolOutputs, stepContext);
+        List<ToolCallMessagePart> toolResultMessageParts = extractToolResults(toolManager, batchToolOutputs, stepContext);
+        return toolResultMessageParts.stream()
+                .map(messagePart -> StreamMessageChunk.from(stepContext.getOutputMessageInfo(), messagePart))
+                .toList();
     }
 
     private List<ToolCallMessagePart> extractToolResults(ToolManager toolManager,
@@ -348,7 +370,7 @@ public class LlmStreamingAgent extends AbstractStreamAgent<LlmAgentInput, LlmAge
         return toolCallMessages;
     }
 
-    protected List<ToolCallMessagePart> executeSpringToolCalls(
+    protected List<StreamMessageChunk> executeSpringToolCalls(
             ChatModelInstance modelInstance,
             Prompt prompt,
             ChatResponse chatResponse,
@@ -380,7 +402,7 @@ public class LlmStreamingAgent extends AbstractStreamAgent<LlmAgentInput, LlmAge
 
         List<ToolCallMessagePart> toolResultParts = buildToolCallResultMessageParts(stepContext, executionResult);
         stepContext.setFinishReason(generation.getMetadata().getFinishReason());
-        return toolResultParts;
+        return toolResultParts.stream().map(stepContext::newMessageChunk).toList();
     }
 
     protected ToolCallingManager getToolCallingManager(ChatModelInstance modelInstance) {
@@ -429,28 +451,38 @@ public class LlmStreamingAgent extends AbstractStreamAgent<LlmAgentInput, LlmAge
 
 
     static class AggregatedMessagePublisher {
+        MessageInfo currentMessageInfo;
         final List<MessagePart> pendingMessages = new ArrayList<>();
-        final Consumer<MessagePart> publisher;
+        final Consumer<StreamMessageChunk> publisher;
         final StreamMessageAggregator aggregator;
 
-        AggregatedMessagePublisher(Consumer<MessagePart> publisher, StreamMessageAggregator aggregator) {
+        AggregatedMessagePublisher(Consumer<StreamMessageChunk> publisher, StreamMessageAggregator aggregator) {
             this.publisher = Objects.requireNonNull(publisher, "message publisher is required");
             this.aggregator = Objects.requireNonNull(aggregator, "stream message aggregator is required");
         }
 
-        public void add(MessagePart message) {
-            if (aggregator.canAggregateWith(message, pendingMessages)) {
-                pendingMessages.add(message);
+        public void add(StreamMessageChunk messageChunk) {
+            boolean fromNewMessage = currentMessageInfo == null || currentMessageInfo.id().equals(messageChunk.info().id());
+            if (fromNewMessage || aggregator.canAggregateWith(messageChunk.part(), pendingMessages)) {
+                pendingMessages.add(messageChunk.part());
+                currentMessageInfo = messageChunk.info();
             } else {
                 flush();
 
-                pendingMessages.add(message);
+                pendingMessages.add(messageChunk.part());
+                currentMessageInfo = messageChunk.info();
             }
         }
 
         public void flush() {
             List<MessagePart> aggregatedMessages = aggregator.aggregate(pendingMessages);
-            aggregatedMessages.forEach(publisher);
+            if (!aggregatedMessages.isEmpty()) {
+                for (MessagePart aggregatedMessage : aggregatedMessages) {
+                    publisher.accept(StreamMessageChunk.from(currentMessageInfo, aggregatedMessage));
+                }
+            }
+
+            currentMessageInfo = null;
             pendingMessages.clear();
         }
     }

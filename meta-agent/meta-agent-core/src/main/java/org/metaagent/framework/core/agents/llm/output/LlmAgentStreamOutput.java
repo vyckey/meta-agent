@@ -26,9 +26,9 @@ package org.metaagent.framework.core.agents.llm.output;
 
 import com.google.common.base.Preconditions;
 import org.metaagent.framework.core.agent.chat.message.MessageInfo;
-import org.metaagent.framework.core.agent.chat.message.part.MessagePart;
 import org.metaagent.framework.core.agent.output.AgentStreamOutput;
 import org.metaagent.framework.core.agents.llm.LlmStreamingAgent;
+import org.metaagent.framework.core.agents.llm.message.StreamMessageChunk;
 import reactor.core.publisher.Flux;
 
 /**
@@ -40,8 +40,8 @@ import reactor.core.publisher.Flux;
 public record LlmAgentStreamOutput(
         MessageInfo messageInfo,
 
-        Flux<MessagePart> stream
-) implements AgentStreamOutput<MessagePart> {
+        Flux<StreamMessageChunk> stream
+) implements AgentStreamOutput<StreamMessageChunk> {
     public LlmAgentStreamOutput {
         Preconditions.checkArgument(messageInfo != null, "messageInfo is required");
         Preconditions.checkArgument(stream != null, "stream is required");
@@ -58,7 +58,7 @@ public record LlmAgentStreamOutput(
 
     public static class Builder {
         private MessageInfo messageInfo;
-        private Flux<MessagePart> stream;
+        private Flux<StreamMessageChunk> stream;
 
         private Builder() {
         }
@@ -73,7 +73,7 @@ public record LlmAgentStreamOutput(
             return this;
         }
 
-        public Builder stream(Flux<MessagePart> stream) {
+        public Builder stream(Flux<StreamMessageChunk> stream) {
             this.stream = stream;
             return this;
         }

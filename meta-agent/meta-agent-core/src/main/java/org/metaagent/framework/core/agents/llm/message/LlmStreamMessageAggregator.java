@@ -30,6 +30,10 @@ import org.metaagent.framework.common.metadata.MetadataProvider;
 import org.metaagent.framework.core.agent.chat.message.part.MessagePart;
 import org.metaagent.framework.core.agent.chat.message.part.TextMessagePart;
 import org.metaagent.framework.core.agent.output.aggregator.StreamMessageAggregator;
+import org.metaagent.framework.core.agents.llm.message.part.LlmFinishMessagePart;
+import org.metaagent.framework.core.agents.llm.message.part.LlmStartMessagePart;
+import org.metaagent.framework.core.agents.llm.message.part.ReasoningMessagePart;
+import org.metaagent.framework.core.agents.llm.message.part.ToolCallMessagePart;
 
 import java.util.List;
 

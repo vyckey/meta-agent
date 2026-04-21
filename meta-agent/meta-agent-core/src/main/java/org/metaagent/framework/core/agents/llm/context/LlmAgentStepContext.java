@@ -34,9 +34,10 @@ import org.metaagent.framework.core.agent.chat.message.part.MessagePart;
 import org.metaagent.framework.core.agent.chat.message.part.MessagePartId;
 import org.metaagent.framework.core.agent.context.AgentStepContext;
 import org.metaagent.framework.core.agents.llm.LlmStreamingAgent;
-import org.metaagent.framework.core.agents.llm.message.SystemMessagePart;
-import org.metaagent.framework.core.agents.llm.message.ToolCallMessagePart;
+import org.metaagent.framework.core.agents.llm.message.StreamMessageChunk;
+import org.metaagent.framework.core.agents.llm.message.part.ToolCallMessagePart;
 import org.metaagent.framework.core.model.chat.metadata.TokenUsage;
+import org.metaagent.framework.core.model.prompt.PromptValue;
 import org.springframework.ai.chat.metadata.Usage;
 
 import java.util.List;
@@ -54,20 +55,22 @@ import java.util.function.Function;
 public class LlmAgentStepContext implements AgentStepContext {
     private static final Set<String> FINISH_REASONS = Set.of("STOP", "LENGTH", "CONTENT_FILTER", "RETURN_DIRECT");
     private final AtomicInteger loopCounter;
-    private final List<SystemMessagePart> systemMessages;
+    private final List<PromptValue> systemPrompts;
     private final List<Message> historyMessages;
     private final Map<String, ToolCallMessagePart> toolCallMessages;
+    private final List<Message> outputMessages;
     private MessageInfo outputMessageInfo;
     private final List<MessagePart> outputMessageParts;
     private final Map<Message, List<org.springframework.ai.chat.messages.Message>> mappingMessageCache;
     private String finishReason;
     private TokenUsage tokenUsage;
 
-    public LlmAgentStepContext(List<SystemMessagePart> systemMessages, List<Message> historyMessages) {
+    public LlmAgentStepContext(List<PromptValue> systemPrompts, List<Message> historyMessages) {
         this.loopCounter = new AtomicInteger(0);
-        this.systemMessages = Objects.requireNonNull(systemMessages, "systemMessages cannot be null");
+        this.systemPrompts = Objects.requireNonNull(systemPrompts, "systemPrompts cannot be null");
         this.historyMessages = Objects.requireNonNull(historyMessages, "historyMessages cannot be null");
         this.toolCallMessages = Maps.newHashMap();
+        this.outputMessages = Lists.newArrayList();
         this.outputMessageParts = Lists.newArrayList();
         this.mappingMessageCache = Maps.newHashMap();
         this.tokenUsage = TokenUsage.empty();
@@ -86,6 +89,10 @@ public class LlmAgentStepContext implements AgentStepContext {
         this.outputMessageInfo = outputMessageInfo;
     }
 
+    public StreamMessageChunk newMessageChunk(MessagePart messagePart) {
+        return StreamMessageChunk.from(outputMessageInfo, messagePart);
+    }
+
     public Message getOutputMessage() {
         MessageInfo messageInfo = outputMessageInfo;
         if (!outputMessageParts.isEmpty()) {
@@ -96,8 +103,19 @@ public class LlmAgentStepContext implements AgentStepContext {
         return RoleMessage.builder().info(messageInfo).parts(outputMessageParts).build();
     }
 
-    public List<SystemMessagePart> getSystemMessages() {
-        return systemMessages;
+    public List<Message> getOutputMessages() {
+        if (!outputMessages.isEmpty() && outputMessageInfo != null &&
+                outputMessages.get(outputMessages.size() - 1).info().id().equals(outputMessageInfo.id())) {
+            return outputMessages;
+        } else {
+            List<Message> finalOutputMessages = Lists.newArrayList(getOutputMessage());
+            finalOutputMessages.add(getOutputMessage());
+            return finalOutputMessages;
+        }
+    }
+
+    public List<PromptValue> getSystemPrompts() {
+        return systemPrompts;
     }
 
     public List<Message> getHistoryMessages() {

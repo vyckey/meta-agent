@@ -22,7 +22,7 @@
  * SOFTWARE.
  */
 
-package org.metaagent.framework.core.agents.llm.message;
+package org.metaagent.framework.core.agents.llm.message.part;
 
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import org.metaagent.framework.common.metadata.MapMetadataProvider;

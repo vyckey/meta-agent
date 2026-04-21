@@ -30,6 +30,10 @@ import org.metaagent.framework.core.agent.output.AgentOutput;
 import org.metaagent.framework.core.agents.llm.LlmAgent;
 import org.metaagent.framework.core.model.chat.metadata.TokenUsage;
 
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+
 /**
  * Output of {@link LlmAgent}.
  *
@@ -37,19 +41,23 @@ import org.metaagent.framework.core.model.chat.metadata.TokenUsage;
  * @see LlmAgent
  */
 public record LlmAgentOutput(
-        Message message,
+        List<Message> messages,
 
         String finishReason,
 
         TokenUsage tokenUsage
 ) implements AgentOutput {
     public LlmAgentOutput {
-        Preconditions.checkArgument(message != null, "message is required");
+        Preconditions.checkArgument(messages != null, "messages is required");
         Preconditions.checkArgument(tokenUsage != null, "tokenUsage is required");
     }
 
     public static Builder builder() {
         return new Builder();
+    }
+
+    public Message message() {
+        return messages.isEmpty() ? null : messages.get(messages.size() - 1);
     }
 
     public Builder toBuilder() {
@@ -58,7 +66,7 @@ public record LlmAgentOutput(
 
 
     public static class Builder {
-        private Message message;
+        private List<Message> messages;
         private String finishReason;
         private TokenUsage tokenUsage;
 
@@ -66,13 +74,26 @@ public record LlmAgentOutput(
         }
 
         private Builder(LlmAgentOutput agentOutput) {
-            this.message = agentOutput.message();
+            this.messages = agentOutput.messages();
             this.finishReason = agentOutput.finishReason();
             this.tokenUsage = agentOutput.tokenUsage();
         }
 
         public Builder message(Message message) {
-            this.message = message;
+            this.messages = List.of(message);
+            return this;
+        }
+
+        public Builder messages(List<Message> messages) {
+            this.messages = messages;
+            return this;
+        }
+
+        public Builder addMessage(Message message) {
+            if (this.messages == null) {
+                this.messages = new ArrayList<>();
+            }
+            this.messages.add(message);
             return this;
         }
 
@@ -87,7 +108,7 @@ public record LlmAgentOutput(
         }
 
         public LlmAgentOutput build() {
-            return new LlmAgentOutput(message, finishReason, tokenUsage);
+            return new LlmAgentOutput(Collections.unmodifiableList(messages), finishReason, tokenUsage);
         }
     }
 }

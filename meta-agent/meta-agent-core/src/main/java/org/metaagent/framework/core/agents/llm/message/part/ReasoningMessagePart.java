@@ -22,8 +22,7 @@
  * SOFTWARE.
  */
 
-package org.metaagent.framework.core.agents.llm.message;
-
+package org.metaagent.framework.core.agents.llm.message.part;
 
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import org.metaagent.framework.common.metadata.MapMetadataProvider;
@@ -32,38 +31,60 @@ import org.metaagent.framework.core.agent.chat.message.part.AbstractMessagePartB
 import org.metaagent.framework.core.agent.chat.message.part.MessagePart;
 import org.metaagent.framework.core.agent.chat.message.part.MessagePartId;
 import org.metaagent.framework.core.agent.chat.message.part.MessagePartIdValue;
-import org.metaagent.framework.core.model.chat.metadata.TokenUsage;
 
 import java.time.Instant;
 import java.util.Objects;
 
 /**
- * LlmFinishMessagePart represents a message part that indicates the end of a LLM model's response.
+ * ReasoningMessagePart represents a message part that contains a reasoning.
  *
  * @author vyckey
  * @see MessagePart
  */
-public record LlmFinishMessagePart(
+public record ReasoningMessagePart(
         @JsonDeserialize(as = MessagePartIdValue.class)
         MessagePartId id,
 
-        String finishReason,
+        ReasoningStatus status,
 
-        TokenUsage tokenUsage,
+        String text,
 
         Instant createdAt,
+
+        Instant updatedAt,
 
         @JsonDeserialize(as = MapMetadataProvider.class)
         MetadataProvider metadata
 ) implements MessagePart {
-    public static final String TYPE = "llm_finish";
+    public static final String TYPE = "reasoning";
 
-    public LlmFinishMessagePart {
+    public ReasoningMessagePart {
         id = id != null ? id : MessagePartId.next();
-        Objects.requireNonNull(finishReason, "finishReason cannot be null");
-        Objects.requireNonNull(tokenUsage, "tokenUsage cannot be null");
+        Objects.requireNonNull(status, "status is required");
+        if (status == ReasoningStatus.PROCESSING) {
+            Objects.requireNonNull(text, "text is required");
+        } else {
+            text = "";
+        }
         createdAt = createdAt != null ? createdAt : Instant.now();
+        updatedAt = updatedAt != null ? updatedAt : Instant.now();
         metadata = metadata != null ? metadata : MetadataProvider.empty();
+    }
+
+    public ReasoningMessagePart(ReasoningStatus status, String text, MetadataProvider metadata) {
+        this(MessagePartId.next(), status, text, Instant.now(), Instant.now(), metadata);
+    }
+
+    public static ReasoningMessagePart started() {
+        return new ReasoningMessagePart(ReasoningStatus.STARTED, "", MetadataProvider.empty());
+    }
+
+    public static ReasoningMessagePart completed() {
+        return new ReasoningMessagePart(ReasoningStatus.COMPLETED, "", MetadataProvider.empty());
+    }
+
+    public static ReasoningMessagePart text(String text, MetadataProvider metadata) {
+        return new ReasoningMessagePart(ReasoningStatus.PROCESSING, text, metadata);
     }
 
     public static Builder builder() {
@@ -76,37 +97,62 @@ public record LlmFinishMessagePart(
     }
 
     @Override
-    public Instant updatedAt() {
-        return createdAt;
+    public String content() {
+        return text;
     }
 
-    @Override
-    public String content() {
-        return "";
+    public Builder toBuilder() {
+        return new Builder(this);
+    }
+
+    public enum ReasoningStatus {
+        STARTED,
+        PROCESSING,
+        COMPLETED,
     }
 
 
     public static class Builder extends AbstractMessagePartBuilder<Builder> {
-        private String finishReason;
-        private TokenUsage tokenUsage;
+        private ReasoningStatus status;
+        private String text;
+
+        private Builder() {
+        }
+
+        public Builder(ReasoningMessagePart messagePart) {
+            super(messagePart);
+            this.status = messagePart.status;
+            this.text = messagePart.text;
+        }
 
         @Override
         protected Builder self() {
             return this;
         }
 
-        public Builder finishReason(String finishReason) {
-            this.finishReason = finishReason;
-            return this;
+        public Builder status(ReasoningStatus status) {
+            this.status = status;
+            return self();
         }
 
-        public Builder tokenUsage(TokenUsage tokenUsage) {
-            this.tokenUsage = tokenUsage;
-            return this;
+        public Builder started() {
+            this.status = ReasoningStatus.STARTED;
+            return self();
         }
 
-        public LlmFinishMessagePart build() {
-            return new LlmFinishMessagePart(id, finishReason, tokenUsage, createdAt, metadata);
+        public Builder completed() {
+            this.status = ReasoningStatus.COMPLETED;
+            return self();
+        }
+
+        public Builder text(String text) {
+            this.status = ReasoningStatus.PROCESSING;
+            this.text = text;
+            return self();
+        }
+
+        public ReasoningMessagePart build() {
+            return new ReasoningMessagePart(id, status, text, createdAt, updatedAt, metadata);
         }
     }
 }
